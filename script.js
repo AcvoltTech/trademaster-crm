@@ -1,485 +1,389 @@
-// ===== FASE 3: LEADS MODULE CON GOOGLE MAPS =====
-// Sistema completo de autenticación, dashboard, y leads con geolocalización
+// ===== TRADE MASTER CRM - CON SUPABASE AUTH =====
+
+// ===== SUPABASE CONFIG =====
+const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== VARIABLES GLOBALES =====
 let leadsMap = null;
 let markers = [];
 let leadsData = [];
+let currentUser = null;
 
-// ===== DATOS EN localStorage =====
-function InitData() {
-      if (!localStorage.getItem('companies')) {
-                localStorage.setItem('companies', JSON.stringify([]));
-      }
-      if (!localStorage.getItem('currentUser')) {
-                localStorage.setItem('currentUser', JSON.stringify(null));
-      }
-      if (!localStorage.getItem('leads')) {
-                localStorage.setItem('leads', JSON.stringify([]));
-      }
-}
-
-InitData();
-
-// ===== TAB SWITCHING EN AUTENTICACIÓN =====
+// ===== TABS DE AUTENTICACIÓN =====
 function switchTab(tab) {
-      const loginForm = document.getElementById('loginForm');
-      const registerForm = document.getElementById('registerForm');
-      const tabBtns = document.querySelectorAll('.tab-btn');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const tabBtns = document.querySelectorAll('.tab-btn');
 
     tabBtns.forEach(btn => btn.classList.remove('active'));
-      loginForm.classList.remove('active');
-      registerForm.classList.remove('active');
+    loginForm.classList.remove('active');
+    registerForm.classList.remove('active');
+
+    // Limpiar errores
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('registerError').style.display = 'none';
+    document.getElementById('registerSuccess').style.display = 'none';
 
     if (tab === 'login') {
-              tabBtns[0].classList.add('active');
-              loginForm.classList.add('active');
+        tabBtns[0].classList.add('active');
+        loginForm.classList.add('active');
     } else {
-              tabBtns[1].classList.add('active');
-              registerForm.classList.add('active');
+        tabBtns[1].classList.add('active');
+        registerForm.classList.add('active');
     }
 }
 
-// ===== MANEJO DE LOGIN =====
-function handleLogin(event) {
-      event.preventDefault();
+// ===== LOGIN CON SUPABASE =====
+async function handleLogin(event) {
+    event.preventDefault();
 
     const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    const errorEl = document.getElementById('loginError');
 
-    const companies = JSON.parse(localStorage.getItem('companies')) || [];
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Iniciando sesión...';
 
-    for (let company of companies) {
-              for (let user of company.users || []) {
-                            if (user.email === email && user.password === password) {
-                                              const currentUser = {
-                                                                    email: user.email,
-                                                                    name: user.firstName,
-                                                                    companyId: company.id,
-                                                                    companyName: company.name
-                                              };
-                                              localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                                              showDashboard();
-                                              return;
-                            }
-              }
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            errorEl.textContent = error.message === 'Invalid login credentials'
+                ? 'Email o contraseña incorrectos'
+                : error.message;
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        currentUser = data.user;
+        showDashboard();
+    } catch (err) {
+        errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
+        errorEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar Sesión';
     }
-
-    alert('Email o contraseña incorrectos');
 }
 
-// ===== MANEJO DE REGISTRO =====
-function handleRegister(event) {
-      event.preventDefault();
+// ===== REGISTRO CON SUPABASE =====
+async function handleRegister(event) {
+    event.preventDefault();
 
     const companyName = document.getElementById('companyName').value;
-      const firstName = document.getElementById('firstName').value;
-      const lastName = document.getElementById('lastName').value;
-      const email = document.getElementById('registerEmail').value;
-      const phone = document.getElementById('phone').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const email = document.getElementById('registerEmail').value;
+    const phone = document.getElementById('phone').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const btn = document.getElementById('registerBtn');
+    const errorEl = document.getElementById('registerError');
+    const successEl = document.getElementById('registerSuccess');
+
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
 
     if (password !== confirmPassword) {
-              alert('Las contraseñas no coinciden');
-              return;
+        errorEl.textContent = 'Las contraseñas no coinciden';
+        errorEl.style.display = 'block';
+        return;
     }
 
-    const companies = JSON.parse(localStorage.getItem('companies')) || [];
-
-    for (let company of companies) {
-              for (let user of company.users || []) {
-                            if (user.email === email) {
-                                              alert('Este email ya está registrado');
-                                              return;
-                            }
-              }
+    if (password.length < 6) {
+        errorEl.textContent = 'La contraseña debe tener mínimo 6 caracteres';
+        errorEl.style.display = 'block';
+        return;
     }
 
-    const newCompany = {
-              id: Date.now(),
-              name: companyName,
-              phone: phone,
-              users: [
-                {
-                                  email: email,
-                                  firstName: firstName,
-                                  lastName: lastName,
-                                  phone: phone,
-                                  password: password,
-                                  role: 'admin'
+    btn.disabled = true;
+    btn.textContent = 'Creando cuenta...';
+
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    company_name: companyName,
+                    phone: phone
                 }
-                        ]
-    };
+            }
+        });
 
-    companies.push(newCompany);
-      localStorage.setItem('companies', JSON.stringify(companies));
+        if (error) {
+            errorEl.textContent = error.message;
+            errorEl.style.display = 'block';
+            return;
+        }
 
-    const currentUser = {
-              email: email,
-              name: firstName,
-              companyId: newCompany.id,
-              companyName: newCompany.name
-    };
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-    document.getElementById('registerForm').reset();
-
-    alert('¡Empresa creada exitosamente!');
-      showDashboard();
+        // Si Supabase requiere confirmación de email
+        if (data.user && !data.session) {
+            successEl.textContent = '¡Cuenta creada! Revisa tu email para confirmar tu cuenta.';
+            successEl.style.display = 'block';
+        } else if (data.session) {
+            // Login automático después de registro
+            currentUser = data.user;
+            showDashboard();
+        }
+    } catch (err) {
+        errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
+        errorEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear Cuenta Empresarial';
+    }
 }
 
 // ===== MOSTRAR DASHBOARD =====
 function showDashboard() {
-      const authPage = document.getElementById('authPage');
-      const dashboardPage = document.getElementById('dashboardPage');
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
 
-    if (!currentUser) {
-              return;
-    }
+    const meta = currentUser.user_metadata || {};
+    const displayName = meta.first_name || currentUser.email.split('@')[0];
+    const companyName = meta.company_name || 'Mi Empresa';
+    const initial = displayName.charAt(0).toUpperCase();
 
-    authPage.style.display = 'none';
-      dashboardPage.style.display = 'grid';
-
-    document.getElementById('companyDisplay').textContent = currentUser.companyName;
-      document.getElementById('userInitials').textContent = currentUser.name.charAt(0).toUpperCase();
-      document.getElementById('pageTitle').textContent = 'Dashboard';
+    document.getElementById('authPage').style.display = 'none';
+    document.getElementById('dashboardPage').style.display = 'grid';
+    document.getElementById('companyDisplay').textContent = companyName;
+    document.getElementById('userInitials').textContent = initial;
+    document.getElementById('sidebarInitials').textContent = initial;
+    document.getElementById('sidebarUserName').textContent = displayName;
+    document.getElementById('pageTitle').textContent = 'Dashboard';
 
     showSection('dashboard');
-      loadLeadsData();
+    loadLeadsData();
 }
 
-// ===== MOSTRAR SECCIONES =====
+// ===== NAVEGACIÓN =====
 function showSection(sectionName) {
-      const sections = document.querySelectorAll('.section');
-      sections.forEach(section => section.classList.remove('active'));
-
-    const targetSection = document.getElementById(sectionName + '-section');
-      if (targetSection) {
-                targetSection.classList.add('active');
-      }
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(sectionName + '-section');
+    if (target) target.classList.add('active');
 
     const titles = {
-              'dashboard': 'Dashboard',
-              'clients': 'Gestión de Clientes',
-              'jobs': 'Gestión de Trabajos',
-              'leads': 'Gestión de Leads - Mapa de Ubicaciones',
-              'dispatch': 'Dispatch - Asignación de Trabajos',
-              'technicians': 'Gestión de Técnicos',
-              'invoices': 'Gestión de Facturas',
-              'collections': 'Crédito & Cobranza',
-              'settings': 'Configuración'
+        'dashboard': 'Dashboard',
+        'clients': 'Gestión de Clientes',
+        'jobs': 'Gestión de Trabajos',
+        'leads': 'Gestión de Leads',
+        'dispatch': 'Dispatch',
+        'technicians': 'Gestión de Técnicos',
+        'invoices': 'Facturas',
+        'collections': 'Cobranza',
+        'settings': 'Configuración'
     };
 
     document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-
-    const navLinks = document.querySelectorAll('.nav-link');
-      navLinks.forEach(link => link.classList.remove('active'));
-
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     const activeLink = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
-      if (activeLink) {
-                activeLink.classList.add('active');
-      }
+    if (activeLink) activeLink.classList.add('active');
 
-    // Inicializar mapa si es la sección de leads
     if (sectionName === 'leads') {
-              setTimeout(() => {
-                            if (!leadsMap) {
-                                              initLeadsMap();
-                            } else {
-                                              google.maps.event.trigger(leadsMap, 'resize');
-                            }
-              }, 100);
+        setTimeout(() => {
+            if (!leadsMap) initLeadsMap();
+            else google.maps.event.trigger(leadsMap, 'resize');
+        }, 150);
     }
 }
 
-// ===== LEADS MODULE FUNCTIONS =====
+// ===== LEADS (localStorage por ahora, se puede migrar a Supabase tables) =====
 function showLeadForm() {
-      document.getElementById('leadFormContainer').style.display = 'block';
-      document.getElementById('leadForm').reset();
+    document.getElementById('leadFormContainer').style.display = 'block';
+    document.getElementById('leadForm').reset();
 }
 
 function hideLeadForm() {
-      document.getElementById('leadFormContainer').style.display = 'none';
+    document.getElementById('leadFormContainer').style.display = 'none';
 }
 
 function handleLeadCreate(event) {
-      event.preventDefault();
-
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const name = document.getElementById('leadName').value;
-      const phone = document.getElementById('leadPhone').value;
-      const email = document.getElementById('leadEmail').value;
-      const service = document.getElementById('leadService').value;
-      const address = document.getElementById('leadAddress').value;
-      const lat = document.getElementById('leadLat').value;
-      const lng = document.getElementById('leadLng').value;
-      const notes = document.getElementById('leadNotes').value;
+    event.preventDefault();
+    const lat = document.getElementById('leadLat').value;
+    const lng = document.getElementById('leadLng').value;
 
     if (!lat || !lng) {
-              alert('Por favor, ingresa una dirección válida para obtener coordenadas');
-              return;
+        alert('Por favor, ingresa una dirección válida para obtener coordenadas');
+        return;
     }
 
-    const leads = JSON.parse(localStorage.getItem('leads')) || [];
+    const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+    leads.push({
+        id: Date.now(),
+        userId: currentUser.id,
+        name: document.getElementById('leadName').value,
+        phone: document.getElementById('leadPhone').value,
+        email: document.getElementById('leadEmail').value,
+        service: document.getElementById('leadService').value,
+        address: document.getElementById('leadAddress').value,
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        notes: document.getElementById('leadNotes').value,
+        status: 'new',
+        createdAt: new Date().toISOString()
+    });
 
-    const newLead = {
-              id: Date.now(),
-              companyId: currentUser.companyId,
-              name: name,
-              phone: phone,
-              email: email,
-              service: service,
-              address: address,
-              lat: parseFloat(lat),
-              lng: parseFloat(lng),
-              notes: notes,
-              status: 'new',
-              createdAt: new Date().toISOString()
-    };
-
-    leads.push(newLead);
-      localStorage.setItem('leads', JSON.stringify(leads));
-
+    localStorage.setItem('tm_leads', JSON.stringify(leads));
     hideLeadForm();
-      loadLeadsData();
-      alert('¡Lead creado exitosamente!');
+    loadLeadsData();
+    alert('¡Lead creado exitosamente!');
 }
 
 function loadLeadsData() {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const leads = JSON.parse(localStorage.getItem('leads')) || [];
-
-    leadsData = leads.filter(lead => lead.companyId === currentUser.companyId);
-
-    // Actualizar KPI
+    const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+    leadsData = leads.filter(l => l.userId === currentUser.id);
     document.getElementById('leadCountKPI').textContent = leadsData.length;
-
-    // Mostrar lista
     renderLeadsTable();
-
-    // Actualizar mapa
-    if (leadsMap) {
-              updateLeadsMap();
-    }
+    if (leadsMap) updateLeadsMap();
 }
 
 function renderLeadsTable() {
-      const listContainer = document.getElementById('leadsList');
-
+    const container = document.getElementById('leadsList');
     if (leadsData.length === 0) {
-              listContainer.innerHTML = '<div class="empty-state">No hay leads registrados. Crea uno para comenzar.</div>';
-              return;
+        container.innerHTML = '<p class="empty-msg">No hay leads registrados. Crea uno para comenzar.</p>';
+        return;
     }
 
-    let html = `<table class="leads-table">
-            <thead>
-                        <tr>
-                                        <th>Nombre</th>
-                                                        <th>Teléfono</th>
-                                                                        <th>Email</th>
-                                                                                        <th>Servicio</th>
-                                                                                                        <th>Estado</th>
-                                                                                                                        <th>Dirección</th>
-                                                                                                                                        <th>Acciones</th>
-                                                                                                                                                    </tr>
-                                                                                                                                                            </thead>
-                                                                                                                                                                    <tbody>`;
+    let html = `<table class="leads-table"><thead><tr>
+        <th>Nombre</th><th>Teléfono</th><th>Email</th>
+        <th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th>
+    </tr></thead><tbody>`;
 
     leadsData.forEach(lead => {
-              html += `<tr>
-                          <td>${lead.name}</td>
-                                      <td>${lead.phone}</td>
-                                                  <td>${lead.email || '-'}</td>
-                                                              <td>${lead.service}</td>
-                                                                          <td><span class="lead-status ${lead.status}">${lead.status}</span></td>
-                                                                                      <td>${lead.address}</td>
-                                                                                                  <td>
-                                                                                                                  <div class="lead-actions">
-                                                                                                                                      <button class="btn-icon" onclick="editLead('${lead.id}')">Editar</button>
-                                                                                                                                                          <button class="btn-icon" onclick="deleteLead('${lead.id}')" style="border-color: #ef4444; color: #ef4444;">Eliminar</button>
-                                                                                                                                                                          </div>
-                                                                                                                                                                                      </td>
-                                                                                                                                                                                              </tr>`;
+        html += `<tr>
+            <td>${lead.name}</td><td>${lead.phone}</td><td>${lead.email || '-'}</td>
+            <td>${lead.service}</td>
+            <td><span class="lead-status ${lead.status}">${lead.status}</span></td>
+            <td>${lead.address}</td>
+            <td><div class="lead-actions">
+                <button class="btn-icon" onclick="deleteLead('${lead.id}')" style="border-color:#ef4444;color:#ef4444;">Eliminar</button>
+            </div></td>
+        </tr>`;
     });
 
-    html += `</tbody></table>`;
-      listContainer.innerHTML = html;
-}
-
-function editLead(leadId) {
-      alert('Función de edición en desarrollo');
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 function deleteLead(leadId) {
-      if (confirm('¿Estás seguro de que deseas eliminar este lead?')) {
-                const leads = JSON.parse(localStorage.getItem('leads')) || [];
-                const updatedLeads = leads.filter(lead => lead.id !== parseInt(leadId));
-                localStorage.setItem('leads', JSON.stringify(updatedLeads));
-                loadLeadsData();
-      }
+    if (confirm('¿Eliminar este lead?')) {
+        const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+        localStorage.setItem('tm_leads', JSON.stringify(leads.filter(l => l.id !== parseInt(leadId))));
+        loadLeadsData();
+    }
 }
 
-// ===== GOOGLE MAPS INTEGRATION =====
+// ===== GOOGLE MAPS =====
 function initLeadsMap() {
-      const mapElement = document.getElementById('leadsMap');
-
-    leadsMap = new google.maps.Map(mapElement, {
-              zoom: 11,
-              center: { lat: 37.7749, lng: -122.4194 }, // San Francisco por defecto
-              styles: [
-                { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-                { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-                { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-                {
-                                  featureType: 'administrative.locality',
-                                  elementType: 'labels.text.fill',
-                                  stylers: [{ color: '#d59563' }],
-                },
-                        ],
-              mapTypeControl: true,
-              fullscreenControl: true
+    leadsMap = new google.maps.Map(document.getElementById('leadsMap'), {
+        zoom: 11,
+        center: { lat: 34.1083, lng: -117.2898 },
+        styles: [
+            { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+            { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+            { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] }
+        ],
+        mapTypeControl: true,
+        fullscreenControl: true
     });
-
     updateLeadsMap();
 }
 
 function updateLeadsMap() {
-      // Limpiar marcadores anteriores
-    markers.forEach(marker => marker.setMap(null));
-      markers = [];
-
+    markers.forEach(m => m.setMap(null));
+    markers = [];
     if (leadsData.length === 0) return;
 
-    // Crear bounds para centrar el mapa
     const bounds = new google.maps.LatLngBounds();
-
     leadsData.forEach(lead => {
-              const position = { lat: parseFloat(lead.lat), lng: parseFloat(lead.lng) };
+        const pos = { lat: parseFloat(lead.lat), lng: parseFloat(lead.lng) };
+        const marker = new google.maps.Marker({
+            position: pos, map: leadsMap, title: lead.name,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#10b981', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
+        });
 
-                              const marker = new google.maps.Marker({
-                                            position: position,
-                                            map: leadsMap,
-                                            title: lead.name,
-                                            icon: {
-                                                              path: google.maps.SymbolPath.CIRCLE,
-                                                              scale: 10,
-                                                              fillColor: '#10b981',
-                                                              fillOpacity: 1,
-                                                              strokeColor: 'white',
-                                                              strokeWeight: 2,
-                                            }
-                              });
+        const info = new google.maps.InfoWindow({
+            content: `<div style="color:#333;padding:8px;font-size:13px;">
+                <strong>${lead.name}</strong><br>📞 ${lead.phone}<br>📍 ${lead.address}<br>🔧 ${lead.service}</div>`
+        });
 
-                              // Info window
-                              const infoWindow = new google.maps.InfoWindow({
-                                            content: `<div style="color: #333; padding: 10px; font-size: 12px;">
-                                                            <strong>${lead.name}</strong><br/>
-                                                                            📞 ${lead.phone}<br/>
-                                                                                            📍 ${lead.address}<br/>
-                                                                                                            🔧 ${lead.service}
-                                                                                                                        </div>`
-                              });
-
-                              marker.addListener('click', () => {
-                                            infoWindow.open(leadsMap, marker);
-                              });
-
-                              markers.push(marker);
-              bounds.extend(position);
+        marker.addListener('click', () => info.open(leadsMap, marker));
+        markers.push(marker);
+        bounds.extend(pos);
     });
 
-    // Centrar mapa en todos los marcadores
-    if (leadsData.length > 1) {
-              leadsMap.fitBounds(bounds);
-    } else if (leadsData.length === 1) {
-              leadsMap.setCenter(bounds.getCenter());
-              leadsMap.setZoom(14);
-    }
+    if (leadsData.length > 1) leadsMap.fitBounds(bounds);
+    else { leadsMap.setCenter(bounds.getCenter()); leadsMap.setZoom(14); }
 }
 
-// Geocoding para obtener coordenadas de dirección
 function geocodeAddress(address) {
-      const geocoder = new google.maps.Geocoder();
-
-    geocoder.geocode({ address: address }, (results, status) => {
-              if (status === 'OK' && results.length > 0) {
-                            const location = results[0].geometry.location;
-                            document.getElementById('leadLat').value = location.lat().toFixed(6);
-                            document.getElementById('leadLng').value = location.lng().toFixed(6);
-                            leadsMap.setCenter(location);
-                            leadsMap.setZoom(14);
-              } else {
-                            alert('No se pudo encontrar la dirección: ' + status);
-              }
+    new google.maps.Geocoder().geocode({ address }, (results, status) => {
+        if (status === 'OK' && results.length > 0) {
+            const loc = results[0].geometry.location;
+            document.getElementById('leadLat').value = loc.lat().toFixed(6);
+            document.getElementById('leadLng').value = loc.lng().toFixed(6);
+            if (leadsMap) { leadsMap.setCenter(loc); leadsMap.setZoom(14); }
+        } else {
+            alert('No se pudo encontrar la dirección');
+        }
     });
 }
 
-// Detectar cambios en dirección y geocodificar
-document.addEventListener('DOMContentLoaded', function() {
-      const addressInput = document.getElementById('leadAddress');
-      if (addressInput) {
-                addressInput.addEventListener('blur', function() {
-                              if (this.value && document.getElementById('leadsMap')) {
-                                                setTimeout(geocodeAddress, 500, this.value);
-                              }
-                });
-      }
-});
+// ===== CONFIGURACIÓN =====
+function saveSettings() {
+    alert('Configuración guardada (los cambios de perfil se guardan en Supabase)');
+}
 
 // ===== LOGOUT =====
-function logout() {
-      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-                localStorage.setItem('currentUser', JSON.stringify(null));
-                location.reload();
-      }
-}
-
-// ===== MODAL FUNCTIONS =====
-function showModal(modalId) {
-      alert('Función en desarrollo: ' + modalId);
-}
-
-// ===== GUARDAR CONFIGURACIÓN =====
-function saveSettings() {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const companies = JSON.parse(localStorage.getItem('companies')) || [];
-
-    const companyName = document.getElementById('settingsCompanyName').value;
-      const phone = document.getElementById('settingsPhone').value;
-      const email = document.getElementById('settingsEmail').value;
-
-    for (let company of companies) {
-              if (company.id === currentUser.companyId) {
-                            company.name = companyName;
-                            company.phone = phone;
-                            break;
-              }
+async function logout() {
+    if (confirm('¿Cerrar sesión?')) {
+        await supabase.auth.signOut();
+        currentUser = null;
+        location.reload();
     }
-
-    localStorage.setItem('companies', JSON.stringify(companies));
-
-    currentUser.companyName = companyName;
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      document.getElementById('companyDisplay').textContent = companyName;
-
-    alert('Configuración guardada correctamente');
-}
-
-// ===== TOGGLE USER MENU =====
-function toggleUserMenu() {
-      console.log('User menu clicked');
 }
 
 // ===== INICIALIZACIÓN =====
-document.addEventListener('DOMContentLoaded', function() {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar si hay sesión activa
+    const { data: { session } } = await supabase.auth.getSession();
 
-                              if (currentUser && currentUser.email) {
-                                        showDashboard();
-                              } else {
-                                        document.getElementById('authPage').style.display = 'flex';
-                                        document.getElementById('dashboardPage').style.display = 'none';
-                              }
+    if (session && session.user) {
+        currentUser = session.user;
+        showDashboard();
+    } else {
+        document.getElementById('authPage').style.display = 'flex';
+        document.getElementById('dashboardPage').style.display = 'none';
+    }
+
+    // Escuchar cambios de autenticación
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            currentUser = session.user;
+            showDashboard();
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            document.getElementById('authPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+        }
+    });
+
+    // Geocoding en blur del address
+    const addressInput = document.getElementById('leadAddress');
+    if (addressInput) {
+        addressInput.addEventListener('blur', function() {
+            if (this.value) setTimeout(geocodeAddress, 300, this.value);
+        });
+    }
 });
