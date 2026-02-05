@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Trade Master CRM - HVACR Management System</title>
+      <link rel="stylesheet" href="styles.css">
+  </head>
+<body>
+      <div class="container">
+                <nav class="navbar">
+                              <div class="logo">
+                                                <h1>⚙️ Trade Master CRM</h1>
+                              </div>div>
+                            <ul class="nav-links">
+                                            <li><a href="#dashboard" class="active">Dashboard</a>a></li>
+                                            <li><a href="#customers">Customers</a>a></li>
+                                            <li><a href="#jobs">Jobs</a>a></li>
+                                            <li><a href="#invoices">Invoices</a>a></li>
+                                            <li><a href="#reports">Reports</a>a></li>
+                                            <li><a href="#" id="logout">Logout</a>a></li>
+                            </ul>ul>
+                </nav>nav>
+      
+              <div class="main-content">
+                          <!-- Dashboard Section -->
+                          <section id="dashboard" class="section active">
+                                          <h2>Dashboard</h2>
+                                          <div class="stats-grid">
+                                                              <div class="stat-card">
+                                                                                      <h3>Total Customers</h3>
+                                                                                      <p class="stat-number" id="totalCustomers">0</p>p>
+                                                              </div>div>
+                                                              <div class="stat-card">
+                                                                                      <h3>Active Jobs</h3>
+                                                                                      <p class="stat-number" id="activeJobs">0</p>p>
+                                                              </div>div>
+                                                              <div class="stat-card">
+                                                                                      <h3>Pending Invoices</h3>
+                                                                                      <p class="stat-number" id="pendingInvoices">0</p>p>
+                                                              </div>div>
+                                                              <div class="stat-card">
+                                                                                      <h3>Monthly Revenue</h3>
+                                                                                      <p class="stat-number" id="monthlyRevenue">$0</p>p>
+                                                              </div>div>
+                                          </div>div>
+                          </section>section>
+              
+                          <!-- Customers Section -->
+                          <section id="customers" class="section">
+                                          <h2>Customers</h2>
+                                          <div class="form-group">
+                                                              <input type="text" id="customerName" placeholder="Customer Name" required>
+                                                              <input type="email" id="customerEmail" placeholder="Email" required>
+                                                              <input type="tel" id="customerPhone" placeholder="Phone" required>
+                                                              <button class="btn-primary" onclick="addCustomer()">Add Customer</button>button>
+                                          </div>div>
+                                          <table id="customersTable" class="table">
+                                                              <thead>
+                                                                                        <tr>
+                                                                                                                      <th>Name</th>
+                                                                                          <th>Email</th>
+                                                                                          <th>Phone</th>
+                                                                                          <th>Actions</th>
+                                                                                        </tr>
+                                                              </thead>
+                                                              <tbody id="customersBody"></tbody>tbody>
+                                          </table>table>
+                          </section>section>
+              
+                          <!-- Jobs Section -->
+                          <section id="jobs" class="section">
+                                          <h2>Jobs</h2>
+                                          <div class="form-group">
+                                                              <select id="jobCustomer" required>
+                                                                                      <option value="">Select Customer</option>option>
+                                                              </select>select>
+                                                              <input type="text" id="jobType" placeholder="Job Type (AC/Heat/Repair)" required>
+                                                              <input type="date" id="jobDate" required>
+                                                              <input type="number" id="jobCost" placeholder="Cost" required>
+                                                              <select id="jobStatus" required>
+                                                                                      <option value="Pending">Pending</option>option>
+                                                                                      <option value="In Progress">In Progress</option>option>
+                                                                                      <option value="Completed">Completed</option>option>
+                                                              </select>select>
+                                                              <button class="btn-primary" onclick="addJob()">Add Job</button>button>
+                                          </div>div>
+                                          <table id="jobsTable" class="table">
+                                                              <thead>
+                                                                                      <tr>
+                                                                                                                    <th>Customer</th>th>
+                                                                                                                    <th>Type</th>th>
+                                                                                                                    <th>Date</th>th>
+                                                                                                                    <th>Cost</th>th>
+                                                                                                                    <th>Status</th>th>
+                                                                                                                    <th>Actions</th>th>
+                                                                                        </tr>
+                                                              </thead>
+                                                                <tbody id="jobsBody"></tbody>tbody>
+                                          </table>table>
+                          </section>section>
+
+                            <!-- Invoices Section -->
+                            <section id="invoices" class="section">
+                                              <h2>Invoices</h2>
+                                              <div class="form-group">
+                                                                    <select id="invoiceJob" required>
+                                                                                              <option value="">Select Job</option>option>
+                                                                    </select>select>
+                                                                    <input type="number" id="invoiceAmount" placeholder="Invoice Amount" required>
+                                                                    <select id="invoiceStatus" required>
+                                                                                              <option value="Draft">Draft</option>option>
+                                                                                              <option value="Sent">Sent</option>option>
+                                                                                              <option value="Paid">Paid</option>option>
+                                                                    </select>select>
+                                                                    <button class="btn-primary" onclick="createInvoice()">Create Invoice</button>button>
+                                              </div>div>
+                                              <table id="invoicesTable" class="table">
+                                                                    <thead>
+                                                                                              <tr>
+                                                                                                                            <th>Job ID</th>
+                                                                                                <th>Amount</th>
+                                                                                                <th>Status</th>
+                                                                                                <th>Date</th>
+                                                                                                <th>Actions</th>
+                                                                                              </tr>
+                                                                    </thead>
+                                                                  <tbody id="invoicesBody"></tbody>tbody>
+                                              </table>table>
+                            </section>section>
+              
+                          <!-- Reports Section -->
+                          <section id="reports" class="section">
+                                          <h2>Reports & Analytics</h2>
+                                          <div class="reports-grid">
+                                                              <div class="report-card">
+                                                                                      <h3>Revenue Breakdown</h3>
+                                                                                      <div id="revenueChart" class="chart">
+                                                                                                                  <p id="revenueText">No data yet</p>p>
+                                                                                        </div>div>
+                                                              </div>div>
+                                                              <div class="report-card">
+                                                                                      <h3>Job Status Distribution</h3>
+                                                                                      <ul id="jobStatusList"></ul>ul>
+                                                              </div>div>
+                                                              <div class="report-card">
+                                                                                      <h3>Customer Summary</h3>
+                                                                                      <ul id="customerSummary"></ul>ul>
+                                                              </div>div>
+                                          </div>div>
+                                          <button class="btn-primary" onclick="exportReport()">Export Report (CSV)</button>button>
+                          </section>section>
+              </div>div>
+      </div>div>
+
+    <script src="script.js"></script>
+</body>
+</html>html></th></th>
+                                                                                              </tr>
+                                                                                      </tr></th></th>
+                                                                                        </tr>
+                                                              </thead></li></li></h1>
+</body></title>
+  </head>
