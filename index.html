@@ -1,241 +1,347 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Master CRM</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnV9KDtKVFqk8RoKp1dGMXJ97G_d7Ks_I"></script>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Trade Master CRM</title>
+      <link rel="stylesheet" href="styles.css">
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnV9KDUt-Vfq8RokgLdGPCl97G_d7Ks_I"></script>
   </head>
 <body>
-  <div id="authPage" class="auth-container">
-    <div class="auth-wrapper">
-      <div class="auth-left">
-        <div class="auth-logo">
-          <div class="logo-icon">⚙️</div>div>
-          <h1>Trade Master</h1>
-        <p>CRM HVACR - Sistema Multi-Empresa</p>
-        </div>div>
+      <div id="authPage" class="auth-container">
+                <div class="auth-wrapper">
+                              <div class="auth-left">
+                                                <div class="auth-logo">
+                                                                      <div class="logo-icon">⚙️</div>div>
+                                                                      <h1>Trade Master</h1>
+                                                                    <p>CRM HVACR - Sistema Multi-Empresa</p>
+                                                </div>div>
+                              </div>div>
+                            <div class="auth-right">
+                                            <div class="auth-tabs">
+                                                                <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>button>
+                                                                <button class="tab-btn" onclick="switchTab('register')">Registrar Empresa</button>button>
+                                            </div>div>
+                                            
+                                            <div id="loginForm" class="auth-form active">
+                                                                <h2>Bienvenido</h2>
+                                                                <form onsubmit="handleLogin(event)">
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Email</label>
+                                                                                                                    <input type="email" id="loginEmail" placeholder="Email" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Contraseña</label>
+                                                                                                                    <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <button type="submit" class="btn-primary">INICIAR SESIÓN</button>button>
+                                                                </form>form>
+                                                                <p class="forgot-password"><a href="#" onclick="alert('Contacte al administrador')">¿Olvidaste la contraseña?</a>a></p>
+                                            </div>div>
+                                            
+                                            <div id="registerForm" class="auth-form">
+                                                                <h2>Crear Cuenta Empresarial</h2>
+                                                                <form onsubmit="handleRegister(event)">
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Nombre de la Empresa</label>
+                                                                                                                    <input type="text" id="companyName" placeholder="Nombre de la Empresa" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-row">
+                                                                                                                    <div class="form-group">
+                                                                                                                                                    <label>Nombre</label>
+                                                                                                                                                    <input type="text" id="firstName" placeholder="Nombre" required>
+                                                                                                                      </div>div>
+                                                                                                                    <div class="form-group">
+                                                                                                                                                    <label>Apellido</label>
+                                                                                                                                                    <input type="text" id="lastName" placeholder="Apellido" required>
+                                                                                                                      </div>div>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Email</label>
+                                                                                                                    <input type="email" id="registerEmail" placeholder="Email" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Teléfono</label>
+                                                                                                                    <input type="tel" id="phone" placeholder="Teléfono" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Contraseña</label>
+                                                                                                                    <input type="password" id="registerPassword" placeholder="Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Confirmar Contraseña</label>
+                                                                                                                    <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <button type="submit" class="btn-primary">CREAR CUENTA EMPRESARIAL</button>button>
+                                                                </form>form>
+                                            </div>div>
+                            </div>div>
+                </div>div>
       </div>div>
-    <div class="auth-right">
-    <div class="auth-tabs">
-    <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>button>
-    <button class="tab-btn" onclick="switchTab('register')">Registrar Empresa</button>button>
+
+    <div id="dashboardPage" class="dashboard-container" style="display:none;">
+            <div class="sidebar">
+                        <div class="sidebar-header">
+                                        <h2>Trade Master</h2>
+                        </div>div>
+                        <nav class="sidebar-nav">
+                                        <a href="#" onclick="switchModule('dashboard')" class="nav-item active" data-module="dashboard">Dashboard</a>a>
+                                        <a href="#" onclick="switchModule('leads')" class="nav-item" data-module="leads">Leads</a>a>
+                                        <a href="#" onclick="switchModule('dispatch')" class="nav-item" data-module="dispatch">Dispatch</a>a>
+                                        <a href="#" onclick="switchModule('customers')" class="nav-item" data-module="customers">Clientes</a>a>
+                                        <a href="#" onclick="switchModule('jobs')" class="nav-item" data-module="jobs">Trabajos</a>a>
+                                        <a href="#" onclick="switchModule('invoices')" class="nav-item" data-module="invoices">Facturas</a>a>
+                                        <a href="#" onclick="switchModule('reports')" class="nav-item" data-module="reports">Reportes</a>a>
+                                        <a href="#" onclick="switchModule('technicians')" class="nav-item" data-module="technicians">Técnicos</a>a>
+                                        <a href="#" onclick="switchModule('collections')" class="nav-item" data-module="collections">Cobranza</a>a>
+                        </nav>nav>
+                        <div class="sidebar-footer">
+                                        <button onclick="handleLogout()" class="btn-logout">Logout</button>button>
+                        </div>div>
+            </div>div>
+    
+            <div class="main-content">
+                        <div class="top-bar">
+                                        <h1 id="pageTitle">Dashboard</h1>
+                                        <div class="user-info">
+                                                            <span id="companyDisplay"></span>span>
+                                        </div>div>
+                        </div>div>
+            
+                        <!-- DASHBOARD MODULE -->
+                        <div id="dashboardModule" class="module-content active">
+                                        <div class="kpi-grid">
+                                                            <div class="kpi-card">
+                                                                                    <h3>Leads</h3>
+                                                                                    <p class="kpi-value" id="leadCount">0</p>
+                                                                                    <p class="kpi-label">Nuevos Leads</p>
+                                                            </div>div>
+                                                            <div class="kpi-card">
+                                                                                    <h3>Trabajos</h3>
+                                                                                    <p class="kpi-value" id="jobCount">0</p>
+                                                                                    <p class="kpi-label">Trabajos Activos</p>
+                                                            </div>div>
+                                                            <div class="kpi-card">
+                                                                                    <h3>Ingresos</h3>
+                                                                                    <p class="kpi-value" id="revenueTotal">$0.00</p>
+                                                                                    <p class="kpi-label">Ingresos Este Mes</p>
+                                                            </div>div>
+                                                            <div class="kpi-card">
+                                                                                    <h3>Clientes</h3>
+                                                                                    <p class="kpi-value" id="customerCount">0</p>
+                                                                                    <p class="kpi-label">Clientes Totales</p>
+                                                            </div>div>
+                                        </div>div>
+                        </div>div>
+            
+                        <!-- LEADS MODULE -->
+                        <div id="leadsModule" class="module-content" style="display:none;">
+                                        <div class="module-header">
+                                                            <h2>Gestión de Leads</h2>
+                                                            <button onclick="toggleLeadForm()" class="btn-primary">+ Nuevo Lead</button>button>
+                                        </div>div>
+                        
+                                        <div id="leadFormContainer" class="form-container" style="display:none;">
+                                                            <h3>Crear Nuevo Lead</h3>
+                                                            <form onsubmit="handleCreateLead(event)">
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Nombre Completo</label>
+                                                                                                                                                <input type="text" id="leadName" placeholder="Nombre Completo" required>
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Email</label>
+                                                                                                                                                <input type="email" id="leadEmail" placeholder="Email">
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Teléfono</label>
+                                                                                                                                                <input type="tel" id="leadPhone" placeholder="Teléfono">
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Dirección</label>
+                                                                                                                                                <input type="text" id="leadAddress" placeholder="Dirección Completa" required onchange="geocodeLead()">
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Tipo de Servicio</label>
+                                                                                                                                                <select id="leadService" required>
+                                                                                                                                                                                    <option value="">Seleccionar Servicio</option>option>
+                                                                                                                                                                                    <option value="instalacion">Instalación</option>option>
+                                                                                                                                                                                    <option value="mantenimiento">Mantenimiento</option>option>
+                                                                                                                                                                                    <option value="reparacion">Reparación</option>option>
+                                                                                                                                                  </select>select>
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Descripción</label>
+                                                                                                                                                <textarea id="leadDescription" placeholder="Descripción del Servicio Requerido"></textarea>
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-actions">
+                                                                                                                <button type="submit" class="btn-primary">Guardar Lead</button>button>
+                                                                                                                <button type="button" class="btn-secondary" onclick="toggleLeadForm()">Cancelar</button>button>
+                                                                                      </div>div>
+                                                            </form>form>
+                                        </div>div>
+                        
+                                        <div class="leads-table">
+                                                            <table>
+                                                                                      <thead>
+                                                                                                                    <tr>
+                                                                                                                                                      <th>Nombre</th>
+                                                                                                                      <th>Email</th>
+                                                                                                                      <th>Teléfono</th>
+                                                                                                                      <th>Dirección</th>
+                                                                                                                      <th>Servicio</th>
+                                                                                                                      <th>Estado</th>
+                                                                                                                      <th>Acciones</th>
+                                                                                                                      </tr>
+                                                                                        </thead>
+                                                                                    <tbody id="leadsTableBody">
+                                                                                    </tbody>tbody>
+                                                            </table>
+                                        </div>div>
+                        
+                                        <div class="map-container">
+                                                            <h3>Mapa de Leads</h3>
+                                                            <div id="leadsMap" style="width: 100%; height: 500px;"></div>div>
+                                        </div>div>
+                        </div>div>
+            
+                        <!-- DISPATCH MODULE -->
+                        <div id="dispatchModule" class="module-content" style="display:none;">
+                                        <div class="module-header">
+                                                            <h2>Gestión de Dispatch</h2>
+                                                            <button onclick="toggleDispatchForm()" class="btn-primary">+ Nuevo Trabajo</button>button>
+                                        </div>div>
+                        
+                                        <div id="dispatchFormContainer" class="form-container" style="display:none;">
+                                                            <h3>Crear Nuevo Trabajo</h3>
+                                                            <form onsubmit="handleCreateDispatch(event)">
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Título del Trabajo</label>
+                                                                                                                                                <input type="text" id="jobTitle" placeholder="Título del Trabajo" required>
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Cliente</label>
+                                                                                                                                                <select id="jobLead" required>
+                                                                                                                                                                                    <option value="">Seleccionar Cliente</option>option>
+                                                                                                                                                  </select>select>
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Técnico Asignado</label>
+                                                                                                                                                <select id="jobTechnician" required>
+                                                                                                                                                                                    <option value="">Seleccionar Técnico</option>option>
+                                                                                                                                                  </select>select>
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Prioridad</label>
+                                                                                                                                                <select id="jobPriority" required>
+                                                                                                                                                                                    <option value="media">Media</option>option>
+                                                                                                                                                                                    <option value="alta">Alta</option>option>
+                                                                                                                                                                                    <option value="baja">Baja</option>option>
+                                                                                                                                                                                    <option value="urgente">Urgente</option>option>
+                                                                                                                                                  </select>select>
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-row">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Fecha Programada</label>
+                                                                                                                                                <input type="datetime-local" id="jobDate" required>
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Descripción</label>
+                                                                                                                                                <textarea id="jobDescription" placeholder="Descripción del Trabajo"></textarea>
+                                                                                                                  </div>div>
+                                                                                      </div>div>
+                                                                                    <div class="form-actions">
+                                                                                                                <button type="submit" class="btn-primary">Crear Trabajo</button>button>
+                                                                                                                <button type="button" class="btn-secondary" onclick="toggleDispatchForm()">Cancelar</button>button>
+                                                                                      </div>div>
+                                                            </form>form>
+                                        </div>div>
+                        
+                                        <div class="jobs-table">
+                                                            <table>
+                                                                                    <thead>
+                                                                                                                <tr>
+                                                                                                                                                  <th>Título</th>th>
+                                                                                                                                                  <th>Cliente</th>th>
+                                                                                                                                                  <th>Técnico</th>th>
+                                                                                                                                                  <th>Fecha</th>th>
+                                                                                                                                                  <th>Prioridad</th>th>
+                                                                                                                                                  <th>Estado</th>th>
+                                                                                                                                                  <th>Acciones</th>th>
+                                                                                                                  </tr>
+                                                                                      </thead>
+                                                                                      <tbody id="dispatchTableBody">
+                                                                                        </tbody>tbody>
+                                                            </table>
+                                        </div>div>
+                        </div>div>
+
+                          <!-- CUSTOMERS MODULE -->
+                          <div id="customersModule" class="module-content" style="display:none;">
+                                            <h2>Gestión de Clientes</h2>
+                                            <p>Módulo de Clientes - En desarrollo</p>
+                          </div>div>
+            
+                        <!-- JOBS MODULE -->
+                        <div id="jobsModule" class="module-content" style="display:none;">
+                                        <h2>Gestión de Trabajos</h2>
+                                        <p>Módulo de Trabajos - En desarrollo</p>
+                        </div>div>
+            
+                        <!-- INVOICES MODULE -->
+                        <div id="invoicesModule" class="module-content" style="display:none;">
+                                        <h2>Gestión de Facturas</h2>
+                                        <p>Módulo de Facturas - En desarrollo</p>
+                        </div>div>
+            
+                        <!-- REPORTS MODULE -->
+                        <div id="reportsModule" class="module-content" style="display:none;">
+                                        <h2>Reportes y Análisis</h2>
+                                        <div class="reports-container">
+                                                            <div class="report-card">
+                                                                                    <h3>Ingresos por Mes</h3>
+                                                                                    <p>Análisis de ingresos mensuales</p>
+                                                            </div>div>
+                                                            <div class="report-card">
+                                                                                    <h3>Desempeño de Técnicos</h3>
+                                                                                    <p>Evaluación de productividad de técnicos</p>
+                                                            </div>div>
+                                                            <div class="report-card">
+                                                                                    <h3>Satisfacción de Clientes</h3>
+                                                                                    <p>Calificaciones y feedback de clientes</p>
+                                                            </div>div>
+                                        </div>div>
+                        </div>div>
+            
+                        <!-- TECHNICIANS MODULE -->
+                        <div id="techniciansModule" class="module-content" style="display:none;">
+                                        <h2>Gestión de Técnicos</h2>
+                                        <p>Módulo de Técnicos - En desarrollo</p>
+                        </div>div>
+            
+                        <!-- COLLECTIONS MODULE -->
+                        <div id="collectionsModule" class="module-content" style="display:none;">
+                                        <h2>Gestión de Cobranza</h2>
+                                        <p>Módulo de Cobranza - En desarrollo</p>
+                        </div>div>
+            </div>div>
     </div>div>
-    <div id="loginForm" class="auth-form active">
-    <h2>Bienvenido</h2>
-    <form onsubmit="handleLogin(event)">
-    <div class="form-group">
-    <label>Email</label>
-    <input type="email" id="loginEmail" placeholder="Email" required>
-    </div>div>
-    <div class="form-group">
-    <label>Contraseña</label>
-    <input type="password" id="loginPassword" placeholder="Contraseña" required>
-    </div>div>
-    <button type="submit" class="btn-primary">Iniciar Sesión</button>button>
-    </form>form>
-    <p class="form-hint">¿Olvidaste tu contraseña? <a href="#">Click aquí</a>a></p>
-    </div>div>
-    <div id="registerForm" class="auth-form">
-    <h2>Crear Cuenta Empresarial</h2>
-    <form onsubmit="handleRegister(event)">
-    <div class="form-group">
-    <label>Nombre de la Empresa</label>
-    <input type="text" id="companyName" placeholder="Nombre" required>
-    </div>div>
-    <div class="form-row">
-    <div class="form-group">
-    <label>Nombre</label>
-    <input type="text" id="firstName" placeholder="Nombre" required>
-    </div>div>
-    <div class="form-group">
-    <label>Apellido</label>
-    <input type="text" id="lastName" placeholder="Apellido" required>
-    </div>div>
-    </div>div>
-    <div class="form-group">
-    <label>Email</label>
-    <input type="email" id="registerEmail" placeholder="Email" required>
-    </div>div>
-    <div class="form-group">
-    <label>Teléfono</label>
-    <input type="tel" id="phone" placeholder="(555) 123-4567">
-    </div>div>
-    <div class="form-group">
-    <label>Contraseña</label>
-    <input type="password" id="registerPassword" placeholder="Contraseña" required>
-    </div>div>
-    <div class="form-group">
-    <label>Confirmar Contraseña</label>
-    <input type="password" id="confirmPassword" placeholder="Confirmar" required>
-    </div>div>
-    <button type="submit" class="btn-primary">Crear Cuenta</button>button>
-    </form>form>
-    </div>div>
-    </div>div>
-    </div>div>
-  </div>div>
-<div id="dashboardPage" class="dashboard-container" style="display: none;">
-<div class="sidebar">
-<div class="sidebar-header">
-<div class="logo">
-<div class="logo-icon">⚙️</div>div>
-<h2>Trade Master</h2>
-</div>div>
-</div>div>
-<nav class="sidebar-nav">
-<div class="nav-section">
-<h3>Principales</h3>
-<a href="#" class="nav-link active" onclick="showSection('dashboard')">📊 Dashboard</a>a>
-<a href="#" class="nav-link" onclick="showSection('clients')">👥 Clientes</a>a>
-<a href="#" class="nav-link" onclick="showSection('jobs')">📋 Trabajos</a>a>
-</div>div>
-<div class="nav-section">
-<h3>Ventas</h3>
-<a href="#" class="nav-link" onclick="showSection('leads')">🎯 Leads</a>a>
-<a href="#" class="nav-link" onclick="showSection('dispatch')">🚗 Dispatch</a>a>
-</div>div>
-<div class="nav-section">
-<h3>Operaciones</h3>
-<a href="#" class="nav-link" onclick="showSection('technicians')">🔧 Técnicos</a>a>
-<a href="#" class="nav-link" onclick="showSection('invoices')">💰 Facturas</a>a>
-<a href="#" class="nav-link" onclick="showSection('collections')">💳 Cobranza</a>a>
-</div>div>
-<div class="nav-section">
-<h3>Configuración</h3>
-<a href="#" class="nav-link" onclick="showSection('settings')">⚙️ Configuración</a>a>
-</div>div>
-</nav>nav>
-<div class="sidebar-footer">
-<button onclick="logout()" class="btn-logout">Cerrar Sesión</button>button>
-</div>div>
-</div>div>
-<div class="main-content">
-<div class="top-bar">
-<div class="top-bar-left">
-<h1 id="pageTitle">Dashboard</h1>
-</div>div>
-<div class="top-bar-right">
-<div class="company-info">
-<span id="companyDisplay" class="company-name"></span>span>
-</div>div>
-<div class="user-avatar" id="userInitials"></div>div>
-</div>div>
-</div>div>
-<div class="content-area">
-<div id="dashboard-section" class="section active">
-<div class="dashboard-grid">
-<div class="kpi-card">
-<div class="kpi-header">Ingresos</div>div>
-<div class="kpi-value">$0</div>div>
-</div>div>
-<div class="kpi-card">
-<div class="kpi-header">Trabajos</div>div>
-<div class="kpi-value">0</div>div>
-</div>div>
-<div class="kpi-card">
-<div class="kpi-header">Clientes</div>div>
-<div class="kpi-value">0</div>div>
-</div>div>
-<div class="kpi-card">
-<div class="kpi-header">Leads</div>div>
-<div class="kpi-value" id="leadCountKPI">0</div>div>
-</div>div>
-</div>div>
-</div>div>
-<div id="clients-section" class="section">
-<div class="card">
-<h3>Gestión de Clientes</h3>
-<button class="btn-primary" onclick="showModal('client')">+ Nuevo Cliente</button>button>
-<div class="empty-state">No hay clientes</div>div>
-</div>div>
-</div>div>
-<div id="jobs-section" class="section">
-<div class="card">
-<h3>Gestión de Trabajos</h3>
-<button class="btn-primary" onclick="showModal('job')">+ Nuevo Trabajo</button>button>
-<div class="empty-state">No hay trabajos</div>div>
-</div>div>
-</div>div>
-<div id="leads-section" class="section">
-<div class="card">
-<h3>Gestión de Leads - Mapa</h3>
-<button class="btn-primary" onclick="showLeadForm()">+ Nuevo Lead</button>button>
-</div>div>
-<div id="leadFormContainer" class="card" style="display: none;">
-<h3>Crear Lead</h3>
-<form id="leadForm" onsubmit="handleLeadCreate(event)">
-<div class="form-row">
-<div class="form-group">
-<label>Nombre</label>
-<input type="text" id="leadName" required>
-</div>div>
-<div class="form-group">
-<label>Teléfono</label>
-<input type="tel" id="leadPhone" required>
-</div>div>
-</div>div>
-<div class="form-group">
-<label>Dirección</label>
-<input type="text" id="leadAddress" required>
-</div>div>
-<div class="form-row">
-<button type="submit" class="btn-primary">Guardar</button>button>
-<button type="button" class="btn-secondary" onclick="hideLeadForm()">Cancelar</button>button>
-</div>div>
-</form>form>
-</div>div>
-<div class="card" style="margin-top: 20px;">
-<div id="leadsMap" style="width: 100%; height: 500px; border-radius: 8px;"></div>div>
-</div>div>
-<div class="card" style="margin-top: 20px;">
-<h3>Leads Registrados</h3>
-<div id="leadsList" class="empty-state">No hay leads</div>div>
-</div>div>
-</div>div>
-<div id="dispatch-section" class="section">
-<div class="card">
-<h3>Dispatch</h3>
-<button class="btn-primary" onclick="showModal('dispatch')">+ Nuevo Dispatch</button>button>
-<div class="empty-state">No hay asignaciones</div>div>
-</div>div>
-</div>div>
-<div id="technicians-section" class="section">
-<div class="card">
-<h3>Técnicos</h3>
-<button class="btn-primary" onclick="showModal('tech')">+ Nuevo Técnico</button>button>
-<div class="empty-state">No hay técnicos</div>div>
-</div>div>
-</div>div>
-<div id="invoices-section" class="section">
-<div class="card">
-<h3>Facturas</h3>
-<button class="btn-primary" onclick="showModal('invoice')">+ Nueva Factura</button>button>
-<div class="empty-state">No hay facturas</div>div>
-</div>div>
-</div>div>
-<div id="collections-section" class="section">
-<div class="card">
-<h3>Cobranza</h3>
-<div class="empty-state">Sin datos</div>div>
-</div>div>
-</div>div>
-<div id="settings-section" class="section">
-<div class="card">
-<h3>Configuración</h3>
-<div class="form-group">
-<label>Nombre de Empresa</label>
-<input type="text" id="settingsCompanyName">
-</div>div>
-<button class="btn-primary" onclick="saveSettings()">Guardar</button>button>
-</div>div>
-</div>div>
-</div>div>
-</div>div>
-</div>div>
-<script src="script.js"></script>
+
+    <script src="script.js"></script>
 </body>
-</html>html></label></label></p></h1>
+</html>html></p></p>
+                                                                                                                </tr></th></th>
+                                                                                                                    </tr>
+                                                                                      </thead>
+                                                            </table></label></label></p></h1>
 </body></title>
   </head>
