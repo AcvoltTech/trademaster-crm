@@ -1,397 +1,455 @@
+// ===== TRADE MASTER CRM - FULL SYSTEM =====
+var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
+var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== TRADE MASTER CRM - CON SUPABASE AUTH =====
+var leadsMap = null, dispatchMap = null, trackingMap = null;
+var markers = [], dispatchMarkers = [];
+var leadsData = [], techsData = [], jobsData = [];
+var currentUser = null, companyId = null;
+var trackingInterval = null;
 
-// ===== SUPABASE CONFIG =====
-const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
-
-const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ===== VARIABLES GLOBALES =====
-let leadsMap = null;
-let markers = [];
-let leadsData = [];
-let currentUser = null;
-
-// ===== TABS DE AUTENTICACIÓN =====
+// ===== AUTH =====
 function switchTab(tab) {
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-
-    tabBtns.forEach(function(btn) { btn.classList.remove('active'); });
-    loginForm.classList.remove('active');
-    registerForm.classList.remove('active');
-
+    var lf = document.getElementById('loginForm');
+    var rf = document.getElementById('registerForm');
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(b) { b.classList.remove('active'); });
+    lf.classList.remove('active'); rf.classList.remove('active');
     document.getElementById('loginError').style.display = 'none';
     document.getElementById('registerError').style.display = 'none';
     document.getElementById('registerSuccess').style.display = 'none';
-
-    if (tab === 'login') {
-        tabBtns[0].classList.add('active');
-        loginForm.classList.add('active');
-    } else {
-        tabBtns[1].classList.add('active');
-        registerForm.classList.add('active');
-    }
+    if (tab === 'login') { btns[0].classList.add('active'); lf.classList.add('active'); }
+    else { btns[1].classList.add('active'); rf.classList.add('active'); }
 }
 
-// ===== LOGIN CON SUPABASE =====
 async function handleLogin(event) {
     event.preventDefault();
-
-    var email = document.getElementById('loginEmail').value;
-    var password = document.getElementById('loginPassword').value;
     var btn = document.getElementById('loginBtn');
-    var errorEl = document.getElementById('loginError');
-
-    errorEl.style.display = 'none';
-    btn.disabled = true;
-    btn.textContent = 'Iniciando sesión...';
-
+    var err = document.getElementById('loginError');
+    err.style.display = 'none'; btn.disabled = true; btn.textContent = 'Iniciando sesión...';
     try {
-        var result = await sbClient.auth.signInWithPassword({
-            email: email,
-            password: password
+        var res = await sbClient.auth.signInWithPassword({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
         });
-
-        if (result.error) {
-            errorEl.textContent = result.error.message === 'Invalid login credentials'
-                ? 'Email o contraseña incorrectos'
-                : result.error.message;
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'Iniciar Sesión';
-            return;
-        }
-
-        currentUser = result.data.user;
-        showDashboard();
-    } catch (err) {
-        errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
-        errorEl.style.display = 'block';
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Iniciar Sesión';
+        if (res.error) { err.textContent = res.error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : res.error.message; err.style.display = 'block'; }
+        else { currentUser = res.data.user; await loadCompanyId(); showDashboard(); }
+    } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
+    btn.disabled = false; btn.textContent = 'Iniciar Sesión';
 }
 
-// ===== REGISTRO CON SUPABASE =====
 async function handleRegister(event) {
     event.preventDefault();
-
-    var companyName = document.getElementById('companyName').value;
-    var firstName = document.getElementById('firstName').value;
-    var lastName = document.getElementById('lastName').value;
-    var email = document.getElementById('registerEmail').value;
-    var phone = document.getElementById('phone').value;
-    var password = document.getElementById('registerPassword').value;
-    var confirmPassword = document.getElementById('confirmPassword').value;
     var btn = document.getElementById('registerBtn');
-    var errorEl = document.getElementById('registerError');
-    var successEl = document.getElementById('registerSuccess');
-
-    errorEl.style.display = 'none';
-    successEl.style.display = 'none';
-
-    if (password !== confirmPassword) {
-        errorEl.textContent = 'Las contraseñas no coinciden';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    if (password.length < 6) {
-        errorEl.textContent = 'La contraseña debe tener mínimo 6 caracteres';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Creando cuenta...';
-
+    var err = document.getElementById('registerError');
+    var suc = document.getElementById('registerSuccess');
+    err.style.display = 'none'; suc.style.display = 'none';
+    var pw = document.getElementById('registerPassword').value;
+    if (pw !== document.getElementById('confirmPassword').value) { err.textContent = 'Las contraseñas no coinciden'; err.style.display = 'block'; return; }
+    if (pw.length < 6) { err.textContent = 'Mínimo 6 caracteres'; err.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = 'Creando cuenta...';
     try {
-        var result = await sbClient.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    first_name: firstName,
-                    last_name: lastName,
-                    company_name: companyName,
-                    phone: phone
-                }
-            }
+        var res = await sbClient.auth.signUp({
+            email: document.getElementById('registerEmail').value,
+            password: pw,
+            options: { data: { first_name: document.getElementById('firstName').value, last_name: document.getElementById('lastName').value, company_name: document.getElementById('companyName').value, phone: document.getElementById('phone').value } }
         });
-
-        if (result.error) {
-            errorEl.textContent = result.error.message;
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'Crear Cuenta Empresarial';
-            return;
-        }
-
-        if (result.data.user && !result.data.session) {
-            successEl.textContent = '¡Cuenta creada! Revisa tu email para confirmar tu cuenta.';
-            successEl.style.display = 'block';
-        } else if (result.data.session) {
-            currentUser = result.data.user;
-            showDashboard();
-        }
-    } catch (err) {
-        errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
-        errorEl.style.display = 'block';
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Crear Cuenta Empresarial';
+        if (res.error) { err.textContent = res.error.message; err.style.display = 'block'; }
+        else if (res.data.user && !res.data.session) { suc.textContent = '¡Cuenta creada! Revisa tu email para confirmar.'; suc.style.display = 'block'; }
+        else if (res.data.session) { currentUser = res.data.user; await createCompany(); showDashboard(); }
+    } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
+    btn.disabled = false; btn.textContent = 'Crear Cuenta Empresarial';
 }
 
-// ===== MOSTRAR DASHBOARD =====
+async function createCompany() {
+    var meta = currentUser.user_metadata || {};
+    var res = await sbClient.from('companies').insert({ name: meta.company_name || 'Mi Empresa', phone: meta.phone || '', created_by: currentUser.id }).select().single();
+    if (res.data) companyId = res.data.id;
+}
+
+async function loadCompanyId() {
+    var res = await sbClient.from('companies').select('id').eq('created_by', currentUser.id).single();
+    if (res.data) companyId = res.data.id;
+}
+
+// ===== DASHBOARD =====
 function showDashboard() {
     if (!currentUser) return;
-
     var meta = currentUser.user_metadata || {};
-    var displayName = meta.first_name || currentUser.email.split('@')[0];
-    var companyName = meta.company_name || 'Mi Empresa';
-    var initial = displayName.charAt(0).toUpperCase();
-
+    var name = meta.first_name || currentUser.email.split('@')[0];
+    var company = meta.company_name || 'Mi Empresa';
+    var ini = name.charAt(0).toUpperCase();
     document.getElementById('authPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'grid';
-    document.getElementById('companyDisplay').textContent = companyName;
-    document.getElementById('userInitials').textContent = initial;
-    document.getElementById('sidebarInitials').textContent = initial;
-    document.getElementById('sidebarUserName').textContent = displayName;
-    document.getElementById('pageTitle').textContent = 'Dashboard';
-
+    document.getElementById('companyDisplay').textContent = company;
+    document.getElementById('userInitials').textContent = ini;
+    document.getElementById('sidebarInitials').textContent = ini;
+    document.getElementById('sidebarUserName').textContent = name;
     showSection('dashboard');
-    loadLeadsData();
+    loadAllData();
 }
 
-// ===== NAVEGACIÓN =====
-function showSection(sectionName) {
-    var sections = document.querySelectorAll('.section');
-    sections.forEach(function(s) { s.classList.remove('active'); });
+async function loadAllData() {
+    await loadLeadsData();
+    await loadTechnicians();
+    await loadJobs();
+    updateKPIs();
+}
 
-    var target = document.getElementById(sectionName + '-section');
-    if (target) target.classList.add('active');
+function updateKPIs() {
+    document.getElementById('leadCountKPI').textContent = leadsData.length;
+    document.getElementById('techCountKPI').textContent = techsData.length;
+    document.getElementById('jobCountKPI').textContent = jobsData.filter(function(j) { return j.status !== 'completed'; }).length;
+    document.getElementById('clientCountKPI').textContent = '0';
+}
 
-    var titles = {
-        'dashboard': 'Dashboard',
-        'clients': 'Gestión de Clientes',
-        'jobs': 'Gestión de Trabajos',
-        'leads': 'Gestión de Leads',
-        'dispatch': 'Dispatch',
-        'technicians': 'Gestión de Técnicos',
-        'invoices': 'Facturas',
-        'collections': 'Cobranza',
-        'settings': 'Configuración'
-    };
-
-    document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-
-    var navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(function(l) { l.classList.remove('active'); });
-
-    var activeLink = document.querySelector('[onclick="showSection(\'' + sectionName + '\')"]');
-    if (activeLink) activeLink.classList.add('active');
-
-    if (sectionName === 'leads') {
-        setTimeout(function() {
-            if (!leadsMap) initLeadsMap();
-            else google.maps.event.trigger(leadsMap, 'resize');
-        }, 150);
-    }
+// ===== NAVIGATION =====
+function showSection(name) {
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+    var t = document.getElementById(name + '-section');
+    if (t) t.classList.add('active');
+    var titles = { dashboard:'Dashboard', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
+    document.getElementById('pageTitle').textContent = titles[name] || 'Dashboard';
+    document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
+    var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
+    if (al) al.classList.add('active');
+    if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
+    if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
+    if (name === 'technicians') { renderTechFullList(); generateTrackingLinks(); }
 }
 
 // ===== LEADS =====
-function showLeadForm() {
-    document.getElementById('leadFormContainer').style.display = 'block';
-    document.getElementById('leadForm').reset();
-}
+function showLeadForm() { document.getElementById('leadFormContainer').style.display = 'block'; document.getElementById('leadForm').reset(); }
+function hideLeadForm() { document.getElementById('leadFormContainer').style.display = 'none'; }
 
-function hideLeadForm() {
-    document.getElementById('leadFormContainer').style.display = 'none';
-}
-
-function handleLeadCreate(event) {
+async function handleLeadCreate(event) {
     event.preventDefault();
     var lat = document.getElementById('leadLat').value;
     var lng = document.getElementById('leadLng').value;
-
-    if (!lat || !lng) {
-        alert('Por favor, ingresa una dirección válida para obtener coordenadas');
-        return;
-    }
-
-    var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
-    leads.push({
-        id: Date.now(),
-        userId: currentUser.id,
-        name: document.getElementById('leadName').value,
-        phone: document.getElementById('leadPhone').value,
-        email: document.getElementById('leadEmail').value,
-        service: document.getElementById('leadService').value,
-        address: document.getElementById('leadAddress').value,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        notes: document.getElementById('leadNotes').value,
-        status: 'new',
-        createdAt: new Date().toISOString()
+    if (!lat || !lng) { alert('Ingresa una dirección válida'); return; }
+    await sbClient.from('leads').insert({
+        company_id: companyId, name: document.getElementById('leadName').value,
+        phone: document.getElementById('leadPhone').value, email: document.getElementById('leadEmail').value,
+        service: document.getElementById('leadService').value, address: document.getElementById('leadAddress').value,
+        lat: parseFloat(lat), lng: parseFloat(lng), notes: document.getElementById('leadNotes').value
     });
-
-    localStorage.setItem('tm_leads', JSON.stringify(leads));
-    hideLeadForm();
-    loadLeadsData();
-    alert('¡Lead creado exitosamente!');
+    hideLeadForm(); await loadLeadsData(); updateKPIs(); alert('¡Lead creado!');
 }
 
-function loadLeadsData() {
-    var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
-    leadsData = leads.filter(function(l) { return l.userId === currentUser.id; });
-    document.getElementById('leadCountKPI').textContent = leadsData.length;
+async function loadLeadsData() {
+    if (!companyId) return;
+    var res = await sbClient.from('leads').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+    leadsData = res.data || [];
     renderLeadsTable();
     if (leadsMap) updateLeadsMap();
 }
 
 function renderLeadsTable() {
-    var container = document.getElementById('leadsList');
-    if (leadsData.length === 0) {
-        container.innerHTML = '<p class="empty-msg">No hay leads registrados. Crea uno para comenzar.</p>';
-        return;
-    }
-
-    var html = '<table class="leads-table"><thead><tr>';
-    html += '<th>Nombre</th><th>Teléfono</th><th>Email</th>';
-    html += '<th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th>';
-    html += '</tr></thead><tbody>';
-
-    leadsData.forEach(function(lead) {
-        html += '<tr>';
-        html += '<td>' + lead.name + '</td>';
-        html += '<td>' + lead.phone + '</td>';
-        html += '<td>' + (lead.email || '-') + '</td>';
-        html += '<td>' + lead.service + '</td>';
-        html += '<td><span class="lead-status ' + lead.status + '">' + lead.status + '</span></td>';
-        html += '<td>' + lead.address + '</td>';
-        html += '<td><div class="lead-actions">';
-        html += '<button class="btn-icon" onclick="deleteLead(\'' + lead.id + '\')" style="border-color:#ef4444;color:#ef4444;">Eliminar</button>';
-        html += '</div></td>';
-        html += '</tr>';
+    var c = document.getElementById('leadsList');
+    if (leadsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay leads. Crea uno para comenzar.</p>'; return; }
+    var h = '<table class="leads-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody>';
+    leadsData.forEach(function(l) {
+        h += '<tr><td>' + l.name + '</td><td>' + l.phone + '</td><td>' + l.service + '</td>';
+        h += '<td><span class="lead-status ' + l.status + '">' + l.status + '</span></td>';
+        h += '<td>' + l.address + '</td><td><div class="lead-actions">';
+        h += '<button class="btn-nav" onclick="navigateTo(' + l.lat + ',' + l.lng + ')">🧭 Navegar</button>';
+        h += '<button class="btn-danger-sm" onclick="deleteLead(\'' + l.id + '\')">Eliminar</button>';
+        h += '</div></td></tr>';
     });
-
-    html += '</tbody></table>';
-    container.innerHTML = html;
+    c.innerHTML = h + '</tbody></table>';
 }
 
-function deleteLead(leadId) {
-    if (confirm('¿Eliminar este lead?')) {
-        var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
-        localStorage.setItem('tm_leads', JSON.stringify(leads.filter(function(l) { return l.id !== parseInt(leadId); })));
-        loadLeadsData();
-    }
+async function deleteLead(id) {
+    if (confirm('¿Eliminar lead?')) { await sbClient.from('leads').delete().eq('id', id); await loadLeadsData(); updateKPIs(); }
 }
 
-// ===== GOOGLE MAPS =====
+// ===== TECHNICIANS =====
+function showTechForm() { document.getElementById('techFormContainer').style.display = 'block'; document.getElementById('techForm').reset(); }
+function hideTechForm() { document.getElementById('techFormContainer').style.display = 'none'; }
+
+async function handleTechCreate(event) {
+    event.preventDefault();
+    await sbClient.from('technicians').insert({
+        company_id: companyId, name: document.getElementById('techName').value,
+        phone: document.getElementById('techPhone').value, email: document.getElementById('techEmail').value,
+        specialty: document.getElementById('techSpecialty').value
+    });
+    hideTechForm(); await loadTechnicians(); updateKPIs(); alert('¡Técnico agregado!');
+}
+
+async function loadTechnicians() {
+    if (!companyId) return;
+    var res = await sbClient.from('technicians').select('*').eq('company_id', companyId).order('name');
+    techsData = res.data || [];
+    renderTechList(); updateTechSelect();
+}
+
+function renderTechList() {
+    var c = document.getElementById('techniciansList');
+    if (techsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay técnicos registrados.</p>'; return; }
+    var h = '<table class="dispatch-table"><thead><tr><th>Nombre</th><th>Especialidad</th><th>Estado</th><th>Última Ubicación</th><th>Acciones</th></tr></thead><tbody>';
+    techsData.forEach(function(t) {
+        var locTime = t.last_location_update ? new Date(t.last_location_update).toLocaleString('es') : 'Sin reportar';
+        h += '<tr><td>' + t.name + '</td><td>' + (t.specialty || '-') + '</td>';
+        h += '<td><span class="tech-status ' + t.status + '">' + t.status + '</span></td>';
+        h += '<td style="font-size:11px;">' + locTime + '</td>';
+        h += '<td><div class="tech-actions">';
+        if (t.current_lat && t.current_lng) h += '<button class="btn-nav" onclick="navigateTo(' + t.current_lat + ',' + t.current_lng + ')">📍 Ver</button>';
+        h += '<button class="btn-danger-sm" onclick="deleteTech(\'' + t.id + '\')">X</button>';
+        h += '</div></td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+function renderTechFullList() {
+    var c = document.getElementById('techniciansFullList');
+    if (!c) return;
+    c.innerHTML = document.getElementById('techniciansList').innerHTML;
+}
+
+function updateTechSelect() {
+    var sel = document.getElementById('jobTechId');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Sin asignar</option>';
+    techsData.forEach(function(t) { sel.innerHTML += '<option value="' + t.id + '">' + t.name + ' (' + t.specialty + ')</option>'; });
+}
+
+async function deleteTech(id) {
+    if (confirm('¿Eliminar técnico?')) { await sbClient.from('technicians').delete().eq('id', id); await loadTechnicians(); updateKPIs(); }
+}
+
+function generateTrackingLinks() {
+    var c = document.getElementById('trackingLinkContainer');
+    if (!c || techsData.length === 0) { if (c) c.innerHTML = 'Agrega técnicos primero en Dispatch.'; return; }
+    var h = '';
+    techsData.forEach(function(t) {
+        var url = window.location.origin + '?track=' + t.id;
+        h += '<div style="margin-bottom:12px;"><strong>' + t.name + ':</strong><br><a href="' + url + '" target="_blank" style="color:var(--primary);word-break:break-all;">' + url + '</a></div>';
+    });
+    c.innerHTML = h;
+}
+
+// ===== JOBS =====
+function showJobForm() { document.getElementById('jobFormContainer').style.display = 'block'; document.getElementById('jobForm').reset(); }
+function hideJobForm() { document.getElementById('jobFormContainer').style.display = 'none'; }
+
+async function handleJobCreate(event) {
+    event.preventDefault();
+    var lat = document.getElementById('jobLat').value;
+    var lng = document.getElementById('jobLng').value;
+    var techId = document.getElementById('jobTechId').value || null;
+    await sbClient.from('work_orders').insert({
+        company_id: companyId, title: document.getElementById('jobTitle').value,
+        service_type: document.getElementById('jobServiceType').value,
+        priority: document.getElementById('jobPriority').value,
+        address: document.getElementById('jobAddress').value,
+        lat: lat ? parseFloat(lat) : null, lng: lng ? parseFloat(lng) : null,
+        scheduled_date: document.getElementById('jobDate').value || null,
+        technician_id: techId, notes: document.getElementById('jobNotes').value
+    });
+    hideJobForm(); await loadJobs(); updateKPIs(); alert('¡Trabajo creado!');
+}
+
+async function loadJobs() {
+    if (!companyId) return;
+    var res = await sbClient.from('work_orders').select('*, technicians(name)').eq('company_id', companyId).order('created_at', { ascending: false });
+    jobsData = res.data || [];
+    renderJobsList();
+}
+
+function renderJobsList() {
+    var c = document.getElementById('jobsList');
+    if (jobsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay trabajos pendientes.</p>'; return; }
+    var h = '<table class="dispatch-table"><thead><tr><th>Trabajo</th><th>Prioridad</th><th>Técnico</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+    jobsData.forEach(function(j) {
+        var techName = j.technicians ? j.technicians.name : 'Sin asignar';
+        var status = j.status || 'pending';
+        h += '<tr><td>' + j.title + '<br><span style="font-size:11px;color:#94a3b8;">' + (j.address || '') + '</span></td>';
+        h += '<td><span class="priority-badge ' + j.priority + '">' + j.priority + '</span></td>';
+        h += '<td>' + techName + '</td>';
+        h += '<td><span class="job-status ' + status + '">' + status + '</span></td>';
+        h += '<td><div class="job-actions">';
+        if (j.lat && j.lng) h += '<button class="btn-nav" onclick="navigateTo(' + j.lat + ',' + j.lng + ')">🧭 Navegar</button>';
+        h += '<button class="btn-danger-sm" onclick="deleteJob(\'' + j.id + '\')">X</button>';
+        h += '</div></td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+async function deleteJob(id) {
+    if (confirm('¿Eliminar trabajo?')) { await sbClient.from('work_orders').delete().eq('id', id); await loadJobs(); updateKPIs(); }
+}
+
+// ===== NAVIGATION =====
+function navigateTo(lat, lng) {
+    window.open('https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng, '_blank');
+}
+
+// ===== GOOGLE MAPS - LEADS =====
 function initLeadsMap() {
     leadsMap = new google.maps.Map(document.getElementById('leadsMap'), {
-        zoom: 11,
-        center: { lat: 34.1083, lng: -117.2898 },
-        styles: [
-            { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-            { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-            { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] }
-        ],
-        mapTypeControl: true,
-        fullscreenControl: true
+        zoom: 11, center: { lat: 34.1083, lng: -117.2898 },
+        styles: [{ elementType: 'geometry', stylers: [{ color: '#242f3e' }] }, { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] }],
+        mapTypeControl: true, fullscreenControl: true
     });
     updateLeadsMap();
 }
 
 function updateLeadsMap() {
-    markers.forEach(function(m) { m.setMap(null); });
-    markers = [];
+    markers.forEach(function(m) { m.setMap(null); }); markers = [];
     if (leadsData.length === 0) return;
-
     var bounds = new google.maps.LatLngBounds();
-    leadsData.forEach(function(lead) {
-        var pos = { lat: parseFloat(lead.lat), lng: parseFloat(lead.lng) };
-        var marker = new google.maps.Marker({
-            position: pos, map: leadsMap, title: lead.name,
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#10b981', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
-        });
-
-        var infoContent = '<div style="color:#333;padding:8px;font-size:13px;">';
-        infoContent += '<strong>' + lead.name + '</strong><br>';
-        infoContent += '📞 ' + lead.phone + '<br>📍 ' + lead.address + '<br>🔧 ' + lead.service;
-        infoContent += '</div>';
-
-        var info = new google.maps.InfoWindow({ content: infoContent });
-        marker.addListener('click', function() { info.open(leadsMap, marker); });
-        markers.push(marker);
-        bounds.extend(pos);
+    leadsData.forEach(function(l) {
+        if (!l.lat || !l.lng) return;
+        var pos = { lat: parseFloat(l.lat), lng: parseFloat(l.lng) };
+        var m = new google.maps.Marker({ position: pos, map: leadsMap, title: l.name,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#10b981', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 } });
+        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>' + l.name + '</strong><br>📞 ' + l.phone + '<br>📍 ' + l.address + '<br>🔧 ' + l.service + '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '" target="_blank" style="color:#059669;font-weight:bold;">🧭 Navegar aquí</a></div>' });
+        m.addListener('click', function() { iw.open(leadsMap, m); });
+        markers.push(m); bounds.extend(pos);
     });
-
     if (leadsData.length > 1) leadsMap.fitBounds(bounds);
     else { leadsMap.setCenter(bounds.getCenter()); leadsMap.setZoom(14); }
 }
 
-function geocodeAddress(address) {
-    var geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: address }, function(results, status) {
+// ===== GOOGLE MAPS - DISPATCH =====
+function initDispatchMap() {
+    dispatchMap = new google.maps.Map(document.getElementById('dispatchMap'), {
+        zoom: 11, center: { lat: 34.1083, lng: -117.2898 },
+        styles: [{ elementType: 'geometry', stylers: [{ color: '#242f3e' }] }, { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] }],
+        mapTypeControl: true, fullscreenControl: true
+    });
+    updateDispatchMap();
+}
+
+function updateDispatchMap() {
+    dispatchMarkers.forEach(function(m) { m.setMap(null); }); dispatchMarkers = [];
+    var bounds = new google.maps.LatLngBounds();
+    var hasMarkers = false;
+
+    // Técnicos en azul
+    techsData.forEach(function(t) {
+        if (!t.current_lat || !t.current_lng) return;
+        var pos = { lat: parseFloat(t.current_lat), lng: parseFloat(t.current_lng) };
+        var m = new google.maps.Marker({ position: pos, map: dispatchMap, title: t.name,
+            icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 7, fillColor: '#3b82f6', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2, rotation: 0 } });
+        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '') + '<br>🔧 ' + (t.specialty || '') + '<br>Estado: ' + t.status + '</div>' });
+        m.addListener('click', function() { iw.open(dispatchMap, m); });
+        dispatchMarkers.push(m); bounds.extend(pos); hasMarkers = true;
+    });
+
+    // Trabajos en amarillo
+    jobsData.forEach(function(j) {
+        if (!j.lat || !j.lng) return;
+        var pos = { lat: parseFloat(j.lat), lng: parseFloat(j.lng) };
+        var techName = j.technicians ? j.technicians.name : 'Sin asignar';
+        var m = new google.maps.Marker({ position: pos, map: dispatchMap, title: j.title,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#f59e0b', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 } });
+        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>📋 ' + j.title + '</strong><br>📍 ' + (j.address || '') + '<br>👷 ' + techName + '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' + j.lat + ',' + j.lng + '" target="_blank" style="color:#059669;font-weight:bold;">🧭 Navegar</a></div>' });
+        m.addListener('click', function() { iw.open(dispatchMap, m); });
+        dispatchMarkers.push(m); bounds.extend(pos); hasMarkers = true;
+    });
+
+    if (hasMarkers && dispatchMarkers.length > 1) dispatchMap.fitBounds(bounds);
+    else if (hasMarkers) { dispatchMap.setCenter(bounds.getCenter()); dispatchMap.setZoom(14); }
+}
+
+// ===== GEOCODING =====
+function geocodeAddress(address, latId, lngId) {
+    new google.maps.Geocoder().geocode({ address: address }, function(results, status) {
         if (status === 'OK' && results.length > 0) {
             var loc = results[0].geometry.location;
-            document.getElementById('leadLat').value = loc.lat().toFixed(6);
-            document.getElementById('leadLng').value = loc.lng().toFixed(6);
-            if (leadsMap) { leadsMap.setCenter(loc); leadsMap.setZoom(14); }
-        } else {
-            alert('No se pudo encontrar la dirección');
-        }
+            document.getElementById(latId).value = loc.lat().toFixed(6);
+            document.getElementById(lngId).value = loc.lng().toFixed(6);
+        } else { alert('No se encontró la dirección'); }
     });
 }
 
-// ===== CONFIGURACIÓN =====
-function saveSettings() {
-    alert('Configuración guardada');
+// ===== TECHNICIAN GPS TRACKING PAGE =====
+function initTrackingPage(techId) {
+    document.getElementById('authPage').style.display = 'none';
+    document.getElementById('dashboardPage').style.display = 'none';
+    document.getElementById('techTrackingPage').style.display = 'block';
+    window._trackTechId = techId;
+    trackingMap = new google.maps.Map(document.getElementById('trackingMap'), {
+        zoom: 15, center: { lat: 34.1083, lng: -117.2898 },
+        styles: [{ elementType: 'geometry', stylers: [{ color: '#242f3e' }] }]
+    });
+    document.getElementById('trackingStatus').textContent = 'Listo para iniciar tracking';
 }
 
-// ===== LOGOUT =====
-async function logout() {
-    if (confirm('¿Cerrar sesión?')) {
-        await sbClient.auth.signOut();
-        currentUser = null;
-        location.reload();
+function toggleTracking() {
+    var btn = document.getElementById('trackingBtn');
+    if (trackingInterval) {
+        clearInterval(trackingInterval); trackingInterval = null;
+        btn.textContent = 'Iniciar Tracking GPS';
+        document.getElementById('trackingStatus').textContent = 'Tracking detenido';
+        document.getElementById('trackingStatus').className = 'tracking-status';
+    } else {
+        btn.textContent = 'Detener Tracking';
+        document.getElementById('trackingStatus').textContent = 'Enviando ubicación...';
+        document.getElementById('trackingStatus').className = 'tracking-status active';
+        sendLocation();
+        trackingInterval = setInterval(sendLocation, 30000);
     }
 }
 
-// ===== INICIALIZACIÓN =====
-document.addEventListener('DOMContentLoaded', async function() {
-    var sessionResult = await sbClient.auth.getSession();
+function sendLocation() {
+    if (!navigator.geolocation) { document.getElementById('trackingStatus').textContent = 'GPS no disponible'; return; }
+    navigator.geolocation.getCurrentPosition(async function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var techId = window._trackTechId;
+        await sbClient.from('technicians').update({ current_lat: lat, current_lng: lng, last_location_update: new Date().toISOString() }).eq('id', techId);
+        await sbClient.from('technician_locations').insert({ technician_id: techId, lat: lat, lng: lng });
+        if (trackingMap) { trackingMap.setCenter({ lat: lat, lng: lng }); }
+        document.getElementById('trackingInfo').textContent = 'Última: ' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ' - ' + new Date().toLocaleTimeString('es');
+    }, function(err) {
+        document.getElementById('trackingStatus').textContent = 'Error GPS: ' + err.message;
+        document.getElementById('trackingStatus').className = 'tracking-status error';
+    }, { enableHighAccuracy: true });
+}
 
-    if (sessionResult.data.session && sessionResult.data.session.user) {
-        currentUser = sessionResult.data.session.user;
+// ===== SETTINGS =====
+function saveSettings() { alert('Configuración guardada'); }
+
+// ===== LOGOUT =====
+async function logout() { if (confirm('¿Cerrar sesión?')) { await sbClient.auth.signOut(); location.reload(); } }
+
+// ===== REALTIME SUBSCRIPTIONS =====
+function subscribeRealtime() {
+    sbClient.channel('tech-locations').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, function() {
+        loadTechnicians().then(function() { if (dispatchMap) updateDispatchMap(); });
+    }).subscribe();
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check if tracking page
+    var params = new URLSearchParams(window.location.search);
+    var trackId = params.get('track');
+    if (trackId) { initTrackingPage(trackId); return; }
+
+    var session = await sbClient.auth.getSession();
+    if (session.data.session && session.data.session.user) {
+        currentUser = session.data.session.user;
+        await loadCompanyId();
         showDashboard();
+        subscribeRealtime();
     } else {
         document.getElementById('authPage').style.display = 'flex';
         document.getElementById('dashboardPage').style.display = 'none';
     }
 
     sbClient.auth.onAuthStateChange(function(event, session) {
-        if (event === 'SIGNED_IN' && session) {
-            currentUser = session.user;
-            showDashboard();
-        } else if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            document.getElementById('authPage').style.display = 'flex';
-            document.getElementById('dashboardPage').style.display = 'none';
-        }
+        if (event === 'SIGNED_IN' && session) { currentUser = session.user; loadCompanyId().then(function() { showDashboard(); subscribeRealtime(); }); }
+        else if (event === 'SIGNED_OUT') { location.reload(); }
     });
 
-    var addressInput = document.getElementById('leadAddress');
-    if (addressInput) {
-        addressInput.addEventListener('blur', function() {
-            if (this.value) setTimeout(geocodeAddress, 300, this.value);
-        });
-    }
+    // Geocode listeners
+    var leadAddr = document.getElementById('leadAddress');
+    if (leadAddr) leadAddr.addEventListener('blur', function() { if (this.value) geocodeAddress(this.value, 'leadLat', 'leadLng'); });
+    var jobAddr = document.getElementById('jobAddress');
+    if (jobAddr) jobAddr.addEventListener('blur', function() { if (this.value) geocodeAddress(this.value, 'jobLat', 'jobLng'); });
 });
