@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Trade Master CRM - Sistema Multi-Empresa</title>
       <link rel="stylesheet" href="styles.css">
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnV9KDtKVFqk8RoKp1dGMXJ97G_d7Ks_I"></script>
   </head>
 <body>
       <!-- AUTHENTICATION PAGE -->
@@ -192,8 +193,8 @@
                                                                                                                 <div class="kpi-subtext">Total</div>div>
                                                                                       </div>div>
                                                                                     <div class="kpi-card">
-                                                                                                                <div class="kpi-header">Pendientes de Pago</div>div>
-                                                                                                                <div class="kpi-value">$0</div>div>
+                                                                                                                <div class="kpi-header">Leads Pendientes</div>div>
+                                                                                                                <div class="kpi-value" id="leadCountKPI">0</div>div>
                                                                                                                 <div class="kpi-subtext">Próximos 30 días</div>div>
                                                                                       </div>div>
                                                             </div>div>
@@ -232,14 +233,86 @@
                                                             </div>div>
                                         </div>div>
                         
-                                        <!-- LEADS SECTION -->
+                                        <!-- LEADS SECTION WITH GOOGLE MAPS -->
                                         <div id="leads-section" class="section">
                                                             <div class="card">
                                                                                     <div class="card-header">
-                                                                                                                <h3>Gestión de Leads</h3>
-                                                                                                                <button class="btn-primary" onclick="showModal('leadForm')">+ Nuevo Lead</button>button>
+                                                                                                                <h3>Gestión de Leads - Mapa de Ubicaciones</h3>
+                                                                                                                <button class="btn-primary" onclick="showLeadForm()">+ Nuevo Lead</button>button>
                                                                                       </div>div>
-                                                                                    <div class="empty-state">No hay leads registrados. Crea uno para comenzar.</div>div>
+                                                            </div>div>
+                                        
+                                                            <!-- LEADS FORM -->
+                                                            <div id="leadFormContainer" class="card" style="display:none; margin-top: 20px;">
+                                                                                    <h3>Crear Nuevo Lead</h3>
+                                                                                    <form id="leadForm" onsubmit="handleLeadCreate(event)">
+                                                                                                                <div class="form-row">
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Nombre del Cliente *</label>
+                                                                                                                                                                                    <input type="text" id="leadName" placeholder="Nombre completo" required>
+                                                                                                                                                  </div>div>
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Teléfono *</label>
+                                                                                                                                                                                    <input type="tel" id="leadPhone" placeholder="(555) 123-4567" required>
+                                                                                                                                                  </div>div>
+                                                                                                                  </div>div>
+                                                                                    
+                                                                                                                <div class="form-row">
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Email</label>
+                                                                                                                                                                                    <input type="email" id="leadEmail" placeholder="email@example.com">
+                                                                                                                                                  </div>div>
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Tipo de Servicio *</label>
+                                                                                                                                                                                    <select id="leadService" required>
+                                                                                                                                                                                                                            <option value="">Seleccionar...</option>option>
+                                                                                                                                                                                                                            <option value="installation">Instalación de HVAC</option>option>
+                                                                                                                                                                                                                            <option value="repair">Reparación</option>option>
+                                                                                                                                                                                                                            <option value="maintenance">Mantenimiento</option>option>
+                                                                                                                                                                                                                            <option value="emergency">Emergencia</option>option>
+                                                                                                                                                                                                                        </select>select>
+                                                                                                                                                  </div>div>
+                                                                                                                  </div>div>
+                                                                                    
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Dirección *</label>
+                                                                                                                                                <input type="text" id="leadAddress" placeholder="Calle, número, ciudad" required>
+                                                                                                                  </div>div>
+                                                                                    
+                                                                                                                <div class="form-row">
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Latitud</label>
+                                                                                                                                                                                    <input type="number" id="leadLat" placeholder="Auto-detectado" step="0.000001" readonly>
+                                                                                                                                                  </div>div>
+                                                                                                                                                <div class="form-group">
+                                                                                                                                                                                    <label>Longitud</label>
+                                                                                                                                                                                    <input type="number" id="leadLng" placeholder="Auto-detectado" step="0.000001" readonly>
+                                                                                                                                                  </div>div>
+                                                                                                                  </div>div>
+                                                                                    
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Notas</label>
+                                                                                                                                                <textarea id="leadNotes" placeholder="Detalles adicionales..." rows="3"></textarea>
+                                                                                                                  </div>div>
+                                                                                    
+                                                                                                                <div class="form-row">
+                                                                                                                                                <button type="submit" class="btn-primary">Guardar Lead</button>button>
+                                                                                                                                                <button type="button" class="btn-secondary" onclick="hideLeadForm()">Cancelar</button>button>
+                                                                                                                  </div>div>
+                                                                                      </form>form>
+                                                            </div>div>
+                                        
+                                                            <!-- GOOGLE MAP -->
+                                                            <div class="card" style="padding: 0; overflow: hidden; margin-top: 20px;">
+                                                                                    <div id="leadsMap" style="width: 100%; height: 500px;"></div>div>
+                                                            </div>div>
+                                        
+                                                            <!-- LEADS LIST -->
+                                                            <div class="card" style="margin-top: 20px;">
+                                                                                    <h3>Lista de Leads Registrados</h3>
+                                                                                    <div id="leadsList" class="leads-table-container">
+                                                                                                                <div class="empty-state">No hay leads registrados. Crea uno para comenzar.</div>div>
+                                                                                      </div>div>
                                                             </div>div>
                                         </div>div>
                         
