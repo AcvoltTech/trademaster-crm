@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -32,8 +31,6 @@
             <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
             <button class="tab-btn" onclick="switchTab('register')">Registrar Empresa</button>
           </div>
-
-          <!-- Login Form -->
           <div id="loginForm" class="auth-form active">
             <h2>Bienvenido</h2>
             <div id="loginError" class="error-msg" style="display:none;"></div>
@@ -50,8 +47,6 @@
             </form>
             <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
           </div>
-
-          <!-- Register Form -->
           <div id="registerForm" class="auth-form">
             <h2>Crear Cuenta Empresarial</h2>
             <div id="registerError" class="error-msg" style="display:none;"></div>
@@ -105,42 +100,24 @@
         <nav class="sidebar-nav">
           <div class="nav-group">
             <span class="nav-group-title">Principal</span>
-            <a href="#" onclick="showSection('dashboard')" class="nav-link active">
-              <span>📊</span> Dashboard
-            </a>
-            <a href="#" onclick="showSection('leads')" class="nav-link">
-              <span>🎯</span> Leads
-            </a>
-            <a href="#" onclick="showSection('dispatch')" class="nav-link">
-              <span>🚚</span> Dispatch
-            </a>
+            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> Dashboard</a>
+            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> Leads</a>
+            <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> Dispatch</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title">Gestión</span>
-            <a href="#" onclick="showSection('clients')" class="nav-link">
-              <span>👥</span> Clientes
-            </a>
-            <a href="#" onclick="showSection('jobs')" class="nav-link">
-              <span>🔧</span> Trabajos
-            </a>
-            <a href="#" onclick="showSection('technicians')" class="nav-link">
-              <span>👷</span> Técnicos
-            </a>
+            <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> Clientes</a>
+            <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> Trabajos</a>
+            <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> Técnicos</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title">Finanzas</span>
-            <a href="#" onclick="showSection('invoices')" class="nav-link">
-              <span>📄</span> Facturas
-            </a>
-            <a href="#" onclick="showSection('collections')" class="nav-link">
-              <span>💰</span> Cobranza
-            </a>
+            <a href="#" onclick="showSection('invoices')" class="nav-link"><span>📄</span> Facturas</a>
+            <a href="#" onclick="showSection('collections')" class="nav-link"><span>💰</span> Cobranza</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title">Sistema</span>
-            <a href="#" onclick="showSection('settings')" class="nav-link">
-              <span>⚙️</span> Configuración
-            </a>
+            <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> Configuración</a>
           </div>
         </nav>
         <div class="sidebar-footer">
@@ -162,49 +139,25 @@
         </header>
 
         <div class="content-area">
-          <!-- Dashboard -->
+
+          <!-- ===== DASHBOARD ===== -->
           <div id="dashboard-section" class="section active">
             <div class="kpi-grid">
-              <div class="kpi-card">
-                <span class="kpi-label">Leads</span>
-                <span class="kpi-value" id="leadCountKPI">0</span>
-                <span class="kpi-sub">Total de leads</span>
-              </div>
-              <div class="kpi-card">
-                <span class="kpi-label">Trabajos Activos</span>
-                <span class="kpi-value">0</span>
-                <span class="kpi-sub">En progreso</span>
-              </div>
-              <div class="kpi-card">
-                <span class="kpi-label">Ingresos del Mes</span>
-                <span class="kpi-value">$0.00</span>
-                <span class="kpi-sub">Facturado</span>
-              </div>
-              <div class="kpi-card">
-                <span class="kpi-label">Clientes</span>
-                <span class="kpi-value">0</span>
-                <span class="kpi-sub">Clientes activos</span>
-              </div>
+              <div class="kpi-card"><span class="kpi-label">Leads</span><span class="kpi-value" id="leadCountKPI">0</span><span class="kpi-sub">Total de leads</span></div>
+              <div class="kpi-card"><span class="kpi-label">Trabajos Activos</span><span class="kpi-value" id="jobCountKPI">0</span><span class="kpi-sub">En progreso</span></div>
+              <div class="kpi-card"><span class="kpi-label">Técnicos</span><span class="kpi-value" id="techCountKPI">0</span><span class="kpi-sub">Registrados</span></div>
+              <div class="kpi-card"><span class="kpi-label">Clientes</span><span class="kpi-value" id="clientCountKPI">0</span><span class="kpi-sub">Clientes activos</span></div>
             </div>
             <div class="cards-row">
-              <div class="card">
-                <h3>Trabajos Recientes</h3>
-                <p class="empty-msg">No hay trabajos recientes</p>
-              </div>
-              <div class="card">
-                <h3>Próximas Citas</h3>
-                <p class="empty-msg">No hay citas programadas</p>
-              </div>
+              <div class="card"><h3>Trabajos Recientes</h3><p class="empty-msg">No hay trabajos recientes</p></div>
+              <div class="card"><h3>Próximas Citas</h3><p class="empty-msg">No hay citas programadas</p></div>
             </div>
           </div>
 
-          <!-- Leads -->
+          <!-- ===== LEADS ===== -->
           <div id="leads-section" class="section">
             <div class="card">
-              <div class="card-top">
-                <h3>Leads Registrados</h3>
-                <button class="btn-primary btn-sm" onclick="showLeadForm()">+ Nuevo Lead</button>
-              </div>
+              <div class="card-top"><h3>Leads Registrados</h3><button class="btn-primary btn-sm" onclick="showLeadForm()">+ Nuevo Lead</button></div>
               <div id="leadFormContainer" style="display:none; margin-bottom:20px;">
                 <form id="leadForm" onsubmit="handleLeadCreate(event)">
                   <div class="form-row">
@@ -216,7 +169,7 @@
                     <div class="form-group">
                       <label>Servicio</label>
                       <select id="leadService" required>
-                        <option value="">Seleccionar servicio</option>
+                        <option value="">Seleccionar</option>
                         <option value="Instalación AC">Instalación AC</option>
                         <option value="Reparación AC">Reparación AC</option>
                         <option value="Mantenimiento">Mantenimiento</option>
@@ -227,16 +180,8 @@
                       </select>
                     </div>
                   </div>
-                  <div class="form-group">
-                    <label>Dirección</label>
-                    <input type="text" id="leadAddress" placeholder="Dirección completa" required>
-                    <input type="hidden" id="leadLat">
-                    <input type="hidden" id="leadLng">
-                  </div>
-                  <div class="form-group">
-                    <label>Notas</label>
-                    <textarea id="leadNotes" rows="3" placeholder="Notas adicionales"></textarea>
-                  </div>
+                  <div class="form-group"><label>Dirección</label><input type="text" id="leadAddress" placeholder="Dirección completa" required><input type="hidden" id="leadLat"><input type="hidden" id="leadLng"></div>
+                  <div class="form-group"><label>Notas</label><textarea id="leadNotes" rows="3" placeholder="Notas adicionales"></textarea></div>
                   <div class="form-actions">
                     <button type="submit" class="btn-primary btn-sm">Guardar Lead</button>
                     <button type="button" class="btn-secondary btn-sm" onclick="hideLeadForm()">Cancelar</button>
@@ -245,32 +190,142 @@
               </div>
               <div id="leadsList"></div>
             </div>
+            <div class="card"><h3>Mapa de Leads</h3><div id="leadsMap" style="width:100%;height:500px;border-radius:8px;"></div></div>
+          </div>
+
+          <!-- ===== DISPATCH ===== -->
+          <div id="dispatch-section" class="section">
             <div class="card">
-              <h3>Mapa de Leads</h3>
-              <div id="leadsMap" style="width:100%;height:500px;border-radius:8px;"></div>
+              <div class="card-top">
+                <h3>🗺️ Mapa de Dispatch en Tiempo Real</h3>
+                <div class="dispatch-legend">
+                  <span class="legend-item"><span class="legend-dot tech-dot"></span> Técnicos</span>
+                  <span class="legend-item"><span class="legend-dot job-dot"></span> Trabajos</span>
+                  <span class="legend-item"><span class="legend-dot client-dot"></span> Clientes</span>
+                </div>
+              </div>
+              <div id="dispatchMap" style="width:100%;height:500px;border-radius:8px;"></div>
+            </div>
+            <div class="dispatch-panels">
+              <div class="card">
+                <div class="card-top"><h3>👷 Técnicos</h3><button class="btn-primary btn-sm" onclick="showTechForm()">+ Agregar Técnico</button></div>
+                <div id="techFormContainer" style="display:none; margin-bottom:16px;">
+                  <form id="techForm" onsubmit="handleTechCreate(event)">
+                    <div class="form-row">
+                      <div class="form-group"><label>Nombre</label><input type="text" id="techName" required placeholder="Nombre completo"></div>
+                      <div class="form-group"><label>Teléfono</label><input type="tel" id="techPhone" placeholder="Teléfono"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Email</label><input type="email" id="techEmail" placeholder="Email"></div>
+                      <div class="form-group">
+                        <label>Especialidad</label>
+                        <select id="techSpecialty">
+                          <option value="HVAC">HVAC</option>
+                          <option value="Refrigeración">Refrigeración</option>
+                          <option value="Eléctrico">Eléctrico</option>
+                          <option value="Plomería">Plomería</option>
+                          <option value="General">General</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn-primary btn-sm">Guardar</button>
+                      <button type="button" class="btn-secondary btn-sm" onclick="hideTechForm()">Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+                <div id="techniciansList"></div>
+              </div>
+              <div class="card">
+                <div class="card-top"><h3>📋 Trabajos Pendientes</h3><button class="btn-primary btn-sm" onclick="showJobForm()">+ Nuevo Trabajo</button></div>
+                <div id="jobFormContainer" style="display:none; margin-bottom:16px;">
+                  <form id="jobForm" onsubmit="handleJobCreate(event)">
+                    <div class="form-group"><label>Título</label><input type="text" id="jobTitle" required placeholder="Descripción del trabajo"></div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Tipo de Servicio</label>
+                        <select id="jobServiceType">
+                          <option value="Instalación">Instalación</option>
+                          <option value="Reparación">Reparación</option>
+                          <option value="Mantenimiento">Mantenimiento</option>
+                          <option value="Emergencia">Emergencia</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Prioridad</label>
+                        <select id="jobPriority">
+                          <option value="normal">Normal</option>
+                          <option value="high">Alta</option>
+                          <option value="urgent">Urgente</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group"><label>Dirección</label><input type="text" id="jobAddress" required placeholder="Dirección del trabajo"><input type="hidden" id="jobLat"><input type="hidden" id="jobLng"></div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Fecha</label><input type="date" id="jobDate"></div>
+                      <div class="form-group">
+                        <label>Asignar Técnico</label>
+                        <select id="jobTechId"><option value="">Sin asignar</option></select>
+                      </div>
+                    </div>
+                    <div class="form-group"><label>Notas</label><textarea id="jobNotes" rows="2" placeholder="Notas"></textarea></div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn-primary btn-sm">Crear Trabajo</button>
+                      <button type="button" class="btn-secondary btn-sm" onclick="hideJobForm()">Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+                <div id="jobsList"></div>
+              </div>
             </div>
           </div>
 
-          <!-- Other Sections -->
+          <!-- ===== TÉCNICOS ===== -->
+          <div id="technicians-section" class="section">
+            <div class="card">
+              <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Dispatch</button></div>
+              <div id="techniciansFullList"></div>
+            </div>
+            <div class="card">
+              <h3>📱 Link de Tracking para Técnicos</h3>
+              <p style="color:var(--text-light);font-size:14px;margin-bottom:12px;">Comparte este link con tus técnicos para que reporten su ubicación en tiempo real desde su celular:</p>
+              <div id="trackingLinkContainer" class="tracking-link-box"></div>
+            </div>
+          </div>
+
+          <!-- ===== OTHER SECTIONS ===== -->
           <div id="clients-section" class="section"><div class="card"><h3>Gestión de Clientes</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
-          <div id="jobs-section" class="section"><div class="card"><h3>Gestión de Trabajos</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
-          <div id="dispatch-section" class="section"><div class="card"><h3>Dispatch</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
-          <div id="technicians-section" class="section"><div class="card"><h3>Gestión de Técnicos</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
+          <div id="jobs-section" class="section"><div class="card"><h3>Gestión de Trabajos</h3><p class="empty-msg">Ir a Dispatch para gestionar trabajos</p></div></div>
           <div id="invoices-section" class="section"><div class="card"><h3>Facturas</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="collections-section" class="section"><div class="card"><h3>Cobranza</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="settings-section" class="section">
             <div class="card">
               <h3>Configuración de la Empresa</h3>
               <div class="settings-form">
-                <div class="form-group"><label>Nombre de la Empresa</label><input type="text" id="settingsCompanyName" placeholder="Nombre de la empresa"></div>
+                <div class="form-group"><label>Nombre de la Empresa</label><input type="text" id="settingsCompanyName" placeholder="Nombre"></div>
                 <div class="form-group"><label>Teléfono</label><input type="tel" id="settingsPhone" placeholder="Teléfono"></div>
-                <div class="form-group"><label>Email de Contacto</label><input type="email" id="settingsEmail" placeholder="Email"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="settingsEmail" placeholder="Email"></div>
                 <button class="btn-primary btn-sm" onclick="saveSettings()">Guardar Configuración</button>
               </div>
             </div>
           </div>
+
         </div>
       </main>
+    </div>
+
+    <!-- ==================== TECH TRACKING PAGE (separate URL) ==================== -->
+    <div id="techTrackingPage" style="display:none;">
+      <div class="tracking-container">
+        <div class="tracking-header">
+          <span>🔧</span>
+          <h2>Trade Master - GPS Tracking</h2>
+        </div>
+        <div id="trackingStatus" class="tracking-status">Conectando...</div>
+        <div id="trackingMap" style="width:100%;height:400px;border-radius:8px;margin:20px 0;"></div>
+        <button id="trackingBtn" class="btn-primary" onclick="toggleTracking()">Iniciar Tracking GPS</button>
+        <p id="trackingInfo" style="color:#94a3b8;font-size:13px;text-align:center;margin-top:12px;"></p>
+      </div>
     </div>
 
     <script src="script.js"></script>
