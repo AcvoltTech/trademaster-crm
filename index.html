@@ -27,109 +27,286 @@
                                             <!-- LOGIN FORM -->
                                             <div id="loginForm" class="auth-form active">
                                                                 <h2>Bienvenido</h2>
-                                                                <input type="email" id="loginEmail" placeholder="Email" class="form-input">
-                                                                <input type="password" id="loginPassword" placeholder="Contraseña" class="form-input">
-                                                                <button class="btn-primary" onclick="handleLogin()">Iniciar Sesión</button>button>
-                                                                <p class="form-note">¿Olvidaste tu contraseña? <a href="#">Click aquí</a>a></p>
+                                                                <form onsubmit="handleLogin(event)">
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Email</label>
+                                                                                                                    <input type="email" id="loginEmail" placeholder="Email" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Contraseña</label>
+                                                                                                                    <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <button type="submit" class="btn-primary">Iniciar Sesión</button>button>
+                                                                </form>form>
+                                                                <p class="form-hint">¿Olvidaste tu contraseña? <a href="#">Click aquí</a>a></p>
                                             </div>div>
                             
                                             <!-- REGISTER FORM -->
                                             <div id="registerForm" class="auth-form">
                                                                 <h2>Crear Cuenta Empresarial</h2>
-                                                                
-                                                                <div class="form-group">
-                                                                                        <label>Nombre de la Empresa *</label>
-                                                                                        <input type="text" id="regCompanyName" placeholder="Ej: High Tech Pro" class="form-input">
-                                                                </div>div>
-                                            
-                                                                <div class="form-row">
+                                                                <form onsubmit="handleRegister(event)">
                                                                                         <div class="form-group">
-                                                                                                                    <label>Nombre *</label>
-                                                                                                                    <input type="text" id="regFirstName" placeholder="Nombre" class="form-input">
+                                                                                                                    <label>Nombre de la Empresa *</label>
+                                                                                                                    <input type="text" id="companyName" placeholder="Nombre de la Empresa" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-row">
+                                                                                                                    <div class="form-group">
+                                                                                                                                                    <label>Nombre *</label>
+                                                                                                                                                    <input type="text" id="firstName" placeholder="Nombre" required>
+                                                                                                                      </div>div>
+                                                                                                                    <div class="form-group">
+                                                                                                                                                    <label>Apellido *</label>
+                                                                                                                                                    <input type="text" id="lastName" placeholder="Apellido" required>
+                                                                                                                      </div>div>
                                                                                           </div>div>
                                                                                         <div class="form-group">
-                                                                                                                    <label>Apellido *</label>
-                                                                                                                    <input type="text" id="regLastName" placeholder="Apellido" class="form-input">
+                                                                                                                    <label>Email *</label>
+                                                                                                                    <input type="email" id="registerEmail" placeholder="Email" required>
                                                                                           </div>div>
-                                                                </div>div>
-                                            
-                                                                <div class="form-group">
-                                                                                        <label>Email *</label>
-                                                                                        <input type="email" id="regEmail" placeholder="email@empresa.com" class="form-input">
-                                                                </div>div>
-                                            
-                                                                <div class="form-group">
-                                                                                        <label>Teléfono *</label>
-                                                                                        <input type="tel" id="regPhone" placeholder="(555) 123-4567" class="form-input">
-                                                                </div>div>
-                                            
-                                                                <div class="form-group">
-                                                                                        <label>Contraseña *</label>
-                                                                                        <input type="password" id="regPassword" placeholder="Contraseña segura" class="form-input">
-                                                                </div>div>
-                                            
-                                                                <div class="form-group">
-                                                                                        <label>Confirmar Contraseña *</label>
-                                                                                        <input type="password" id="regConfirmPassword" placeholder="Confirmar contraseña" class="form-input">
-                                                                </div>div>
-                                            
-                                                                <button class="btn-primary" onclick="handleRegister()">Crear Cuenta Empresarial</button>button>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Teléfono</label>
+                                                                                                                    <input type="tel" id="phone" placeholder="(555) 123-4567">
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Contraseña *</label>
+                                                                                                                    <input type="password" id="registerPassword" placeholder="Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <div class="form-group">
+                                                                                                                    <label>Confirmar Contraseña *</label>
+                                                                                                                    <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required>
+                                                                                          </div>div>
+                                                                                        <button type="submit" class="btn-primary">Crear Cuenta Empresarial</button>button>
+                                                                </form>form>
                                             </div>div>
                             </div>div>
                 </div>div>
       </div>div>
 
-    <!-- DASHBOARD PAGE (Hidden by default) -->
-    <div id="dashboardPage" class="dashboard-container" style="display:none;">
-            <nav class="navbar">
-                        <div class="nav-brand">
-                                        <span class="logo-text">⚙️ Trade Master CRM</span>span>
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboardPage" class="dashboard-container" style="display: none;">
+            <!-- SIDEBAR NAVIGATION -->
+            <div class="sidebar">
+                        <div class="sidebar-header">
+                                        <div class="logo">
+                                                            <div class="logo-icon">⚙️</div>div>
+                                                            <h2>Trade Master</h2>
+                                        </div>div>
                         </div>div>
-                        <div class="nav-menu">
-                                        <span id="companyName" class="company-badge"></span>span>
-                                        <button class="btn-logout" onclick="handleLogout()">Cerrar Sesión</button>button>
+            
+                        <nav class="sidebar-nav">
+                                        <div class="nav-section">
+                                                            <h3>Principales</h3>
+                                                            <a href="#" class="nav-link active" onclick="showSection('dashboard')">
+                                                                                    <span class="nav-icon">📊</span>span>
+                                                                                    <span>Dashboard</span>
+                                                            </a>a>
+                                                            <a href="#" class="nav-link" onclick="showSection('clients')">
+                                                                                    <span class="nav-icon">👥</span>
+                                                                                    <span>Clientes</span>
+                                                            </a>a>
+                                                            <a href="#" class="nav-link" onclick="showSection('jobs')">
+                                                                                    <span class="nav-icon">📋</span>
+                                                                                    <span>Trabajos</span>
+                                                            </a>a>
+                                        </div>div>
+                        
+                                        <div class="nav-section">
+                                                            <h3>Ventas</h3>
+                                                            <a href="#" class="nav-link" onclick="showSection('leads')">
+                                                                                    <span class="nav-icon">🎯</span>
+                                                                                    <span>Leads</span>
+                                                            </a>a>
+                                                            <a href="#" class="nav-link" onclick="showSection('dispatch')">
+                                                                                    <span class="nav-icon">🚗</span>
+                                                                                    <span>Dispatch</span>
+                                                            </a>a>
+                                        </div>div>
+                        
+                                        <div class="nav-section">
+                                                            <h3>Operaciones</h3>
+                                                            <a href="#" class="nav-link" onclick="showSection('technicians')">
+                                                                                    <span class="nav-icon">🔧</span>
+                                                                                    <span>Técnicos</span>
+                                                            </a>a>
+                                                            <a href="#" class="nav-link" onclick="showSection('invoices')">
+                                                                                    <span class="nav-icon">💰</span>
+                                                                                    <span>Facturas</span>
+                                                            </a>a>
+                                                            <a href="#" class="nav-link" onclick="showSection('collections')">
+                                                                                    <span class="nav-icon">💳</span>
+                                                                                    <span>Cobranza</span>
+                                                            </a>a>
+                                        </div>div>
+                        
+                                        <div class="nav-section">
+                                                            <h3>Configuración</h3>
+                                                            <a href="#" class="nav-link" onclick="showSection('settings')">
+                                                                                    <span class="nav-icon">⚙️</span>
+                                                                                    <span>Configuración</span>
+                                                            </a>a>
+                                        </div>div>
+                        </nav>nav>
+            
+                        <div class="sidebar-footer">
+                                        <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>button>
                         </div>div>
-            </nav>nav>
+            </div>div>
     
-            <div class="dashboard-content">
-                        <h2>Bienvenido al Dashboard</h2>
-                        <p>Panel de control - Fase 1: Sistema de Autenticación Multi-Empresa</p>
-                        <div class="dashboard-grid">
-                                        <div class="dashboard-card">
-                                                            <h3>📊 Módulo 1</h3>
-                                                            <p>Dashboard</p>
+            <!-- MAIN CONTENT -->
+            <div class="main-content">
+                        <!-- TOP BAR -->
+                        <div class="top-bar">
+                                        <div class="top-bar-left">
+                                                            <h1 id="pageTitle">Dashboard</h1>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>📤 Módulo 2</h3>
-                                                            <p>Dispatch</p>
+                                        <div class="top-bar-right">
+                                                            <div class="company-info">
+                                                                                    <span id="companyDisplay" class="company-name"></span>
+                                                            </div>div>
+                                                            <div class="user-menu">
+                                                                                    <div class="user-avatar" onclick="toggleUserMenu()">
+                                                                                                                <span id="userInitials"></span>
+                                                                                      </div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>💰 Módulo 3</h3>
-                                                            <p>Ventas</p>
+                        </div>div>
+            
+                        <!-- PAGE CONTENT -->
+                        <div class="content-area">
+                                        <!-- DASHBOARD SECTION -->
+                                        <div id="dashboard-section" class="section active">
+                                                            <div class="dashboard-grid">
+                                                                                    <div class="kpi-card">
+                                                                                                                <div class="kpi-header">Ingresos Este Mes</div>div>
+                                                                                                                <div class="kpi-value">$0</div>div>
+                                                                                                                <div class="kpi-subtext">+0% vs mes anterior</div>div>
+                                                                                      </div>div>
+                                                                                    <div class="kpi-card">
+                                                                                                                <div class="kpi-header">Trabajos Completados</div>div>
+                                                                                                                <div class="kpi-value">0</div>div>
+                                                                                                                <div class="kpi-subtext">Este mes</div>div>
+                                                                                      </div>div>
+                                                                                    <div class="kpi-card">
+                                                                                                                <div class="kpi-header">Clientes Activos</div>div>
+                                                                                                                <div class="kpi-value">0</div>div>
+                                                                                                                <div class="kpi-subtext">Total</div>div>
+                                                                                      </div>div>
+                                                                                    <div class="kpi-card">
+                                                                                                                <div class="kpi-header">Pendientes de Pago</div>div>
+                                                                                                                <div class="kpi-value">$0</div>div>
+                                                                                                                <div class="kpi-subtext">Próximos 30 días</div>div>
+                                                                                      </div>div>
+                                                            </div>div>
+                                        
+                                                            <div class="dashboard-row">
+                                                                                    <div class="card">
+                                                                                                                <h3>Trabajos Recientes</h3>
+                                                                                                                <div class="empty-state">No hay trabajos registrados</div>div>
+                                                                                      </div>div>
+                                                                                    <div class="card">
+                                                                                                                <h3>Actividad</h3>
+                                                                                                                <div class="empty-state">Sin actividad reciente</div>div>
+                                                                                      </div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>🔧 Módulo 4</h3>
-                                                            <p>Instalación</p>
+                        
+                                        <!-- CLIENTS SECTION -->
+                                        <div id="clients-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Gestión de Clientes</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('clientForm')">+ Nuevo Cliente</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay clientes registrados. Crea uno para comenzar.</div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>🛠️ Módulo 5</h3>
-                                                            <p>Servicio</p>
+                        
+                                        <!-- JOBS SECTION -->
+                                        <div id="jobs-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Gestión de Trabajos</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('jobForm')">+ Nuevo Trabajo</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay trabajos registrados. Crea uno para comenzar.</div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>📋 Módulo 6</h3>
-                                                            <p>Contratos</p>
+                        
+                                        <!-- LEADS SECTION -->
+                                        <div id="leads-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Gestión de Leads</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('leadForm')">+ Nuevo Lead</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay leads registrados. Crea uno para comenzar.</div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>👷 Módulo 7</h3>
-                                                            <p>Técnicos</p>
+                        
+                                        <!-- DISPATCH SECTION -->
+                                        <div id="dispatch-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Dispatch - Asignación de Trabajos</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('dispatchForm')">+ Asignar Trabajo</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay asignaciones. Asigna trabajos a tus técnicos.</div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>📍 Módulo 8</h3>
-                                                            <p>Leads + Google Maps</p>
+                        
+                                        <!-- TECHNICIANS SECTION -->
+                                        <div id="technicians-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Gestión de Técnicos</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('technicianForm')">+ Nuevo Técnico</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay técnicos registrados. Agrega uno para comenzar.</div>div>
+                                                            </div>div>
                                         </div>div>
-                                        <div class="dashboard-card">
-                                                            <h3>💳 Módulo 9</h3>
-                                                            <p>Crédito & Cobranza</p>
+                        
+                                        <!-- INVOICES SECTION -->
+                                        <div id="invoices-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Gestión de Facturas</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('invoiceForm')">+ Nueva Factura</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay facturas. Crea una para comenzar.</div>div>
+                                                            </div>div>
+                                        </div>div>
+                        
+                                        <!-- COLLECTIONS SECTION -->
+                                        <div id="collections-section" class="section">
+                                                            <div class="card">
+                                                                                    <div class="card-header">
+                                                                                                                <h3>Crédito & Cobranza</h3>
+                                                                                                                <button class="btn-primary" onclick="showModal('collectionForm')">+ Nuevo Cobro</button>button>
+                                                                                      </div>div>
+                                                                                    <div class="empty-state">No hay cobros registrados.</div>div>
+                                                            </div>div>
+                                        </div>div>
+                        
+                                        <!-- SETTINGS SECTION -->
+                                        <div id="settings-section" class="section">
+                                                            <div class="card">
+                                                                                    <h3>Configuración de la Empresa</h3>
+                                                                                    <div class="settings-form">
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Nombre de la Empresa</label>
+                                                                                                                                                <input type="text" id="settingsCompanyName" placeholder="Nombre de la Empresa">
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Teléfono</label>
+                                                                                                                                                <input type="tel" id="settingsPhone" placeholder="Teléfono">
+                                                                                                                  </div>div>
+                                                                                                                <div class="form-group">
+                                                                                                                                                <label>Email</label>
+                                                                                                                                                <input type="email" id="settingsEmail" placeholder="Email">
+                                                                                                                  </div>div>
+                                                                                                                <button class="btn-primary" onclick="saveSettings()">Guardar Cambios</button>button>
+                                                                                      </div>div>
+                                                            </div>div>
                                         </div>div>
                         </div>div>
             </div>div>
@@ -137,6 +314,6 @@
 
     <script src="script.js"></script>
 </body>
-</html>html></p></p></label></label></p></h1>
+</html>html></span></span></label></label></p></h1>
 </body></title>
   </head>
