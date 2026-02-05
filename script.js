@@ -1,10 +1,11 @@
+
 // ===== TRADE MASTER CRM - CON SUPABASE AUTH =====
 
 // ===== SUPABASE CONFIG =====
 const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== VARIABLES GLOBALES =====
 let leadsMap = null;
@@ -18,11 +19,10 @@ function switchTab(tab) {
     const registerForm = document.getElementById('registerForm');
     const tabBtns = document.querySelectorAll('.tab-btn');
 
-    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns.forEach(function(btn) { btn.classList.remove('active'); });
     loginForm.classList.remove('active');
     registerForm.classList.remove('active');
 
-    // Limpiar errores
     document.getElementById('loginError').style.display = 'none';
     document.getElementById('registerError').style.display = 'none';
     document.getElementById('registerSuccess').style.display = 'none';
@@ -40,54 +40,56 @@ function switchTab(tab) {
 async function handleLogin(event) {
     event.preventDefault();
 
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const btn = document.getElementById('loginBtn');
-    const errorEl = document.getElementById('loginError');
+    var email = document.getElementById('loginEmail').value;
+    var password = document.getElementById('loginPassword').value;
+    var btn = document.getElementById('loginBtn');
+    var errorEl = document.getElementById('loginError');
 
     errorEl.style.display = 'none';
     btn.disabled = true;
     btn.textContent = 'Iniciando sesión...';
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        var result = await sbClient.auth.signInWithPassword({
             email: email,
             password: password
         });
 
-        if (error) {
-            errorEl.textContent = error.message === 'Invalid login credentials'
+        if (result.error) {
+            errorEl.textContent = result.error.message === 'Invalid login credentials'
                 ? 'Email o contraseña incorrectos'
-                : error.message;
+                : result.error.message;
             errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Iniciar Sesión';
             return;
         }
 
-        currentUser = data.user;
+        currentUser = result.data.user;
         showDashboard();
     } catch (err) {
         errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
         errorEl.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesión';
     }
+
+    btn.disabled = false;
+    btn.textContent = 'Iniciar Sesión';
 }
 
 // ===== REGISTRO CON SUPABASE =====
 async function handleRegister(event) {
     event.preventDefault();
 
-    const companyName = document.getElementById('companyName').value;
-    const firstName = document.getElementById('firstName').value;
-    const lastName = document.getElementById('lastName').value;
-    const email = document.getElementById('registerEmail').value;
-    const phone = document.getElementById('phone').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const btn = document.getElementById('registerBtn');
-    const errorEl = document.getElementById('registerError');
-    const successEl = document.getElementById('registerSuccess');
+    var companyName = document.getElementById('companyName').value;
+    var firstName = document.getElementById('firstName').value;
+    var lastName = document.getElementById('lastName').value;
+    var email = document.getElementById('registerEmail').value;
+    var phone = document.getElementById('phone').value;
+    var password = document.getElementById('registerPassword').value;
+    var confirmPassword = document.getElementById('confirmPassword').value;
+    var btn = document.getElementById('registerBtn');
+    var errorEl = document.getElementById('registerError');
+    var successEl = document.getElementById('registerSuccess');
 
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
@@ -108,7 +110,7 @@ async function handleRegister(event) {
     btn.textContent = 'Creando cuenta...';
 
     try {
-        const { data, error } = await supabase.auth.signUp({
+        var result = await sbClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -121,38 +123,38 @@ async function handleRegister(event) {
             }
         });
 
-        if (error) {
-            errorEl.textContent = error.message;
+        if (result.error) {
+            errorEl.textContent = result.error.message;
             errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Crear Cuenta Empresarial';
             return;
         }
 
-        // Si Supabase requiere confirmación de email
-        if (data.user && !data.session) {
+        if (result.data.user && !result.data.session) {
             successEl.textContent = '¡Cuenta creada! Revisa tu email para confirmar tu cuenta.';
             successEl.style.display = 'block';
-        } else if (data.session) {
-            // Login automático después de registro
-            currentUser = data.user;
+        } else if (result.data.session) {
+            currentUser = result.data.user;
             showDashboard();
         }
     } catch (err) {
         errorEl.textContent = 'Error de conexión. Intenta de nuevo.';
         errorEl.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Crear Cuenta Empresarial';
     }
+
+    btn.disabled = false;
+    btn.textContent = 'Crear Cuenta Empresarial';
 }
 
 // ===== MOSTRAR DASHBOARD =====
 function showDashboard() {
     if (!currentUser) return;
 
-    const meta = currentUser.user_metadata || {};
-    const displayName = meta.first_name || currentUser.email.split('@')[0];
-    const companyName = meta.company_name || 'Mi Empresa';
-    const initial = displayName.charAt(0).toUpperCase();
+    var meta = currentUser.user_metadata || {};
+    var displayName = meta.first_name || currentUser.email.split('@')[0];
+    var companyName = meta.company_name || 'Mi Empresa';
+    var initial = displayName.charAt(0).toUpperCase();
 
     document.getElementById('authPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'grid';
@@ -168,11 +170,13 @@ function showDashboard() {
 
 // ===== NAVEGACIÓN =====
 function showSection(sectionName) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(sectionName + '-section');
+    var sections = document.querySelectorAll('.section');
+    sections.forEach(function(s) { s.classList.remove('active'); });
+
+    var target = document.getElementById(sectionName + '-section');
     if (target) target.classList.add('active');
 
-    const titles = {
+    var titles = {
         'dashboard': 'Dashboard',
         'clients': 'Gestión de Clientes',
         'jobs': 'Gestión de Trabajos',
@@ -185,19 +189,22 @@ function showSection(sectionName) {
     };
 
     document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    const activeLink = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
+
+    var navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(function(l) { l.classList.remove('active'); });
+
+    var activeLink = document.querySelector('[onclick="showSection(\'' + sectionName + '\')"]');
     if (activeLink) activeLink.classList.add('active');
 
     if (sectionName === 'leads') {
-        setTimeout(() => {
+        setTimeout(function() {
             if (!leadsMap) initLeadsMap();
             else google.maps.event.trigger(leadsMap, 'resize');
         }, 150);
     }
 }
 
-// ===== LEADS (localStorage por ahora, se puede migrar a Supabase tables) =====
+// ===== LEADS =====
 function showLeadForm() {
     document.getElementById('leadFormContainer').style.display = 'block';
     document.getElementById('leadForm').reset();
@@ -209,15 +216,15 @@ function hideLeadForm() {
 
 function handleLeadCreate(event) {
     event.preventDefault();
-    const lat = document.getElementById('leadLat').value;
-    const lng = document.getElementById('leadLng').value;
+    var lat = document.getElementById('leadLat').value;
+    var lng = document.getElementById('leadLng').value;
 
     if (!lat || !lng) {
         alert('Por favor, ingresa una dirección válida para obtener coordenadas');
         return;
     }
 
-    const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+    var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
     leads.push({
         id: Date.now(),
         userId: currentUser.id,
@@ -240,35 +247,37 @@ function handleLeadCreate(event) {
 }
 
 function loadLeadsData() {
-    const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
-    leadsData = leads.filter(l => l.userId === currentUser.id);
+    var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+    leadsData = leads.filter(function(l) { return l.userId === currentUser.id; });
     document.getElementById('leadCountKPI').textContent = leadsData.length;
     renderLeadsTable();
     if (leadsMap) updateLeadsMap();
 }
 
 function renderLeadsTable() {
-    const container = document.getElementById('leadsList');
+    var container = document.getElementById('leadsList');
     if (leadsData.length === 0) {
         container.innerHTML = '<p class="empty-msg">No hay leads registrados. Crea uno para comenzar.</p>';
         return;
     }
 
-    let html = `<table class="leads-table"><thead><tr>
-        <th>Nombre</th><th>Teléfono</th><th>Email</th>
-        <th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th>
-    </tr></thead><tbody>`;
+    var html = '<table class="leads-table"><thead><tr>';
+    html += '<th>Nombre</th><th>Teléfono</th><th>Email</th>';
+    html += '<th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th>';
+    html += '</tr></thead><tbody>';
 
-    leadsData.forEach(lead => {
-        html += `<tr>
-            <td>${lead.name}</td><td>${lead.phone}</td><td>${lead.email || '-'}</td>
-            <td>${lead.service}</td>
-            <td><span class="lead-status ${lead.status}">${lead.status}</span></td>
-            <td>${lead.address}</td>
-            <td><div class="lead-actions">
-                <button class="btn-icon" onclick="deleteLead('${lead.id}')" style="border-color:#ef4444;color:#ef4444;">Eliminar</button>
-            </div></td>
-        </tr>`;
+    leadsData.forEach(function(lead) {
+        html += '<tr>';
+        html += '<td>' + lead.name + '</td>';
+        html += '<td>' + lead.phone + '</td>';
+        html += '<td>' + (lead.email || '-') + '</td>';
+        html += '<td>' + lead.service + '</td>';
+        html += '<td><span class="lead-status ' + lead.status + '">' + lead.status + '</span></td>';
+        html += '<td>' + lead.address + '</td>';
+        html += '<td><div class="lead-actions">';
+        html += '<button class="btn-icon" onclick="deleteLead(\'' + lead.id + '\')" style="border-color:#ef4444;color:#ef4444;">Eliminar</button>';
+        html += '</div></td>';
+        html += '</tr>';
     });
 
     html += '</tbody></table>';
@@ -277,8 +286,8 @@ function renderLeadsTable() {
 
 function deleteLead(leadId) {
     if (confirm('¿Eliminar este lead?')) {
-        const leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
-        localStorage.setItem('tm_leads', JSON.stringify(leads.filter(l => l.id !== parseInt(leadId))));
+        var leads = JSON.parse(localStorage.getItem('tm_leads')) || [];
+        localStorage.setItem('tm_leads', JSON.stringify(leads.filter(function(l) { return l.id !== parseInt(leadId); })));
         loadLeadsData();
     }
 }
@@ -301,24 +310,25 @@ function initLeadsMap() {
 }
 
 function updateLeadsMap() {
-    markers.forEach(m => m.setMap(null));
+    markers.forEach(function(m) { m.setMap(null); });
     markers = [];
     if (leadsData.length === 0) return;
 
-    const bounds = new google.maps.LatLngBounds();
-    leadsData.forEach(lead => {
-        const pos = { lat: parseFloat(lead.lat), lng: parseFloat(lead.lng) };
-        const marker = new google.maps.Marker({
+    var bounds = new google.maps.LatLngBounds();
+    leadsData.forEach(function(lead) {
+        var pos = { lat: parseFloat(lead.lat), lng: parseFloat(lead.lng) };
+        var marker = new google.maps.Marker({
             position: pos, map: leadsMap, title: lead.name,
             icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#10b981', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
         });
 
-        const info = new google.maps.InfoWindow({
-            content: `<div style="color:#333;padding:8px;font-size:13px;">
-                <strong>${lead.name}</strong><br>📞 ${lead.phone}<br>📍 ${lead.address}<br>🔧 ${lead.service}</div>`
-        });
+        var infoContent = '<div style="color:#333;padding:8px;font-size:13px;">';
+        infoContent += '<strong>' + lead.name + '</strong><br>';
+        infoContent += '📞 ' + lead.phone + '<br>📍 ' + lead.address + '<br>🔧 ' + lead.service;
+        infoContent += '</div>';
 
-        marker.addListener('click', () => info.open(leadsMap, marker));
+        var info = new google.maps.InfoWindow({ content: infoContent });
+        marker.addListener('click', function() { info.open(leadsMap, marker); });
         markers.push(marker);
         bounds.extend(pos);
     });
@@ -328,9 +338,10 @@ function updateLeadsMap() {
 }
 
 function geocodeAddress(address) {
-    new google.maps.Geocoder().geocode({ address }, (results, status) => {
+    var geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: address }, function(results, status) {
         if (status === 'OK' && results.length > 0) {
-            const loc = results[0].geometry.location;
+            var loc = results[0].geometry.location;
             document.getElementById('leadLat').value = loc.lat().toFixed(6);
             document.getElementById('leadLng').value = loc.lng().toFixed(6);
             if (leadsMap) { leadsMap.setCenter(loc); leadsMap.setZoom(14); }
@@ -342,13 +353,13 @@ function geocodeAddress(address) {
 
 // ===== CONFIGURACIÓN =====
 function saveSettings() {
-    alert('Configuración guardada (los cambios de perfil se guardan en Supabase)');
+    alert('Configuración guardada');
 }
 
 // ===== LOGOUT =====
 async function logout() {
     if (confirm('¿Cerrar sesión?')) {
-        await supabase.auth.signOut();
+        await sbClient.auth.signOut();
         currentUser = null;
         location.reload();
     }
@@ -356,19 +367,17 @@ async function logout() {
 
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', async function() {
-    // Verificar si hay sesión activa
-    const { data: { session } } = await supabase.auth.getSession();
+    var sessionResult = await sbClient.auth.getSession();
 
-    if (session && session.user) {
-        currentUser = session.user;
+    if (sessionResult.data.session && sessionResult.data.session.user) {
+        currentUser = sessionResult.data.session.user;
         showDashboard();
     } else {
         document.getElementById('authPage').style.display = 'flex';
         document.getElementById('dashboardPage').style.display = 'none';
     }
 
-    // Escuchar cambios de autenticación
-    supabase.auth.onAuthStateChange((event, session) => {
+    sbClient.auth.onAuthStateChange(function(event, session) {
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
             showDashboard();
@@ -379,8 +388,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // Geocoding en blur del address
-    const addressInput = document.getElementById('leadAddress');
+    var addressInput = document.getElementById('leadAddress');
     if (addressInput) {
         addressInput.addEventListener('blur', function() {
             if (this.value) setTimeout(geocodeAddress, 300, this.value);
