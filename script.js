@@ -3986,23 +3986,24 @@ function loadDefaultClauses() {
 
 function loadClausesFromData(clauses) {
     if (!clauses) { loadDefaultClauses(); return; }
-    if (clauses.state) document.getElementById('clauseState').value = clauses.state;
-    document.getElementById('clausePayment').value = clauses.payment || '';
-    document.getElementById('clauseCancel').value = clauses.cancel || '';
-    document.getElementById('clauseRestock').value = clauses.restock || '';
-    document.getElementById('clauseLicense').value = clauses.license || '';
-    document.getElementById('clauseDownPayment').value = clauses.downPayment || '';
-    document.getElementById('clauseLien').value = clauses.lien || '';
-    document.getElementById('clauseWarranty').value = clauses.warranty || '';
-    document.getElementById('clauseEpa').value = clauses.epa || '';
-    document.getElementById('clausePermits').value = clauses.permits || '';
-    document.getElementById('clauseInsurance').value = clauses.insurance || '';
-    document.getElementById('clausePrivacy').value = clauses.privacy || '';
-    document.getElementById('clauseRefuse').value = clauses.refuse || '';
-    document.getElementById('clauseCustom').value = clauses.custom || '';
+    var setVal = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+    if (clauses.state) setVal('clauseState', clauses.state);
+    setVal('clausePayment', clauses.payment);
+    setVal('clauseCancel', clauses.cancel);
+    setVal('clauseRestock', clauses.restock);
+    setVal('clauseLicense', clauses.license);
+    setVal('clauseDownPayment', clauses.downPayment);
+    setVal('clauseLien', clauses.lien);
+    setVal('clauseWarranty', clauses.warranty);
+    setVal('clauseEpa', clauses.epa);
+    setVal('clausePermits', clauses.permits);
+    setVal('clauseInsurance', clauses.insurance);
+    setVal('clausePrivacy', clauses.privacy);
+    setVal('clauseRefuse', clauses.refuse);
+    setVal('clauseCustom', clauses.custom);
     var state = clauses.state || 'CA';
     var summaryEl = document.getElementById('stateRegSummary');
-    if (stateRegSummaries[state]) {
+    if (summaryEl && stateRegSummaries[state]) {
         summaryEl.innerHTML = '<strong>' + state + ':</strong> ' + stateRegSummaries[state];
         summaryEl.style.display = 'block';
     }
