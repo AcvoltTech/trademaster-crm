@@ -132,6 +132,7 @@ async function handleLeadCreate(event) {
         company_id: companyId, name: document.getElementById('leadName').value,
         phone: document.getElementById('leadPhone').value, email: document.getElementById('leadEmail').value,
         service: document.getElementById('leadService').value, address: document.getElementById('leadAddress').value,
+        property_type: document.getElementById('leadPropertyType').value,
         lat: parseFloat(lat), lng: parseFloat(lng), notes: document.getElementById('leadNotes').value
     });
     hideLeadForm(); await loadLeadsData(); updateKPIs(); alert('¡Lead creado!');
@@ -154,7 +155,9 @@ function renderLeadsTable() {
     var statusOpts = ['new','contacted','quoted','won','lost'];
     var statusLabels = {new:'Nuevo',contacted:'Contactado',quoted:'Cotizado',won:'Ganado',lost:'Perdido'};
 
-    var h = '<table class="leads-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Servicio</th><th>Estado</th><th>Técnico</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody>';
+    var propEmojis = {residential:'🏠',commercial:'🏢',industrial:'🏭',restaurant:'🍽️'};
+
+    var h = '<table class="leads-table"><thead><tr><th>Tipo</th><th>Nombre</th><th>Teléfono</th><th>Servicio</th><th>Estado</th><th>Técnico</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody>';
     leadsData.forEach(function(l) {
         var assignedTech = '';
         if (l.technician_id) {
@@ -166,7 +169,9 @@ function renderLeadsTable() {
         statusOpts.forEach(function(s) { statusSelect += '<option value="' + s + '"' + (l.status === s ? ' selected' : '') + '>' + statusLabels[s] + '</option>'; });
         statusSelect += '</select>';
 
-        h += '<tr><td><strong>' + l.name + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (l.email || '') + '</span></td>';
+        var propIcon = propEmojis[l.property_type] || '🏠';
+        h += '<tr><td style="font-size:24px;text-align:center;">' + propIcon + '</td>';
+        h += '<td><strong>' + l.name + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (l.email || '') + '</span></td>';
         h += '<td>' + l.phone + '<div class="contact-btns">';
         h += '<a href="tel:' + l.phone + '" class="btn-call" onclick="logContact(\'' + l.id + '\',\'llamada\')">📞 Llamar</a>';
         h += '<a href="sms:' + l.phone + '" class="btn-text" onclick="logContact(\'' + l.id + '\',\'texto\')">💬 Texto</a>';
@@ -180,7 +185,9 @@ function renderLeadsTable() {
         h += '</td>';
         h += '<td style="font-size:12px;">' + l.address + '</td><td><div class="lead-actions">';
         h += '<button class="btn-nav" onclick="navigateTo(' + l.lat + ',' + l.lng + ')">🧭</button>';
-        h += '<button class="btn-icon" onclick="convertLeadToJob(\'' + l.id + '\')">📋 Trabajo</button>';
+        h += '<button class="btn-icon" onclick="openStreetView(' + l.lat + ',' + l.lng + ')">📸</button>';
+        h += '<button class="btn-icon btn-zillow" onclick="openZillow(\'' + encodeURIComponent(l.address) + '\')">🏘️</button>';
+        h += '<button class="btn-icon" onclick="convertLeadToJob(\'' + l.id + '\')">📋</button>';
         h += '<button class="btn-danger-sm" onclick="deleteLead(\'' + l.id + '\')">X</button>';
         h += '</div></td></tr>';
     });
@@ -250,19 +257,40 @@ async function loadTechnicians() {
 function renderTechList() {
     var c = document.getElementById('techniciansList');
     if (techsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay técnicos registrados.</p>'; return; }
+    var statusOpts = ['available','busy','on_route','offline'];
+    var statusLabels = {available:'Disponible',busy:'Ocupado',on_route:'En Ruta',offline:'Offline'};
     var h = '<table class="dispatch-table"><thead><tr><th>Nombre</th><th>Especialidad</th><th>Estado</th><th>Última Ubicación</th><th>Acciones</th></tr></thead><tbody>';
     techsData.forEach(function(t) {
         var locTime = t.last_location_update ? new Date(t.last_location_update).toLocaleString('es') : 'Sin reportar';
-        h += '<tr><td>' + t.name + '</td><td>' + (t.specialty || '-') + '</td>';
-        h += '<td><span class="tech-status ' + t.status + '">' + t.status + '</span></td>';
-        h += '<td style="font-size:11px;">' + locTime + '</td>';
+        // Check if tracking is stale (>10 min)
+        var isStale = false;
+        if (t.last_location_update) {
+            var diff = (Date.now() - new Date(t.last_location_update).getTime()) / 60000;
+            if (diff > 10) isStale = true;
+        }
+        var staleTag = isStale ? ' <span style="color:var(--danger);font-size:10px;">⚠️ hace >' + Math.round((Date.now() - new Date(t.last_location_update).getTime()) / 60000) + 'min</span>' : '';
+
+        // Status dropdown
+        var statusSelect = '<select class="inline-select status-select-' + t.status + '" onchange="changeTechStatus(\'' + t.id + '\', this.value)">';
+        statusOpts.forEach(function(s) { statusSelect += '<option value="' + s + '"' + (t.status === s ? ' selected' : '') + '>' + statusLabels[s] + '</option>'; });
+        statusSelect += '</select>';
+
+        h += '<tr><td><strong>' + t.name + '</strong></td><td>' + (t.specialty || '-') + '</td>';
+        h += '<td>' + statusSelect + '</td>';
+        h += '<td style="font-size:11px;">' + locTime + staleTag + '</td>';
         h += '<td><div class="tech-actions">';
         if (t.phone) h += '<a href="tel:' + t.phone + '" class="btn-call">📞</a><a href="sms:' + t.phone + '" class="btn-text">💬</a>';
-        if (t.current_lat && t.current_lng) h += '<button class="btn-nav" onclick="navigateTo(' + t.current_lat + ',' + t.current_lng + ')">📍</button>';
+        if (t.current_lat && t.current_lng && t.status !== 'offline') h += '<button class="btn-nav" onclick="navigateTo(' + t.current_lat + ',' + t.current_lng + ')">📍</button>';
         h += '<button class="btn-danger-sm" onclick="deleteTech(\'' + t.id + '\')">X</button>';
         h += '</div></td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+async function changeTechStatus(techId, status) {
+    await sbClient.from('technicians').update({ status: status }).eq('id', techId);
+    await loadTechnicians();
+    if (dispatchMap) updateDispatchMap();
 }
 
 function renderTechFullList() {
@@ -349,6 +377,14 @@ function navigateTo(lat, lng) {
     window.open('https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng, '_blank');
 }
 
+function openStreetView(lat, lng) {
+    window.open('https://www.google.com/maps/@' + lat + ',' + lng + ',3a,75y,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192', '_blank');
+}
+
+function openZillow(address) {
+    window.open('https://www.zillow.com/homes/' + address + '_rb/', '_blank');
+}
+
 // ===== GOOGLE MAPS - LEADS =====
 function initLeadsMap() {
     leadsMap = new google.maps.Map(document.getElementById('leadsMap'), {
@@ -366,9 +402,31 @@ function updateLeadsMap() {
     leadsData.forEach(function(l) {
         if (!l.lat || !l.lng) return;
         var pos = { lat: parseFloat(l.lat), lng: parseFloat(l.lng) };
+        var propIcons = {
+            residential: { label: '🏠', color: '#10b981' },
+            commercial: { label: '🏢', color: '#3b82f6' },
+            industrial: { label: '🏭', color: '#f59e0b' },
+            restaurant: { label: '🍽️', color: '#ef4444' }
+        };
+        var prop = propIcons[l.property_type] || propIcons.residential;
         var m = new google.maps.Marker({ position: pos, map: leadsMap, title: l.name,
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#10b981', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 } });
-        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>' + l.name + '</strong><br>📞 ' + l.phone + '<br>📍 ' + l.address + '<br>🔧 ' + l.service + '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '" target="_blank" style="color:#059669;font-weight:bold;">🧭 Navegar aquí</a></div>' });
+            label: { text: prop.label, fontSize: '18px' },
+            icon: { path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z', fillColor: prop.color, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2, scale: 1.8, anchor: new google.maps.Point(12, 22), labelOrigin: new google.maps.Point(12, 10) } });
+        var propLabel = {residential:'🏠 Residencial',commercial:'🏢 Comercial',industrial:'🏭 Industrial',restaurant:'🍽️ Restaurante'};
+        var streetViewUrl = 'https://maps.googleapis.com/maps/api/streetview?size=300x150&location=' + l.lat + ',' + l.lng + '&key=AIzaSyCkHcL1QcgKzxABmI4IJeEmjjvnZz_Xtys';
+        var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent(l.address) + '_rb/';
+        var googleMapsUrl = 'https://www.google.com/maps/@' + l.lat + ',' + l.lng + ',3a,75y,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192';
+        var iwContent = '<div style="color:#333;padding:4px;font-size:13px;max-width:320px;">';
+        iwContent += '<img src="' + streetViewUrl + '" style="width:100%;border-radius:6px;margin-bottom:8px;">';
+        iwContent += '<strong>' + l.name + '</strong> ' + (propLabel[l.property_type] || '🏠') + '<br>';
+        iwContent += '📞 ' + l.phone + '<br>📍 ' + l.address + '<br>🔧 ' + l.service + '<br>';
+        iwContent += '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">';
+        iwContent += '<a href="tel:' + l.phone + '" style="color:#059669;font-weight:bold;font-size:12px;">📞 Llamar</a>';
+        iwContent += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '" target="_blank" style="color:#3b82f6;font-weight:bold;font-size:12px;">🧭 Navegar</a>';
+        iwContent += '<a href="' + googleMapsUrl + '" target="_blank" style="color:#8b5cf6;font-weight:bold;font-size:12px;">📸 Street View</a>';
+        iwContent += '<a href="' + zillowUrl + '" target="_blank" style="color:#e44d25;font-weight:bold;font-size:12px;">🏘️ Zillow</a>';
+        iwContent += '</div></div>';
+        var iw = new google.maps.InfoWindow({ content: iwContent });
         m.addListener('click', function() { iw.open(leadsMap, m); });
         markers.push(m); bounds.extend(pos);
     });
@@ -391,13 +449,16 @@ function updateDispatchMap() {
     var bounds = new google.maps.LatLngBounds();
     var hasMarkers = false;
 
-    // Técnicos en azul
+    // Técnicos en azul (solo si NO están offline)
     techsData.forEach(function(t) {
         if (!t.current_lat || !t.current_lng) return;
+        if (t.status === 'offline') return;
         var pos = { lat: parseFloat(t.current_lat), lng: parseFloat(t.current_lng) };
+        var statusColors = {available:'#3b82f6', busy:'#f59e0b', on_route:'#8b5cf6'};
+        var pinColor = statusColors[t.status] || '#3b82f6';
         var m = new google.maps.Marker({ position: pos, map: dispatchMap, title: t.name,
-            icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 7, fillColor: '#3b82f6', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2, rotation: 0 } });
-        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '') + '<br>🔧 ' + (t.specialty || '') + '<br>Estado: ' + t.status + '</div>' });
+            icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 7, fillColor: pinColor, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2, rotation: 0 } });
+        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '') + '<br>🔧 ' + (t.specialty || '') + '<br>Estado: ' + t.status + '<br><a href="tel:' + (t.phone || '') + '" style="color:#059669;font-weight:bold;">📞 Llamar</a> | <a href="sms:' + (t.phone || '') + '" style="color:#3b82f6;font-weight:bold;">💬 Texto</a></div>' });
         m.addListener('click', function() { iw.open(dispatchMap, m); });
         dispatchMarkers.push(m); bounds.extend(pos); hasMarkers = true;
     });
@@ -439,20 +500,60 @@ function initTrackingPage(techId) {
         zoom: 15, center: { lat: 34.1083, lng: -117.2898 },
         styles: [{ elementType: 'geometry', stylers: [{ color: '#242f3e' }] }]
     });
-    document.getElementById('trackingStatus').textContent = 'Listo para iniciar tracking';
+    // Load tech name
+    sbClient.from('technicians').select('name,status').eq('id', techId).single().then(function(res) {
+        if (res.data) {
+            document.getElementById('trackingTechName').textContent = '👷 ' + res.data.name;
+            updateTrackingUI(res.data.status);
+        }
+    });
+    document.getElementById('trackingStatus').textContent = 'Listo para iniciar jornada';
+}
+
+function updateTrackingUI(status) {
+    var clockBtn = document.getElementById('clockInBtn');
+    var trackBtn = document.getElementById('trackingBtn');
+    if (status === 'offline') {
+        clockBtn.textContent = '🟢 Iniciar Jornada (Clock In)';
+        clockBtn.className = 'btn-primary';
+        trackBtn.style.display = 'none';
+        document.getElementById('trackingStatus').textContent = 'Fuera de servicio';
+        document.getElementById('trackingStatus').className = 'tracking-status';
+    } else {
+        clockBtn.textContent = '🔴 Terminar Jornada (Clock Out)';
+        clockBtn.className = 'btn-primary btn-clockout';
+        trackBtn.style.display = 'block';
+        document.getElementById('trackingStatus').textContent = 'En servicio - ' + status;
+        document.getElementById('trackingStatus').className = 'tracking-status active';
+    }
+}
+
+async function toggleClockIn() {
+    var techId = window._trackTechId;
+    var res = await sbClient.from('technicians').select('status').eq('id', techId).single();
+    if (!res.data) return;
+    if (res.data.status === 'offline') {
+        // Clock In
+        await sbClient.from('technicians').update({ status: 'available' }).eq('id', techId);
+        updateTrackingUI('available');
+        // Auto start tracking
+        if (!trackingInterval) toggleTracking();
+    } else {
+        // Clock Out
+        if (trackingInterval) toggleTracking(); // stop tracking
+        await sbClient.from('technicians').update({ status: 'offline', current_lat: null, current_lng: null }).eq('id', techId);
+        updateTrackingUI('offline');
+    }
 }
 
 function toggleTracking() {
     var btn = document.getElementById('trackingBtn');
     if (trackingInterval) {
         clearInterval(trackingInterval); trackingInterval = null;
-        btn.textContent = 'Iniciar Tracking GPS';
-        document.getElementById('trackingStatus').textContent = 'Tracking detenido';
-        document.getElementById('trackingStatus').className = 'tracking-status';
+        btn.textContent = '▶️ Reanudar Tracking GPS';
+        document.getElementById('trackingInfo').textContent = 'Tracking pausado';
     } else {
-        btn.textContent = 'Detener Tracking';
-        document.getElementById('trackingStatus').textContent = 'Enviando ubicación...';
-        document.getElementById('trackingStatus').className = 'tracking-status active';
+        btn.textContent = '⏸️ Pausar Tracking GPS';
         sendLocation();
         trackingInterval = setInterval(sendLocation, 30000);
     }
