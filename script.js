@@ -5471,9 +5471,9 @@ function renderPipelineSection() {
 
 // ===== MY MONEY =====
 var expensesData = JSON.parse(localStorage.getItem('tm_expenses')||'[]');
-function showExpenseForm(){document.getElementById('expenseFormContainer').style.display='block';document.getElementById('expDate').value=new Date().toISOString().split('T')[0];}
-function hideExpenseForm(){document.getElementById('expenseFormContainer').style.display='none';}
-function handleExpenseCreate(e){e.preventDefault();expensesData.push({id:Date.now().toString(),description:document.getElementById('expDesc').value,amount:parseFloat(document.getElementById('expAmount').value)||0,category:document.getElementById('expCategory').value,date:document.getElementById('expDate').value,notes:document.getElementById('expNotes').value});localStorage.setItem('tm_expenses',JSON.stringify(expensesData));hideExpenseForm();renderMyMoney();}
+function showMoneyExpenseForm(){document.getElementById('moneyExpFormContainer').style.display='block';document.getElementById('moneyExpDate').value=new Date().toISOString().split('T')[0];}
+function hideMoneyExpenseForm(){document.getElementById('moneyExpFormContainer').style.display='none';}
+function handleMoneyExpCreate(e){e.preventDefault();expensesData.push({id:Date.now().toString(),description:document.getElementById('moneyExpDesc').value,amount:parseFloat(document.getElementById('moneyExpAmount').value)||0,category:document.getElementById('moneyExpCat').value,date:document.getElementById('moneyExpDate').value,notes:document.getElementById('moneyExpNotes2').value});localStorage.setItem('tm_expenses',JSON.stringify(expensesData));hideMoneyExpenseForm();renderMyMoney();}
 function renderMyMoney(){
     var paidInv=(window.invoicesData||[]).filter(function(i){return i.status==='paid';});
     var income=paidInv.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
@@ -7253,4 +7253,152 @@ function checkRoleAccess(sectionName) {
         return false;
     }
     return true;
+}
+
+// ============================================================
+// ===== INSPECTION REPORTS / REPORTES DE INSPECCIÓN =====
+// ============================================================
+var inspReportsData = JSON.parse(localStorage.getItem('tm_insp_reports_' + companyId) || '[]');
+var irCurrentTab = 'all';
+
+function showInspReportForm() {
+    document.getElementById('inspReportForm').style.display = 'block';
+    document.getElementById('irDate').value = new Date().toISOString().split('T')[0];
+    // Populate jobs dropdown
+    var sel = document.getElementById('irJobId');
+    sel.innerHTML = '<option value="">-- Sin trabajo --</option>';
+    jobsData.forEach(function(j) { sel.innerHTML += '<option value="' + j.id + '">' + (j.title || j.service_type || 'Trabajo') + ' - ' + (j.client_name || '') + '</option>'; });
+}
+function hideInspReportForm() { document.getElementById('inspReportForm').style.display = 'none'; }
+
+function previewInspReport(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var fnEl = document.getElementById('irFileName');
+    var imgEl = document.getElementById('irFilePreview');
+    fnEl.textContent = '📎 ' + file.name;
+    fnEl.style.display = 'block';
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        window._irFile = { name: file.name, data: e.target.result };
+        if (file.type.startsWith('image/')) {
+            imgEl.src = e.target.result;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveInspReport() {
+    var type = document.getElementById('irType').value;
+    var client = document.getElementById('irClient').value;
+    var subject = document.getElementById('irType').options[document.getElementById('irType').selectedIndex].text;
+    
+    if (!client && !document.getElementById('irJobId').value) {
+        alert('⚠️ Ingresa el cliente o selecciona un trabajo.');
+        return;
+    }
+    
+    var report = {
+        id: 'ir_' + Date.now(),
+        type: type,
+        typeLabel: subject.replace(/^[^\s]+\s/, ''),
+        jobId: document.getElementById('irJobId').value,
+        client: client,
+        address: document.getElementById('irAddress').value,
+        date: document.getElementById('irDate').value,
+        inspector: document.getElementById('irInspector').value,
+        score: document.getElementById('irScore').value,
+        result: document.getElementById('irResult').value,
+        notes: document.getElementById('irNotes').value,
+        file: window._irFile || null,
+        created: new Date().toISOString()
+    };
+    
+    inspReportsData.push(report);
+    localStorage.setItem('tm_insp_reports_' + companyId, JSON.stringify(inspReportsData));
+    window._irFile = null;
+    hideInspReportForm();
+    renderInspReports();
+    alert('✅ Reporte guardado: ' + report.typeLabel);
+}
+
+function setIRTab(tab) {
+    irCurrentTab = tab;
+    document.querySelectorAll('[id^="irTab"]').forEach(function(b) { b.classList.remove('active'); });
+    var tabMap = {all:'All', hers:'Hers', inspection:'Insp', energy:'Energy', safety:'Safety'};
+    var btn = document.getElementById('irTab' + (tabMap[tab] || 'All'));
+    if (btn) btn.classList.add('active');
+    renderInspReports();
+}
+
+function renderInspReports() {
+    var c = document.getElementById('inspReportsList');
+    if (!c) return;
+    
+    var hersTypes = ['hers_rating','title24','cf1r','cf2r','cf3r'];
+    var inspTypes = ['home_inspection','hvac_inspection','duct_test','refrigerant_charge','airflow_test','combustion_test'];
+    var energyTypes = ['energy_audit','hers_rating','title24'];
+    var safetyTypes = ['co_test','gas_leak_test','epa_compliance','asbestos_test'];
+    
+    var filtered = inspReportsData.filter(function(r) {
+        if (irCurrentTab === 'hers') return hersTypes.indexOf(r.type) >= 0;
+        if (irCurrentTab === 'inspection') return inspTypes.indexOf(r.type) >= 0;
+        if (irCurrentTab === 'energy') return energyTypes.indexOf(r.type) >= 0;
+        if (irCurrentTab === 'safety') return safetyTypes.indexOf(r.type) >= 0;
+        return true;
+    });
+    
+    if (filtered.length === 0) {
+        c.innerHTML = '<div style="text-align:center;padding:30px;"><span style="font-size:40px;">📊</span><h3 style="margin:12px 0 8px;color:var(--text-primary);">Sin reportes de inspección</h3><p style="color:var(--text-muted);font-size:13px;">Agrega HERS Ratings, Home Inspections, Energy Audits y más.</p></div>';
+        return;
+    }
+    
+    var resultColors = {pass:'#10b981', fail:'#ef4444', conditional:'#f59e0b', pending:'#94a3b8', info:'#3b82f6'};
+    var resultLabels = {pass:'✅ Aprobado', fail:'❌ Reprobado', conditional:'⚠️ Condicional', pending:'⏳ Pendiente', info:'ℹ️ Informativo'};
+    
+    var h = '';
+    filtered.sort(function(a,b) { return b.date.localeCompare(a.date); }).forEach(function(r) {
+        var color = resultColors[r.result] || '#94a3b8';
+        h += '<div style="padding:14px;border:1px solid var(--border);border-left:4px solid ' + color + ';border-radius:8px;margin-bottom:8px;background:var(--bg-card);">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">';
+        h += '<div>';
+        h += '<strong style="font-size:14px;">' + (r.typeLabel || r.type) + '</strong>';
+        if (r.score) h += ' <span class="badge" style="background:' + color + '22;color:' + color + ';font-weight:700;">' + r.score + '</span>';
+        h += '<br><span style="font-size:12px;color:var(--text-muted);">📅 ' + r.date;
+        if (r.client) h += ' | 👤 ' + r.client;
+        if (r.address) h += ' | 📍 ' + r.address;
+        h += '</span>';
+        if (r.inspector) h += '<br><span style="font-size:11px;color:var(--text-muted);">🔍 Inspector: ' + r.inspector + '</span>';
+        if (r.notes) h += '<p style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.5;">' + r.notes.substring(0, 200) + (r.notes.length > 200 ? '...' : '') + '</p>';
+        h += '</div>';
+        h += '<div style="display:flex;gap:6px;align-items:center;">';
+        h += '<span class="badge" style="background:' + color + '22;color:' + color + ';">' + (resultLabels[r.result] || r.result) + '</span>';
+        if (r.file) h += '<button class="client-action-btn client-btn-view" onclick="viewInspReportFile(\'' + r.id + '\')">📎 Ver</button>';
+        h += '<button class="client-action-btn client-btn-delete" onclick="deleteInspReport(\'' + r.id + '\')">🗑️</button>';
+        h += '</div></div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function viewInspReportFile(id) {
+    var r = inspReportsData.find(function(x) { return x.id === id; });
+    if (r && r.file && r.file.data) {
+        var win = window.open('', '_blank');
+        if (r.file.data.indexOf('image') >= 0) {
+            win.document.write('<html><head><title>' + (r.typeLabel || 'Reporte') + '</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#222;"><img src="' + r.file.data + '" style="max-width:100%;max-height:100vh;"></body></html>');
+        } else {
+            win.document.write('<html><head><title>' + (r.typeLabel || 'Reporte') + '</title></head><body style="margin:0;"><iframe src="' + r.file.data + '" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+        }
+    }
+}
+
+function deleteInspReport(id) {
+    if (!confirm('¿Eliminar este reporte?')) return;
+    inspReportsData = inspReportsData.filter(function(x) { return x.id !== id; });
+    localStorage.setItem('tm_insp_reports_' + companyId, JSON.stringify(inspReportsData));
+    renderInspReports();
 }
