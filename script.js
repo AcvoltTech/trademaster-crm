@@ -142,8 +142,8 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio' };
-    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo' };
+    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
@@ -6598,6 +6598,7 @@ if (_origShowSection && !window._showSectionPatched) {
         if (name === 'receipts') renderReceipts();
         if (name === 'expenses') renderExpenses();
         if (name === 'mailbox') renderMailbox();
+        if (name === 'team') renderTeamUsers();
     };
     window._showSectionPatched = true;
 }
@@ -6975,4 +6976,199 @@ function deleteMail(id) {
     mailboxData = mailboxData.filter(function(x) { return x.id !== id; });
     localStorage.setItem('tm_mailbox_' + companyId, JSON.stringify(mailboxData));
     renderMailbox();
+}
+
+// ============================================================
+// ===== TEAM USERS / USUARIOS Y ROLES =====
+// ============================================================
+var teamUsers = JSON.parse(localStorage.getItem('tm_team_users_' + companyId) || '[]');
+
+var rolePermissions = {
+    owner: {
+        label: '👑 Dueño / CEO',
+        sections: ['dashboard','calendar','inbox','leads','dispatch','clients','jobs','technicians','advisors','invoices','collections','mymoney','payroll','marketing','pricebook','reports','receipts','expenses','mailbox','pipeline','team','settings'],
+        perms: ['✅ Tablero y KPIs', '✅ Mi Dinero — conexión bancaria', '✅ Nómina completa', '✅ Facturas y Cobranza', '✅ Gastos y Recibos', '✅ Despacho y Trabajos', '✅ Clientes y Prospectos', '✅ Reportes completos', '✅ Configuración y Usuarios', '✅ Correo del Negocio', '✅ Mercadotecnia', '✅ Lista de Precios']
+    },
+    accounting: {
+        label: '📊 Contabilidad / Admin',
+        sections: ['dashboard','invoices','collections','payroll','receipts','expenses','reports','mailbox','clients','pricebook'],
+        perms: ['✅ Tablero (solo KPIs)', '✅ Facturas y Cobranza', '✅ Nómina — pagar empleados', '✅ Recibos de Proveedores', '✅ Gastos del Negocio — QuickBooks', '✅ Reportes financieros', '✅ Correo del Negocio', '✅ Clientes (solo vista)', '✅ Lista de Precios', '❌ Mi Dinero — cuenta bancaria', '❌ Configuración', '❌ Usuarios']
+    },
+    dispatcher: {
+        label: '🎯 Coordinador de Despacho',
+        sections: ['dashboard','calendar','inbox','dispatch','clients','jobs','technicians','leads','mailbox','pricebook'],
+        perms: ['✅ Tablero', '✅ Despacho — asignar trabajos', '✅ Técnicos — GPS y status', '✅ Clientes — crear y editar', '✅ Prospectos / Leads', '✅ Agenda / Calendario', '✅ Correo del Negocio', '✅ Lista de Precios', '❌ Mi Dinero', '❌ Nómina', '❌ Facturas (solo ver)', '❌ Gastos y Recibos']
+    },
+    technician: {
+        label: '🔧 Técnico',
+        sections: ['dashboard','jobs'],
+        perms: ['✅ Tablero (limitado)', '✅ Sus trabajos asignados', '✅ Reloj Entrada/Salida', '❌ Clientes (solo del trabajo)', '❌ Todo lo demás']
+    },
+    viewer: {
+        label: '👁️ Solo Vista',
+        sections: ['dashboard','reports'],
+        perms: ['✅ Tablero (solo vista)', '✅ Reportes (solo vista)', '❌ No puede crear ni editar', '❌ No puede eliminar nada']
+    }
+};
+
+function showTeamUserForm() { 
+    document.getElementById('teamUserForm').style.display = 'block'; 
+    previewRolePerms();
+}
+function hideTeamUserForm() { document.getElementById('teamUserForm').style.display = 'none'; }
+
+function previewRolePerms() {
+    var role = document.getElementById('tuRole').value;
+    var perms = rolePermissions[role];
+    var el = document.getElementById('tuPermList');
+    if (el && perms) {
+        el.innerHTML = perms.perms.join('<br>');
+    }
+}
+
+function saveTeamUser() {
+    var name = document.getElementById('tuName').value.trim();
+    var email = document.getElementById('tuEmail').value.trim();
+    var username = document.getElementById('tuUsername').value.trim();
+    var password = document.getElementById('tuPassword').value;
+    var passwordConfirm = document.getElementById('tuPasswordConfirm').value;
+    
+    if (!name || !username || !password) {
+        alert('⚠️ Nombre, usuario y contraseña son obligatorios.');
+        return;
+    }
+    if (password.length < 6) {
+        alert('⚠️ La contraseña debe tener al menos 6 caracteres.');
+        return;
+    }
+    if (password !== passwordConfirm) {
+        alert('⚠️ Las contraseñas no coinciden.');
+        return;
+    }
+    // Check duplicate username
+    var dup = teamUsers.find(function(u) { return u.username === username; });
+    if (dup) {
+        alert('⚠️ El nombre de usuario "' + username + '" ya existe.');
+        return;
+    }
+    
+    var role = document.getElementById('tuRole').value;
+    // Only allow one owner
+    if (role === 'owner') {
+        var existingOwner = teamUsers.find(function(u) { return u.role === 'owner'; });
+        if (existingOwner) {
+            alert('⚠️ Ya existe un Dueño/CEO: ' + existingOwner.name + '. Solo puede haber uno.');
+            return;
+        }
+    }
+    
+    var user = {
+        id: 'user_' + Date.now(),
+        name: name,
+        email: email,
+        phone: document.getElementById('tuPhone').value,
+        username: username,
+        password: btoa(password), // Base64 encoded (basic obfuscation)
+        role: role,
+        status: document.getElementById('tuStatus').value,
+        notes: document.getElementById('tuNotes').value,
+        sections: rolePermissions[role].sections,
+        created: new Date().toISOString(),
+        lastLogin: null
+    };
+    
+    teamUsers.push(user);
+    localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
+    hideTeamUserForm();
+    renderTeamUsers();
+    alert('✅ Usuario "' + name + '" creado con rol: ' + rolePermissions[role].label);
+}
+
+function renderTeamUsers() {
+    var c = document.getElementById('teamUsersList');
+    if (!c) return;
+    
+    if (teamUsers.length === 0) {
+        c.innerHTML = '<div style="text-align:center;padding:30px;"><span style="font-size:40px;">👥</span><h3 style="margin:12px 0 8px;color:var(--text-primary);">Sin usuarios registrados</h3><p style="color:var(--text-muted);font-size:13px;">Agrega al Dueño/CEO primero, luego la persona de contabilidad y el coordinador de despacho.</p></div>';
+        return;
+    }
+    
+    var roleColors = {owner:'#3b82f6',accounting:'#8b5cf6',dispatcher:'#f59e0b',technician:'#10b981',viewer:'#94a3b8'};
+    var roleIcons = {owner:'👑',accounting:'📊',dispatcher:'🎯',technician:'🔧',viewer:'👁️'};
+    
+    var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">';
+    teamUsers.forEach(function(u) {
+        var color = roleColors[u.role] || '#94a3b8';
+        var icon = roleIcons[u.role] || '👤';
+        var initials = u.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
+        var statusDot = u.status === 'active' ? '🟢' : '🔴';
+        
+        h += '<div style="padding:16px;border:1px solid var(--border);border-radius:10px;border-left:4px solid ' + color + ';background:var(--bg-card);">';
+        h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
+        h += '<div style="width:45px;height:45px;border-radius:50%;background:' + color + ';color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">' + initials + '</div>';
+        h += '<div style="flex:1;"><strong style="font-size:14px;">' + u.name + '</strong><br>';
+        h += '<span style="font-size:11px;color:' + color + ';">' + icon + ' ' + (rolePermissions[u.role] ? rolePermissions[u.role].label : u.role) + '</span></div>';
+        h += '<span title="' + (u.status === 'active' ? 'Activo' : 'Inactivo') + '">' + statusDot + '</span>';
+        h += '</div>';
+        h += '<div style="font-size:11px;color:var(--text-muted);line-height:1.8;">';
+        h += '👤 Usuario: <strong>' + u.username + '</strong><br>';
+        if (u.email) h += '📧 ' + u.email + '<br>';
+        if (u.phone) h += '📱 ' + u.phone + '<br>';
+        h += '📅 Creado: ' + new Date(u.created).toLocaleDateString('es') + '<br>';
+        if (u.lastLogin) h += '🕐 Último acceso: ' + new Date(u.lastLogin).toLocaleString('es');
+        else h += '🕐 Sin acceso aún';
+        h += '</div>';
+        h += '<div style="display:flex;gap:6px;margin-top:10px;">';
+        if (u.status === 'active') {
+            h += '<button class="client-action-btn client-btn-edit" onclick="toggleTeamUserStatus(\'' + u.id + '\',\'inactive\')">⛔ Desactivar</button>';
+        } else {
+            h += '<button class="client-action-btn client-btn-view" onclick="toggleTeamUserStatus(\'' + u.id + '\',\'active\')">✅ Activar</button>';
+        }
+        h += '<button class="client-action-btn client-btn-edit" onclick="resetTeamPassword(\'' + u.id + '\')">🔑 Reset</button>';
+        if (u.role !== 'owner') h += '<button class="client-action-btn client-btn-delete" onclick="deleteTeamUser(\'' + u.id + '\')">🗑️</button>';
+        h += '</div></div>';
+    });
+    c.innerHTML = h + '</div>';
+}
+
+function toggleTeamUserStatus(id, newStatus) {
+    var u = teamUsers.find(function(x) { return x.id === id; });
+    if (!u) return;
+    u.status = newStatus;
+    localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
+    renderTeamUsers();
+    alert(newStatus === 'active' ? '✅ Usuario activado' : '⛔ Usuario desactivado');
+}
+
+function resetTeamPassword(id) {
+    var u = teamUsers.find(function(x) { return x.id === id; });
+    if (!u) return;
+    var newPass = prompt('Nueva contraseña para ' + u.name + ' (mínimo 6 caracteres):');
+    if (!newPass || newPass.length < 6) { alert('⚠️ Contraseña inválida.'); return; }
+    u.password = btoa(newPass);
+    localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
+    alert('✅ Contraseña actualizada para ' + u.name);
+}
+
+function deleteTeamUser(id) {
+    var u = teamUsers.find(function(x) { return x.id === id; });
+    if (!u) return;
+    if (u.role === 'owner') { alert('⚠️ No se puede eliminar al Dueño/CEO.'); return; }
+    if (!confirm('¿Eliminar al usuario "' + u.name + '"?\n\nEsta acción no se puede deshacer.')) return;
+    teamUsers = teamUsers.filter(function(x) { return x.id !== id; });
+    localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
+    renderTeamUsers();
+}
+
+// Check user role access on section change
+function checkRoleAccess(sectionName) {
+    var currentUser = JSON.parse(localStorage.getItem('tm_current_user_' + companyId) || 'null');
+    if (!currentUser) return true; // No user system active yet, allow all
+    var perms = rolePermissions[currentUser.role];
+    if (!perms) return true;
+    if (perms.sections.indexOf(sectionName) < 0) {
+        alert('🔒 No tienes permiso para acceder a esta sección.\n\nTu rol: ' + perms.label + '\n\nContacta al Dueño/CEO para solicitar acceso.');
+        return false;
+    }
+    return true;
 }
