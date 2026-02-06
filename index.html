@@ -339,6 +339,55 @@
               </div>
             </div>
 
+            <!-- ===== CLOCK IN / OUT WIDGET ===== -->
+            <div class="clock-widget-card">
+              <div class="clock-widget-left">
+                <div class="clock-display">
+                  <span class="clock-time" id="dashClockTime">00:00:00</span>
+                  <span class="clock-date" id="dashClockDate"></span>
+                </div>
+                <div class="clock-controls">
+                  <div class="form-row" style="margin-bottom:10px;">
+                    <div class="form-group" style="margin:0;">
+                      <label style="font-size:11px;margin-bottom:4px;" data-i18n="clock_select_tech">Seleccionar Técnico</label>
+                      <select id="clockTechSelect" onchange="onClockTechChange()" style="padding:8px;font-size:12px;"></select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                      <label style="font-size:11px;margin-bottom:4px;" data-i18n="clock_hourly_rate">Tarifa por Hora</label>
+                      <div style="display:flex;align-items:center;gap:4px;">
+                        <span style="font-size:14px;">$</span>
+                        <input type="number" id="clockHourlyRate" value="0" min="0" step="0.50" style="padding:8px;font-size:14px;font-weight:700;width:80px;" onchange="saveClockRate()">
+                        <span style="font-size:11px;color:var(--text-muted);">/hr</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="clock-btn clock-btn-in" id="clockInOutBtn" onclick="toggleDashClockInOut()">
+                    <span class="clock-btn-icon" id="clockBtnIcon">🟢</span>
+                    <span id="clockBtnText" data-i18n="clock_in">Clock In</span>
+                  </button>
+                </div>
+              </div>
+              <div class="clock-widget-right">
+                <div class="clock-earning-box">
+                  <span class="clock-earning-label" data-i18n="clock_worked_today">Trabajado Hoy</span>
+                  <span class="clock-earning-time" id="clockWorkedTime">0h 0m 0s</span>
+                </div>
+                <div class="clock-earning-box clock-earning-highlight">
+                  <span class="clock-earning-label" data-i18n="clock_earned_today">Ganado Hoy</span>
+                  <span class="clock-earning-money" id="clockEarnedToday">$0.00</span>
+                </div>
+                <div class="clock-earning-box">
+                  <span class="clock-earning-label" data-i18n="clock_projected_8h">Proyección 8hrs</span>
+                  <span class="clock-earning-sub" id="clockProjected8">$0.00</span>
+                </div>
+                <!-- Today's Clock History -->
+                <div class="clock-history">
+                  <span class="clock-history-title" data-i18n="clock_history">Historial de Hoy</span>
+                  <div id="clockHistoryList"></div>
+                </div>
+              </div>
+            </div>
+
             <!-- Estimates Pipeline -->
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
@@ -2075,6 +2124,108 @@
 
               <!-- Payroll Table -->
               <div id="payrollTable"></div>
+            </div>
+
+            <!-- ===== PAYROLL PROVIDER MANAGER ===== -->
+            <div class="card" style="margin-top:16px;">
+              <div class="card-top">
+                <h3>🔗 <span data-i18n="pay_provider_title">Proveedor de Nómina / Payroll Provider</span></h3>
+                <span class="badge" id="payProviderStatus" style="background:#f59e0b22;color:#f59e0b;">No conectado</span>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" data-i18n="pay_provider_desc">Conecta tu proveedor de nómina para sincronizar horas, pagos y reportes automáticamente.</p>
+
+              <!-- Provider Cards -->
+              <div class="payroll-providers-grid">
+                <div class="payroll-provider-card" id="providerCard_adp" onclick="selectPayrollProvider('adp')">
+                  <div class="provider-logo">ADP</div>
+                  <div class="provider-info">
+                    <strong>ADP Workforce</strong>
+                    <small>Nómina completa, impuestos, beneficios</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_adp">○</span>
+                </div>
+                <div class="payroll-provider-card" id="providerCard_gusto" onclick="selectPayrollProvider('gusto')">
+                  <div class="provider-logo" style="background:#f45d48;">Gusto</div>
+                  <div class="provider-info">
+                    <strong>Gusto</strong>
+                    <small>Nómina para pequeñas empresas</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_gusto">○</span>
+                </div>
+                <div class="payroll-provider-card" id="providerCard_qb" onclick="selectPayrollProvider('qb')">
+                  <div class="provider-logo" style="background:#2ca01c;">QB</div>
+                  <div class="provider-info">
+                    <strong>QuickBooks Payroll</strong>
+                    <small>Integrado con contabilidad QB</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_qb">○</span>
+                </div>
+                <div class="payroll-provider-card" id="providerCard_paychex" onclick="selectPayrollProvider('paychex')">
+                  <div class="provider-logo" style="background:#004b87;">PCX</div>
+                  <div class="provider-info">
+                    <strong>Paychex</strong>
+                    <small>Nómina y HR para empresas medianas</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_paychex">○</span>
+                </div>
+                <div class="payroll-provider-card" id="providerCard_square" onclick="selectPayrollProvider('square')">
+                  <div class="provider-logo" style="background:#006aff;">■</div>
+                  <div class="provider-info">
+                    <strong>Square Payroll</strong>
+                    <small>Nómina + pagos con Square POS</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_square">○</span>
+                </div>
+                <div class="payroll-provider-card" id="providerCard_manual" onclick="selectPayrollProvider('manual')">
+                  <div class="provider-logo" style="background:#64748b;">✋</div>
+                  <div class="provider-info">
+                    <strong data-i18n="pay_manual">Manual / Sin Proveedor</strong>
+                    <small data-i18n="pay_manual_desc">Administra nómina manualmente en Trade Master</small>
+                  </div>
+                  <span class="provider-check" id="providerCheck_manual">○</span>
+                </div>
+              </div>
+
+              <!-- Provider Config (shown after selection) -->
+              <div id="providerConfigArea" style="display:none;margin-top:16px;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;" id="providerConfigTitle">Configurar Proveedor</h4>
+                <div class="form-row">
+                  <div class="form-group"><label data-i18n="pay_api_key">API Key / Client ID</label><input type="text" id="providerApiKey" placeholder="Ingresa tu API Key..."></div>
+                  <div class="form-group"><label data-i18n="pay_api_secret">API Secret</label><input type="password" id="providerApiSecret" placeholder="Ingresa tu Secret..."></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label data-i18n="pay_company_id">Company ID</label><input type="text" id="providerCompanyId" placeholder="ID de tu empresa en el proveedor"></div>
+                  <div class="form-group"><label data-i18n="pay_sync_freq">Frecuencia de Sync</label>
+                    <select id="providerSyncFreq">
+                      <option value="manual">Manual</option>
+                      <option value="daily">Diario</option>
+                      <option value="weekly">Semanal</option>
+                      <option value="biweekly">Quincenal</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row" style="margin-top:8px;">
+                  <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="providerSyncHours" checked> <label style="margin:0;font-size:12px;" data-i18n="pay_sync_hours">Sincronizar horas de Clock In/Out</label>
+                  </div>
+                  <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="providerSyncRates" checked> <label style="margin:0;font-size:12px;" data-i18n="pay_sync_rates">Sincronizar tarifas de técnicos</label>
+                  </div>
+                </div>
+                <div class="form-actions" style="margin-top:12px;">
+                  <button class="btn-primary btn-sm" onclick="savePayrollProvider()">🔗 <span data-i18n="pay_connect">Conectar</span></button>
+                  <button class="btn-secondary btn-sm" onclick="testPayrollConnection()" data-i18n="pay_test">🧪 Probar Conexión</button>
+                  <button class="btn-secondary btn-sm" onclick="syncPayrollNow()" data-i18n="pay_sync_now">🔄 Sync Ahora</button>
+                  <button class="btn-secondary btn-sm" style="color:#ef4444;" onclick="disconnectProvider()" data-i18n="pay_disconnect">✕ Desconectar</button>
+                </div>
+                <div id="providerSyncStatus" style="margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
+              </div>
+
+              <!-- Sync History -->
+              <div style="margin-top:12px;">
+                <h4 style="font-size:13px;color:var(--text-muted);margin-bottom:8px;" data-i18n="pay_sync_history">Historial de Sincronización</h4>
+                <div id="providerSyncHistory"></div>
+              </div>
             </div>
           </div>
 
