@@ -2697,6 +2697,8 @@ async function loadClients() {
 }
 
 function showClientForm(cId) {
+    // If in profile view, go back to list first
+    if (document.getElementById('clientProfileView').style.display !== 'none') closeClientProfile();
     document.getElementById('clientFormContainer').style.display = 'block';
     document.getElementById('clientForm').reset();
     editingClientId = null;
@@ -2714,12 +2716,23 @@ function showClientForm(cId) {
         document.getElementById('clientAddress').value = c.address || '';
         document.getElementById('clientPropertyType').value = c.property_type || 'Residencial';
         document.getElementById('clientNotes').value = c.notes || '';
+        var companyEl = document.getElementById('clientCompany');
+        if (companyEl) companyEl.value = c.company || '';
+        var tagsEl = document.getElementById('clientTags');
+        if (tagsEl && c.tags) {
+            for (var i = 0; i < tagsEl.options.length; i++) {
+                tagsEl.options[i].selected = c.tags.indexOf(tagsEl.options[i].value) >= 0;
+            }
+        }
     }
 }
 function hideClientForm() { document.getElementById('clientFormContainer').style.display = 'none'; editingClientId = null; }
 
 async function handleClientCreate(event) {
     event.preventDefault();
+    var tagsSelect = document.getElementById('clientTags');
+    var tags = [];
+    if (tagsSelect) { for (var i = 0; i < tagsSelect.selectedOptions.length; i++) tags.push(tagsSelect.selectedOptions[i].value); }
     var data = {
         company_id: companyId,
         name: document.getElementById('clientName').value,
@@ -2727,6 +2740,8 @@ async function handleClientCreate(event) {
         email: document.getElementById('clientEmail').value,
         address: document.getElementById('clientAddress').value,
         property_type: document.getElementById('clientPropertyType').value,
+        company: (document.getElementById('clientCompany') || {}).value || '',
+        tags: tags,
         notes: document.getElementById('clientNotes').value,
         source: 'manual'
     };
@@ -2748,35 +2763,330 @@ async function deleteClient(id) {
 function renderClientsList() {
     var c = document.getElementById('clientsList');
     var search = (document.getElementById('clientSearchInput').value || '').toLowerCase();
+    var tagFilter = (document.getElementById('clientFilterTag') || {}).value || '';
     var filtered = clientsData.filter(function(cl) {
-        if (!search) return true;
-        return (cl.name || '').toLowerCase().indexOf(search) >= 0 ||
+        if (search && !((cl.name || '').toLowerCase().indexOf(search) >= 0 ||
                (cl.phone || '').indexOf(search) >= 0 ||
                (cl.email || '').toLowerCase().indexOf(search) >= 0 ||
-               (cl.address || '').toLowerCase().indexOf(search) >= 0;
+               (cl.address || '').toLowerCase().indexOf(search) >= 0 ||
+               (cl.company || '').toLowerCase().indexOf(search) >= 0)) return false;
+        if (tagFilter) {
+            var tags = cl.tags || [];
+            if (tagFilter === cl.property_type) return true;
+            if (tags.indexOf(tagFilter) >= 0) return true;
+            return false;
+        }
+        return true;
     });
+    
+    var countEl = document.getElementById('clientCount');
+    if (countEl) countEl.textContent = '(' + filtered.length + ' de ' + clientsData.length + ')';
+    
     if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay clientes' + (search ? ' que coincidan' : '') + '.</p>'; return; }
 
+    var tagHTML = function(cl) {
+        var h = '';
+        var typeClass = cl.property_type === 'Comercial' ? 'tag-com' : cl.property_type === 'Industrial' ? 'tag-ind' : 'tag-res';
+        if (cl.property_type) h += '<span class="client-tag ' + typeClass + '">' + cl.property_type + '</span> ';
+        (cl.tags || []).forEach(function(t) {
+            var tc = t === 'VIP' ? 'tag-vip' : t === 'Service Plan' ? 'tag-sp' : 'tag-default';
+            h += '<span class="client-tag ' + tc + '">' + t + '</span> ';
+        });
+        return h;
+    };
+    
     var srcLabels = { manual: '✋ Manual', lead: '🎯 Lead', invoice: '📄 Factura', referral: '🏠 Referencia' };
-    var h = '<table class="dispatch-table"><thead><tr><th>Cliente</th><th>Contacto</th><th>Dirección</th><th>Tipo</th><th>Origen</th><th>Acciones</th></tr></thead><tbody>';
+    var h = '<table class="dispatch-table"><thead><tr><th>Cliente</th><th>Empresa</th><th>Contacto</th><th>Dirección</th><th>Tags</th><th>Acciones</th></tr></thead><tbody>';
     filtered.forEach(function(cl) {
-        h += '<tr><td><strong>' + cl.name + '</strong>';
-        if (cl.notes) h += '<br><span style="font-size:10px;color:var(--text-muted);">📝 ' + cl.notes.substring(0,50) + '</span>';
-        h += '</td>';
+        h += '<tr>';
+        h += '<td><a href="#" onclick="openClientProfile(\'' + cl.id + '\');return false;" style="color:var(--primary);font-weight:700;text-decoration:none;">' + cl.name + '</a></td>';
+        h += '<td style="font-size:12px;color:var(--text-muted);">' + (cl.company || '—') + '</td>';
         h += '<td style="font-size:12px;">';
-        if (cl.phone) h += '<a href="tel:' + cl.phone + '" class="btn-call">📱 ' + cl.phone + '</a> ';
-        if (cl.email) h += '<br><span style="color:var(--text-muted);">' + cl.email + '</span>';
+        if (cl.phone) h += '<a href="tel:' + cl.phone + '" class="btn-call">📱 ' + cl.phone + '</a>';
+        if (cl.email) h += '<br><span style="color:var(--text-muted);font-size:11px;">' + cl.email + '</span>';
         h += '</td>';
-        h += '<td style="font-size:12px;">' + (cl.address || '—') + '</td>';
-        h += '<td><span style="font-size:11px;">' + (cl.property_type || '') + '</span></td>';
-        h += '<td><span style="font-size:11px;">' + (srcLabels[cl.source] || cl.source || '') + '</span></td>';
+        h += '<td style="font-size:11px;">' + (cl.address || '—') + '</td>';
+        h += '<td>' + tagHTML(cl) + '</td>';
         h += '<td><div class="job-actions">';
+        h += '<button class="btn-icon" onclick="openClientProfile(\'' + cl.id + '\')" title="Ver Perfil">👁️</button>';
         h += '<button class="btn-icon" onclick="showClientForm(\'' + cl.id + '\')" title="Editar">✏️</button>';
         h += '<button class="btn-icon" onclick="createApptForClient(\'' + cl.id + '\')" title="Crear Cita">📅</button>';
         h += '<button class="btn-danger-sm" onclick="deleteClient(\'' + cl.id + '\')" style="padding:4px 8px;">X</button>';
         h += '</div></td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+function exportClientsCSV() {
+    if (clientsData.length === 0) { alert('No hay clientes para exportar.'); return; }
+    var csv = 'Nombre,Empresa,Teléfono,Email,Dirección,Tipo,Tags\\n';
+    clientsData.forEach(function(c) {
+        csv += '"' + (c.name||'') + '","' + (c.company||'') + '","' + (c.phone||'') + '","' + (c.email||'') + '","' + (c.address||'') + '","' + (c.property_type||'') + '","' + ((c.tags||[]).join(', ')) + '"\\n';
+    });
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'clientes_trademaster_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+}
+
+// ===== CLIENT PROFILE =====
+var currentProfileClientId = null;
+
+function openClientProfile(clientId) {
+    currentProfileClientId = clientId;
+    document.getElementById('clientListView').style.display = 'none';
+    document.getElementById('clientProfileView').style.display = 'block';
+    renderClientProfile();
+    switchClientTab('profile');
+}
+
+function closeClientProfile() {
+    currentProfileClientId = null;
+    document.getElementById('clientProfileView').style.display = 'none';
+    document.getElementById('clientListView').style.display = 'block';
+}
+
+function renderClientProfile() {
+    var cl = clientsData.find(function(c) { return c.id === currentProfileClientId; });
+    if (!cl) return;
+    
+    document.getElementById('cpName').textContent = cl.name || '—';
+    document.getElementById('cpCompany').textContent = cl.company || '';
+    
+    // Tags
+    var tagsEl = document.getElementById('cpTags');
+    var tagsHTML = '';
+    var typeClass = cl.property_type === 'Comercial' ? 'tag-com' : cl.property_type === 'Industrial' ? 'tag-ind' : 'tag-res';
+    if (cl.property_type) tagsHTML += '<span class="client-tag ' + typeClass + '">' + cl.property_type + '</span>';
+    (cl.tags || []).forEach(function(t) {
+        var tc = t === 'VIP' ? 'tag-vip' : t === 'Service Plan' ? 'tag-sp' : 'tag-default';
+        tagsHTML += '<span class="client-tag ' + tc + '">' + t + '</span>';
+    });
+    tagsEl.innerHTML = tagsHTML;
+    
+    // Contact info
+    var contactHTML = '';
+    if (cl.phone) contactHTML += '📱 <a href="tel:' + cl.phone + '">' + cl.phone + '</a> &nbsp;&nbsp;';
+    if (cl.email) contactHTML += '📧 <a href="mailto:' + cl.email + '">' + cl.email + '</a> &nbsp;&nbsp;';
+    if (cl.address) contactHTML += '<br>📍 ' + cl.address;
+    document.getElementById('cpContact').innerHTML = contactHTML;
+    
+    // Stats
+    var clientJobs = jobsData.filter(function(j) { return j.client_id === cl.id; });
+    var clientInvoices = invoicesData.filter(function(i) { return i.client_id === cl.id; });
+    var totalRevenue = clientInvoices.reduce(function(sum, inv) { return sum + (parseFloat(inv.total) || 0); }, 0);
+    var completedJobs = clientJobs.filter(function(j) { return j.status === 'completed'; }).length;
+    
+    document.getElementById('cpStats').innerHTML =
+        '<div class="cp-stat-card"><div class="cp-stat-num">' + clientJobs.length + '</div><div class="cp-stat-label">Trabajos</div></div>' +
+        '<div class="cp-stat-card"><div class="cp-stat-num">' + completedJobs + '</div><div class="cp-stat-label">Completados</div></div>' +
+        '<div class="cp-stat-card"><div class="cp-stat-num">' + clientInvoices.length + '</div><div class="cp-stat-label">Facturas</div></div>' +
+        '<div class="cp-stat-card"><div class="cp-stat-num">$' + totalRevenue.toLocaleString() + '</div><div class="cp-stat-label">Revenue Total</div></div>';
+    
+    document.getElementById('cpAddress').textContent = cl.address || 'Sin dirección';
+    document.getElementById('cpPropertyType').innerHTML = cl.property_type ? '<span class="client-tag ' + typeClass + '">' + cl.property_type + '</span>' : '';
+    
+    // Timeline
+    var timeline = [];
+    clientJobs.forEach(function(j) { timeline.push({ date: j.created_at, text: '🔧 Trabajo: ' + j.title, status: j.status }); });
+    clientInvoices.forEach(function(i) { timeline.push({ date: i.created_at, text: '📄 Factura #' + (i.invoice_number || '') + ' — $' + (i.total || 0), status: i.status }); });
+    timeline.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    
+    var tlEl = document.getElementById('cpTimeline');
+    if (timeline.length === 0) { tlEl.innerHTML = '<p class="empty-msg">Sin historial</p>'; }
+    else {
+        tlEl.innerHTML = timeline.slice(0, 10).map(function(t) {
+            return '<div class="cp-timeline-item"><strong>' + t.text + '</strong><br><small>' + new Date(t.date).toLocaleDateString('es') + ' — ' + (t.status || '') + '</small></div>';
+        }).join('');
+    }
+}
+
+function switchClientTab(tab) {
+    document.querySelectorAll('.cp-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.cp-tab-content').forEach(function(t) { t.style.display = 'none'; });
+    
+    var tabEl = document.querySelector('.cp-tab[onclick*="' + tab + '"]');
+    if (tabEl) tabEl.classList.add('active');
+    var contentEl = document.getElementById('cpTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (contentEl) contentEl.style.display = 'block';
+    
+    if (tab === 'profile') renderClientProfile();
+    if (tab === 'jobs') renderClientJobs();
+    if (tab === 'estimates') renderClientEstimates();
+    if (tab === 'invoices') renderClientInvoices();
+    if (tab === 'notes') renderClientNotes();
+    if (tab === 'attachments') renderClientAttachments();
+    if (tab === 'comms') renderClientComms();
+}
+
+function renderClientJobs() {
+    var el = document.getElementById('cpJobsList');
+    var jobs = jobsData.filter(function(j) { return j.client_id === currentProfileClientId; });
+    if (jobs.length === 0) { el.innerHTML = '<p class="empty-msg">Sin trabajos</p>'; return; }
+    var statusIcons = { pending:'🟡', in_progress:'🔵', completed:'✅', cancelled:'❌' };
+    el.innerHTML = '<table class="dispatch-table"><thead><tr><th>Trabajo</th><th>Tipo</th><th>Estado</th><th>Fecha</th><th>Técnico</th></tr></thead><tbody>' +
+        jobs.map(function(j) {
+            var tech = techsData.find(function(t) { return t.id === j.technician_id; });
+            return '<tr><td><strong>' + j.title + '</strong></td><td>' + (j.service_type||'') + '</td><td>' + (statusIcons[j.status]||'') + ' ' + (j.status||'') + '</td><td>' + (j.scheduled_date||'—') + '</td><td>' + (tech ? tech.name : '—') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+}
+
+function renderClientEstimates() {
+    var el = document.getElementById('cpEstimatesList');
+    var estimates = [];
+    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    var clientEstimates = estimates.filter(function(e) { return e.client_id === currentProfileClientId || e.clientName === (clientsData.find(function(c){return c.id===currentProfileClientId;})||{}).name; });
+    if (clientEstimates.length === 0) { el.innerHTML = '<p class="empty-msg">Sin estimados</p>'; return; }
+    el.innerHTML = clientEstimates.map(function(e) {
+        return '<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;"><strong>' + (e.jobTitle || 'Estimado') + '</strong> — <span style="color:var(--accent);font-weight:700;">$' + (e.total || 0) + '</span><br><small style="color:var(--text-muted);">' + (e.date || '') + ' | ' + (e.status || 'open') + '</small></div>';
+    }).join('');
+}
+
+function renderClientInvoices() {
+    var el = document.getElementById('cpInvoicesList');
+    var invs = invoicesData.filter(function(i) { return i.client_id === currentProfileClientId; });
+    if (invs.length === 0) { el.innerHTML = '<p class="empty-msg">Sin facturas</p>'; return; }
+    var statusColors = { draft:'#9ca3af', sent:'#3b82f6', partial:'#f59e0b', paid:'#10b981', overdue:'#ef4444' };
+    el.innerHTML = '<table class="dispatch-table"><thead><tr><th>#</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Vence</th></tr></thead><tbody>' +
+        invs.map(function(i) {
+            return '<tr><td>' + (i.invoice_number||'') + '</td><td><strong>$' + (i.total||0) + '</strong></td><td><span style="color:' + (statusColors[i.status]||'#666') + ';font-weight:600;">' + (i.status||'') + '</span></td><td>' + (i.created_at ? new Date(i.created_at).toLocaleDateString('es') : '') + '</td><td>' + (i.due_date||'—') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+}
+
+// ===== CLIENT NOTES =====
+function getClientMeta(clientId) {
+    var key = 'clientMeta_' + companyId + '_' + clientId;
+    try { return JSON.parse(localStorage.getItem(key) || '{"notes":[],"attachments":[],"comms":[]}'); }
+    catch(e) { return { notes: [], attachments: [], comms: [] }; }
+}
+function saveClientMeta(clientId, meta) {
+    localStorage.setItem('clientMeta_' + companyId + '_' + clientId, JSON.stringify(meta));
+}
+
+function addClientNote() {
+    var text = document.getElementById('cpNewNote').value.trim();
+    if (!text || !currentProfileClientId) return;
+    var meta = getClientMeta(currentProfileClientId);
+    meta.notes.unshift({ id: 'n_' + Date.now(), text: text, date: new Date().toISOString(), by: 'Admin' });
+    saveClientMeta(currentProfileClientId, meta);
+    document.getElementById('cpNewNote').value = '';
+    renderClientNotes();
+}
+
+function deleteClientNote(noteId) {
+    var meta = getClientMeta(currentProfileClientId);
+    meta.notes = meta.notes.filter(function(n) { return n.id !== noteId; });
+    saveClientMeta(currentProfileClientId, meta);
+    renderClientNotes();
+}
+
+function renderClientNotes() {
+    var el = document.getElementById('cpNotesList');
+    var meta = getClientMeta(currentProfileClientId);
+    if (meta.notes.length === 0) { el.innerHTML = '<p class="empty-msg">Sin notas</p>'; return; }
+    el.innerHTML = meta.notes.map(function(n) {
+        return '<div class="cp-note-item"><button class="cp-note-delete" onclick="deleteClientNote(\'' + n.id + '\')">✕</button><div class="cp-note-date">📝 ' + new Date(n.date).toLocaleString('es') + ' — ' + (n.by || '') + '</div><div class="cp-note-text">' + n.text + '</div></div>';
+    }).join('');
+}
+
+// ===== CLIENT ATTACHMENTS =====
+function uploadClientAttachment(input) {
+    if (!input.files || !input.files[0] || !currentProfileClientId) return;
+    var file = input.files[0];
+    if (file.size > 5*1024*1024) { alert('⚠️ Máximo 5MB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var meta = getClientMeta(currentProfileClientId);
+        meta.attachments.unshift({
+            id: 'a_' + Date.now(), name: file.name, type: file.type,
+            size: file.size, data: e.target.result, date: new Date().toISOString()
+        });
+        saveClientMeta(currentProfileClientId, meta);
+        renderClientAttachments();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+}
+
+function viewClientAttachment(attId) {
+    var meta = getClientMeta(currentProfileClientId);
+    var att = meta.attachments.find(function(a) { return a.id === attId; });
+    if (!att) return;
+    var w = window.open('', '_blank');
+    if (att.type && att.type.startsWith('image/')) {
+        w.document.write('<html><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a1a;"><img src="' + att.data + '" style="max-width:95vw;max-height:95vh;"></body></html>');
+    } else {
+        w.document.write('<html><body style="margin:0;"><iframe src="' + att.data + '" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+    }
+    w.document.close();
+}
+
+function deleteClientAttachment(attId) {
+    var meta = getClientMeta(currentProfileClientId);
+    meta.attachments = meta.attachments.filter(function(a) { return a.id !== attId; });
+    saveClientMeta(currentProfileClientId, meta);
+    renderClientAttachments();
+}
+
+function renderClientAttachments() {
+    var el = document.getElementById('cpAttachmentsList');
+    var meta = getClientMeta(currentProfileClientId);
+    if (meta.attachments.length === 0) { el.innerHTML = '<p class="empty-msg">Sin archivos adjuntos</p>'; return; }
+    var icons = function(type) { if (type && type.includes('pdf')) return '📄'; if (type && type.startsWith('image/')) return '🖼️'; return '📁'; };
+    el.innerHTML = meta.attachments.map(function(a) {
+        var size = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1) + ' MB' : (a.size/1024).toFixed(0) + ' KB';
+        return '<div class="cp-attach-item"><span class="cp-attach-icon">' + icons(a.type) + '</span><div class="cp-attach-info"><strong>' + a.name + '</strong><br><small>' + size + ' — ' + new Date(a.date).toLocaleDateString('es') + '</small></div>' +
+            '<button class="btn-secondary btn-sm" style="font-size:10px;padding:4px 8px;" onclick="viewClientAttachment(\'' + a.id + '\')">👁️ Ver</button>' +
+            '<button style="background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:10px;" onclick="deleteClientAttachment(\'' + a.id + '\')">✕</button></div>';
+    }).join('');
+}
+
+// ===== CLIENT COMMUNICATIONS =====
+function addClientComm() {
+    var type = document.getElementById('cpCommType').value;
+    var note = document.getElementById('cpCommNote').value.trim();
+    if (!note || !currentProfileClientId) return;
+    var meta = getClientMeta(currentProfileClientId);
+    var typeLabels = { call_out:'📱 Llamada Saliente', call_in:'📲 Llamada Entrante', text:'💬 SMS', email:'📧 Email', visit:'🏠 Visita', follow_up:'🔄 Follow-Up' };
+    meta.comms.unshift({ id: 'cm_' + Date.now(), type: type, label: typeLabels[type] || type, note: note, date: new Date().toISOString(), by: 'Admin' });
+    saveClientMeta(currentProfileClientId, meta);
+    document.getElementById('cpCommNote').value = '';
+    renderClientComms();
+}
+
+function deleteClientComm(commId) {
+    var meta = getClientMeta(currentProfileClientId);
+    meta.comms = meta.comms.filter(function(c) { return c.id !== commId; });
+    saveClientMeta(currentProfileClientId, meta);
+    renderClientComms();
+}
+
+function renderClientComms() {
+    var el = document.getElementById('cpCommsList');
+    var meta = getClientMeta(currentProfileClientId);
+    if (meta.comms.length === 0) { el.innerHTML = '<p class="empty-msg">Sin registro de comunicación</p>'; return; }
+    el.innerHTML = meta.comms.map(function(cm) {
+        return '<div class="cp-comm-item"><span class="cp-comm-icon">' + cm.label.split(' ')[0] + '</span><div class="cp-comm-content"><strong>' + cm.label + '</strong><br>' + cm.note + '<br><small>' + new Date(cm.date).toLocaleString('es') + ' — ' + (cm.by || '') + '</small></div>' +
+            '<button class="cp-comm-delete" onclick="deleteClientComm(\'' + cm.id + '\')">✕</button></div>';
+    }).join('');
+}
+
+function cpQuickAction(type) {
+    var cl = clientsData.find(function(c) { return c.id === currentProfileClientId; });
+    if (!cl) return;
+    switch(type) {
+        case 'job': showSection('dispatch'); setTimeout(function(){ showJobForm(); }, 100); break;
+        case 'estimate': showSection('jobs'); break;
+        case 'appointment':
+            showSection('calendar');
+            setTimeout(function() {
+                showApptForm();
+                var sel = document.getElementById('apptClientSelect');
+                if (sel) sel.value = currentProfileClientId;
+            }, 150);
+            break;
+    }
 }
 
 // Auto-create client from lead conversion
@@ -3053,6 +3363,30 @@ function renderDashboardDynamic() {
     renderEstimatePipeline();
     generateNotifications();
     loadServicePlans();
+    renderAdvancedKPIs();
+}
+
+function renderAdvancedKPIs() {
+    // Revenue earned (paid invoices)
+    var paidInvs = (invoicesData || []).filter(function(i) { return i.status === 'paid'; });
+    var revenue = paidInvs.reduce(function(s, i) { return s + (parseFloat(i.total) || 0); }, 0);
+    var el = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+    el('revenueKPI', '$' + revenue.toLocaleString('en', {minimumFractionDigits:0, maximumFractionDigits:0}));
+    
+    // Jobs completed
+    var completed = (jobsData || []).filter(function(j) { return j.status === 'completed'; });
+    el('jobsCompletedKPI', completed.length);
+    
+    // Average job size
+    var allInvs = (invoicesData || []).filter(function(i) { return parseFloat(i.total) > 0; });
+    var avg = allInvs.length > 0 ? allInvs.reduce(function(s, i) { return s + (parseFloat(i.total) || 0); }, 0) / allInvs.length : 0;
+    el('avgJobKPI', '$' + Math.round(avg).toLocaleString('en'));
+    
+    // Open estimates
+    var estimates = [];
+    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    var open = estimates.filter(function(e) { return e.status !== 'approved'; });
+    el('openEstKPI', open.length);
 }
 
 function renderRecentJobs() {
