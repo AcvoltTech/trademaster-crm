@@ -667,3 +667,15 @@ body {
 .supplier-info small{font-size:10px;color:var(--text-muted)}
 @media(max-width:768px){.supplier-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.supplier-grid{grid-template-columns:1fr}}
+
+/* ===== IMPORT CENTER ===== */
+.import-tab{padding:8px 16px;border:1px solid var(--border);border-radius:20px;background:white;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);transition:all .2s}
+.import-tab:hover{border-color:var(--primary);color:var(--primary)}
+.import-tab.active{background:#f59e0b;color:white;border-color:#f59e0b}
+.import-upload-zone{border:2px dashed var(--border);border-radius:10px;transition:all .2s;cursor:pointer}
+.import-upload-zone:hover{border-color:#f59e0b;background:rgba(245,158,11,0.03)}
+
+/* ===== DISPATCH COORDINATOR PHOTO ===== */
+.dispatch-avatar-container{cursor:default;border:3px solid var(--primary);box-shadow:0 2px 8px rgba(59,130,246,0.2)}
+.dc-photo-preview{width:80px;height:80px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex-shrink:0;transition:all .2s}
+.dc-photo-preview:hover{border-color:var(--primary)}
