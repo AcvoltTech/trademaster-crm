@@ -168,9 +168,11 @@ function renderLeadsTable() {
 
         h += '<tr><td><strong>' + l.name + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (l.email || '') + '</span></td>';
         h += '<td>' + l.phone + '<div class="contact-btns">';
-        h += '<a href="tel:' + l.phone + '" class="btn-call">📞 Llamar</a>';
-        h += '<a href="sms:' + l.phone + '" class="btn-text">💬 Texto</a>';
-        h += '</div></td><td>' + l.service + '</td>';
+        h += '<a href="tel:' + l.phone + '" class="btn-call" onclick="logContact(\'' + l.id + '\',\'llamada\')">📞 Llamar</a>';
+        h += '<a href="sms:' + l.phone + '" class="btn-text" onclick="logContact(\'' + l.id + '\',\'texto\')">💬 Texto</a>';
+        h += '</div>';
+        if (l.last_contact) { h += '<span class="contact-log">✅ ' + l.last_contact + '</span>'; }
+        h += '</td><td>' + l.service + '</td>';
         h += '<td>' + statusSelect + '</td>';
         h += '<td>';
         if (assignedTech) { h += '<span style="color:var(--primary);font-weight:600;">' + assignedTech + '</span>'; }
@@ -188,6 +190,14 @@ function renderLeadsTable() {
 async function changeLeadStatus(id, status) {
     await sbClient.from('leads').update({ status: status }).eq('id', id);
     await loadLeadsData(); updateKPIs();
+}
+
+async function logContact(leadId, type) {
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('es') + ' ' + now.toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+    var msg = type === 'llamada' ? 'Llamada cel ' + dateStr : 'Texto enviado ' + dateStr;
+    await sbClient.from('leads').update({ status: 'contacted', last_contact: msg }).eq('id', leadId);
+    setTimeout(function() { loadLeadsData(); }, 1500);
 }
 
 async function assignLeadTech(leadId, techId) {
