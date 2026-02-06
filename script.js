@@ -3050,6 +3050,9 @@ function renderDashboardDynamic() {
     renderUpcomingAppts();
     renderOverdueAlert();
     renderPipeline();
+    renderEstimatePipeline();
+    generateNotifications();
+    loadServicePlans();
 }
 
 function renderRecentJobs() {
@@ -4081,6 +4084,289 @@ async function saveJobPermits() {
     if (res.error) alert('❌ Error: ' + res.error.message);
     else alert('✅ Permisos guardados');
     await loadJobs();
+}
+
+// ===== GLOBAL SEARCH =====
+function globalSearch(query) {
+    var results = document.getElementById('globalSearchResults');
+    if (!query || query.length < 2) { results.innerHTML = ''; return; }
+    var q = query.toLowerCase();
+    var items = [];
+    
+    // Search clients
+    (clientsData || []).forEach(function(c) {
+        if ((c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q) || (c.email || '').toLowerCase().includes(q)) {
+            items.push({ type: 'Cliente', icon: '👥', name: c.name, sub: c.phone || c.email || '', action: "showSection('clients')" });
+        }
+    });
+    // Search jobs
+    (jobsData || []).forEach(function(j) {
+        if ((j.title || '').toLowerCase().includes(q) || (j.address || '').toLowerCase().includes(q)) {
+            items.push({ type: 'Trabajo', icon: '🔧', name: j.title, sub: j.address || '', action: "showSection('jobs')" });
+        }
+    });
+    // Search leads
+    (leadsData || []).forEach(function(l) {
+        if ((l.name || '').toLowerCase().includes(q) || (l.phone || '').includes(q)) {
+            items.push({ type: 'Lead', icon: '🎯', name: l.name, sub: l.phone || '', action: "showSection('leads')" });
+        }
+    });
+    // Search technicians
+    (techsData || []).forEach(function(t) {
+        if ((t.name || '').toLowerCase().includes(q)) {
+            items.push({ type: 'Técnico', icon: '👷', name: t.name, sub: t.specialty || '', action: "showSection('technicians')" });
+        }
+    });
+    
+    if (items.length === 0) {
+        results.innerHTML = '<div class="search-result-item" style="color:var(--text-muted);justify-content:center;">Sin resultados para "' + query + '"</div>';
+    } else {
+        results.innerHTML = items.slice(0, 8).map(function(i) {
+            return '<div class="search-result-item" onclick="' + i.action + ';document.getElementById(\'globalSearchInput\').value=\'\';">' +
+                '<span>' + i.icon + '</span><span class="search-result-type">' + i.type + '</span>' +
+                '<span><strong>' + i.name + '</strong><br><small style="color:var(--text-muted)">' + i.sub + '</small></span></div>';
+        }).join('');
+    }
+}
+
+// ===== QUICK ADD =====
+function toggleQuickAdd() {
+    var menu = document.getElementById('quickAddMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    // Close on outside click
+    if (menu.style.display === 'block') {
+        setTimeout(function() {
+            document.addEventListener('click', function closeQA(e) {
+                if (!e.target.closest('.quick-add-wrap')) { menu.style.display = 'none'; document.removeEventListener('click', closeQA); }
+            });
+        }, 10);
+    }
+}
+
+function quickAddAction(type) {
+    document.getElementById('quickAddMenu').style.display = 'none';
+    switch(type) {
+        case 'client': showSection('clients'); setTimeout(function(){ showClientForm(); }, 100); break;
+        case 'job': showSection('dispatch'); setTimeout(function(){ showJobForm(); }, 100); break;
+        case 'lead': showSection('leads'); setTimeout(function(){ showLeadForm(); }, 100); break;
+        case 'appointment': showSection('calendar'); setTimeout(function(){ showApptForm(); }, 100); break;
+        case 'invoice': showSection('invoices'); setTimeout(function(){ showInvoiceForm(); }, 100); break;
+        case 'estimate': showSection('jobs'); break;
+    }
+}
+
+// ===== NOTIFICATIONS =====
+var notifications = [];
+
+function toggleNotifications() {
+    var panel = document.getElementById('notifPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if (panel.style.display === 'block') {
+        setTimeout(function() {
+            document.addEventListener('click', function closeN(e) {
+                if (!e.target.closest('.notif-wrap')) { panel.style.display = 'none'; document.removeEventListener('click', closeN); }
+            });
+        }, 10);
+    }
+}
+
+function generateNotifications() {
+    notifications = [];
+    var now = new Date();
+    
+    // Check overdue invoices
+    (invoicesData || []).forEach(function(inv) {
+        if (inv.status === 'sent' || inv.status === 'partial') {
+            var due = inv.due_date ? new Date(inv.due_date) : null;
+            if (due && due < now) {
+                notifications.push({ icon: '💸', title: 'Factura vencida: ' + (inv.invoice_number || '#'), sub: 'Vence: ' + due.toLocaleDateString('es'), action: "showSection('collections')", unread: true });
+            }
+        }
+    });
+    
+    // Check upcoming appointments (next 24h)
+    var tomorrow = new Date(now.getTime() + 86400000);
+    (appointmentsData || []).forEach(function(a) {
+        var d = new Date(a.appointment_date);
+        if (d >= now && d <= tomorrow) {
+            notifications.push({ icon: '📅', title: 'Cita: ' + (a.title || 'Sin título'), sub: d.toLocaleDateString('es') + ' ' + (a.start_time || ''), action: "showSection('calendar')", unread: true });
+        }
+    });
+    
+    // Check new leads (last 7 days)
+    var weekAgo = new Date(now.getTime() - 7 * 86400000);
+    (leadsData || []).forEach(function(l) {
+        if (l.created_at && new Date(l.created_at) > weekAgo && l.status === 'new') {
+            notifications.push({ icon: '🎯', title: 'Nuevo lead: ' + l.name, sub: l.service || l.phone || '', action: "showSection('leads')", unread: true });
+        }
+    });
+    
+    // Check expiring docs
+    var docTypes = { workers_comp: 'Workers Comp', general_liability: 'General Liability', bond: 'Bond', contractor_license: 'Licencia', vehicle_insurance: 'Seguro Vehículo' };
+    var compDocs = (window._companyInfo && window._companyInfo.company_documents) ? window._companyInfo.company_documents : {};
+    Object.keys(docTypes).forEach(function(key) {
+        if (compDocs[key] && compDocs[key].expiry) {
+            var exp = new Date(compDocs[key].expiry);
+            var days = Math.floor((exp - now) / 86400000);
+            if (days < 30 && days >= 0) {
+                notifications.push({ icon: '⚠️', title: docTypes[key] + ' vence pronto', sub: 'En ' + days + ' días (' + exp.toLocaleDateString('es') + ')', action: "showSection('settings')", unread: true });
+            } else if (days < 0) {
+                notifications.push({ icon: '🔴', title: docTypes[key] + ' EXPIRADO', sub: 'Venció ' + exp.toLocaleDateString('es'), action: "showSection('settings')", unread: true });
+            }
+        }
+    });
+    
+    renderNotifications();
+}
+
+function renderNotifications() {
+    var list = document.getElementById('notifList');
+    var badge = document.getElementById('notifBadge');
+    var unread = notifications.filter(function(n) { return n.unread; }).length;
+    
+    if (badge) {
+        badge.textContent = unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+    }
+    
+    if (!list) return;
+    if (notifications.length === 0) {
+        list.innerHTML = '<p class="empty-msg" style="padding:20px;">✅ Sin notificaciones pendientes</p>';
+        return;
+    }
+    list.innerHTML = notifications.map(function(n) {
+        return '<div class="notif-item' + (n.unread ? ' unread' : '') + '" onclick="' + n.action + ';document.getElementById(\'notifPanel\').style.display=\'none\';">' +
+            '<span class="notif-icon">' + n.icon + '</span>' +
+            '<div class="notif-content"><strong>' + n.title + '</strong><small>' + n.sub + '</small></div></div>';
+    }).join('');
+}
+
+// ===== ESTIMATE PIPELINE =====
+function renderEstimatePipeline() {
+    var estimates = [];
+    // Pull from saved estimates in localStorage
+    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    
+    var openCount = 0, openAmt = 0, approvedCount = 0, approvedAmt = 0;
+    estimates.forEach(function(est) {
+        var total = parseFloat(est.total) || 0;
+        if (est.status === 'approved') { approvedCount++; approvedAmt += total; }
+        else { openCount++; openAmt += total; }
+    });
+    
+    // Invoices data
+    var invoicedCount = 0, invoicedAmt = 0, paidCount = 0, paidAmt = 0;
+    (invoicesData || []).forEach(function(inv) {
+        var total = parseFloat(inv.total) || 0;
+        if (inv.status === 'paid') { paidCount++; paidAmt += total; }
+        else { invoicedCount++; invoicedAmt += total; }
+    });
+    
+    var fmt = function(n) { return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}); };
+    
+    var el = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+    el('pipeOpenCount', openCount);
+    el('pipeOpenAmt', fmt(openAmt));
+    el('pipeApprovedCount', approvedCount);
+    el('pipeApprovedAmt', fmt(approvedAmt));
+    el('pipeInvoicedCount', invoicedCount);
+    el('pipeInvoicedAmt', fmt(invoicedAmt));
+    el('pipePaidCount', paidCount);
+    el('pipePaidAmt', fmt(paidAmt));
+    
+    // Conversion rate
+    var totalEst = openCount + approvedCount;
+    var rate = totalEst > 0 ? Math.round((approvedCount / totalEst) * 100) : 0;
+    var rateEl = document.getElementById('pipeConversionRate');
+    if (rateEl) {
+        rateEl.innerHTML = '📊 <strong>Tasa de Conversión:</strong> ' + rate + '% de estimados aprobados' +
+            (totalEst > 0 ? ' | <strong>Pipeline Total:</strong> ' + fmt(openAmt + approvedAmt + invoicedAmt) : '');
+    }
+}
+
+// ===== SERVICE PLANS =====
+var servicePlansData = [];
+
+function showServicePlanForm() { document.getElementById('servicePlanFormArea').style.display = 'block'; }
+function hideServicePlanForm() { document.getElementById('servicePlanFormArea').style.display = 'none'; }
+
+async function createServicePlan(event) {
+    event.preventDefault();
+    if (!companyId) return;
+    var plan = {
+        company_id: companyId,
+        name: document.getElementById('spName').value,
+        price: parseFloat(document.getElementById('spPrice').value) || 0,
+        visits_per_year: parseInt(document.getElementById('spVisits').value) || 2,
+        repair_discount: parseInt(document.getElementById('spDiscount').value) || 0,
+        includes: document.getElementById('spIncludes').value,
+        duration: document.getElementById('spDuration').value,
+        equipment_type: document.getElementById('spEquipType').value,
+        status: 'active',
+        enrolled_count: 0
+    };
+    var res = await sbClient.from('service_plans').insert(plan);
+    if (res.error) {
+        // Table may not exist yet — save to localStorage
+        var plans = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
+        plan.id = 'sp_' + Date.now();
+        plan.created_at = new Date().toISOString();
+        plans.push(plan);
+        localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
+    }
+    hideServicePlanForm();
+    document.querySelector('#servicePlanFormArea form').reset();
+    loadServicePlans();
+    alert('✅ Plan de Servicio creado');
+}
+
+async function loadServicePlans() {
+    if (!companyId) return;
+    var res = await sbClient.from('service_plans').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+    if (res.error || !res.data) {
+        // Fallback to localStorage
+        servicePlansData = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
+    } else {
+        servicePlansData = res.data;
+    }
+    renderServicePlans();
+}
+
+function renderServicePlans() {
+    var c = document.getElementById('servicePlansList');
+    if (!c) return;
+    if (servicePlansData.length === 0) {
+        c.innerHTML = '<p class="empty-msg">No hay planes de servicio. Crea tu primer plan de mantenimiento para generar ingresos recurrentes.</p>';
+        return;
+    }
+    var durLabels = { monthly: '/mes', quarterly: '/trimestre', annual: '/año' };
+    var equipLabels = { residential_ac: 'AC Residencial', commercial_ac: 'AC Comercial', heating: 'Heating', full_system: 'Sistema Completo', refrigeration: 'Refrigeración' };
+    
+    c.innerHTML = '<div class="sp-grid">' + servicePlansData.map(function(p) {
+        return '<div class="sp-card">' +
+            '<div class="sp-card-header"><h4>' + p.name + '</h4><div class="sp-price">$' + (p.price || 0).toFixed(2) + ' <small>' + (durLabels[p.duration] || '/mes') + '</small></div></div>' +
+            '<div class="sp-card-body"><div class="sp-detail">' +
+            '<strong>Equipo:</strong> ' + (equipLabels[p.equipment_type] || p.equipment_type || '—') + '<br>' +
+            '<strong>Visitas/Año:</strong> ' + (p.visits_per_year || 0) + '<br>' +
+            '<strong>Descuento:</strong> ' + (p.repair_discount || 0) + '% en reparaciones<br>' +
+            (p.includes ? '<strong>Incluye:</strong> ' + p.includes : '') +
+            '</div></div>' +
+            '<div class="sp-card-footer">' +
+            '<span class="sp-enrolled">' + (p.enrolled_count || 0) + ' clientes</span>' +
+            '<button class="btn-secondary btn-sm" style="font-size:10px;padding:4px 10px;" onclick="deleteServicePlan(\'' + p.id + '\')">🗑️</button>' +
+            '</div></div>';
+    }).join('') + '</div>';
+}
+
+async function deleteServicePlan(id) {
+    if (!confirm('¿Eliminar este plan?')) return;
+    var res = await sbClient.from('service_plans').delete().eq('id', id);
+    if (res.error) {
+        var plans = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
+        plans = plans.filter(function(p) { return p.id !== id; });
+        localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
+    }
+    loadServicePlans();
 }
 
 // ===== SEED DEMO DATA =====
