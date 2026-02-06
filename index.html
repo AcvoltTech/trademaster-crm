@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -308,7 +309,60 @@
 
           <!-- ===== OTHER SECTIONS ===== -->
           <div id="clients-section" class="section"><div class="card"><h3>Gestión de Clientes</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
-          <div id="jobs-section" class="section"><div class="card"><h3>Gestión de Trabajos</h3><p class="empty-msg">Ir a Dispatch para gestionar trabajos</p></div></div>
+          <div id="jobs-section" class="section">
+            <div class="card">
+              <div class="card-top"><h3>💰 Crear Estimado / Presentación</h3></div>
+              <div id="estimateBuilder">
+                <!-- Step 1: Select Job -->
+                <div class="estimate-step">
+                  <h4>1. Seleccionar Trabajo</h4>
+                  <select id="estJobSelect" class="form-select" onchange="loadEstimateJob()">
+                    <option value="">Seleccionar trabajo...</option>
+                  </select>
+                  <div id="estJobInfo" style="display:none;" class="est-job-info"></div>
+                </div>
+
+                <!-- Step 2: Equipment Type -->
+                <div class="estimate-step">
+                  <h4>2. Tipo de Equipo</h4>
+                  <div class="equip-grid">
+                    <button class="equip-btn" onclick="selectEquipType('ac_single')">❄️<br>AC Single Stage</button>
+                    <button class="equip-btn" onclick="selectEquipType('heat_pump')">🔄<br>Heat Pump Single Stage</button>
+                    <button class="equip-btn" onclick="selectEquipType('furnace_80')">🔥<br>Furnace 80% AFUE<br><small>Cat I - Induced Draft</small></button>
+                    <button class="equip-btn" onclick="selectEquipType('furnace_90')">🔥<br>Furnace 90%+ AFUE<br><small>Cat IV - Condensing</small></button>
+                    <button class="equip-btn" onclick="selectEquipType('mini_split')">🌬️<br>Mini Split</button>
+                    <button class="equip-btn" onclick="selectEquipType('package_unit')">📦<br>Package Unit</button>
+                  </div>
+                </div>
+
+                <!-- Step 3: Select Components -->
+                <div class="estimate-step">
+                  <h4>3. Componentes y Reparaciones</h4>
+                  <div id="componentsList"></div>
+                </div>
+
+                <!-- Step 4: Summary -->
+                <div class="estimate-step">
+                  <h4>4. Resumen del Estimado</h4>
+                  <div id="estimateSummary"></div>
+                  <div class="form-row" style="margin-top:12px;">
+                    <div class="form-group"><label>Descuento (%)</label><input type="number" id="estDiscount" value="0" min="0" max="100" onchange="updateEstimateTotals()"></div>
+                    <div class="form-group"><label>Tax (%)</label><input type="number" id="estTax" value="8.75" step="0.25" onchange="updateEstimateTotals()"></div>
+                  </div>
+                  <div id="estimateTotals" class="est-totals"></div>
+                  <div class="form-group" style="margin-top:12px;"><label>Notas para el cliente</label><textarea id="estNotes" rows="3" placeholder="Garantía, condiciones, recomendaciones..."></textarea></div>
+                  <div class="form-actions" style="margin-top:16px;">
+                    <button class="btn-primary" onclick="generateEstimatePDF()">📄 Generar Estimado PDF</button>
+                    <button class="btn-secondary" onclick="presentEstimateToClient()">📱 Presentar al Cliente</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>📋 Estimados Guardados</h3>
+              <div id="savedEstimates"><p class="empty-msg">No hay estimados guardados</p></div>
+            </div>
+          </div>
           <div id="invoices-section" class="section"><div class="card"><h3>Facturas</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="collections-section" class="section"><div class="card"><h3>Cobranza</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="settings-section" class="section">
