@@ -523,3 +523,92 @@ body {
 .inbox-body p{font-size:12px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .inbox-meta{text-align:right;flex-shrink:0;font-size:10px;color:var(--text-muted)}
 .inbox-type-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600}
+
+/* ===== LANGUAGE TOGGLE ===== */
+.lang-toggle-btn{display:flex;align-items:center;gap:4px;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-primary);transition:all .2s}
+.lang-toggle-btn:hover{background:var(--primary);color:white;border-color:var(--primary)}
+
+/* ===== HCP WELCOME BANNER ===== */
+.hcp-welcome-banner{background:linear-gradient(135deg,#eff6ff,#e8f0fe);border-radius:12px;padding:24px 30px;margin-bottom:16px;text-align:center;position:relative}
+.hcp-welcome-banner h2{font-size:20px;color:var(--text-primary);margin-bottom:12px}
+.hcp-close-banner{position:absolute;top:12px;right:16px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted)}
+.hcp-quick-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hcp-quick-actions button{padding:8px 16px;border:1px solid var(--border);border-radius:20px;background:white;cursor:pointer;font-size:12px;color:var(--text-primary);transition:all .2s}
+.hcp-quick-actions button:hover{background:var(--primary);color:white;border-color:var(--primary)}
+
+/* ===== HCP SUMMARY CARDS ===== */
+.hcp-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+.hcp-summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative}
+.hcp-summary-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.hcp-summary-header{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.hcp-summary-icon{font-size:16px}
+.hcp-plus-btn{margin-left:auto;width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--primary);transition:all .2s}
+.hcp-plus-btn:hover{background:var(--primary);color:white}
+.hcp-summary-body{margin-bottom:8px}
+.hcp-big-num{font-size:36px;font-weight:700;color:var(--text-primary);line-height:1}
+.hcp-summary-detail{font-size:12px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:4px}
+.hcp-summary-info{font-size:12px;color:var(--text-muted);cursor:help}
+.hcp-sub-amount{font-size:12px;color:var(--text-muted)}
+.hcp-summary-link{display:block;font-size:12px;color:var(--primary);cursor:pointer;padding-top:8px;border-top:1px solid var(--border);text-decoration:none}
+.hcp-summary-link:hover{text-decoration:underline}
+.hcp-sp-text{font-size:12px;color:var(--text-muted);line-height:1.4}
+
+/* ===== HCP YEAR-TO-DATE KPIs ===== */
+.hcp-ytd-section{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.hcp-ytd-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hcp-link{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:none}
+.hcp-link:hover{text-decoration:underline}
+.hcp-ytd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--border);border-radius:8px;overflow:hidden}
+.hcp-ytd-card{background:var(--bg-card);padding:16px;text-align:center}
+.hcp-ytd-label{display:block;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:6px}
+.hcp-ytd-value{font-size:24px;font-weight:700;color:var(--text-primary)}
+
+/* ===== HCP EMPLOYEE STATUS ===== */
+.hcp-employee-section{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:320px}
+.hcp-employee-left{padding:16px;background:var(--bg-card)}
+.hcp-employee-right{background:#e5e7eb;position:relative}
+.hcp-employee-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hcp-employee-header h3{font-size:16px;color:var(--text-primary)}
+.hcp-today-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.hcp-toggle-btn{padding:6px 14px;border:none;background:white;cursor:pointer;font-size:12px;color:var(--text-muted);transition:all .2s}
+.hcp-toggle-btn.active{background:var(--primary);color:white}
+.hcp-employee-list{flex:1;margin:12px 0;min-height:150px}
+.hcp-emp-item{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border);font-size:12px}
+.hcp-emp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hcp-employee-actions{display:flex;gap:8px}
+
+/* ===== PIPELINE KANBAN ===== */
+.pipeline-kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;min-height:200px}
+.kanban-col{background:var(--bg-input);border-radius:10px;padding:10px;min-height:180px}
+.kanban-col-header{font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:2px solid transparent}
+.kanban-new .kanban-col-header{border-color:#94a3b8}
+.kanban-quoted .kanban-col-header{border-color:#3b82f6}
+.kanban-approved .kanban-col-header{border-color:#10b981}
+.kanban-scheduled .kanban-col-header{border-color:#f59e0b}
+.kanban-won .kanban-col-header{border-color:#8b5cf6}
+.kanban-count{background:var(--bg-card);padding:2px 8px;border-radius:10px;font-size:11px}
+.kanban-items{display:flex;flex-direction:column;gap:6px}
+.kanban-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;cursor:pointer;transition:all .2s}
+.kanban-item:hover{box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.kanban-item strong{display:block;font-size:12px;margin-bottom:4px}
+.kanban-amount{display:block;font-weight:600;color:var(--primary);margin-bottom:2px}
+.kanban-item small{color:var(--text-muted)}
+
+/* ===== DATA TABLE ===== */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table thead th{text-align:left;padding:10px 8px;font-size:11px;font-weight:600;color:var(--text-muted);border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:0.3px}
+.data-table tbody td{padding:10px 8px;border-bottom:1px solid var(--border);color:var(--text-primary)}
+.data-table tbody tr:hover{background:var(--bg-input)}
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600}
+
+@media(max-width:768px){
+  .hcp-summary-grid{grid-template-columns:1fr 1fr}
+  .hcp-employee-section{grid-template-columns:1fr}
+  .pipeline-kanban{grid-template-columns:1fr 1fr;overflow-x:auto}
+  .hcp-ytd-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .hcp-summary-grid{grid-template-columns:1fr}
+  .hcp-ytd-grid{grid-template-columns:1fr 1fr}
+  .pipeline-kanban{grid-template-columns:1fr}
+}
