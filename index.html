@@ -503,8 +503,123 @@
             </div>
           </div>
 
-          <div id="invoices-section" class="section"><div class="card"><h3>Facturas</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
-          <div id="collections-section" class="section"><div class="card"><h3>Cobranza</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
+          <!-- ===== INVOICES (Facturas) ===== -->
+          <div id="invoices-section" class="section">
+            <div class="card">
+              <div class="card-top">
+                <h3>📄 Facturas</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <select id="invoiceFilterStatus" class="inline-select" onchange="renderInvoicesTable()" style="padding:8px 12px;font-size:12px;">
+                    <option value="all">Todas</option>
+                    <option value="draft">Borrador</option>
+                    <option value="sent">Enviadas</option>
+                    <option value="paid">Pagadas</option>
+                    <option value="partial">Pago Parcial</option>
+                    <option value="overdue">Vencidas</option>
+                    <option value="cancelled">Canceladas</option>
+                  </select>
+                  <button class="btn-primary btn-sm" onclick="showInvoiceForm()">+ Nueva Factura</button>
+                </div>
+              </div>
+
+              <!-- Invoice KPIs -->
+              <div class="invoice-kpis" id="invoiceKPIs"></div>
+
+              <!-- Invoice Form -->
+              <div id="invoiceFormContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="margin-bottom:16px;color:var(--primary);">📄 Nueva Factura</h4>
+                <form id="invoiceForm" onsubmit="handleInvoiceCreate(event)">
+                  <!-- Source: from job or manual -->
+                  <div class="form-group">
+                    <label>Crear desde Trabajo (opcional)</label>
+                    <select id="invJobSelect" onchange="loadInvoiceFromJob()">
+                      <option value="">— Factura manual —</option>
+                    </select>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group"><label>Nombre del Cliente</label><input type="text" id="invClientName" required placeholder="Nombre completo"></div>
+                    <div class="form-group"><label>Teléfono</label><input type="tel" id="invClientPhone" placeholder="(555) 123-4567"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Email</label><input type="email" id="invClientEmail" placeholder="email@cliente.com"></div>
+                    <div class="form-group"><label>Dirección</label><input type="text" id="invClientAddress" placeholder="Dirección del servicio"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Técnico</label>
+                      <select id="invTechSelect"><option value="">Seleccionar...</option></select>
+                    </div>
+                    <div class="form-group"><label>Fecha de Vencimiento</label><input type="date" id="invDueDate"></div>
+                  </div>
+
+                  <!-- Line Items -->
+                  <div style="margin:16px 0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                      <label style="font-weight:600;font-size:13px;color:var(--primary);">Líneas de Factura</label>
+                      <button type="button" class="btn-secondary btn-sm" onclick="addInvoiceLine()" style="padding:6px 12px;font-size:11px;">+ Agregar Línea</button>
+                    </div>
+                    <div id="invoiceLines"></div>
+                  </div>
+
+                  <!-- Service Call -->
+                  <div class="form-row">
+                    <div class="form-group"><label>Service Call Fee ($)</label><input type="number" id="invServiceCall" value="0" min="0" step="0.01" onchange="calcInvoiceTotals()"></div>
+                    <div class="form-group"><label>Descuento (%)</label><input type="number" id="invDiscount" value="0" min="0" max="100" onchange="calcInvoiceTotals()"></div>
+                    <div class="form-group"><label>Tax (%)</label><input type="number" id="invTax" value="8.75" step="0.25" onchange="calcInvoiceTotals()"></div>
+                  </div>
+
+                  <!-- Totals Preview -->
+                  <div id="invoiceTotalsPreview" class="est-totals" style="margin:12px 0;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;"></div>
+
+                  <div class="form-group"><label>Notas para el Cliente</label><textarea id="invNotes" rows="2" placeholder="Garantía, términos, condiciones..."></textarea></div>
+                  <div class="form-group"><label>Notas Internas (no se muestran al cliente)</label><textarea id="invInternalNotes" rows="2" placeholder="Notas internas..."></textarea></div>
+
+                  <div class="form-actions" style="margin-top:12px;">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar Factura</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideInvoiceForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Invoice Table -->
+              <div id="invoicesTable"></div>
+            </div>
+
+            <!-- Invoice Detail Modal -->
+            <div id="invoiceDetailModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+              <div style="max-width:700px;margin:40px auto;background:var(--bg-card);border-radius:12px;padding:30px;position:relative;">
+                <button onclick="closeInvoiceDetail()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+                <div id="invoiceDetailContent"></div>
+              </div>
+            </div>
+          </div>
+          <!-- ===== COLLECTIONS (Cobranza) ===== -->
+          <div id="collections-section" class="section">
+            <div class="card">
+              <div class="card-top">
+                <h3>💰 Cobranza</h3>
+                <select id="collectionsFilter" class="inline-select" onchange="renderCollections()" style="padding:8px 12px;font-size:12px;">
+                  <option value="all_due">Todas con Balance</option>
+                  <option value="overdue">Vencidas</option>
+                  <option value="partial">Pago Parcial</option>
+                  <option value="sent">Enviadas (sin pago)</option>
+                  <option value="recent_paid">Recién Pagadas</option>
+                </select>
+              </div>
+
+              <!-- Collections KPIs -->
+              <div id="collectionsKPIs" class="invoice-kpi-row"></div>
+
+              <!-- Collections Table -->
+              <div id="collectionsTable"></div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card" style="margin-top:16px;">
+              <h3>📋 Historial de Pagos</h3>
+              <div id="paymentsHistory"></div>
+            </div>
+          </div>
           <div id="settings-section" class="section">
             <div class="card">
               <h3>Configuración de la Empresa</h3>
