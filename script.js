@@ -142,7 +142,7 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Dashboard', calendar:'Calendario', inbox:'Inbox - Comunicaciones', leads:'Gestión de Leads', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Pipeline de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Marketing', pricebook:'Lista de Precios', reports:'Reportes' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes' };
     var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
@@ -4727,8 +4727,18 @@ function toggleDispatchCoord() {
         document.getElementById('dcPhone').value = dc.phone || '';
         document.getElementById('dcEmail').value = dc.email || '';
         document.getElementById('dcLicense').value = dc.license || '';
-        document.getElementById('dcShift').value = dc.shift || 'Full Time 7am-5pm';
+        document.getElementById('dcShift').value = dc.shift || 'Tiempo Completo 7am-5pm';
         document.getElementById('dcNotes').value = dc.notes || '';
+        window._dcTempPhoto = null;
+        // Load existing photo into preview
+        if (dc.photo) {
+            showDCPhotoPreview(dc.photo);
+        } else {
+            var placeholder = document.getElementById('dcPhotoPlaceholder');
+            var imgEl = document.getElementById('dcPhotoImg');
+            if (placeholder) placeholder.style.display = 'block';
+            if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+        }
     }
 }
 
@@ -4741,12 +4751,19 @@ function saveDispatchCoord() {
         license: document.getElementById('dcLicense').value,
         shift: document.getElementById('dcShift').value,
         notes: document.getElementById('dcNotes').value,
+        photo: window._dcTempPhoto || null,
         updated: new Date().toLocaleString('es')
     };
+    // Preserve existing photo if not changed
+    if (!dc.photo) {
+        var existing = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+        if (existing.photo) dc.photo = existing.photo;
+    }
     localStorage.setItem('dispatchCoord_' + companyId, JSON.stringify(dc));
+    window._dcTempPhoto = null;
     renderDispatchCoord();
     toggleDispatchCoord();
-    alert('✅ Coordinador de Dispatch guardado');
+    alert('✅ Coordinador de Despacho guardado');
 }
 
 function renderDispatchCoord() {
@@ -4759,10 +4776,17 @@ function renderDispatchCoord() {
     
     if (dc.name) {
         nameEl.textContent = dc.name;
-        roleEl.textContent = dc.role || 'Dispatch Coordinator';
-        var initials = dc.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
-        avatarEl.textContent = initials;
-        avatarEl.style.background = 'linear-gradient(135deg, var(--primary), var(--accent))';
+        roleEl.textContent = dc.role || 'Coordinador de Despacho';
+        
+        if (dc.photo) {
+            avatarEl.innerHTML = '<img src="' + dc.photo + '" alt="' + dc.name + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+            avatarEl.style.background = 'transparent';
+        } else {
+            var initials = dc.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
+            avatarEl.textContent = initials;
+            avatarEl.innerHTML = initials;
+            avatarEl.style.background = 'linear-gradient(135deg, var(--primary), var(--accent))';
+        }
         
         var info = '';
         if (dc.phone) info += '<span>📱 <a href="tel:' + dc.phone + '">' + dc.phone + '</a></span>';
@@ -4773,10 +4797,83 @@ function renderDispatchCoord() {
     } else {
         nameEl.textContent = 'Sin asignar';
         roleEl.textContent = 'Haz click en Editar para asignar un responsable';
-        avatarEl.textContent = '?';
+        avatarEl.innerHTML = '?';
         avatarEl.style.background = 'var(--primary)';
         infoEl.innerHTML = '';
     }
+}
+
+// ===== DISPATCH COORDINATOR PHOTO =====
+window._dcTempPhoto = null;
+
+function handleDCPhotoUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+        alert('⚠️ La imagen es muy grande. Máximo 2MB.');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        // Resize to max 300px for localStorage efficiency
+        resizeDCPhoto(e.target.result, 300, function(resized) {
+            window._dcTempPhoto = resized;
+            showDCPhotoPreview(resized);
+        });
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+}
+
+function resizeDCPhoto(dataUrl, maxSize, callback) {
+    var img = new Image();
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var w = img.width, h = img.height;
+        if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+        else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = dataUrl;
+}
+
+function showDCPhotoPreview(src) {
+    var placeholder = document.getElementById('dcPhotoPlaceholder');
+    var imgEl = document.getElementById('dcPhotoImg');
+    if (placeholder) placeholder.style.display = 'none';
+    if (imgEl) {
+        imgEl.src = src;
+        imgEl.style.display = 'block';
+    }
+}
+
+function removeDCPhoto() {
+    window._dcTempPhoto = '';
+    var placeholder = document.getElementById('dcPhotoPlaceholder');
+    var imgEl = document.getElementById('dcPhotoImg');
+    if (placeholder) placeholder.style.display = 'block';
+    if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+    // Also remove from saved data
+    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    if (dc.photo) {
+        dc.photo = null;
+        localStorage.setItem('dispatchCoord_' + companyId, JSON.stringify(dc));
+        renderDispatchCoord();
+    }
+}
+
+function takeDCPhoto() {
+    // Use camera via file input with capture
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'user';
+    input.onchange = function() { handleDCPhotoUpload(input); };
+    input.click();
 }
 
 // ===== CALENDAR VIEW TOGGLE =====
@@ -5103,10 +5200,10 @@ async function seedDemoData() {
 var currentLang = localStorage.getItem('tm_lang') || 'es';
 var i18nData = {
   es: {
-    nav_principal:'Principal',nav_dashboard:'Dashboard',nav_inbox:'Bandeja',nav_schedule:'Agenda',nav_customers:'Clientes',nav_leads:'Leads',nav_pipeline:'Pipeline',
-    nav_operations:'Operaciones',nav_dispatch:'Despacho',nav_jobs:'Trabajos',nav_technicians:'Técnicos',nav_advisors:'Home Advisors',
+    nav_principal:'Principal',nav_dashboard:'Tablero',nav_inbox:'Bandeja',nav_schedule:'Agenda',nav_customers:'Clientes',nav_leads:'Prospectos',nav_pipeline:'Flujo de Ventas',
+    nav_operations:'Operaciones',nav_dispatch:'Despacho',nav_jobs:'Trabajos',nav_technicians:'Técnicos',nav_advisors:'Asesores del Hogar',
     nav_finance:'Finanzas',nav_invoices:'Facturas',nav_collections:'Cobranza',nav_mymoney:'Mi Dinero',nav_payroll:'Nómina',
-    nav_growth:'Crecimiento',nav_marketing:'Marketing',nav_pricebook:'Lista de Precios',nav_reports:'Reportes',nav_system:'Sistema',nav_settings:'Configuración',
+    nav_growth:'Crecimiento',nav_marketing:'Mercadotecnia',nav_pricebook:'Lista de Precios',nav_reports:'Reportes',nav_system:'Sistema',nav_settings:'Configuración',
     dash_welcome:'Hola, ¿en qué nos enfocamos hoy?',dash_add_material:'Agregar materiales',dash_import_data:'Importar datos',dash_connect_reviews:'Conectar reseñas',dash_ask_something:'Preguntar algo',
     dash_estimates:'Estimados',dash_open_estimates:'Estimados abiertos',dash_view_all_estimates:'Ver todos los estimados',
     dash_jobs:'Trabajos',dash_unsched_jobs:'Trabajos sin agendar',dash_view_all_jobs:'Ver todos los trabajos',
@@ -5115,16 +5212,16 @@ var i18nData = {
     dash_ytd:'Año hasta la fecha',dash_mtd:'Mes hasta la fecha',dash_last30:'Últimos 30 días',dash_last90:'Últimos 90 días',dash_view_reports:'Ver todos los reportes',
     kpi_revenue:'INGRESOS GANADOS',kpi_completed:'TRABAJOS COMPLETADOS',kpi_avg_job:'TICKET PROMEDIO',kpi_new_booked:'NUEVOS TRABAJOS',kpi_online_booked:'RESERVADOS EN LÍNEA',
     dash_employee_status:'Estado de Empleados',dash_today:'Hoy',dash_tomorrow:'Mañana',dash_see_jobs:'Ve los trabajos y estimados del día',dash_add_job:'Agregar trabajo',dash_add_estimate:'Agregar estimado',
-    dash_est_pipeline:'Pipeline de Estimados',dash_new_estimate:'Nuevo Estimado',
-    pipe_title:'Pipeline de Ventas',pipe_all:'Todos',pipe_week:'Esta Semana',pipe_month:'Este Mes',pipe_quarter:'Este Trimestre',pipe_new_est:'Nuevo Estimado',
+    dash_est_pipeline:'Flujo de Estimados',dash_new_estimate:'Nuevo Estimado',
+    pipe_title:'Flujo de Ventas',pipe_all:'Todos',pipe_week:'Esta Semana',pipe_month:'Este Mes',pipe_quarter:'Este Trimestre',pipe_new_est:'Nuevo Estimado',
     pipe_new:'Nuevos',pipe_quoted:'Cotizados',pipe_approved:'Aprobados',pipe_scheduled:'Agendados',pipe_won:'Ganados',
     pipe_total_value:'VALOR TOTAL',pipe_conversion:'TASA DE CONVERSIÓN',pipe_avg_deal:'TRATO PROMEDIO',pipe_avg_close:'DÍAS PARA CERRAR',
     money_income:'Ingresos',money_expenses:'Gastos',money_profit:'Ganancia Neta',money_outstanding:'Por Cobrar',money_this_month:'Este mes',money_overdue_invoices:'Facturas pendientes',
     money_transactions:'Transacciones',money_add_expense:'+ Agregar Gasto',money_new_expense:'Nuevo Gasto',money_desc:'Descripción',money_amount:'Monto',money_category:'Categoría',money_date:'Fecha',money_notes:'Notas',money_save:'Guardar',
     pay_employees:'Empleados',pay_active:'Activos',pay_this_period:'Este Período',pay_total_payroll:'Total nómina',pay_hours:'Horas',pay_this_week:'Esta semana',pay_pending:'Pendiente',pay_to_process:'Por procesar',
-    pay_title:'Nómina / Payroll',pay_add_entry:'Agregar Entrada',pay_new_entry:'Nueva Entrada',pay_tech:'Técnico',pay_type:'Tipo',pay_hours_worked:'Horas Trabajadas',pay_rate:'Tarifa ($)',pay_total:'Total ($)',pay_period_start:'Inicio',pay_period_end:'Fin',pay_notes:'Notas',pay_save:'Guardar',
-    mkt_reviews:'Reseñas',mkt_avg_rating:'Rating promedio',mkt_campaigns:'Campañas',mkt_active:'Activas',mkt_lead_source:'Fuentes de Leads',mkt_channels:'Canales',mkt_roi:'ROI Marketing',mkt_return:'Retorno',
-    mkt_title:'Marketing',mkt_new_campaign:'Nueva Campaña',mkt_create_campaign:'Crear Campaña',mkt_camp_name:'Nombre',mkt_camp_type:'Tipo',mkt_budget:'Presupuesto ($)',mkt_start:'Inicio',mkt_end:'Fin',mkt_message:'Mensaje',mkt_save:'Guardar',
+    pay_title:'Nómina',pay_add_entry:'Agregar Entrada',pay_new_entry:'Nueva Entrada',pay_tech:'Técnico',pay_type:'Tipo',pay_hours_worked:'Horas Trabajadas',pay_rate:'Tarifa ($)',pay_total:'Total ($)',pay_period_start:'Inicio',pay_period_end:'Fin',pay_notes:'Notas',pay_save:'Guardar',
+    mkt_reviews:'Reseñas',mkt_avg_rating:'Rating promedio',mkt_campaigns:'Campañas',mkt_active:'Activas',mkt_lead_source:'Fuentes de Leads',mkt_channels:'Canales',mkt_roi:'Retorno de Inversión',mkt_return:'Retorno',
+    mkt_title:'Mercadotecnia',mkt_new_campaign:'Nueva Campaña',mkt_create_campaign:'Crear Campaña',mkt_camp_name:'Nombre',mkt_camp_type:'Tipo',mkt_budget:'Presupuesto ($)',mkt_start:'Inicio',mkt_end:'Fin',mkt_message:'Mensaje',mkt_save:'Guardar',
     mkt_lead_breakdown:'Desglose de Fuentes de Leads',mkt_review_requests:'Solicitar Reseñas',mkt_review_desc:'Envía solicitudes de reseñas a clientes satisfechos.',mkt_select_client:'Cliente',mkt_platform:'Plataforma',mkt_send_request:'📧 Enviar Solicitud',
     pb_title:'Lista de Precios',pb_all:'Todas las categorías',pb_add_item:'Agregar Artículo',pb_new_item:'Nuevo Artículo',pb_name:'Nombre',pb_sku:'SKU / Part #',pb_category:'Categoría',pb_unit:'Unidad',
     pb_cost:'Costo ($)',pb_price:'Precio ($)',pb_markup:'Markup %',pb_description:'Descripción',pb_save:'Guardar',pb_total_items:'TOTAL ARTÍCULOS',pb_avg_markup:'MARKUP PROMEDIO',pb_categories:'CATEGORÍAS',
@@ -5132,10 +5229,10 @@ var i18nData = {
     rpt_revenue_chart:'Ingresos por Período',rpt_by_tech:'Por Técnico',rpt_by_source:'Por Fuente',rpt_top_services:'Top Servicios',rpt_by_day:'Por Día',btn_cancel:'Cancelar'
   },
   en: {
-    nav_principal:'Main',nav_dashboard:'Dashboard',nav_inbox:'Inbox',nav_schedule:'Schedule',nav_customers:'Customers',nav_leads:'Leads',nav_pipeline:'Pipeline',
-    nav_operations:'Operations',nav_dispatch:'Dispatch',nav_jobs:'Jobs',nav_technicians:'Technicians',nav_advisors:'Home Advisors',
+    nav_principal:'Main',nav_dashboard:'Tablero',nav_inbox:'Inbox',nav_schedule:'Schedule',nav_customers:'Customers',nav_leads:'Prospectos',nav_pipeline:'Flujo de Ventas',
+    nav_operations:'Operations',nav_dispatch:'Dispatch',nav_jobs:'Jobs',nav_technicians:'Technicians',nav_advisors:'Asesores del Hogar',
     nav_finance:'Finance',nav_invoices:'Invoices',nav_collections:'Collections',nav_mymoney:'My Money',nav_payroll:'Payroll',
-    nav_growth:'Growth',nav_marketing:'Marketing',nav_pricebook:'Price Book',nav_reports:'Reports',nav_system:'System',nav_settings:'Settings',
+    nav_growth:'Growth',nav_marketing:'Mercadotecnia',nav_pricebook:'Price Book',nav_reports:'Reports',nav_system:'System',nav_settings:'Settings',
     dash_welcome:'Hi, what should we dive into today?',dash_add_material:'Add material line items',dash_import_data:'Import my data',dash_connect_reviews:'Connect Google reviews',dash_ask_something:'Ask something',
     dash_estimates:'Estimates',dash_open_estimates:'Open estimates',dash_view_all_estimates:'View all estimates',
     dash_jobs:'Jobs',dash_unsched_jobs:'Unscheduled jobs',dash_view_all_jobs:'View all jobs',
@@ -5153,7 +5250,7 @@ var i18nData = {
     pay_employees:'Employees',pay_active:'Active',pay_this_period:'This Period',pay_total_payroll:'Total payroll',pay_hours:'Hours',pay_this_week:'This week',pay_pending:'Pending',pay_to_process:'To process',
     pay_title:'Payroll',pay_add_entry:'Add Entry',pay_new_entry:'New Entry',pay_tech:'Technician',pay_type:'Type',pay_hours_worked:'Hours Worked',pay_rate:'Rate ($)',pay_total:'Total ($)',pay_period_start:'Start',pay_period_end:'End',pay_notes:'Notes',pay_save:'Save',
     mkt_reviews:'Reviews',mkt_avg_rating:'Avg rating',mkt_campaigns:'Campaigns',mkt_active:'Active',mkt_lead_source:'Lead Sources',mkt_channels:'Channels',mkt_roi:'Marketing ROI',mkt_return:'Return',
-    mkt_title:'Marketing',mkt_new_campaign:'New Campaign',mkt_create_campaign:'Create Campaign',mkt_camp_name:'Name',mkt_camp_type:'Type',mkt_budget:'Budget ($)',mkt_start:'Start',mkt_end:'End',mkt_message:'Message',mkt_save:'Save',
+    mkt_title:'Mercadotecnia',mkt_new_campaign:'New Campaign',mkt_create_campaign:'Create Campaign',mkt_camp_name:'Name',mkt_camp_type:'Type',mkt_budget:'Budget ($)',mkt_start:'Start',mkt_end:'End',mkt_message:'Message',mkt_save:'Save',
     mkt_lead_breakdown:'Lead Source Breakdown',mkt_review_requests:'Request Reviews',mkt_review_desc:'Send review requests to satisfied customers.',mkt_select_client:'Customer',mkt_platform:'Platform',mkt_send_request:'📧 Send Request',
     pb_title:'Price Book',pb_all:'All categories',pb_add_item:'Add Item',pb_new_item:'New Item',pb_name:'Name',pb_sku:'SKU / Part #',pb_category:'Category',pb_unit:'Unit',
     pb_cost:'Cost ($)',pb_price:'Price ($)',pb_markup:'Markup %',pb_description:'Description',pb_save:'Save',pb_total_items:'TOTAL ITEMS',pb_avg_markup:'AVG MARKUP',pb_categories:'CATEGORIES',
@@ -5454,7 +5551,7 @@ function toggleDashClockInOut() {
         var techId = document.getElementById('clockTechSelect').value;
         var rate = parseFloat(document.getElementById('clockHourlyRate').value) || 0;
         if (!techId) {
-            alert(currentLang === 'en' ? 'Select a technician first!' : '¡Selecciona un técnico primero!');
+            alert(currentLang === 'en' ? '¡Selecciona un técnico primero!' : '¡Selecciona un técnico primero!');
             return;
         }
         var tech = techsData.find(function(t) { return t.id === techId; });
@@ -5481,11 +5578,11 @@ function updateClockBtnState(isActive) {
     if (isActive) {
         btn.className = 'clock-btn clock-btn-out';
         icon.textContent = '🔴';
-        text.textContent = 'Clock Out';
+        text.textContent = 'Marcar Salida';
     } else {
         btn.className = 'clock-btn clock-btn-in';
         icon.textContent = '🟢';
-        text.textContent = 'Clock In';
+        text.textContent = 'Marcar Entrada';
     }
 }
 
@@ -5523,7 +5620,7 @@ function renderClockHistory() {
     var todayHistory = (clockData.history || []).filter(function(h) { return h.date === today; });
 
     if (clockData.activeSession && clockData.activeSession.date === today) {
-        var html = '<div class="clock-hist-item clock-hist-active"><span class="hcp-emp-dot" style="background:#10b981;"></span><strong>' + clockData.activeSession.tech_name + '</strong><span style="color:#10b981;font-size:11px;">⏱ ' + (currentLang === 'en' ? 'Working...' : 'Trabajando...') + '</span><small>In: ' + new Date(clockData.activeSession.clockIn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) + '</small></div>';
+        var html = '<div class="clock-hist-item clock-hist-active"><span class="hcp-emp-dot" style="background:#10b981;"></span><strong>' + clockData.activeSession.tech_name + '</strong><span style="color:#10b981;font-size:11px;">⏱ ' + (currentLang === 'en' ? 'Trabajando...' : 'Trabajando...') + '</span><small>In: ' + new Date(clockData.activeSession.clockIn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) + '</small></div>';
         todayHistory.forEach(function(h) {
             var dur = h.totalMs ? Math.round(h.totalMs / 60000) : 0;
             var earned = (h.totalMs / 3600000 * (h.rate || 0));
@@ -5539,7 +5636,7 @@ function renderClockHistory() {
         });
         list.innerHTML = html2;
     } else {
-        list.innerHTML = '<p style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px;">' + (currentLang === 'en' ? 'No clock entries today' : 'Sin entradas hoy') + '</p>';
+        list.innerHTML = '<p style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px;">' + (currentLang === 'en' ? 'Sin registros de entrada hoy' : 'Sin entradas hoy') + '</p>';
     }
 }
 
@@ -5584,7 +5681,7 @@ function selectPayrollProvider(provider) {
     } else {
         configArea.style.display = 'block';
         var names = { adp:'ADP Workforce', gusto:'Gusto', qb:'QuickBooks Payroll', paychex:'Paychex', square:'Square Payroll' };
-        document.getElementById('providerConfigTitle').textContent = (currentLang === 'en' ? 'Configure ' : 'Configurar ') + (names[provider] || provider);
+        document.getElementById('providerConfigTitle').textContent = (currentLang === 'en' ? 'Configurar ' : 'Configurar ') + (names[provider] || provider);
         // Restore saved config
         if (payrollProviderConfig[provider]) {
             document.getElementById('providerApiKey').value = payrollProviderConfig[provider].apiKey || '';
@@ -5615,47 +5712,47 @@ function savePayrollProvider() {
         connectedAt: new Date().toISOString()
     };
     localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
-    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Connected' : 'Conectado');
+    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Conectado' : 'Conectado');
     document.getElementById('payProviderStatus').style.background = '#10b98122';
     document.getElementById('payProviderStatus').style.color = '#10b981';
-    document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Connected successfully at ' : 'Conectado exitosamente a las ') + new Date().toLocaleTimeString();
-    addSyncHistoryEntry(provider, 'connected', currentLang === 'en' ? 'Provider connected' : 'Proveedor conectado');
+    document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Conectado exitosamente a las ' : 'Conectado exitosamente a las ') + new Date().toLocaleTimeString();
+    addSyncHistoryEntry(provider, 'connected', currentLang === 'en' ? 'Proveedor conectado' : 'Proveedor conectado');
 }
 
 function testPayrollConnection() {
     var provider = payrollProviderConfig.selected;
-    document.getElementById('providerSyncStatus').innerHTML = '⏳ ' + (currentLang === 'en' ? 'Testing connection...' : 'Probando conexión...');
+    document.getElementById('providerSyncStatus').innerHTML = '⏳ ' + (currentLang === 'en' ? 'Probando conexión...' : 'Probando conexión...');
     setTimeout(function() {
         var key = document.getElementById('providerApiKey').value;
         if (key && key.length > 3) {
-            document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Connection successful! API responding.' : '¡Conexión exitosa! API respondiendo.');
+            document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? '¡Conexión exitosa! API respondiendo.' : '¡Conexión exitosa! API respondiendo.');
         } else {
-            document.getElementById('providerSyncStatus').innerHTML = '❌ ' + (currentLang === 'en' ? 'Connection failed. Check your API credentials.' : 'Conexión fallida. Verifica tus credenciales.');
+            document.getElementById('providerSyncStatus').innerHTML = '❌ ' + (currentLang === 'en' ? 'Conexión fallida. Verifica tus credenciales.' : 'Conexión fallida. Verifica tus credenciales.');
         }
     }, 1500);
 }
 
 function syncPayrollNow() {
     var provider = payrollProviderConfig.selected;
-    document.getElementById('providerSyncStatus').innerHTML = '🔄 ' + (currentLang === 'en' ? 'Syncing data...' : 'Sincronizando datos...');
+    document.getElementById('providerSyncStatus').innerHTML = '🔄 ' + (currentLang === 'en' ? 'Sincronizando datos...' : 'Sincronizando datos...');
     setTimeout(function() {
-        document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Sync completed. ' : 'Sincronización completada. ') + techsData.length + (currentLang === 'en' ? ' employees synced.' : ' empleados sincronizados.');
-        addSyncHistoryEntry(provider, 'sync', techsData.length + ' employees synced');
+        document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Sincronización completada. ' : 'Sincronización completada. ') + techsData.length + (currentLang === 'en' ? ' empleados sincronizados.' : ' empleados sincronizados.');
+        addSyncHistoryEntry(provider, 'sync', techsData.length + ' empleados sincronizados');
     }, 2000);
 }
 
 function disconnectProvider() {
     var provider = payrollProviderConfig.selected;
-    if (!confirm(currentLang === 'en' ? 'Disconnect this provider?' : '¿Desconectar este proveedor?')) return;
+    if (!confirm(currentLang === 'en' ? '¿Desconectar este proveedor?' : '¿Desconectar este proveedor?')) return;
     if (payrollProviderConfig[provider]) {
         payrollProviderConfig[provider].connected = false;
     }
     localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
-    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Disconnected' : 'Desconectado');
+    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Desconectado' : 'Desconectado');
     document.getElementById('payProviderStatus').style.background = '#f59e0b22';
     document.getElementById('payProviderStatus').style.color = '#f59e0b';
     document.getElementById('providerConfigArea').style.display = 'none';
-    addSyncHistoryEntry(provider, 'disconnect', currentLang === 'en' ? 'Provider disconnected' : 'Proveedor desconectado');
+    addSyncHistoryEntry(provider, 'disconnect', currentLang === 'en' ? 'Proveedor desconectado' : 'Proveedor desconectado');
 }
 
 function addSyncHistoryEntry(provider, action, message) {
@@ -5676,7 +5773,7 @@ function renderSyncHistory() {
     if (!list) return;
     var history = payrollProviderConfig.syncHistory || [];
     if (history.length === 0) {
-        list.innerHTML = '<p class="empty-msg" style="font-size:11px;">' + (currentLang === 'en' ? 'No sync history' : 'Sin historial de sincronización') + '</p>';
+        list.innerHTML = '<p class="empty-msg" style="font-size:11px;">' + (currentLang === 'en' ? 'Sin historial de sincronización' : 'Sin historial de sincronización') + '</p>';
         return;
     }
     var html = '';
@@ -5697,7 +5794,7 @@ window.renderPayroll = function() {
     if (payrollProviderConfig.selected) {
         selectPayrollProvider(payrollProviderConfig.selected);
         if (payrollProviderConfig[payrollProviderConfig.selected] && payrollProviderConfig[payrollProviderConfig.selected].connected) {
-            document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Connected' : 'Conectado');
+            document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Conectado' : 'Conectado');
             document.getElementById('payProviderStatus').style.background = '#10b98122';
             document.getElementById('payProviderStatus').style.color = '#10b981';
         }
@@ -5709,7 +5806,7 @@ window.renderPayroll = function() {
 // ===== HVAC/R DEFAULT PRICE BOOK CATALOG =====
 // ============================================================
 function loadDefaultPriceBook() {
-    if (priceBookData.length > 0 && !confirm(currentLang === 'en' ? 'This will ADD 150+ HVAC items to your price book. Continue?' : 'Esto AGREGARÁ 150+ artículos HVAC a tu lista de precios. ¿Continuar?')) return;
+    if (priceBookData.length > 0 && !confirm(currentLang === 'en' ? 'Esto AGREGARÁ 150+ artículos HVAC a tu lista de precios. ¿Continuar?' : 'Esto AGREGARÁ 150+ artículos HVAC a tu lista de precios. ¿Continuar?')) return;
     var catalog = [
         // ===== AC PARTS =====
         {sku:'CAP-355',name:'Capacitor 35/5 MFD 370/440V',category:'ac_parts',unit:'each',cost:8,price:45,description:'Dual run capacitor para condensadora'},
@@ -5880,12 +5977,370 @@ function loadDefaultPriceBook() {
     });
     localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
     renderPriceBook();
-    alert((currentLang === 'en' ? 'Added ' : 'Se agregaron ') + added + (currentLang === 'en' ? ' HVAC items to your price book!' : ' artículos HVAC a tu lista de precios!'));
+    alert((currentLang === 'en' ? 'Se agregaron ' : 'Se agregaron ') + added + (currentLang === 'en' ? ' artículos HVAC a tu lista de precios!' : ' artículos HVAC a tu lista de precios!'));
 }
 
 function clearPriceBook() {
-    if (!confirm(currentLang === 'en' ? 'Clear ALL items from price book?' : '¿Borrar TODOS los artículos de la lista de precios?')) return;
+    if (!confirm(currentLang === 'en' ? '¿Borrar TODOS los artículos de la lista de precios?' : '¿Borrar TODOS los artículos de la lista de precios?')) return;
     priceBookData = [];
     localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
     renderPriceBook();
 }
+
+// ============================================================
+// ===== HCP IMPORT CENTER =====
+// ============================================================
+var importParsedData = [];
+var importCurrentTab = 'all';
+
+function showImportCenter() {
+    document.getElementById('importCenterContainer').style.display = 'block';
+    importParsedData = [];
+    document.getElementById('importPreviewArea').style.display = 'none';
+    document.getElementById('importStatusArea').style.display = 'none';
+    document.getElementById('importExecuteBtn').disabled = true;
+    document.getElementById('importManualData').value = '';
+    // Scroll into view
+    document.getElementById('importCenterContainer').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideImportCenter() {
+    document.getElementById('importCenterContainer').style.display = 'none';
+    importParsedData = [];
+}
+
+function setImportTab(tab) {
+    importCurrentTab = tab;
+    document.querySelectorAll('.import-tab').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('importTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    // Set the category dropdown to match
+    var catMap = {all:'won', won:'won', estimate:'estimate', existing:'existing'};
+    document.getElementById('importCategory').value = catMap[tab] || 'won';
+}
+
+function handleImportFile(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var text = e.target.result;
+        parseImportData(text, true);
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+function parseImportData(text, isCSV) {
+    var lines = text.split('\n').filter(function(l) { return l.trim(); });
+    if (lines.length < 1) {
+        showImportStatus('⚠️ No se encontraron datos', 'warning');
+        return;
+    }
+
+    importParsedData = [];
+    var headers = null;
+    var startLine = 0;
+
+    if (isCSV && lines.length > 1) {
+        // Try to detect headers
+        var firstLine = lines[0].toLowerCase();
+        var hasHeaders = firstLine.indexOf('name') >= 0 || firstLine.indexOf('nombre') >= 0 ||
+                        firstLine.indexOf('first') >= 0 || firstLine.indexOf('customer') >= 0 ||
+                        firstLine.indexOf('phone') >= 0 || firstLine.indexOf('email') >= 0 ||
+                        firstLine.indexOf('display') >= 0 || firstLine.indexOf('address') >= 0;
+
+        if (hasHeaders) {
+            headers = parseCSVLine(lines[0]).map(function(h) { return h.toLowerCase().trim().replace(/"/g, ''); });
+            startLine = 1;
+        }
+    }
+
+    // Column mapping for HCP exports
+    var colMap = {};
+    if (headers) {
+        colMap.name = findColIndex(headers, ['display name','customer name','nombre','name','first name','full name','client','cliente','customer']);
+        colMap.firstName = findColIndex(headers, ['first name','first','primer nombre']);
+        colMap.lastName = findColIndex(headers, ['last name','last','apellido']);
+        colMap.phone = findColIndex(headers, ['mobile phone','phone','mobile','phone number','telefono','teléfono','celular','primary phone','home phone']);
+        colMap.email = findColIndex(headers, ['email','email address','correo','e-mail']);
+        colMap.address = findColIndex(headers, ['address','street','street address','direccion','dirección','domicilio','property address']);
+        colMap.city = findColIndex(headers, ['city','ciudad']);
+        colMap.state = findColIndex(headers, ['state','estado']);
+        colMap.zip = findColIndex(headers, ['zip','zip code','zipcode','postal','código postal','postal code']);
+        colMap.company = findColIndex(headers, ['company','company name','empresa','compañía','business','business name']);
+        colMap.notes = findColIndex(headers, ['notes','note','notas','comments','tags']);
+        colMap.source = findColIndex(headers, ['source','lead source','fuente','how did you hear']);
+        colMap.status = findColIndex(headers, ['status','customer status','estado','type','customer type']);
+        colMap.created = findColIndex(headers, ['created','date added','created date','date created','fecha','signup date']);
+    }
+
+    for (var i = startLine; i < lines.length; i++) {
+        var cols = isCSV ? parseCSVLine(lines[i]) : lines[i].split(',');
+        cols = cols.map(function(c) { return (c || '').trim().replace(/^"|"$/g, ''); });
+
+        var record = {};
+        if (headers && colMap.name >= 0) {
+            record.name = cols[colMap.name] || '';
+        } else if (headers && colMap.firstName >= 0) {
+            var fn = cols[colMap.firstName] || '';
+            var ln = colMap.lastName >= 0 ? (cols[colMap.lastName] || '') : '';
+            record.name = (fn + ' ' + ln).trim();
+        } else {
+            // No headers or no name column - assume: Name, Phone, Email, Address
+            record.name = cols[0] || '';
+        }
+
+        if (!record.name) continue;
+
+        record.phone = headers && colMap.phone >= 0 ? (cols[colMap.phone] || '') : (cols[1] || '');
+        record.email = headers && colMap.email >= 0 ? (cols[colMap.email] || '') : (cols[2] || '');
+
+        // Build address
+        if (headers && colMap.address >= 0) {
+            var addrParts = [cols[colMap.address] || ''];
+            if (colMap.city >= 0 && cols[colMap.city]) addrParts.push(cols[colMap.city]);
+            if (colMap.state >= 0 && cols[colMap.state]) addrParts.push(cols[colMap.state]);
+            if (colMap.zip >= 0 && cols[colMap.zip]) addrParts.push(cols[colMap.zip]);
+            record.address = addrParts.filter(function(p) { return p; }).join(', ');
+        } else {
+            record.address = cols[3] || '';
+        }
+
+        record.company = headers && colMap.company >= 0 ? (cols[colMap.company] || '') : '';
+        record.notes = headers && colMap.notes >= 0 ? (cols[colMap.notes] || '') : '';
+        record.hcpSource = headers && colMap.source >= 0 ? (cols[colMap.source] || '') : '';
+        record.hcpStatus = headers && colMap.status >= 0 ? (cols[colMap.status] || '') : '';
+        record.hcpCreated = headers && colMap.created >= 0 ? (cols[colMap.created] || '') : '';
+
+        // Auto-detect category from HCP status
+        var statusLower = (record.hcpStatus || '').toLowerCase();
+        if (statusLower.indexOf('won') >= 0 || statusLower.indexOf('completed') >= 0 || statusLower.indexOf('active') >= 0) {
+            record.autoCategory = 'won';
+        } else if (statusLower.indexOf('estimate') >= 0 || statusLower.indexOf('pending') >= 0 || statusLower.indexOf('open') >= 0) {
+            record.autoCategory = 'estimate';
+        } else {
+            record.autoCategory = 'existing';
+        }
+
+        record.selected = true;
+        importParsedData.push(record);
+    }
+
+    if (importParsedData.length === 0) {
+        showImportStatus('⚠️ No se encontraron registros válidos. Verifica el formato del archivo.', 'warning');
+        return;
+    }
+
+    showImportStatus('✅ ' + importParsedData.length + ' registros encontrados. Revisa la vista previa y haz clic en Importar.', 'success');
+    document.getElementById('importExecuteBtn').disabled = false;
+    renderImportPreview();
+}
+
+function previewImport() {
+    var manual = document.getElementById('importManualData').value.trim();
+    if (manual) {
+        parseImportData(manual, false);
+    } else if (importParsedData.length > 0) {
+        renderImportPreview();
+    } else {
+        showImportStatus('⚠️ Sube un archivo CSV o pega datos manualmente primero.', 'warning');
+    }
+}
+
+function renderImportPreview() {
+    var area = document.getElementById('importPreviewArea');
+    var data = importParsedData;
+    var catFilter = importCurrentTab;
+
+    if (catFilter !== 'all') {
+        data = data.filter(function(r) { return r.autoCategory === catFilter; });
+    }
+
+    // Duplicate check
+    var dupCount = 0;
+    var skipDups = document.getElementById('importSkipDuplicates').checked;
+    data.forEach(function(r) {
+        r.isDuplicate = clientsData.some(function(c) {
+            return c.name && r.name && c.name.toLowerCase() === r.name.toLowerCase() ||
+                   (r.phone && c.phone && c.phone.replace(/\D/g,'') === r.phone.replace(/\D/g,''));
+        });
+        if (r.isDuplicate) dupCount++;
+    });
+
+    var catIcons = {won:'🏆', estimate:'📝', existing:'👥', lead:'🎯'};
+    var catColors = {won:'#10b981', estimate:'#f59e0b', existing:'#3b82f6', lead:'#8b5cf6'};
+
+    var html = '<div style="padding:4px 12px;background:var(--bg-card);border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;">';
+    html += '<span><strong>' + data.length + '</strong> registros';
+    if (dupCount > 0) html += ' | <span style="color:#f59e0b;">' + dupCount + ' duplicados</span>';
+    html += '</span>';
+
+    // Category counts
+    var cats = {won:0, estimate:0, existing:0};
+    importParsedData.forEach(function(r) { if (cats[r.autoCategory] !== undefined) cats[r.autoCategory]++; });
+    html += '<span>🏆 ' + cats.won + ' | 📝 ' + cats.estimate + ' | 👥 ' + cats.existing + '</span>';
+    html += '</div>';
+
+    html += '<table class="data-table" style="font-size:11px;"><thead><tr><th style="width:30px;">✓</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th>Cat.</th><th>Status</th></tr></thead><tbody>';
+    data.forEach(function(r, idx) {
+        var rowStyle = r.isDuplicate ? 'background:rgba(245,158,11,0.08);' : '';
+        var cat = r.autoCategory || 'existing';
+        html += '<tr style="' + rowStyle + '">';
+        html += '<td><input type="checkbox" ' + (r.selected && !(r.isDuplicate && skipDups) ? 'checked' : '') + ' onchange="toggleImportRow(' + idx + ',this.checked)"></td>';
+        html += '<td><strong>' + r.name + '</strong>' + (r.company ? '<br><small style="color:var(--text-muted);">' + r.company + '</small>' : '') + '</td>';
+        html += '<td>' + (r.phone || '<span style="color:#ccc;">—</span>') + '</td>';
+        html += '<td>' + (r.email || '<span style="color:#ccc;">—</span>') + '</td>';
+        html += '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.address || '<span style="color:#ccc;">—</span>') + '</td>';
+        html += '<td><span style="color:' + (catColors[cat]||'#64748b') + ';">' + (catIcons[cat]||'') + '</span></td>';
+        html += '<td>';
+        if (r.isDuplicate) html += '<span class="badge" style="background:#f59e0b22;color:#f59e0b;">Duplicado</span>';
+        else html += '<span class="badge" style="background:#10b98122;color:#10b981;">Nuevo</span>';
+        html += '</td></tr>';
+    });
+    html += '</tbody></table>';
+    area.innerHTML = html;
+    area.style.display = 'block';
+}
+
+function toggleImportRow(idx, checked) {
+    if (importParsedData[idx]) importParsedData[idx].selected = checked;
+}
+
+async function executeImport() {
+    var category = document.getElementById('importCategory').value;
+    var propType = document.getElementById('importPropertyType').value;
+    var source = document.getElementById('importSource').value;
+    var skipDups = document.getElementById('importSkipDuplicates').checked;
+
+    var toImport = importParsedData.filter(function(r) {
+        if (!r.selected) return false;
+        if (skipDups && r.isDuplicate) return false;
+        return true;
+    });
+
+    if (toImport.length === 0) {
+        showImportStatus('⚠️ No hay registros para importar.', 'warning');
+        return;
+    }
+
+    document.getElementById('importExecuteBtn').disabled = true;
+    document.getElementById('importExecuteBtn').textContent = '⏳ Importando...';
+    showImportStatus('⏳ Importando ' + toImport.length + ' clientes...', 'info');
+
+    var imported = 0, errors = 0;
+    var tagMap = {won: ['Won', 'HCP Import'], estimate: ['Estimate', 'HCP Import'], existing: ['Existing', 'HCP Import'], lead: ['Lead', 'HCP Import']};
+
+    for (var i = 0; i < toImport.length; i++) {
+        var r = toImport[i];
+        var cat = r.autoCategory || category;
+        var tags = tagMap[cat] || ['HCP Import'];
+
+        try {
+            var insertData = {
+                company_id: companyId,
+                name: r.name,
+                phone: r.phone || null,
+                email: r.email || null,
+                address: r.address || null,
+                company: r.company || null,
+                property_type: propType,
+                tags: tags,
+                source: source,
+                notes: [r.notes, r.hcpSource ? 'Fuente HCP: ' + r.hcpSource : '', r.hcpStatus ? 'Status HCP: ' + r.hcpStatus : '', 'Categoría: ' + cat].filter(function(n) { return n; }).join(' | ')
+            };
+
+            var res = await sbClient.from('clients').insert(insertData).select().single();
+            if (res.data) {
+                clientsData.push(res.data);
+                imported++;
+            } else {
+                errors++;
+            }
+        } catch(err) {
+            errors++;
+        }
+
+        // Progress update every 10 records
+        if (i % 10 === 0) {
+            showImportStatus('⏳ Importando... ' + (i + 1) + '/' + toImport.length, 'info');
+        }
+    }
+
+    var catLabel = {won:'Clientes Ganados 🏆', estimate:'En Estimado 📝', existing:'Existentes 👥', lead:'Leads 🎯'};
+    showImportStatus(
+        '✅ Importación completada!\n\n' +
+        '📥 Importados: ' + imported + ' (' + (catLabel[category] || category) + ')\n' +
+        (errors > 0 ? '❌ Errores: ' + errors + '\n' : '') +
+        '⏭️ Omitidos: ' + (toImport.length - imported - errors),
+        'success'
+    );
+
+    document.getElementById('importExecuteBtn').textContent = '📥 Importar Clientes';
+    document.getElementById('importExecuteBtn').disabled = false;
+    renderClientsList();
+    updateKPIs();
+
+    // Auto-create leads for estimate category
+    if (category === 'estimate' || importParsedData.some(function(r) { return r.autoCategory === 'estimate'; })) {
+        var estClients = toImport.filter(function(r) { return (r.autoCategory || category) === 'estimate'; });
+        if (estClients.length > 0) {
+            var createLeads = confirm('¿Crear ' + estClients.length + ' leads automáticamente para los clientes en estimado?');
+            if (createLeads) {
+                var leadsCreated = 0;
+                for (var j = 0; j < estClients.length; j++) {
+                    var ec = estClients[j];
+                    try {
+                        var leadRes = await sbClient.from('leads').insert({
+                            company_id: companyId,
+                            name: ec.name,
+                            phone: ec.phone || null,
+                            email: ec.email || null,
+                            address: ec.address || null,
+                            source: source,
+                            status: 'new',
+                            notes: 'Importado de HCP - En Estimado'
+                        }).select().single();
+                        if (leadRes.data) { leadsData.push(leadRes.data); leadsCreated++; }
+                    } catch(err) {}
+                }
+                alert('✅ ' + leadsCreated + ' leads creados para clientes en estimado');
+            }
+        }
+    }
+}
+
+function showImportStatus(msg, type) {
+    var area = document.getElementById('importStatusArea');
+    var colors = {success:'#10b981', warning:'#f59e0b', info:'#3b82f6', error:'#ef4444'};
+    area.style.display = 'block';
+    area.style.background = (colors[type] || '#64748b') + '11';
+    area.style.border = '1px solid ' + (colors[type] || '#64748b') + '44';
+    area.style.color = colors[type] || 'var(--text-primary)';
+    area.innerHTML = msg.replace(/\n/g, '<br>');
+}
+
+// Drag and drop support
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var dropZone = document.getElementById('importDropZone');
+        if (!dropZone) return;
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = '#f59e0b';
+            dropZone.style.background = 'rgba(245,158,11,0.05)';
+        });
+        dropZone.addEventListener('dragleave', function() {
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = '';
+        });
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = '';
+            if (e.dataTransfer.files.length > 0) {
+                var fakeInput = {files: e.dataTransfer.files};
+                handleImportFile(fakeInput);
+            }
+        });
+    }, 500);
+});
