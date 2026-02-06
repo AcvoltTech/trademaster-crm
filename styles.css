@@ -207,6 +207,10 @@ body {
 .age-warning { margin-top: 12px; padding: 12px; background: rgba(245,158,11,0.1); border: 1px solid var(--warning); border-radius: 8px; color: var(--warning); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .btn-warning-sm { padding: 6px 14px; background: var(--warning); color: #1e293b; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .btn-warning-sm:hover { background: #d97706; }
+
+/* Referral Box */
+.referral-box { padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid var(--primary); border-radius: 10px; }
+.referral-box h5 { color: var(--primary); margin-bottom: 12px; font-size: 14px; }
 .form-select { width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-size: 14px; }
 
 /* === BRAND LOGO === */
