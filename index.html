@@ -119,28 +119,37 @@
         </div>
         <nav class="sidebar-nav">
           <div class="nav-group">
-            <span class="nav-group-title">Principal</span>
-            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> Dashboard</a>
-            <a href="#" onclick="showSection('calendar')" class="nav-link"><span>📅</span> Calendario</a>
-            <a href="#" onclick="showSection('inbox')" class="nav-link"><span>📬</span> Inbox</a>
-            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> Leads</a>
-            <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> Dispatch</a>
+            <span class="nav-group-title" data-i18n="nav_principal">Principal</span>
+            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
+            <a href="#" onclick="showSection('inbox')" class="nav-link"><span>📬</span> <span data-i18n="nav_inbox">Bandeja</span></a>
+            <a href="#" onclick="showSection('calendar')" class="nav-link"><span>📅</span> <span data-i18n="nav_schedule">Agenda</span></a>
+            <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> <span data-i18n="nav_customers">Clientes</span></a>
+            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> <span data-i18n="nav_leads">Leads</span></a>
+            <a href="#" onclick="showSection('pipeline')" class="nav-link"><span>📈</span> <span data-i18n="nav_pipeline">Pipeline</span></a>
           </div>
           <div class="nav-group">
-            <span class="nav-group-title">Gestión</span>
-            <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> Clientes</a>
-            <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> Trabajos</a>
-            <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> Técnicos</a>
-            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> Home Advisors</a>
+            <span class="nav-group-title" data-i18n="nav_operations">Operaciones</span>
+            <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> <span data-i18n="nav_dispatch">Despacho</span></a>
+            <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> <span data-i18n="nav_jobs">Trabajos</span></a>
+            <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> <span data-i18n="nav_technicians">Técnicos</span></a>
+            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> <span data-i18n="nav_advisors">Home Advisors</span></a>
           </div>
           <div class="nav-group">
-            <span class="nav-group-title">Finanzas</span>
-            <a href="#" onclick="showSection('invoices')" class="nav-link"><span>📄</span> Facturas</a>
-            <a href="#" onclick="showSection('collections')" class="nav-link"><span>💰</span> Cobranza</a>
+            <span class="nav-group-title" data-i18n="nav_finance">Finanzas</span>
+            <a href="#" onclick="showSection('invoices')" class="nav-link"><span>📄</span> <span data-i18n="nav_invoices">Facturas</span></a>
+            <a href="#" onclick="showSection('collections')" class="nav-link"><span>💰</span> <span data-i18n="nav_collections">Cobranza</span></a>
+            <a href="#" onclick="showSection('mymoney')" class="nav-link"><span>💵</span> <span data-i18n="nav_mymoney">Mi Dinero</span></a>
+            <a href="#" onclick="showSection('payroll')" class="nav-link"><span>🧾</span> <span data-i18n="nav_payroll">Nómina</span></a>
           </div>
           <div class="nav-group">
-            <span class="nav-group-title">Sistema</span>
-            <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> Configuración</a>
+            <span class="nav-group-title" data-i18n="nav_growth">Crecimiento</span>
+            <a href="#" onclick="showSection('marketing')" class="nav-link"><span>📣</span> <span data-i18n="nav_marketing">Marketing</span></a>
+            <a href="#" onclick="showSection('pricebook')" class="nav-link"><span>📒</span> <span data-i18n="nav_pricebook">Lista de Precios</span></a>
+            <a href="#" onclick="showSection('reports')" class="nav-link"><span>📊</span> <span data-i18n="nav_reports">Reportes</span></a>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title" data-i18n="nav_system">Sistema</span>
+            <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> <span data-i18n="nav_settings">Configuración</span></a>
           </div>
         </nav>
         <div class="sidebar-footer">
@@ -186,6 +195,10 @@
               </div>
             </div>
             <span id="companyDisplay" class="company-name"></span>
+            <!-- Language Toggle -->
+            <button class="lang-toggle-btn" onclick="toggleLanguage()" title="Cambiar Idioma / Change Language">
+              <span id="langFlag">🇲🇽</span> <span id="langLabel">ES</span>
+            </button>
             <div id="userInitials" class="user-avatar">M</div>
           </div>
         </header>
@@ -194,25 +207,143 @@
 
           <!-- ===== DASHBOARD ===== -->
           <div id="dashboard-section" class="section active">
-            <div class="kpi-grid">
-              <div class="kpi-card kpi-clickable" onclick="showSection('leads')"><span class="kpi-label">Leads</span><span class="kpi-value" id="leadCountKPI">0</span><span class="kpi-sub">Total de leads</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('dispatch')"><span class="kpi-label">Trabajos Activos</span><span class="kpi-value" id="jobCountKPI">0</span><span class="kpi-sub">En progreso</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('technicians')"><span class="kpi-label">Técnicos</span><span class="kpi-value" id="techCountKPI">0</span><span class="kpi-sub">Registrados</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('clients')"><span class="kpi-label">Clientes</span><span class="kpi-value" id="clientCountKPI">0</span><span class="kpi-sub">Clientes activos</span></div>
+
+            <!-- HCP-Style Welcome Banner -->
+            <div class="hcp-welcome-banner">
+              <button class="hcp-close-banner" onclick="this.parentElement.style.display='none'">✕</button>
+              <h2 id="dashWelcomeMsg" data-i18n="dash_welcome">Hola, ¿en qué nos enfocamos hoy?</h2>
+              <div class="hcp-quick-actions">
+                <button onclick="quickAddAction('estimate')">✨ <span data-i18n="dash_add_material">Agregar materiales</span></button>
+                <button onclick="showSection('clients')">✨ <span data-i18n="dash_import_data">Importar datos</span></button>
+                <button onclick="showSection('marketing')">✨ <span data-i18n="dash_connect_reviews">Conectar reseñas</span></button>
+                <button onclick="showSection('reports')">✨ <span data-i18n="dash_ask_something">Preguntar algo</span></button>
+              </div>
             </div>
-            <!-- Advanced KPIs -->
-            <div class="kpi-grid" style="margin-top:8px;">
-              <div class="kpi-card kpi-clickable" onclick="showSection('invoices')" style="border-left:3px solid #10b981;"><span class="kpi-label">💰 Revenue Earned</span><span class="kpi-value" id="revenueKPI" style="color:#10b981;">$0</span><span class="kpi-sub">Total cobrado</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('dispatch')" style="border-left:3px solid #3b82f6;"><span class="kpi-label">✅ Jobs Completed</span><span class="kpi-value" id="jobsCompletedKPI" style="color:#3b82f6;">0</span><span class="kpi-sub">Trabajos terminados</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('invoices')" style="border-left:3px solid #f59e0b;"><span class="kpi-label">📊 Avg Job Size</span><span class="kpi-value" id="avgJobKPI" style="color:#f59e0b;">$0</span><span class="kpi-sub">Ticket promedio</span></div>
-              <div class="kpi-card kpi-clickable" onclick="showSection('jobs')" style="border-left:3px solid #8b5cf6;"><span class="kpi-label">📋 Open Estimates</span><span class="kpi-value" id="openEstKPI" style="color:#8b5cf6;">0</span><span class="kpi-sub">Estimados abiertos</span></div>
+
+            <!-- HCP-Style Summary Cards (Estimates / Jobs / Invoices / Service Plans) -->
+            <div class="hcp-summary-grid">
+              <div class="hcp-summary-card" onclick="showSection('jobs')">
+                <div class="hcp-summary-header">
+                  <span class="hcp-summary-icon">📋</span>
+                  <span data-i18n="dash_estimates">Estimados</span>
+                  <button class="hcp-plus-btn" onclick="event.stopPropagation();quickAddAction('estimate')">+</button>
+                </div>
+                <div class="hcp-summary-body">
+                  <span class="hcp-big-num" id="hcpOpenEstimates">0</span>
+                  <div class="hcp-summary-detail">
+                    <span data-i18n="dash_open_estimates">Estimados abiertos</span> <span class="hcp-summary-info">ⓘ</span>
+                  </div>
+                  <span class="hcp-sub-amount" id="hcpEstimatesAmount">$0.00</span>
+                </div>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')" data-i18n="dash_view_all_estimates">Ver todos los estimados</a>
+              </div>
+
+              <div class="hcp-summary-card" onclick="showSection('dispatch')">
+                <div class="hcp-summary-header">
+                  <span class="hcp-summary-icon">🔧</span>
+                  <span data-i18n="dash_jobs">Trabajos</span>
+                  <button class="hcp-plus-btn" onclick="event.stopPropagation();quickAddAction('job')">+</button>
+                </div>
+                <div class="hcp-summary-body">
+                  <span class="hcp-big-num" id="hcpUnschedJobs">0</span>
+                  <div class="hcp-summary-detail">
+                    <span data-i18n="dash_unsched_jobs">Trabajos sin agendar</span> <span class="hcp-summary-info">ⓘ</span>
+                  </div>
+                  <span class="hcp-sub-amount" id="hcpJobsAmount">$0.00</span>
+                </div>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')" data-i18n="dash_view_all_jobs">Ver todos los trabajos</a>
+              </div>
+
+              <div class="hcp-summary-card" onclick="showSection('invoices')">
+                <div class="hcp-summary-header">
+                  <span class="hcp-summary-icon">📄</span>
+                  <span data-i18n="dash_invoices">Facturas</span>
+                </div>
+                <div class="hcp-summary-body">
+                  <span class="hcp-big-num" id="hcpOpenInvoices">0</span>
+                  <div class="hcp-summary-detail">
+                    <span data-i18n="dash_open_invoices">Facturas abiertas</span> <span class="hcp-summary-info">ⓘ</span>
+                  </div>
+                  <span class="hcp-sub-amount" id="hcpInvoicesAmount">$0.00</span>
+                </div>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('invoices')" data-i18n="dash_view_all_invoices">Ver todas las facturas</a>
+              </div>
+
+              <div class="hcp-summary-card" onclick="showSection('dashboard')">
+                <div class="hcp-summary-header">
+                  <span class="hcp-summary-icon">🛡️</span>
+                  <span data-i18n="dash_service_plans">Planes de Servicio</span>
+                </div>
+                <div class="hcp-summary-body">
+                  <p class="hcp-sp-text" data-i18n="dash_sp_desc">Crea planes de servicio para crecer ingresos y fidelizar clientes.</p>
+                </div>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showServicePlanForm()" data-i18n="dash_create_template">+ Crear plantilla</a>
+              </div>
+            </div>
+
+            <!-- Year to Date KPIs (Housecall Pro style) -->
+            <div class="hcp-ytd-section">
+              <div class="hcp-ytd-header">
+                <select id="ytdPeriod" class="inline-select" onchange="renderYTDKpis()" style="padding:6px 10px;font-size:13px;font-weight:600;">
+                  <option value="ytd" data-i18n="dash_ytd">Año hasta la fecha</option>
+                  <option value="mtd" data-i18n="dash_mtd">Mes hasta la fecha</option>
+                  <option value="last30" data-i18n="dash_last30">Últimos 30 días</option>
+                  <option value="last90" data-i18n="dash_last90">Últimos 90 días</option>
+                </select>
+                <a class="hcp-link" onclick="showSection('reports')" data-i18n="dash_view_reports">Ver todos los reportes</a>
+              </div>
+              <div class="hcp-ytd-grid">
+                <div class="hcp-ytd-card">
+                  <span class="hcp-ytd-label" data-i18n="kpi_revenue">INGRESOS GANADOS</span> <span class="hcp-summary-info">ⓘ</span>
+                  <span class="hcp-ytd-value" id="ytdRevenue">--</span>
+                </div>
+                <div class="hcp-ytd-card">
+                  <span class="hcp-ytd-label" data-i18n="kpi_completed">TRABAJOS COMPLETADOS</span> <span class="hcp-summary-info">ⓘ</span>
+                  <span class="hcp-ytd-value" id="ytdCompleted">--</span>
+                </div>
+                <div class="hcp-ytd-card">
+                  <span class="hcp-ytd-label" data-i18n="kpi_avg_job">TICKET PROMEDIO</span> <span class="hcp-summary-info">ⓘ</span>
+                  <span class="hcp-ytd-value" id="ytdAvgJob">--</span>
+                </div>
+                <div class="hcp-ytd-card">
+                  <span class="hcp-ytd-label" data-i18n="kpi_new_booked">NUEVOS TRABAJOS</span> <span class="hcp-summary-info">ⓘ</span>
+                  <span class="hcp-ytd-value" id="ytdNewBooked">--</span>
+                </div>
+                <div class="hcp-ytd-card">
+                  <span class="hcp-ytd-label" data-i18n="kpi_online_booked">RESERVADOS EN LÍNEA</span> <span class="hcp-summary-info">ⓘ</span>
+                  <span class="hcp-ytd-value" id="ytdOnlineBooked">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Employee Status + Map (Housecall Pro style) -->
+            <div class="hcp-employee-section">
+              <div class="hcp-employee-left">
+                <div class="hcp-employee-header">
+                  <h3 data-i18n="dash_employee_status">Estado de Empleados</h3>
+                  <div class="hcp-today-toggle">
+                    <button class="hcp-toggle-btn active" onclick="setEmployeeView('today')" data-i18n="dash_today">Hoy</button>
+                    <button class="hcp-toggle-btn" onclick="setEmployeeView('tomorrow')" data-i18n="dash_tomorrow">Mañana</button>
+                  </div>
+                </div>
+                <div id="employeeStatusList" class="hcp-employee-list">
+                  <p class="empty-msg" data-i18n="dash_see_jobs">Ve los trabajos y estimados del día</p>
+                </div>
+                <div class="hcp-employee-actions">
+                  <button class="btn-secondary btn-sm" onclick="quickAddAction('job')" data-i18n="dash_add_job">Agregar trabajo</button>
+                  <button class="btn-secondary btn-sm" onclick="quickAddAction('estimate')" data-i18n="dash_add_estimate">Agregar estimado</button>
+                </div>
+              </div>
+              <div class="hcp-employee-right">
+                <div id="employeeStatusMap" style="width:100%;height:100%;min-height:300px;border-radius:8px;"></div>
+              </div>
             </div>
 
             <!-- Estimates Pipeline -->
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
-                <h3>📋 Pipeline de Estimados</h3>
-                <button class="btn-primary btn-sm" onclick="showSection('jobs')">+ Nuevo Estimado</button>
+                <h3>📋 <span data-i18n="dash_est_pipeline">Pipeline de Estimados</span></h3>
+                <button class="btn-primary btn-sm" onclick="showSection('jobs')">+ <span data-i18n="dash_new_estimate">Nuevo Estimado</span></button>
               </div>
               <div id="estimatePipeline" class="pipeline-row">
                 <div class="pipeline-card pipeline-open">
@@ -1747,6 +1878,423 @@
                 <h4 style="color:var(--primary);margin-bottom:12px;">🧪 Datos de Demostración</h4>
                 <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Crea técnicos, clientes, leads y citas de ejemplo para probar el sistema.</p>
                 <button class="btn-secondary btn-sm" onclick="seedDemoData()">🎲 Crear Datos Demo</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== PIPELINE ===== -->
+          <div id="pipeline-section" class="section">
+            <div class="card">
+              <div class="card-top">
+                <h3>📈 <span data-i18n="pipe_title">Pipeline de Ventas</span></h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <select id="pipeFilterPeriod" class="inline-select" onchange="renderPipelineSection()" style="padding:8px 12px;font-size:12px;">
+                    <option value="all" data-i18n="pipe_all">Todos</option>
+                    <option value="week" data-i18n="pipe_week">Esta Semana</option>
+                    <option value="month" data-i18n="pipe_month">Este Mes</option>
+                    <option value="quarter" data-i18n="pipe_quarter">Este Trimestre</option>
+                  </select>
+                  <button class="btn-primary btn-sm" onclick="quickAddAction('estimate')">+ <span data-i18n="pipe_new_est">Nuevo Estimado</span></button>
+                </div>
+              </div>
+
+              <!-- Pipeline Kanban Board -->
+              <div class="pipeline-kanban" id="pipelineKanban">
+                <div class="kanban-col kanban-new">
+                  <div class="kanban-col-header"><span data-i18n="pipe_new">Nuevos</span> <span class="kanban-count" id="kanbanNewCount">0</span></div>
+                  <div class="kanban-items" id="kanbanNew"></div>
+                </div>
+                <div class="kanban-col kanban-quoted">
+                  <div class="kanban-col-header"><span data-i18n="pipe_quoted">Cotizados</span> <span class="kanban-count" id="kanbanQuotedCount">0</span></div>
+                  <div class="kanban-items" id="kanbanQuoted"></div>
+                </div>
+                <div class="kanban-col kanban-approved">
+                  <div class="kanban-col-header"><span data-i18n="pipe_approved">Aprobados</span> <span class="kanban-count" id="kanbanApprovedCount">0</span></div>
+                  <div class="kanban-items" id="kanbanApproved"></div>
+                </div>
+                <div class="kanban-col kanban-scheduled">
+                  <div class="kanban-col-header"><span data-i18n="pipe_scheduled">Agendados</span> <span class="kanban-count" id="kanbanScheduledCount">0</span></div>
+                  <div class="kanban-items" id="kanbanScheduled"></div>
+                </div>
+                <div class="kanban-col kanban-won">
+                  <div class="kanban-col-header"><span data-i18n="pipe_won">Ganados</span> <span class="kanban-count" id="kanbanWonCount">0</span></div>
+                  <div class="kanban-items" id="kanbanWon"></div>
+                </div>
+              </div>
+
+              <!-- Pipeline Stats -->
+              <div class="hcp-ytd-grid" style="margin-top:16px;">
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pipe_total_value">VALOR TOTAL</span><span class="hcp-ytd-value" id="pipeTotalValue">$0</span></div>
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pipe_conversion">TASA DE CONVERSIÓN</span><span class="hcp-ytd-value" id="pipeConvRate">0%</span></div>
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pipe_avg_deal">TRATO PROMEDIO</span><span class="hcp-ytd-value" id="pipeAvgDeal">$0</span></div>
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pipe_avg_close">DÍAS PARA CERRAR</span><span class="hcp-ytd-value" id="pipeAvgClose">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== MY MONEY / MI DINERO ===== -->
+          <div id="mymoney-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💵</span> <span data-i18n="money_income">Ingresos</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" style="color:#10b981;" id="moneyIncome">$0.00</span><span class="hcp-sub-amount" data-i18n="money_this_month">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #ef4444;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📤</span> <span data-i18n="money_expenses">Gastos</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" style="color:#ef4444;" id="moneyExpenses">$0.00</span><span class="hcp-sub-amount" data-i18n="money_this_month">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💰</span> <span data-i18n="money_profit">Ganancia Neta</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" style="color:#3b82f6;" id="moneyProfit">$0.00</span><span class="hcp-sub-amount" data-i18n="money_this_month">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">⏳</span> <span data-i18n="money_outstanding">Por Cobrar</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" style="color:#f59e0b;" id="moneyOutstanding">$0.00</span><span class="hcp-sub-amount" data-i18n="money_overdue_invoices">Facturas pendientes</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>💵 <span data-i18n="money_transactions">Transacciones</span></h3>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-primary btn-sm" onclick="showExpenseForm()" data-i18n="money_add_expense">+ Agregar Gasto</button>
+                  <select id="moneyPeriodFilter" class="inline-select" onchange="renderMyMoney()" style="padding:6px 10px;font-size:12px;">
+                    <option value="month" data-i18n="money_f_month">Este Mes</option>
+                    <option value="quarter" data-i18n="money_f_quarter">Este Trimestre</option>
+                    <option value="year" data-i18n="money_f_year">Este Año</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Expense Form -->
+              <div id="expenseFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;" data-i18n="money_new_expense">Nuevo Gasto</h4>
+                <form onsubmit="handleExpenseCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="money_desc">Descripción</label><input type="text" id="expDesc" required placeholder="Ej: Materiales, Herramientas..."></div>
+                    <div class="form-group"><label data-i18n="money_amount">Monto</label><input type="number" id="expAmount" required min="0" step="0.01" placeholder="0.00"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="money_category">Categoría</label>
+                      <select id="expCategory">
+                        <option value="materials">Materiales / Parts</option>
+                        <option value="tools">Herramientas / Tools</option>
+                        <option value="fuel">Gasolina / Fuel</option>
+                        <option value="vehicle">Vehículo / Vehicle</option>
+                        <option value="insurance">Seguros / Insurance</option>
+                        <option value="licenses">Licencias / Licenses</option>
+                        <option value="marketing">Marketing / Advertising</option>
+                        <option value="payroll">Nómina / Payroll</option>
+                        <option value="rent">Renta / Rent</option>
+                        <option value="utilities">Servicios / Utilities</option>
+                        <option value="other">Otro / Other</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label data-i18n="money_date">Fecha</label><input type="date" id="expDate"></div>
+                  </div>
+                  <div class="form-group"><label data-i18n="money_notes">Notas</label><textarea id="expNotes" rows="2" placeholder="Notas adicionales..."></textarea></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="money_save">Guardar</span></button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideExpenseForm()" data-i18n="btn_cancel">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Profit/Loss Chart -->
+              <div id="moneyChart" class="pipeline-chart" style="margin-bottom:16px;"></div>
+
+              <!-- Transactions Table -->
+              <div id="moneyTransactions"></div>
+            </div>
+          </div>
+
+          <!-- ===== PAYROLL / NÓMINA ===== -->
+          <div id="payroll-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">👷</span> <span data-i18n="pay_employees">Empleados</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="payEmployeeCount">0</span><span class="hcp-sub-amount" data-i18n="pay_active">Activos</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💰</span> <span data-i18n="pay_this_period">Este Período</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="payPeriodTotal">$0.00</span><span class="hcp-sub-amount" data-i18n="pay_total_payroll">Total nómina</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">⏰</span> <span data-i18n="pay_hours">Horas</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="payTotalHours">0</span><span class="hcp-sub-amount" data-i18n="pay_this_week">Esta semana</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #ef4444;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📋</span> <span data-i18n="pay_pending">Pendiente</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="payPending">0</span><span class="hcp-sub-amount" data-i18n="pay_to_process">Por procesar</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-top">
+                <h3>🧾 <span data-i18n="pay_title">Nómina / Payroll</span></h3>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-primary btn-sm" onclick="showPayrollEntry()">+ <span data-i18n="pay_add_entry">Agregar Entrada</span></button>
+                  <select id="payPeriodFilter" class="inline-select" onchange="renderPayroll()" style="padding:6px 10px;font-size:12px;">
+                    <option value="week" data-i18n="pay_f_week">Esta Semana</option>
+                    <option value="biweekly" data-i18n="pay_f_biweek">Quincenal</option>
+                    <option value="month" data-i18n="pay_f_month">Mensual</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="payrollFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;" data-i18n="pay_new_entry">Nueva Entrada de Nómina</h4>
+                <form onsubmit="handlePayrollCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pay_tech">Técnico</label><select id="payTechSelect"></select></div>
+                    <div class="form-group"><label data-i18n="pay_type">Tipo</label>
+                      <select id="payType">
+                        <option value="hourly">Por Hora / Hourly</option>
+                        <option value="salary">Salario / Salary</option>
+                        <option value="commission">Comisión / Commission</option>
+                        <option value="bonus">Bono / Bonus</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pay_hours_worked">Horas Trabajadas</label><input type="number" id="payHours" min="0" step="0.5" placeholder="40"></div>
+                    <div class="form-group"><label data-i18n="pay_rate">Tarifa ($)</label><input type="number" id="payRate" min="0" step="0.01" placeholder="25.00"></div>
+                    <div class="form-group"><label data-i18n="pay_total">Total ($)</label><input type="number" id="payTotal" min="0" step="0.01" placeholder="1000.00"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pay_period_start">Inicio del Período</label><input type="date" id="payStart"></div>
+                    <div class="form-group"><label data-i18n="pay_period_end">Fin del Período</label><input type="date" id="payEnd"></div>
+                  </div>
+                  <div class="form-group"><label data-i18n="pay_notes">Notas</label><textarea id="payNotes" rows="2" placeholder="Overtime, deductions, notas..."></textarea></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="pay_save">Guardar</span></button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hidePayrollEntry()" data-i18n="btn_cancel">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Payroll Table -->
+              <div id="payrollTable"></div>
+            </div>
+          </div>
+
+          <!-- ===== MARKETING ===== -->
+          <div id="marketing-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">⭐</span> <span data-i18n="mkt_reviews">Reseñas</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mktReviewCount">0</span><span class="hcp-sub-amount" data-i18n="mkt_avg_rating">Rating promedio</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📧</span> <span data-i18n="mkt_campaigns">Campañas</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mktCampaignCount">0</span><span class="hcp-sub-amount" data-i18n="mkt_active">Activas</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📱</span> <span data-i18n="mkt_lead_source">Fuentes de Leads</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mktLeadSources">0</span><span class="hcp-sub-amount" data-i18n="mkt_channels">Canales</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💸</span> <span data-i18n="mkt_roi">ROI Marketing</span></div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mktROI">0%</span><span class="hcp-sub-amount" data-i18n="mkt_return">Retorno</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>📣 <span data-i18n="mkt_title">Marketing</span></h3>
+                <button class="btn-primary btn-sm" onclick="showCampaignForm()">+ <span data-i18n="mkt_new_campaign">Nueva Campaña</span></button>
+              </div>
+
+              <div id="campaignFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;" data-i18n="mkt_create_campaign">Crear Campaña</h4>
+                <form onsubmit="handleCampaignCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="mkt_camp_name">Nombre</label><input type="text" id="campName" required placeholder="Ej: Promo Verano AC"></div>
+                    <div class="form-group"><label data-i18n="mkt_camp_type">Tipo</label>
+                      <select id="campType">
+                        <option value="email">Email Marketing</option>
+                        <option value="sms">SMS / Texto</option>
+                        <option value="social">Redes Sociales</option>
+                        <option value="postcard">Postal / Postcard</option>
+                        <option value="referral">Referidos / Referral</option>
+                        <option value="google_ads">Google Ads</option>
+                        <option value="facebook_ads">Facebook Ads</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="mkt_budget">Presupuesto ($)</label><input type="number" id="campBudget" min="0" step="0.01" placeholder="500.00"></div>
+                    <div class="form-group"><label data-i18n="mkt_start">Inicio</label><input type="date" id="campStart"></div>
+                    <div class="form-group"><label data-i18n="mkt_end">Fin</label><input type="date" id="campEnd"></div>
+                  </div>
+                  <div class="form-group"><label data-i18n="mkt_message">Mensaje</label><textarea id="campMessage" rows="3" placeholder="Contenido de la campaña..."></textarea></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="mkt_save">Guardar</span></button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideCampaignForm()" data-i18n="btn_cancel">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Lead Source Breakdown -->
+              <h4 style="margin:12px 0 8px;color:var(--text-muted);font-size:13px;" data-i18n="mkt_lead_breakdown">Desglose de Fuentes de Leads</h4>
+              <div id="leadSourceChart" class="pipeline-chart" style="margin-bottom:16px;"></div>
+
+              <!-- Campaigns List -->
+              <div id="campaignsList"></div>
+            </div>
+
+            <!-- Review Request Tool -->
+            <div class="card">
+              <div class="card-top">
+                <h3>⭐ <span data-i18n="mkt_review_requests">Solicitar Reseñas</span></h3>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;" data-i18n="mkt_review_desc">Envía solicitudes de reseñas a tus clientes satisfechos para mejorar tu presencia en línea.</p>
+              <div class="form-row">
+                <div class="form-group"><label data-i18n="mkt_select_client">Cliente</label><select id="reviewClientSelect"></select></div>
+                <div class="form-group"><label data-i18n="mkt_platform">Plataforma</label>
+                  <select id="reviewPlatform">
+                    <option value="google">Google Business</option>
+                    <option value="yelp">Yelp</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="nextdoor">Nextdoor</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-primary btn-sm" onclick="sendReviewRequest()" data-i18n="mkt_send_request">📧 Enviar Solicitud</button>
+              <div id="reviewHistory" style="margin-top:12px;"></div>
+            </div>
+          </div>
+
+          <!-- ===== PRICE BOOK / LISTA DE PRECIOS ===== -->
+          <div id="pricebook-section" class="section">
+            <div class="card">
+              <div class="card-top">
+                <h3>📒 <span data-i18n="pb_title">Lista de Precios / Price Book</span></h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="pbSearch" placeholder="🔍 Buscar parte, servicio..." oninput="filterPriceBook()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px;">
+                  <select id="pbCategoryFilter" class="inline-select" onchange="filterPriceBook()" style="padding:8px 12px;font-size:12px;">
+                    <option value="all" data-i18n="pb_all">Todas las categorías</option>
+                    <option value="ac_parts">AC Parts</option>
+                    <option value="heating_parts">Heating Parts</option>
+                    <option value="refrigeration">Refrigeración</option>
+                    <option value="electrical">Eléctrico</option>
+                    <option value="labor">Mano de Obra / Labor</option>
+                    <option value="equipment">Equipo Nuevo / Equipment</option>
+                    <option value="misc">Misceláneos</option>
+                  </select>
+                  <button class="btn-primary btn-sm" onclick="showPriceBookForm()">+ <span data-i18n="pb_add_item">Agregar Artículo</span></button>
+                </div>
+              </div>
+
+              <div id="priceBookFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;" data-i18n="pb_new_item">Nuevo Artículo</h4>
+                <form onsubmit="handlePriceBookCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pb_name">Nombre</label><input type="text" id="pbName" required placeholder="Ej: Capacitor 45/5 MFD"></div>
+                    <div class="form-group"><label data-i18n="pb_sku">SKU / Part #</label><input type="text" id="pbSku" placeholder="CAP-455"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pb_category">Categoría</label>
+                      <select id="pbCategory">
+                        <option value="ac_parts">AC Parts</option>
+                        <option value="heating_parts">Heating Parts</option>
+                        <option value="refrigeration">Refrigeración</option>
+                        <option value="electrical">Eléctrico</option>
+                        <option value="labor">Mano de Obra</option>
+                        <option value="equipment">Equipo Nuevo</option>
+                        <option value="misc">Misceláneos</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label data-i18n="pb_unit">Unidad</label>
+                      <select id="pbUnit">
+                        <option value="each">Pieza / Each</option>
+                        <option value="hour">Hora / Hour</option>
+                        <option value="foot">Pie / Foot</option>
+                        <option value="lb">Libra / Pound</option>
+                        <option value="flat">Precio Fijo / Flat Rate</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label data-i18n="pb_cost">Costo ($)</label><input type="number" id="pbCost" min="0" step="0.01" placeholder="15.00"></div>
+                    <div class="form-group"><label data-i18n="pb_price">Precio de Venta ($)</label><input type="number" id="pbPrice" required min="0" step="0.01" placeholder="45.00"></div>
+                    <div class="form-group"><label data-i18n="pb_markup">Markup %</label><input type="number" id="pbMarkup" readonly style="background:var(--bg-card);"></div>
+                  </div>
+                  <div class="form-group"><label data-i18n="pb_description">Descripción</label><textarea id="pbDesc" rows="2" placeholder="Descripción del artículo..."></textarea></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="pb_save">Guardar</span></button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hidePriceBookForm()" data-i18n="btn_cancel">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Price Book Stats -->
+              <div class="hcp-ytd-grid" style="margin:12px 0;">
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pb_total_items">TOTAL ARTÍCULOS</span><span class="hcp-ytd-value" id="pbTotalItems">0</span></div>
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pb_avg_markup">MARKUP PROMEDIO</span><span class="hcp-ytd-value" id="pbAvgMarkup">0%</span></div>
+                <div class="hcp-ytd-card"><span class="hcp-ytd-label" data-i18n="pb_categories">CATEGORÍAS</span><span class="hcp-ytd-value" id="pbCategories">0</span></div>
+              </div>
+
+              <!-- Price Book Table -->
+              <div id="priceBookTable"></div>
+            </div>
+          </div>
+
+          <!-- ===== REPORTS / REPORTES ===== -->
+          <div id="reports-section" class="section">
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>📊 <span data-i18n="rpt_title">Reportes</span></h3>
+                <div style="display:flex;gap:8px;">
+                  <select id="rptPeriod" class="inline-select" onchange="renderReports()" style="padding:8px 12px;font-size:12px;">
+                    <option value="week" data-i18n="rpt_week">Esta Semana</option>
+                    <option value="month" selected data-i18n="rpt_month">Este Mes</option>
+                    <option value="quarter" data-i18n="rpt_quarter">Este Trimestre</option>
+                    <option value="year" data-i18n="rpt_year">Este Año</option>
+                    <option value="custom" data-i18n="rpt_custom">Personalizado</option>
+                  </select>
+                  <div id="rptCustomRange" style="display:none;gap:8px;">
+                    <input type="date" id="rptStart" onchange="renderReports()">
+                    <input type="date" id="rptEnd" onchange="renderReports()">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Cards Grid -->
+              <div class="hcp-summary-grid" style="margin-bottom:16px;">
+                <div class="hcp-summary-card"><div class="hcp-summary-header"><span class="hcp-summary-icon">💵</span> <span data-i18n="rpt_revenue">Ingresos</span></div><div class="hcp-summary-body"><span class="hcp-big-num" id="rptRevenue">$0</span></div></div>
+                <div class="hcp-summary-card"><div class="hcp-summary-header"><span class="hcp-summary-icon">📋</span> <span data-i18n="rpt_jobs_done">Trabajos</span></div><div class="hcp-summary-body"><span class="hcp-big-num" id="rptJobsDone">0</span></div></div>
+                <div class="hcp-summary-card"><div class="hcp-summary-header"><span class="hcp-summary-icon">👥</span> <span data-i18n="rpt_new_customers">Nuevos Clientes</span></div><div class="hcp-summary-body"><span class="hcp-big-num" id="rptNewCustomers">0</span></div></div>
+                <div class="hcp-summary-card"><div class="hcp-summary-header"><span class="hcp-summary-icon">📈</span> <span data-i18n="rpt_close_rate">Tasa de Cierre</span></div><div class="hcp-summary-body"><span class="hcp-big-num" id="rptCloseRate">0%</span></div></div>
+              </div>
+            </div>
+
+            <!-- Revenue Chart -->
+            <div class="card" style="margin-bottom:16px;">
+              <h3>💰 <span data-i18n="rpt_revenue_chart">Ingresos por Período</span></h3>
+              <div id="rptRevenueChart" class="pipeline-chart"></div>
+            </div>
+
+            <!-- Reports Grid -->
+            <div class="cards-row">
+              <div class="card">
+                <h3>🔧 <span data-i18n="rpt_by_tech">Por Técnico</span></h3>
+                <div id="rptByTech"></div>
+              </div>
+              <div class="card">
+                <h3>📊 <span data-i18n="rpt_by_source">Por Fuente</span></h3>
+                <div id="rptBySource"></div>
+              </div>
+            </div>
+
+            <div class="cards-row" style="margin-top:16px;">
+              <div class="card">
+                <h3>🏆 <span data-i18n="rpt_top_services">Top Servicios</span></h3>
+                <div id="rptTopServices"></div>
+              </div>
+              <div class="card">
+                <h3>📅 <span data-i18n="rpt_by_day">Por Día de la Semana</span></h3>
+                <div id="rptByDay"></div>
               </div>
             </div>
           </div>
