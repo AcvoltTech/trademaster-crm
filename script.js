@@ -91,8 +91,8 @@ function showDashboard() {
 }
 
 async function loadAllData() {
-    await loadLeadsData();
     await loadTechnicians();
+    await loadLeadsData();
     await loadJobs();
     updateKPIs();
 }
