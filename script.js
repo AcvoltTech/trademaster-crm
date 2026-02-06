@@ -98,12 +98,21 @@ function showDashboard() {
         document.getElementById('settingsCompanyName').value = window._companyInfo.name || '';
         document.getElementById('settingsPhone').value = window._companyInfo.phone || '';
         document.getElementById('settingsEmail').value = window._companyInfo.email || '';
+        var addrEl = document.getElementById('settingsAddress');
+        if (addrEl) addrEl.value = window._companyInfo.address || '';
+        var licEl = document.getElementById('settingsLicense');
+        if (licEl) licEl.value = window._companyInfo.contractor_license || '';
+        // Load extra from localStorage
+        var stgLocal = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+        var bondEl = document.getElementById('settingsBond');
+        if (bondEl) bondEl.value = stgLocal.contractorBond || '';
+        var ownerEl = document.getElementById('settingsOwnerName');
+        if (ownerEl) ownerEl.value = stgLocal.ownerName || '';
         if (window._companyInfo.contract_clauses && window._companyInfo.contract_clauses.payment) {
             loadClausesFromData(window._companyInfo.contract_clauses);
         } else {
             loadDefaultClauses();
         }
-        // Load company documents
         if (window._companyInfo.company_documents) {
             loadCompanyDocs(window._companyInfo.company_documents);
         }
@@ -794,8 +803,33 @@ async function saveSettings() {
     var name = document.getElementById('settingsCompanyName').value;
     var phone = document.getElementById('settingsPhone').value;
     var email = document.getElementById('settingsEmail').value;
-    var res = await sbClient.from('companies').update({ name: name, phone: phone, email: email }).eq('id', companyId);
+    var address = (document.getElementById('settingsAddress') || {}).value || '';
+    var license = (document.getElementById('settingsLicense') || {}).value || '';
+    var bond = (document.getElementById('settingsBond') || {}).value || '';
+    var ownerName = (document.getElementById('settingsOwnerName') || {}).value || '';
+    
+    var updateData = { name: name, phone: phone, email: email, address: address, contractor_license: license };
+    var res = await sbClient.from('companies').update(updateData).eq('id', companyId);
     if (res.error) { alert('Error: ' + res.error.message); return; }
+    
+    // Save extra fields to localStorage
+    var settingsLocal = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+    settingsLocal.contractorLicense = license;
+    settingsLocal.contractorBond = bond;
+    settingsLocal.ownerName = ownerName;
+    settingsLocal.address = address;
+    settingsLocal.companyName = name;
+    localStorage.setItem('tm_settings_' + companyId, JSON.stringify(settingsLocal));
+    
+    // Update window._companyInfo
+    if (window._companyInfo) {
+        window._companyInfo.name = name;
+        window._companyInfo.phone = phone;
+        window._companyInfo.email = email;
+        window._companyInfo.address = address;
+        window._companyInfo.contractor_license = license;
+    }
+    
     // Update all displays
     document.getElementById('companyDisplay').textContent = name;
     var sidebarName = document.querySelector('.sidebar-brand h2');
@@ -2464,9 +2498,25 @@ function printInvoice(invId) {
     html += '</style></head><body>';
 
     // Header
+    var settings = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+    var companyAddr = (window._companyInfo && window._companyInfo.address) ? window._companyInfo.address : (settings.address || '');
+    var companyLicense = settings.contractorLicense || (window._companyInfo && window._companyInfo.contractor_license) || '';
+    var companyBond = settings.contractorBond || '';
+    
+    // Get insurance info from expenses or settings
+    var insuranceInfo = [];
+    var exps = JSON.parse(localStorage.getItem('tm_expenses_' + companyId) || '[]');
+    exps.forEach(function(ex) {
+        if (ex.category === 'general_liability' && ex.vendor) insuranceInfo.push({type:'General Liability', vendor:ex.vendor, policy:ex.policyNum||''});
+        if (ex.category === 'workers_comp' && ex.vendor) insuranceInfo.push({type:'Workers Compensation', vendor:ex.vendor, policy:ex.policyNum||''});
+        if (ex.category === 'bond' && ex.vendor) insuranceInfo.push({type:'Contractor Bond', vendor:ex.vendor, policy:ex.policyNum||''});
+    });
+    
     html += '<div class="inv-header"><div class="company-info"><h1>🔧 ' + company + '</h1>';
+    if (companyAddr) html += '<p>📍 ' + companyAddr + '</p>';
     if (companyPhone) html += '<p>📱 ' + companyPhone + '</p>';
     if (companyEmail) html += '<p>📧 ' + companyEmail + '</p>';
+    if (companyLicense) html += '<p style="font-weight:700;color:#1e3a5f;margin-top:4px;">📜 Lic. # ' + companyLicense + '</p>';
     html += '</div><div class="inv-title"><h2>FACTURA</h2>';
     html += '<p><strong>' + inv.invoice_number + '</strong></p>';
     var badgeClass = 'badge-' + inv.status;
@@ -2484,6 +2534,31 @@ function printInvoice(invId) {
     html += '<p>Vence: ' + dueDate + '</p>';
     html += '<p>Técnico: ' + techName + '</p>';
     html += '</div></div>';
+
+    // Contractor Credentials Box
+    if (companyLicense || insuranceInfo.length > 0) {
+        html += '<div style="margin-bottom:20px;padding:14px;background:#f0f4f8;border:1px solid #cbd5e1;border-radius:8px;">';
+        html += '<h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:8px;">📜 Licencias y Seguros del Contratista</h4>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;font-size:12px;">';
+        if (companyLicense) {
+            html += '<div style="padding:8px;background:white;border-radius:6px;border:1px solid #e2e8f0;">';
+            html += '<strong style="color:#1e3a5f;">📜 Licencia de Contratista</strong><br>';
+            html += '<span style="font-size:14px;font-weight:700;color:#f47621;">' + companyLicense + '</span></div>';
+        }
+        insuranceInfo.forEach(function(ins) {
+            html += '<div style="padding:8px;background:white;border-radius:6px;border:1px solid #e2e8f0;">';
+            html += '<strong style="color:#1e3a5f;">🛡️ ' + ins.type + '</strong><br>';
+            html += '<span>' + ins.vendor + '</span>';
+            if (ins.policy) html += '<br><span style="font-size:11px;color:#666;">Póliza: ' + ins.policy + '</span>';
+            html += '</div>';
+        });
+        if (companyBond) {
+            html += '<div style="padding:8px;background:white;border-radius:6px;border:1px solid #e2e8f0;">';
+            html += '<strong style="color:#1e3a5f;">🏦 Contractor Bond</strong><br>';
+            html += '<span>' + companyBond + '</span></div>';
+        }
+        html += '</div></div>';
+    }
 
     // Items table
     if (items.length > 0) {
@@ -2572,8 +2647,15 @@ function printInvoice(invId) {
     html += '<div class="print-bar"><button class="btn-pr" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button></div>';
 
     // Footer
-    html += '<div class="footer"><p>Gracias por su preferencia | ' + company + '</p>';
-    html += '<p>Generado por Trade Master CRM | trademastersusa.org</p></div>';
+    html += '<div class="footer">';
+    html += '<p><strong>' + company + '</strong></p>';
+    if (companyLicense) html += '<p>📜 Contractor License: ' + companyLicense + ' | State of California</p>';
+    if (insuranceInfo.length > 0) {
+        var insText = insuranceInfo.map(function(i) { return i.type + ': ' + i.vendor + (i.policy ? ' (#' + i.policy + ')' : ''); }).join(' | ');
+        html += '<p>🛡️ ' + insText + '</p>';
+    }
+    html += '<p>Gracias por su preferencia</p>';
+    html += '<p style="margin-top:4px;">Generado por Trade Master CRM | trademastersusa.org</p></div>';
 
     html += '</body></html>';
     w.document.write(html);
