@@ -138,8 +138,14 @@
             <span class="nav-group-title" data-i18n="nav_finance">Finanzas</span>
             <a href="#" onclick="showSection('invoices')" class="nav-link"><span>📄</span> <span data-i18n="nav_invoices">Facturas</span></a>
             <a href="#" onclick="showSection('collections')" class="nav-link"><span>💰</span> <span data-i18n="nav_collections">Cobranza</span></a>
+            <a href="#" onclick="showSection('receipts')" class="nav-link"><span>🧾</span> Recibos</a>
+            <a href="#" onclick="showSection('expenses')" class="nav-link"><span>🏢</span> Gastos del Negocio</a>
             <a href="#" onclick="showSection('mymoney')" class="nav-link"><span>💵</span> <span data-i18n="nav_mymoney">Mi Dinero</span></a>
-            <a href="#" onclick="showSection('payroll')" class="nav-link"><span>🧾</span> <span data-i18n="nav_payroll">Nómina</span></a>
+            <a href="#" onclick="showSection('payroll')" class="nav-link"><span>💳</span> <span data-i18n="nav_payroll">Nómina</span></a>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">Comunicación</span>
+            <a href="#" onclick="showSection('mailbox')" class="nav-link"><span>📬</span> Correo del Negocio</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_growth">Crecimiento</span>
@@ -2401,6 +2407,416 @@
                 <h4 style="font-size:13px;color:var(--text-muted);margin-bottom:8px;" data-i18n="pay_sync_history">Historial de Sincronización</h4>
                 <div id="providerSyncHistory"></div>
               </div>
+            </div>
+          </div>
+
+          <!-- ===== RECIBOS DE PROVEEDORES ===== -->
+          <div id="receipts-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🧾</span> Total Recibos</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="rcptTotal">0</span><span class="hcp-sub-amount">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💰</span> Total Gastado</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="rcptTotalSpent">$0</span><span class="hcp-sub-amount">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📦</span> Proveedores</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="rcptProviders">0</span><span class="hcp-sub-amount">Activos</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📸</span> Sin Foto</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="rcptNoPhoto">0</span><span class="hcp-sub-amount">Pendientes</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>🧾 Recibos de Proveedores</h3>
+                <button class="btn-primary btn-sm" onclick="showReceiptForm()">+ Agregar Recibo</button>
+              </div>
+
+              <div id="receiptFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">📄 Nuevo Recibo</h4>
+                <form onsubmit="handleReceiptCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label>Proveedor</label>
+                      <select id="rcptProvider">
+                        <optgroup label="🏪 Distribuidores HVAC/R">
+                          <option value="Ferguson">Ferguson HVAC</option>
+                          <option value="Johnstone Supply">Johnstone Supply</option>
+                          <option value="Carrier Enterprise">Carrier Enterprise</option>
+                          <option value="US Air Conditioning">US Air Conditioning</option>
+                          <option value="Gemaire">Gemaire</option>
+                          <option value="Grainger">Grainger</option>
+                          <option value="SupplyHouse">SupplyHouse.com</option>
+                          <option value="Trane Supply">Trane Supply</option>
+                          <option value="LennoxPros">LennoxPros</option>
+                        </optgroup>
+                        <optgroup label="🏠 Tiendas Generales">
+                          <option value="Home Depot">Home Depot</option>
+                          <option value="Lowes">Lowe's</option>
+                          <option value="Ace Hardware">Ace Hardware</option>
+                          <option value="Harbor Freight">Harbor Freight</option>
+                          <option value="Walmart">Walmart</option>
+                          <option value="Costco">Costco</option>
+                        </optgroup>
+                        <optgroup label="🌐 En Línea">
+                          <option value="Amazon">Amazon</option>
+                          <option value="eBay">eBay</option>
+                        </optgroup>
+                        <optgroup label="⛽ Gasolina y Vehículos">
+                          <option value="Shell">Shell</option>
+                          <option value="Chevron">Chevron</option>
+                          <option value="ARCO">ARCO</option>
+                          <option value="AutoZone">AutoZone</option>
+                          <option value="OReilly">O'Reilly Auto</option>
+                        </optgroup>
+                        <option value="__other__">✏️ Otro proveedor...</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Categoría</label>
+                      <select id="rcptCategory">
+                        <option value="ac_equipment">Equipos de Aire Acondicionado</option>
+                        <option value="refrigeration_equipment">Equipos de Refrigeración</option>
+                        <option value="heating_equipment">Equipos de Calefacción</option>
+                        <option value="parts">Partes y Refacciones</option>
+                        <option value="refrigerant">Refrigerantes</option>
+                        <option value="tools">Herramientas</option>
+                        <option value="electrical">Material Eléctrico</option>
+                        <option value="ductwork">Ductos y Accesorios</option>
+                        <option value="filters">Filtros</option>
+                        <option value="gas_fuel">Gasolina / Combustible</option>
+                        <option value="vehicle">Vehículo / Mantenimiento</option>
+                        <option value="office">Oficina / Papelería</option>
+                        <option value="safety">Seguridad / EPP</option>
+                        <option value="misc">Misceláneo</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Monto ($)</label><input type="number" id="rcptAmount" min="0" step="0.01" required placeholder="0.00"></div>
+                    <div class="form-group"><label>Impuesto ($)</label><input type="number" id="rcptTax" min="0" step="0.01" placeholder="0.00"></div>
+                    <div class="form-group"><label>Fecha</label><input type="date" id="rcptDate"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label># de Recibo / Invoice</label><input type="text" id="rcptNumber" placeholder="Ej: INV-12345"></div>
+                    <div class="form-group"><label>Método de Pago</label>
+                      <select id="rcptPayMethod">
+                        <option value="credit_card">Tarjeta de Crédito</option>
+                        <option value="debit_card">Tarjeta de Débito</option>
+                        <option value="cash">Efectivo</option>
+                        <option value="check">Cheque</option>
+                        <option value="transfer">Transferencia</option>
+                        <option value="account">Cuenta del Proveedor</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Trabajo Relacionado</label>
+                      <select id="rcptJobId"><option value="">-- Sin trabajo --</option></select>
+                    </div>
+                  </div>
+                  <div class="form-group"><label>Descripción / Items</label><textarea id="rcptDescription" rows="2" placeholder="Ej: 2x Capacitor 45/5 MFD, 1x Contactor 2P 40A"></textarea></div>
+                  <div class="form-group">
+                    <label>📸 Foto del Recibo</label>
+                    <div id="rcptPhotoZone" style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:var(--bg-card);" onclick="document.getElementById('rcptPhotoInput').click()">
+                      <span style="font-size:24px;">📷</span>
+                      <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Haz clic o arrastra la foto del recibo aquí</p>
+                      <img id="rcptPhotoPreview" src="" style="display:none;max-width:200px;margin-top:8px;border-radius:6px;">
+                    </div>
+                    <input type="file" id="rcptPhotoInput" accept="image/*" style="display:none" onchange="previewReceiptPhoto(this)">
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar Recibo</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideReceiptForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Filters -->
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <select id="rcptFilterProvider" onchange="renderReceipts()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;">
+                  <option value="">Todos los Proveedores</option>
+                </select>
+                <select id="rcptFilterCategory" onchange="renderReceipts()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;">
+                  <option value="">Todas las Categorías</option>
+                  <option value="ac_equipment">Equipos AC</option>
+                  <option value="refrigeration_equipment">Equipos Refrigeración</option>
+                  <option value="parts">Partes</option>
+                  <option value="tools">Herramientas</option>
+                  <option value="gas_fuel">Gasolina</option>
+                  <option value="vehicle">Vehículo</option>
+                  <option value="misc">Misceláneo</option>
+                </select>
+                <select id="rcptFilterMonth" onchange="renderReceipts()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;">
+                  <option value="">Todo el Año</option>
+                  <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+                  <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                  <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+                  <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                </select>
+                <button class="btn-secondary btn-sm" onclick="exportReceiptsCSV()">📥 Exportar CSV</button>
+              </div>
+
+              <div id="receiptsList"></div>
+            </div>
+          </div>
+
+          <!-- ===== GASTOS DEL NEGOCIO ===== -->
+          <div id="expenses-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #ef4444;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🏢</span> Gastos Fijos</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="expFixed">$0</span><span class="hcp-sub-amount">Mensuales</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🔄</span> Gastos Variables</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="expVariable">$0</span><span class="hcp-sub-amount">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📊</span> Total Gastos</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="expTotal">$0</span><span class="hcp-sub-amount">Este mes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📗</span> QuickBooks</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" style="font-size:16px;">🔗</span><span class="hcp-sub-amount"><a href="https://quickbooks.intuit.com" target="_blank" style="color:var(--primary);">Ir a QuickBooks</a></span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>🏢 Gastos Fijos y Recurrentes del Negocio</h3>
+                <button class="btn-primary btn-sm" onclick="showExpenseForm()">+ Agregar Gasto</button>
+              </div>
+
+              <div id="expenseFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">💸 Nuevo Gasto del Negocio</h4>
+                <form onsubmit="handleExpenseCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label>Categoría</label>
+                      <select id="expCategory">
+                        <optgroup label="🏠 Local / Oficina">
+                          <option value="rent">Renta del Local / Oficina</option>
+                          <option value="utilities_electric">Electricidad</option>
+                          <option value="utilities_water">Agua</option>
+                          <option value="utilities_gas">Gas Natural</option>
+                          <option value="internet">Internet / Teléfono</option>
+                          <option value="storage">Almacén / Bodega</option>
+                        </optgroup>
+                        <optgroup label="🚐 Vehículos">
+                          <option value="vehicle_insurance">Seguro de Vehículos</option>
+                          <option value="vehicle_payment">Pago de Vehículo / Lease</option>
+                          <option value="vehicle_gas">Gasolina</option>
+                          <option value="vehicle_maintenance">Mantenimiento de Vehículo</option>
+                          <option value="vehicle_registration">Registro / Placas</option>
+                        </optgroup>
+                        <optgroup label="🛡️ Seguros">
+                          <option value="general_liability">General Liability Insurance</option>
+                          <option value="workers_comp">Workers Compensation</option>
+                          <option value="bond">Contractor Bond</option>
+                          <option value="health_insurance">Seguro Médico</option>
+                          <option value="e_and_o">Errors & Omissions</option>
+                        </optgroup>
+                        <optgroup label="📜 Licencias y Permisos">
+                          <option value="contractor_license">Licencia de Contratista</option>
+                          <option value="business_license">Licencia de Negocio</option>
+                          <option value="epa_cert">Certificaciones EPA / NATE</option>
+                          <option value="city_permits">Permisos de la Ciudad</option>
+                        </optgroup>
+                        <optgroup label="💻 Software y Servicios">
+                          <option value="software_crm">CRM / Software de Gestión</option>
+                          <option value="software_accounting">QuickBooks / Contabilidad</option>
+                          <option value="software_marketing">Publicidad / Marketing</option>
+                          <option value="website">Sitio Web / Hosting</option>
+                          <option value="answering_service">Servicio de Contestación</option>
+                        </optgroup>
+                        <optgroup label="🏦 Financiero">
+                          <option value="loan_payment">Pago de Préstamo</option>
+                          <option value="equipment_lease">Leasing de Equipos</option>
+                          <option value="taxes">Impuestos</option>
+                          <option value="accounting">Contador / CPA</option>
+                          <option value="bank_fees">Comisiones Bancarias</option>
+                        </optgroup>
+                        <option value="other">Otro</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Proveedor / A quién se paga</label><input type="text" id="expVendor" placeholder="Ej: State Farm, QuickBooks, Landlord"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Monto ($)</label><input type="number" id="expAmount" min="0" step="0.01" required placeholder="0.00"></div>
+                    <div class="form-group"><label>Frecuencia</label>
+                      <select id="expFrequency">
+                        <option value="monthly">Mensual</option>
+                        <option value="quarterly">Trimestral</option>
+                        <option value="semi_annual">Semestral</option>
+                        <option value="annual">Anual</option>
+                        <option value="one_time">Una sola vez</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Fecha de Pago</label><input type="date" id="expDate"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Tipo</label>
+                      <select id="expType">
+                        <option value="fixed">Gasto Fijo</option>
+                        <option value="variable">Gasto Variable</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Método de Pago</label>
+                      <select id="expPayMethod">
+                        <option value="ach">ACH / Débito Automático</option>
+                        <option value="credit_card">Tarjeta de Crédito</option>
+                        <option value="check">Cheque</option>
+                        <option value="cash">Efectivo</option>
+                        <option value="transfer">Transferencia</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label># de Póliza / Cuenta</label><input type="text" id="expPolicyNum" placeholder="# de referencia"></div>
+                  </div>
+                  <div class="form-group"><label>Notas</label><textarea id="expNotes" rows="2" placeholder="Detalles adicionales..."></textarea></div>
+                  <div class="form-group">
+                    <label>📸 Foto de Factura / Comprobante</label>
+                    <div style="display:flex;gap:8px;">
+                      <label class="btn-secondary btn-sm" style="cursor:pointer;">📷 Subir Foto <input type="file" id="expPhotoInput" accept="image/*,.pdf" style="display:none" onchange="previewExpensePhoto(this)"></label>
+                      <span id="expPhotoName" style="font-size:11px;color:var(--text-muted);align-self:center;"></span>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar Gasto</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideExpenseForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <div id="expensesList"></div>
+            </div>
+
+            <!-- QuickBooks Integration -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>📗 Integración con QuickBooks</h3>
+              </div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;">
+                <a href="https://quickbooks.intuit.com" target="_blank" class="supplier-card" style="flex:1;min-width:200px;">
+                  <div class="supplier-logo" style="background:#2ca01c;">QB</div>
+                  <div class="supplier-info"><strong>QuickBooks Online</strong><small>Iniciar sesión en tu cuenta</small></div>
+                </a>
+                <a href="https://selfemployed.intuit.com" target="_blank" class="supplier-card" style="flex:1;min-width:200px;">
+                  <div class="supplier-logo" style="background:#0077c5;">SE</div>
+                  <div class="supplier-info"><strong>QB Self-Employed</strong><small>Para contratistas independientes</small></div>
+                </a>
+                <a href="https://payroll.intuit.com" target="_blank" class="supplier-card" style="flex:1;min-width:200px;">
+                  <div class="supplier-logo" style="background:#393185;">QP</div>
+                  <div class="supplier-info"><strong>QB Payroll</strong><small>Nómina y impuestos</small></div>
+                </a>
+                <a href="https://quickbooks.intuit.com/accounting/expenses/" target="_blank" class="supplier-card" style="flex:1;min-width:200px;">
+                  <div class="supplier-logo" style="background:#2ca01c;">📊</div>
+                  <div class="supplier-info"><strong>QB Expenses</strong><small>Rastreo de gastos</small></div>
+                </a>
+              </div>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">💡 <strong>Tip:</strong> Exporta tus recibos y gastos como CSV y súbelos a QuickBooks para mantener tu contabilidad al día. Tu contador puede acceder directamente a QuickBooks con su propia cuenta.</p>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <button class="btn-primary btn-sm" onclick="exportReceiptsCSV()">📥 Exportar Recibos CSV</button>
+                <button class="btn-primary btn-sm" onclick="exportExpensesCSV()">📥 Exportar Gastos CSV</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== CORREO DEL NEGOCIO ===== -->
+          <div id="mailbox-section" class="section">
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📥</span> Entrada</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mailInCount">0</span><span class="hcp-sub-amount">Documentos</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📤</span> Salida</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mailOutCount">0</span><span class="hcp-sub-amount">Documentos</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">⚠️</span> Urgente</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mailUrgent">0</span><span class="hcp-sub-amount">Pendientes</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">📎</span> Archivados</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="mailArchived">0</span><span class="hcp-sub-amount">Total</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>📬 Correo del Negocio</h3>
+                <button class="btn-primary btn-sm" onclick="showMailForm()">+ Agregar Documento</button>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">El coordinador de despacho puede subir correo físico o digital importante del negocio: facturas de proveedores, avisos del gobierno, correspondencia de seguros, etc.</p>
+
+              <div id="mailFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">📄 Nuevo Documento</h4>
+                <form onsubmit="handleMailCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label>Tipo</label>
+                      <select id="mailType">
+                        <option value="incoming">📥 Correo Entrante</option>
+                        <option value="outgoing">📤 Correo Saliente</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Prioridad</label>
+                      <select id="mailPriority">
+                        <option value="normal">Normal</option>
+                        <option value="important">⭐ Importante</option>
+                        <option value="urgent">🔴 Urgente</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Fecha</label><input type="date" id="mailDate"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>De / Remitente</label><input type="text" id="mailFrom" placeholder="Ej: State Farm, City of San Bernardino"></div>
+                    <div class="form-group"><label>Categoría</label>
+                      <select id="mailCategory">
+                        <option value="invoice">Factura / Invoice</option>
+                        <option value="insurance">Seguros</option>
+                        <option value="government">Gobierno / Permisos</option>
+                        <option value="tax">Impuestos / IRS / FTB</option>
+                        <option value="bank">Banco / Financiero</option>
+                        <option value="vendor">Proveedor</option>
+                        <option value="legal">Legal / Abogado</option>
+                        <option value="warranty">Garantía</option>
+                        <option value="customer">Cliente</option>
+                        <option value="other">Otro</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group"><label>Asunto / Descripción</label><input type="text" id="mailSubject" required placeholder="Ej: Renovación de póliza General Liability 2026"></div>
+                  <div class="form-group"><label>Notas</label><textarea id="mailNotes" rows="2" placeholder="Detalles importantes, fechas límite, acciones requeridas..."></textarea></div>
+                  <div class="form-group">
+                    <label>📎 Adjuntar Documento (foto, PDF, scan)</label>
+                    <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:var(--bg-card);" onclick="document.getElementById('mailFileInput').click()">
+                      <span style="font-size:24px;">📎</span>
+                      <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Haz clic para subir foto, PDF o scan del documento</p>
+                      <span id="mailFileName" style="font-size:12px;color:var(--primary);display:none;margin-top:6px;"></span>
+                    </div>
+                    <input type="file" id="mailFileInput" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="previewMailFile(this)">
+                  </div>
+                  <div class="form-group">
+                    <label><input type="checkbox" id="mailNeedsAction"> ⚡ Requiere Acción (aparecerá en pendientes)</label>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideMailForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Tabs -->
+              <div style="display:flex;gap:4px;margin-bottom:12px;">
+                <button class="import-tab active" onclick="setMailTab('all')" id="mailTabAll">📬 Todos</button>
+                <button class="import-tab" onclick="setMailTab('incoming')" id="mailTabIn">📥 Entrante</button>
+                <button class="import-tab" onclick="setMailTab('outgoing')" id="mailTabOut">📤 Saliente</button>
+                <button class="import-tab" onclick="setMailTab('urgent')" id="mailTabUrgent">🔴 Urgente</button>
+                <button class="import-tab" onclick="setMailTab('archived')" id="mailTabArchived">📎 Archivado</button>
+              </div>
+
+              <div id="mailList"></div>
             </div>
           </div>
 
