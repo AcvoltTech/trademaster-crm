@@ -142,8 +142,8 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes' };
-    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio' };
+    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
@@ -6595,6 +6595,384 @@ if (_origShowSection && !window._showSectionPatched) {
     window.showSection = function(name) {
         _origShowSection(name);
         if (name === 'technicians') renderTechFullList();
+        if (name === 'receipts') renderReceipts();
+        if (name === 'expenses') renderExpenses();
+        if (name === 'mailbox') renderMailbox();
     };
     window._showSectionPatched = true;
+}
+
+// ============================================================
+// ===== RECEIPTS / RECIBOS DE PROVEEDORES =====
+// ============================================================
+var receiptsData = JSON.parse(localStorage.getItem('tm_receipts_' + companyId) || '[]');
+
+function showReceiptForm() { document.getElementById('receiptFormContainer').style.display = 'block'; document.getElementById('rcptDate').value = new Date().toISOString().split('T')[0]; populateRcptJobs(); }
+function hideReceiptForm() { document.getElementById('receiptFormContainer').style.display = 'none'; }
+
+function populateRcptJobs() {
+    var sel = document.getElementById('rcptJobId');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Sin trabajo --</option>';
+    jobsData.forEach(function(j) { sel.innerHTML += '<option value="' + j.id + '">' + (j.title || 'Trabajo') + '</option>'; });
+}
+
+function previewReceiptPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = document.getElementById('rcptPhotoPreview');
+        img.src = e.target.result; img.style.display = 'block';
+        window._rcptPhoto = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function handleReceiptCreate(e) {
+    e.preventDefault();
+    var provider = document.getElementById('rcptProvider').value;
+    if (provider === '__other__') {
+        provider = prompt('Nombre del proveedor:');
+        if (!provider) return;
+    }
+    var rcpt = {
+        id: 'rcpt_' + Date.now(),
+        provider: provider,
+        category: document.getElementById('rcptCategory').value,
+        amount: parseFloat(document.getElementById('rcptAmount').value) || 0,
+        tax: parseFloat(document.getElementById('rcptTax').value) || 0,
+        date: document.getElementById('rcptDate').value,
+        number: document.getElementById('rcptNumber').value,
+        payMethod: document.getElementById('rcptPayMethod').value,
+        jobId: document.getElementById('rcptJobId').value,
+        description: document.getElementById('rcptDescription').value,
+        photo: window._rcptPhoto || null,
+        created: new Date().toISOString()
+    };
+    rcpt.total = rcpt.amount + rcpt.tax;
+    receiptsData.push(rcpt);
+    localStorage.setItem('tm_receipts_' + companyId, JSON.stringify(receiptsData));
+    window._rcptPhoto = null;
+    hideReceiptForm();
+    e.target.reset();
+    document.getElementById('rcptPhotoPreview').style.display = 'none';
+    renderReceipts();
+    alert('✅ Recibo guardado: $' + rcpt.total.toFixed(2) + ' - ' + provider);
+}
+
+function renderReceipts() {
+    var c = document.getElementById('receiptsList');
+    if (!c) return;
+    var provFilter = (document.getElementById('rcptFilterProvider') || {}).value || '';
+    var catFilter = (document.getElementById('rcptFilterCategory') || {}).value || '';
+    var monthFilter = (document.getElementById('rcptFilterMonth') || {}).value;
+    
+    var filtered = receiptsData.filter(function(r) {
+        if (provFilter && r.provider !== provFilter) return false;
+        if (catFilter && r.category !== catFilter) return false;
+        if (monthFilter !== '' && monthFilter !== undefined) {
+            var m = new Date(r.date).getMonth();
+            if (m !== parseInt(monthFilter)) return false;
+        }
+        return true;
+    });
+    
+    // Update KPIs
+    var thisMonth = new Date().getMonth();
+    var monthRcpts = receiptsData.filter(function(r) { return new Date(r.date).getMonth() === thisMonth; });
+    var totalSpent = monthRcpts.reduce(function(s,r) { return s + (r.total || 0); }, 0);
+    var providers = {};
+    receiptsData.forEach(function(r) { providers[r.provider] = true; });
+    var noPhoto = receiptsData.filter(function(r) { return !r.photo; }).length;
+    
+    var el = function(id,v) { var e = document.getElementById(id); if(e) e.textContent = v; };
+    el('rcptTotal', monthRcpts.length);
+    el('rcptTotalSpent', '$' + totalSpent.toFixed(2));
+    el('rcptProviders', Object.keys(providers).length);
+    el('rcptNoPhoto', noPhoto);
+    
+    // Update provider filter
+    var pSel = document.getElementById('rcptFilterProvider');
+    if (pSel && pSel.options.length <= 1) {
+        Object.keys(providers).sort().forEach(function(p) {
+            pSel.innerHTML += '<option value="' + p + '">' + p + '</option>';
+        });
+    }
+    
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay recibos registrados.</p>'; return; }
+    
+    var catLabels = {ac_equipment:'Equipos AC',refrigeration_equipment:'Equipos Refrig.',heating_equipment:'Calefacción',parts:'Partes',refrigerant:'Refrigerantes',tools:'Herramientas',electrical:'Eléctrico',ductwork:'Ductos',filters:'Filtros',gas_fuel:'Gasolina',vehicle:'Vehículo',office:'Oficina',safety:'Seguridad',misc:'Misceláneo'};
+    var h = '<table class="dispatch-table"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>📸</th><th>Acciones</th></tr></thead><tbody>';
+    filtered.sort(function(a,b) { return b.date.localeCompare(a.date); }).forEach(function(r) {
+        h += '<tr>';
+        h += '<td style="font-size:12px;white-space:nowrap;">' + r.date + '</td>';
+        h += '<td style="font-weight:600;">' + r.provider + '</td>';
+        h += '<td><span class="badge" style="font-size:10px;">' + (catLabels[r.category] || r.category) + '</span></td>';
+        h += '<td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + (r.description || r.number || '—') + '</td>';
+        h += '<td style="font-weight:700;color:var(--primary);">$' + (r.total || 0).toFixed(2) + '</td>';
+        h += '<td>' + (r.photo ? '<span style="cursor:pointer;" onclick="viewReceiptPhoto(\'' + r.id + '\')" title="Ver foto">📸</span>' : '<span style="color:var(--text-muted);">—</span>') + '</td>';
+        h += '<td><button class="client-action-btn client-btn-delete" onclick="deleteReceipt(\'' + r.id + '\')">🗑️</button></td>';
+        h += '</tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+function deleteReceipt(id) {
+    if (!confirm('¿Eliminar este recibo?')) return;
+    receiptsData = receiptsData.filter(function(r) { return r.id !== id; });
+    localStorage.setItem('tm_receipts_' + companyId, JSON.stringify(receiptsData));
+    renderReceipts();
+}
+
+function viewReceiptPhoto(id) {
+    var r = receiptsData.find(function(x) { return x.id === id; });
+    if (r && r.photo) {
+        var win = window.open('', '_blank');
+        win.document.write('<html><head><title>Recibo - ' + r.provider + '</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#222;"><img src="' + r.photo + '" style="max-width:100%;max-height:100vh;"></body></html>');
+    }
+}
+
+function exportReceiptsCSV() {
+    if (receiptsData.length === 0) { alert('No hay recibos para exportar.'); return; }
+    var csv = 'Fecha,Proveedor,Categoría,Descripción,Monto,Impuesto,Total,Método,# Recibo\n';
+    receiptsData.forEach(function(r) {
+        csv += '"' + r.date + '","' + r.provider + '","' + r.category + '","' + (r.description||'') + '",' + r.amount + ',' + r.tax + ',' + (r.total||0) + ',"' + (r.payMethod||'') + '","' + (r.number||'') + '"\n';
+    });
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'recibos_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+// ============================================================
+// ===== EXPENSES / GASTOS DEL NEGOCIO =====
+// ============================================================
+var expensesData = JSON.parse(localStorage.getItem('tm_expenses_' + companyId) || '[]');
+
+function showExpenseForm() { document.getElementById('expenseFormContainer').style.display = 'block'; document.getElementById('expDate').value = new Date().toISOString().split('T')[0]; }
+function hideExpenseForm() { document.getElementById('expenseFormContainer').style.display = 'none'; }
+
+function previewExpensePhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    document.getElementById('expPhotoName').textContent = '📎 ' + input.files[0].name;
+    document.getElementById('expPhotoName').style.display = 'inline';
+    var reader = new FileReader();
+    reader.onload = function(e) { window._expPhoto = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function handleExpenseCreate(e) {
+    e.preventDefault();
+    var exp = {
+        id: 'exp_' + Date.now(),
+        category: document.getElementById('expCategory').value,
+        vendor: document.getElementById('expVendor').value,
+        amount: parseFloat(document.getElementById('expAmount').value) || 0,
+        frequency: document.getElementById('expFrequency').value,
+        date: document.getElementById('expDate').value,
+        type: document.getElementById('expType').value,
+        payMethod: document.getElementById('expPayMethod').value,
+        policyNum: document.getElementById('expPolicyNum').value,
+        notes: document.getElementById('expNotes').value,
+        photo: window._expPhoto || null,
+        created: new Date().toISOString()
+    };
+    expensesData.push(exp);
+    localStorage.setItem('tm_expenses_' + companyId, JSON.stringify(expensesData));
+    window._expPhoto = null;
+    hideExpenseForm();
+    e.target.reset();
+    document.getElementById('expPhotoName').style.display = 'none';
+    renderExpenses();
+    alert('✅ Gasto registrado: $' + exp.amount.toFixed(2) + ' - ' + (exp.vendor || exp.category));
+}
+
+function renderExpenses() {
+    var c = document.getElementById('expensesList');
+    if (!c) return;
+    
+    var thisMonth = new Date().getMonth();
+    var fixed = 0, variable = 0;
+    expensesData.forEach(function(ex) {
+        var m = new Date(ex.date).getMonth();
+        if (m === thisMonth || ex.frequency === 'monthly') {
+            if (ex.type === 'fixed') fixed += ex.amount;
+            else variable += ex.amount;
+        }
+    });
+    var el = function(id,v) { var e = document.getElementById(id); if(e) e.textContent = v; };
+    el('expFixed', '$' + fixed.toFixed(2));
+    el('expVariable', '$' + variable.toFixed(2));
+    el('expTotal', '$' + (fixed + variable).toFixed(2));
+    
+    if (expensesData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay gastos registrados. Agrega tu renta, seguros y otros gastos fijos.</p>'; return; }
+    
+    var catLabels = {rent:'Renta',utilities_electric:'Electricidad',utilities_water:'Agua',utilities_gas:'Gas',internet:'Internet',storage:'Almacén',vehicle_insurance:'Seguro Vehículo',vehicle_payment:'Pago Vehículo',vehicle_gas:'Gasolina',vehicle_maintenance:'Mant. Vehículo',vehicle_registration:'Registro',general_liability:'General Liability',workers_comp:'Workers Comp',bond:'Bond',health_insurance:'Seguro Médico',e_and_o:'E&O',contractor_license:'Lic. Contratista',business_license:'Lic. Negocio',epa_cert:'Certificaciones',city_permits:'Permisos',software_crm:'CRM',software_accounting:'Contabilidad',software_marketing:'Marketing',website:'Sitio Web',answering_service:'Contestación',loan_payment:'Préstamo',equipment_lease:'Leasing',taxes:'Impuestos',accounting:'Contador',bank_fees:'Comisiones',other:'Otro'};
+    var freqLabels = {monthly:'Mensual',quarterly:'Trimestral',semi_annual:'Semestral',annual:'Anual',one_time:'Una vez'};
+    
+    var h = '<table class="dispatch-table"><thead><tr><th>Categoría</th><th>Proveedor</th><th>Monto</th><th>Frecuencia</th><th>Tipo</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+    expensesData.sort(function(a,b) { return b.date.localeCompare(a.date); }).forEach(function(ex) {
+        var typeColor = ex.type === 'fixed' ? '#ef4444' : '#f59e0b';
+        h += '<tr>';
+        h += '<td style="font-weight:600;">' + (catLabels[ex.category] || ex.category) + '</td>';
+        h += '<td style="font-size:12px;">' + (ex.vendor || '—') + '</td>';
+        h += '<td style="font-weight:700;color:var(--primary);">$' + ex.amount.toFixed(2) + '</td>';
+        h += '<td><span class="badge">' + (freqLabels[ex.frequency] || ex.frequency) + '</span></td>';
+        h += '<td><span class="badge" style="background:' + typeColor + '22;color:' + typeColor + ';">' + (ex.type === 'fixed' ? 'Fijo' : 'Variable') + '</span></td>';
+        h += '<td style="font-size:12px;">' + ex.date + '</td>';
+        h += '<td><button class="client-action-btn client-btn-delete" onclick="deleteExpense(\'' + ex.id + '\')">🗑️</button></td>';
+        h += '</tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+function deleteExpense(id) {
+    if (!confirm('¿Eliminar este gasto?')) return;
+    expensesData = expensesData.filter(function(x) { return x.id !== id; });
+    localStorage.setItem('tm_expenses_' + companyId, JSON.stringify(expensesData));
+    renderExpenses();
+}
+
+function exportExpensesCSV() {
+    if (expensesData.length === 0) { alert('No hay gastos para exportar.'); return; }
+    var csv = 'Fecha,Categoría,Proveedor,Monto,Frecuencia,Tipo,Método,# Póliza,Notas\n';
+    expensesData.forEach(function(ex) {
+        csv += '"' + ex.date + '","' + ex.category + '","' + (ex.vendor||'') + '",' + ex.amount + ',"' + ex.frequency + '","' + ex.type + '","' + (ex.payMethod||'') + '","' + (ex.policyNum||'') + '","' + (ex.notes||'').replace(/"/g,"'") + '"\n';
+    });
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'gastos_negocio_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+// ============================================================
+// ===== MAILBOX / CORREO DEL NEGOCIO =====
+// ============================================================
+var mailboxData = JSON.parse(localStorage.getItem('tm_mailbox_' + companyId) || '[]');
+var mailCurrentTab = 'all';
+
+function showMailForm() { document.getElementById('mailFormContainer').style.display = 'block'; document.getElementById('mailDate').value = new Date().toISOString().split('T')[0]; }
+function hideMailForm() { document.getElementById('mailFormContainer').style.display = 'none'; }
+
+function previewMailFile(input) {
+    if (!input.files || !input.files[0]) return;
+    var fn = document.getElementById('mailFileName');
+    fn.textContent = '📎 ' + input.files[0].name;
+    fn.style.display = 'block';
+    var reader = new FileReader();
+    reader.onload = function(e) { window._mailFile = { name: input.files[0].name, data: e.target.result }; };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function handleMailCreate(e) {
+    e.preventDefault();
+    var mail = {
+        id: 'mail_' + Date.now(),
+        type: document.getElementById('mailType').value,
+        priority: document.getElementById('mailPriority').value,
+        date: document.getElementById('mailDate').value,
+        from: document.getElementById('mailFrom').value,
+        category: document.getElementById('mailCategory').value,
+        subject: document.getElementById('mailSubject').value,
+        notes: document.getElementById('mailNotes').value,
+        needsAction: document.getElementById('mailNeedsAction').checked,
+        file: window._mailFile || null,
+        archived: false,
+        created: new Date().toISOString()
+    };
+    mailboxData.push(mail);
+    localStorage.setItem('tm_mailbox_' + companyId, JSON.stringify(mailboxData));
+    window._mailFile = null;
+    hideMailForm();
+    e.target.reset();
+    document.getElementById('mailFileName').style.display = 'none';
+    renderMailbox();
+    alert('✅ Documento guardado: ' + mail.subject);
+}
+
+function setMailTab(tab) {
+    mailCurrentTab = tab;
+    document.querySelectorAll('[id^="mailTab"]').forEach(function(b) { b.classList.remove('active'); });
+    var btn = document.getElementById('mailTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (btn) btn.classList.add('active');
+    renderMailbox();
+}
+
+function renderMailbox() {
+    var c = document.getElementById('mailList');
+    if (!c) return;
+    
+    var filtered = mailboxData.filter(function(m) {
+        if (mailCurrentTab === 'incoming') return m.type === 'incoming' && !m.archived;
+        if (mailCurrentTab === 'outgoing') return m.type === 'outgoing' && !m.archived;
+        if (mailCurrentTab === 'urgent') return m.priority === 'urgent' && !m.archived;
+        if (mailCurrentTab === 'archived') return m.archived;
+        return !m.archived;
+    });
+    
+    // Update KPIs
+    var active = mailboxData.filter(function(m) { return !m.archived; });
+    var el = function(id,v) { var e = document.getElementById(id); if(e) e.textContent = v; };
+    el('mailInCount', active.filter(function(m) { return m.type === 'incoming'; }).length);
+    el('mailOutCount', active.filter(function(m) { return m.type === 'outgoing'; }).length);
+    el('mailUrgent', active.filter(function(m) { return m.priority === 'urgent'; }).length);
+    el('mailArchived', mailboxData.filter(function(m) { return m.archived; }).length);
+    
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay documentos en esta vista.</p>'; return; }
+    
+    var catIcons = {invoice:'📄',insurance:'🛡️',government:'🏛️',tax:'💰',bank:'🏦',vendor:'📦',legal:'⚖️',warranty:'📋',customer:'👤',other:'📄'};
+    var prioColors = {normal:'#94a3b8',important:'#f59e0b',urgent:'#ef4444'};
+    
+    var h = '';
+    filtered.sort(function(a,b) { return b.date.localeCompare(a.date); }).forEach(function(m) {
+        var icon = m.type === 'incoming' ? '📥' : '📤';
+        var catIcon = catIcons[m.category] || '📄';
+        var prioColor = prioColors[m.priority] || '#94a3b8';
+        h += '<div class="mail-item" style="border-left:3px solid ' + prioColor + ';">';
+        h += '<div class="mail-item-header">';
+        h += '<span class="mail-type-badge">' + icon + '</span>';
+        h += '<span class="mail-cat-badge">' + catIcon + ' ' + m.category + '</span>';
+        h += '<span style="font-size:11px;color:var(--text-muted);">' + m.date + '</span>';
+        if (m.needsAction) h += '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;">⚡ Acción Requerida</span>';
+        if (m.file) h += '<span style="cursor:pointer;font-size:14px;" onclick="viewMailFile(\'' + m.id + '\')" title="Ver adjunto">📎</span>';
+        h += '</div>';
+        h += '<div class="mail-item-body">';
+        h += '<strong>' + m.subject + '</strong>';
+        h += '<span style="font-size:12px;color:var(--text-muted);">De: ' + (m.from || '—') + '</span>';
+        if (m.notes) h += '<p style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + m.notes + '</p>';
+        h += '</div>';
+        h += '<div class="mail-item-actions">';
+        if (!m.archived) h += '<button class="client-action-btn client-btn-view" onclick="archiveMail(\'' + m.id + '\')">📎 Archivar</button>';
+        else h += '<button class="client-action-btn client-btn-edit" onclick="unarchiveMail(\'' + m.id + '\')">📬 Restaurar</button>';
+        h += '<button class="client-action-btn client-btn-delete" onclick="deleteMail(\'' + m.id + '\')">🗑️</button>';
+        h += '</div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function viewMailFile(id) {
+    var m = mailboxData.find(function(x) { return x.id === id; });
+    if (m && m.file && m.file.data) {
+        var win = window.open('', '_blank');
+        if (m.file.data.indexOf('image') >= 0) {
+            win.document.write('<html><body style="margin:0;display:flex;justify-content:center;background:#222;"><img src="' + m.file.data + '" style="max-width:100%;max-height:100vh;"></body></html>');
+        } else {
+            win.document.write('<html><body><iframe src="' + m.file.data + '" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+        }
+    }
+}
+
+function archiveMail(id) {
+    var m = mailboxData.find(function(x) { return x.id === id; });
+    if (m) { m.archived = true; localStorage.setItem('tm_mailbox_' + companyId, JSON.stringify(mailboxData)); renderMailbox(); }
+}
+
+function unarchiveMail(id) {
+    var m = mailboxData.find(function(x) { return x.id === id; });
+    if (m) { m.archived = false; localStorage.setItem('tm_mailbox_' + companyId, JSON.stringify(mailboxData)); renderMailbox(); }
+}
+
+function deleteMail(id) {
+    if (!confirm('¿Eliminar este documento?')) return;
+    mailboxData = mailboxData.filter(function(x) { return x.id !== id; });
+    localStorage.setItem('tm_mailbox_' + companyId, JSON.stringify(mailboxData));
+    renderMailbox();
 }
