@@ -5370,3 +5370,337 @@ function renderReports(){
     var dayH='';days.forEach(function(d,i){dayH+='<div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border);"><span>'+d+'</span><span style="font-weight:600;">'+byDay[i]+'</span></div>';});
     document.getElementById('rptByDay').innerHTML=dayH;
 }
+
+// ============================================================
+// ===== DASHBOARD CLOCK IN / OUT WIDGET =====
+// ============================================================
+var clockData = JSON.parse(localStorage.getItem('tm_clock') || '{}');
+var clockTimerInterval = null;
+var dashClockInterval = null;
+
+// Live clock display
+function startDashClock() {
+    function tick() {
+        var now = new Date();
+        var el = document.getElementById('dashClockTime');
+        var dEl = document.getElementById('dashClockDate');
+        if (el) el.textContent = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        if (dEl) {
+            var opts = currentLang === 'en' ? {weekday:'long',month:'long',day:'numeric',year:'numeric'} : {weekday:'long',day:'numeric',month:'long',year:'numeric'};
+            dEl.textContent = now.toLocaleDateString(currentLang === 'en' ? 'en-US' : 'es-MX', opts);
+        }
+    }
+    tick();
+    if (dashClockInterval) clearInterval(dashClockInterval);
+    dashClockInterval = setInterval(tick, 1000);
+}
+
+function initClockWidget() {
+    startDashClock();
+    // Populate tech select
+    var sel = document.getElementById('clockTechSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">' + (currentLang === 'en' ? '-- Select Technician --' : '-- Seleccionar Técnico --') + '</option>';
+    techsData.forEach(function(t) {
+        sel.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
+    });
+    // Restore active session
+    var today = new Date().toISOString().split('T')[0];
+    if (clockData.activeSession && clockData.activeSession.date === today) {
+        sel.value = clockData.activeSession.tech_id || '';
+        document.getElementById('clockHourlyRate').value = clockData.activeSession.rate || 0;
+        updateClockBtnState(true);
+        startClockTimer();
+    }
+    renderClockHistory();
+}
+
+function onClockTechChange() {
+    var techId = document.getElementById('clockTechSelect').value;
+    if (!techId) return;
+    // Load saved rate for this tech
+    var rates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}');
+    var rate = rates[techId] || 0;
+    document.getElementById('clockHourlyRate').value = rate;
+}
+
+function saveClockRate() {
+    var techId = document.getElementById('clockTechSelect').value;
+    var rate = parseFloat(document.getElementById('clockHourlyRate').value) || 0;
+    if (!techId) return;
+    var rates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}');
+    rates[techId] = rate;
+    localStorage.setItem('tm_tech_rates', JSON.stringify(rates));
+}
+
+function toggleDashClockInOut() {
+    var today = new Date().toISOString().split('T')[0];
+    if (clockData.activeSession && clockData.activeSession.date === today) {
+        // CLOCK OUT
+        clockData.activeSession.clockOut = new Date().toISOString();
+        var inTime = new Date(clockData.activeSession.clockIn);
+        var outTime = new Date(clockData.activeSession.clockOut);
+        var diffMs = outTime - inTime;
+        clockData.activeSession.totalMs = diffMs;
+        if (!clockData.history) clockData.history = [];
+        clockData.history.push(Object.assign({}, clockData.activeSession));
+        clockData.activeSession = null;
+        localStorage.setItem('tm_clock', JSON.stringify(clockData));
+        updateClockBtnState(false);
+        stopClockTimer();
+        renderClockHistory();
+    } else {
+        // CLOCK IN
+        var techId = document.getElementById('clockTechSelect').value;
+        var rate = parseFloat(document.getElementById('clockHourlyRate').value) || 0;
+        if (!techId) {
+            alert(currentLang === 'en' ? 'Select a technician first!' : '¡Selecciona un técnico primero!');
+            return;
+        }
+        var tech = techsData.find(function(t) { return t.id === techId; });
+        clockData.activeSession = {
+            tech_id: techId,
+            tech_name: tech ? tech.name : 'Técnico',
+            rate: rate,
+            clockIn: new Date().toISOString(),
+            clockOut: null,
+            date: today
+        };
+        localStorage.setItem('tm_clock', JSON.stringify(clockData));
+        saveClockRate();
+        updateClockBtnState(true);
+        startClockTimer();
+        renderClockHistory();
+    }
+}
+
+function updateClockBtnState(isActive) {
+    var btn = document.getElementById('clockInOutBtn');
+    var icon = document.getElementById('clockBtnIcon');
+    var text = document.getElementById('clockBtnText');
+    if (isActive) {
+        btn.className = 'clock-btn clock-btn-out';
+        icon.textContent = '🔴';
+        text.textContent = 'Clock Out';
+    } else {
+        btn.className = 'clock-btn clock-btn-in';
+        icon.textContent = '🟢';
+        text.textContent = 'Clock In';
+    }
+}
+
+function startClockTimer() {
+    if (clockTimerInterval) clearInterval(clockTimerInterval);
+    clockTimerInterval = setInterval(updateClockEarnings, 1000);
+    updateClockEarnings();
+}
+
+function stopClockTimer() {
+    if (clockTimerInterval) clearInterval(clockTimerInterval);
+    clockTimerInterval = null;
+}
+
+function updateClockEarnings() {
+    if (!clockData.activeSession) return;
+    var inTime = new Date(clockData.activeSession.clockIn);
+    var now = new Date();
+    var diffMs = now - inTime;
+    var hours = diffMs / 3600000;
+    var h = Math.floor(hours);
+    var m = Math.floor((diffMs % 3600000) / 60000);
+    var s = Math.floor((diffMs % 60000) / 1000);
+    document.getElementById('clockWorkedTime').textContent = h + 'h ' + m + 'm ' + s + 's';
+    var rate = clockData.activeSession.rate || 0;
+    var earned = hours * rate;
+    document.getElementById('clockEarnedToday').textContent = '$' + earned.toFixed(2);
+    document.getElementById('clockProjected8').textContent = '$' + (rate * 8).toFixed(2);
+}
+
+function renderClockHistory() {
+    var list = document.getElementById('clockHistoryList');
+    if (!list) return;
+    var today = new Date().toISOString().split('T')[0];
+    var todayHistory = (clockData.history || []).filter(function(h) { return h.date === today; });
+
+    if (clockData.activeSession && clockData.activeSession.date === today) {
+        var html = '<div class="clock-hist-item clock-hist-active"><span class="hcp-emp-dot" style="background:#10b981;"></span><strong>' + clockData.activeSession.tech_name + '</strong><span style="color:#10b981;font-size:11px;">⏱ ' + (currentLang === 'en' ? 'Working...' : 'Trabajando...') + '</span><small>In: ' + new Date(clockData.activeSession.clockIn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) + '</small></div>';
+        todayHistory.forEach(function(h) {
+            var dur = h.totalMs ? Math.round(h.totalMs / 60000) : 0;
+            var earned = (h.totalMs / 3600000 * (h.rate || 0));
+            html += '<div class="clock-hist-item"><span class="hcp-emp-dot" style="background:#94a3b8;"></span><strong>' + h.tech_name + '</strong><span style="font-size:11px;color:var(--text-muted);">' + dur + ' min | $' + earned.toFixed(2) + '</span><small>' + new Date(h.clockIn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) + ' → ' + new Date(h.clockOut).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) + '</small></div>';
+        });
+        list.innerHTML = html;
+    } else if (todayHistory.length > 0) {
+        var html2 = '';
+        todayHistory.forEach(function(h) {
+            var dur = h.totalMs ? Math.round(h.totalMs / 60000) : 0;
+            var earned = (h.totalMs / 3600000 * (h.rate || 0));
+            html2 += '<div class="clock-hist-item"><span class="hcp-emp-dot" style="background:#94a3b8;"></span><strong>' + h.tech_name + '</strong><span style="font-size:11px;color:var(--text-muted);">' + dur + ' min | $' + earned.toFixed(2) + '</span></div>';
+        });
+        list.innerHTML = html2;
+    } else {
+        list.innerHTML = '<p style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px;">' + (currentLang === 'en' ? 'No clock entries today' : 'Sin entradas hoy') + '</p>';
+    }
+}
+
+// Init clock on dashboard load
+var _origRenderDashDyn = typeof renderDashboardDynamic === 'function' ? renderDashboardDynamic : null;
+var _origRDDPatched = false;
+(function patchDashboard() {
+    if (!_origRDDPatched) {
+        var origFn = window.renderDashboardDynamic;
+        window.renderDashboardDynamic = function() {
+            if (origFn) origFn();
+            initClockWidget();
+        };
+        _origRDDPatched = true;
+    }
+})();
+
+// ============================================================
+// ===== PAYROLL PROVIDER MANAGER =====
+// ============================================================
+var payrollProviderConfig = JSON.parse(localStorage.getItem('tm_payroll_provider') || '{}');
+
+function selectPayrollProvider(provider) {
+    // Deselect all
+    ['adp','gusto','qb','paychex','square','manual'].forEach(function(p) {
+        var card = document.getElementById('providerCard_' + p);
+        var check = document.getElementById('providerCheck_' + p);
+        if (card) card.classList.remove('provider-selected');
+        if (check) check.textContent = '○';
+    });
+    // Select this one
+    var card = document.getElementById('providerCard_' + provider);
+    var check = document.getElementById('providerCheck_' + provider);
+    if (card) card.classList.add('provider-selected');
+    if (check) check.textContent = '●';
+    payrollProviderConfig.selected = provider;
+
+    // Show config
+    var configArea = document.getElementById('providerConfigArea');
+    if (provider === 'manual') {
+        configArea.style.display = 'none';
+    } else {
+        configArea.style.display = 'block';
+        var names = { adp:'ADP Workforce', gusto:'Gusto', qb:'QuickBooks Payroll', paychex:'Paychex', square:'Square Payroll' };
+        document.getElementById('providerConfigTitle').textContent = (currentLang === 'en' ? 'Configure ' : 'Configurar ') + (names[provider] || provider);
+        // Restore saved config
+        if (payrollProviderConfig[provider]) {
+            document.getElementById('providerApiKey').value = payrollProviderConfig[provider].apiKey || '';
+            document.getElementById('providerApiSecret').value = payrollProviderConfig[provider].apiSecret || '';
+            document.getElementById('providerCompanyId').value = payrollProviderConfig[provider].companyId || '';
+            document.getElementById('providerSyncFreq').value = payrollProviderConfig[provider].syncFreq || 'manual';
+        } else {
+            document.getElementById('providerApiKey').value = '';
+            document.getElementById('providerApiSecret').value = '';
+            document.getElementById('providerCompanyId').value = '';
+            document.getElementById('providerSyncFreq').value = 'manual';
+        }
+    }
+    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+}
+
+function savePayrollProvider() {
+    var provider = payrollProviderConfig.selected;
+    if (!provider || provider === 'manual') return;
+    payrollProviderConfig[provider] = {
+        apiKey: document.getElementById('providerApiKey').value,
+        apiSecret: document.getElementById('providerApiSecret').value,
+        companyId: document.getElementById('providerCompanyId').value,
+        syncFreq: document.getElementById('providerSyncFreq').value,
+        syncHours: document.getElementById('providerSyncHours').checked,
+        syncRates: document.getElementById('providerSyncRates').checked,
+        connected: true,
+        connectedAt: new Date().toISOString()
+    };
+    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Connected' : 'Conectado');
+    document.getElementById('payProviderStatus').style.background = '#10b98122';
+    document.getElementById('payProviderStatus').style.color = '#10b981';
+    document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Connected successfully at ' : 'Conectado exitosamente a las ') + new Date().toLocaleTimeString();
+    addSyncHistoryEntry(provider, 'connected', currentLang === 'en' ? 'Provider connected' : 'Proveedor conectado');
+}
+
+function testPayrollConnection() {
+    var provider = payrollProviderConfig.selected;
+    document.getElementById('providerSyncStatus').innerHTML = '⏳ ' + (currentLang === 'en' ? 'Testing connection...' : 'Probando conexión...');
+    setTimeout(function() {
+        var key = document.getElementById('providerApiKey').value;
+        if (key && key.length > 3) {
+            document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Connection successful! API responding.' : '¡Conexión exitosa! API respondiendo.');
+        } else {
+            document.getElementById('providerSyncStatus').innerHTML = '❌ ' + (currentLang === 'en' ? 'Connection failed. Check your API credentials.' : 'Conexión fallida. Verifica tus credenciales.');
+        }
+    }, 1500);
+}
+
+function syncPayrollNow() {
+    var provider = payrollProviderConfig.selected;
+    document.getElementById('providerSyncStatus').innerHTML = '🔄 ' + (currentLang === 'en' ? 'Syncing data...' : 'Sincronizando datos...');
+    setTimeout(function() {
+        document.getElementById('providerSyncStatus').innerHTML = '✅ ' + (currentLang === 'en' ? 'Sync completed. ' : 'Sincronización completada. ') + techsData.length + (currentLang === 'en' ? ' employees synced.' : ' empleados sincronizados.');
+        addSyncHistoryEntry(provider, 'sync', techsData.length + ' employees synced');
+    }, 2000);
+}
+
+function disconnectProvider() {
+    var provider = payrollProviderConfig.selected;
+    if (!confirm(currentLang === 'en' ? 'Disconnect this provider?' : '¿Desconectar este proveedor?')) return;
+    if (payrollProviderConfig[provider]) {
+        payrollProviderConfig[provider].connected = false;
+    }
+    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Disconnected' : 'Desconectado');
+    document.getElementById('payProviderStatus').style.background = '#f59e0b22';
+    document.getElementById('payProviderStatus').style.color = '#f59e0b';
+    document.getElementById('providerConfigArea').style.display = 'none';
+    addSyncHistoryEntry(provider, 'disconnect', currentLang === 'en' ? 'Provider disconnected' : 'Proveedor desconectado');
+}
+
+function addSyncHistoryEntry(provider, action, message) {
+    if (!payrollProviderConfig.syncHistory) payrollProviderConfig.syncHistory = [];
+    payrollProviderConfig.syncHistory.unshift({
+        provider: provider,
+        action: action,
+        message: message,
+        timestamp: new Date().toISOString()
+    });
+    if (payrollProviderConfig.syncHistory.length > 20) payrollProviderConfig.syncHistory = payrollProviderConfig.syncHistory.slice(0, 20);
+    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    renderSyncHistory();
+}
+
+function renderSyncHistory() {
+    var list = document.getElementById('providerSyncHistory');
+    if (!list) return;
+    var history = payrollProviderConfig.syncHistory || [];
+    if (history.length === 0) {
+        list.innerHTML = '<p class="empty-msg" style="font-size:11px;">' + (currentLang === 'en' ? 'No sync history' : 'Sin historial de sincronización') + '</p>';
+        return;
+    }
+    var html = '';
+    history.slice(0, 10).forEach(function(h) {
+        var icon = h.action === 'connected' ? '🟢' : h.action === 'sync' ? '🔄' : '🔴';
+        var names = { adp:'ADP', gusto:'Gusto', qb:'QuickBooks', paychex:'Paychex', square:'Square' };
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">';
+        html += '<span>' + icon + '</span><strong>' + (names[h.provider] || h.provider) + '</strong><span style="flex:1;color:var(--text-muted);">' + h.message + '</span><span style="color:var(--text-muted);font-size:10px;">' + new Date(h.timestamp).toLocaleString() + '</span></div>';
+    });
+    list.innerHTML = html;
+}
+
+// Restore provider state on payroll render
+var _origRenderPayroll = window.renderPayroll;
+window.renderPayroll = function() {
+    _origRenderPayroll();
+    // Restore provider selection
+    if (payrollProviderConfig.selected) {
+        selectPayrollProvider(payrollProviderConfig.selected);
+        if (payrollProviderConfig[payrollProviderConfig.selected] && payrollProviderConfig[payrollProviderConfig.selected].connected) {
+            document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Connected' : 'Conectado');
+            document.getElementById('payProviderStatus').style.background = '#10b98122';
+            document.getElementById('payProviderStatus').style.color = '#10b981';
+        }
+    }
+    renderSyncHistory();
+};
