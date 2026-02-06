@@ -145,6 +145,8 @@ body {
 .lead-actions, .tech-actions, .job-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn-icon { padding: 5px 10px; background: rgba(16, 185, 129, 0.08); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-icon:hover { background: var(--primary); color: white; }
+.btn-zillow { background: rgba(228,77,37,0.1) !important; color: #e44d25 !important; border-color: #e44d25 !important; }
+.btn-zillow:hover { background: #e44d25 !important; color: white !important; }
 .inline-select { padding: 4px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 11px; cursor: pointer; }
 .inline-select:focus { border-color: var(--primary); outline: none; }
 .contact-btns { display: flex; gap: 4px; margin-top: 4px; }
@@ -164,6 +166,14 @@ body {
 .tracking-status { padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; background: rgba(16,185,129,0.1); color: var(--primary); }
 .tracking-status.active { background: rgba(16,185,129,0.2); color: #22c55e; }
 .tracking-status.error { background: rgba(239,68,68,0.1); color: var(--danger); }
+.btn-clockout { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; }
+.btn-clockout:hover { box-shadow: 0 6px 20px rgba(239,68,68,0.35) !important; }
+.tracking-hours-info { margin-top: 20px; padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid var(--border); border-radius: 8px; }
+.tracking-hours-info p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.status-select-available { border-color: var(--primary) !important; color: var(--primary) !important; }
+.status-select-busy { border-color: var(--warning) !important; color: var(--warning) !important; }
+.status-select-on_route { border-color: #8b5cf6 !important; color: #8b5cf6 !important; }
+.status-select-offline { border-color: var(--text-muted) !important; color: var(--text-muted) !important; }
 .tracking-link-box { background: var(--bg-input); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: var(--primary); word-break: break-all; }
 
 /* ==================== RESPONSIVE ==================== */
