@@ -478,6 +478,11 @@ body {
 .cp-comm-delete{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-muted)}
 
 /* ===== CALENDAR VIEW TOGGLE ===== */
+.kpi-clickable{cursor:pointer;transition:all .2s;position:relative}
+.kpi-clickable:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.kpi-clickable:active{transform:translateY(0)}
+.kpi-clickable::after{content:'→';position:absolute;top:10px;right:12px;font-size:14px;color:var(--text-muted);opacity:0;transition:opacity .2s}
+.kpi-clickable:hover::after{opacity:1}
 .cal-view-toggle{display:flex;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .cal-view-btn{padding:6px 14px;border:none;background:none;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .2s}
 .cal-view-btn.active{background:var(--primary);color:white}
