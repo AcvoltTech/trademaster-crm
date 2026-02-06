@@ -147,6 +147,16 @@ body {
 .btn-icon:hover { background: var(--primary); color: white; }
 .btn-zillow { background: rgba(228,77,37,0.1) !important; color: #e44d25 !important; border-color: #e44d25 !important; }
 .btn-zillow:hover { background: #e44d25 !important; color: white !important; }
+.btn-edit { background: rgba(139,92,246,0.1) !important; color: #8b5cf6 !important; border-color: #8b5cf6 !important; }
+.btn-edit:hover { background: #8b5cf6 !important; color: white !important; }
+.edit-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; }
+.edit-modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+.edit-modal h3 { color: var(--primary); margin-bottom: 16px; }
+.edit-modal .form-group { margin-bottom: 12px; }
+.edit-modal label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+.edit-modal input, .edit-modal select, .edit-modal textarea { width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 13px; }
+.edit-modal input:focus, .edit-modal select:focus, .edit-modal textarea:focus { border-color: var(--primary); outline: none; }
+.edit-modal .form-actions { display: flex; gap: 8px; margin-top: 16px; }
 .inline-select { padding: 4px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 11px; cursor: pointer; }
 .inline-select:focus { border-color: var(--primary); outline: none; }
 .contact-btns { display: flex; gap: 4px; margin-top: 4px; }
