@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -1605,9 +1604,158 @@
                     </div>
                   </div>
 
+                  <div class="doc-upload-card" id="jpCard_electrical_permit">
+                    <div class="doc-icon">⚡</div>
+                    <div class="doc-info"><strong>Electrical Permit</strong><small>Permiso Eléctrico</small></div>
+                    <div class="doc-status" id="jpStatus_electrical_permit"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('electrical_permit',this)"></label>
+                      <button onclick="viewJobPermit('electrical_permit')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_electrical_permit">👁️</button>
+                      <button onclick="removeJobPermit('electrical_permit')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_electrical_permit">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_plumbing_permit">
+                    <div class="doc-icon">🔧</div>
+                    <div class="doc-info"><strong>Plumbing Permit</strong><small>Permiso de Plomería</small></div>
+                    <div class="doc-status" id="jpStatus_plumbing_permit"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('plumbing_permit',this)"></label>
+                      <button onclick="viewJobPermit('plumbing_permit')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_plumbing_permit">👁️</button>
+                      <button onclick="removeJobPermit('plumbing_permit')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_plumbing_permit">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_city_approval">
+                    <div class="doc-icon">🏛️</div>
+                    <div class="doc-info"><strong>City Approval</strong><small>Aprobación del Municipio</small></div>
+                    <div class="doc-status" id="jpStatus_city_approval"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('city_approval',this)"></label>
+                      <button onclick="viewJobPermit('city_approval')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_city_approval">👁️</button>
+                      <button onclick="removeJobPermit('city_approval')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_city_approval">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_changeout_form">
+                    <div class="doc-icon">📋</div>
+                    <div class="doc-info"><strong>Changeout Form</strong><small>Formulario de Cambio</small></div>
+                    <div class="doc-status" id="jpStatus_changeout_form"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('changeout_form',this)"></label>
+                      <button onclick="viewJobPermit('changeout_form')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_changeout_form">👁️</button>
+                      <button onclick="removeJobPermit('changeout_form')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_changeout_form">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_load_calc">
+                    <div class="doc-icon">🔢</div>
+                    <div class="doc-info"><strong>Manual J / Load Calc</strong><small>Cálculo de Carga</small></div>
+                    <div class="doc-status" id="jpStatus_load_calc"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('load_calc',this)"></label>
+                      <button onclick="viewJobPermit('load_calc')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_load_calc">👁️</button>
+                      <button onclick="removeJobPermit('load_calc')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_load_calc">✕</button>
+                    </div>
+                  </div>
+
                 </div>
                 <button class="btn-primary btn-sm" onclick="saveJobPermits()">💾 Guardar Permisos</button>
               </div>
+            </div>
+
+            <!-- ===== REPORTES DE INSPECCIÓN / AUDITORÍA ===== -->
+            <div class="card">
+              <div class="card-top">
+                <h3>📊 Reportes de Inspección y Auditoría</h3>
+                <button class="btn-primary btn-sm" onclick="showInspReportForm()">+ Nuevo Reporte</button>
+              </div>
+              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Sube HERS Ratings, Home Inspections, Energy Audits y otros reportes de inspección. Se vinculan al trabajo y al cliente.</p>
+
+              <div id="inspReportForm" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">📊 Nuevo Reporte de Inspección</h4>
+                <div class="form-row">
+                  <div class="form-group"><label>Tipo de Reporte</label>
+                    <select id="irType">
+                      <optgroup label="🏠 Eficiencia Energética">
+                        <option value="hers_rating">📊 HERS Rating (Home Energy Rating)</option>
+                        <option value="energy_audit">🔋 Energy Audit / Auditoría Energética</option>
+                        <option value="title24">📐 Title 24 Compliance</option>
+                        <option value="cf1r">📋 CF-1R (Certificate of Compliance)</option>
+                        <option value="cf2r">📋 CF-2R (Certificate of Installation)</option>
+                        <option value="cf3r">📋 CF-3R (Certificate of Verification)</option>
+                      </optgroup>
+                      <optgroup label="🔍 Inspecciones de Casa">
+                        <option value="home_inspection">🏡 Home Inspection Completa</option>
+                        <option value="hvac_inspection">❄️ HVAC System Inspection</option>
+                        <option value="duct_test">💨 Duct Leakage Test / Prueba de Ductos</option>
+                        <option value="refrigerant_charge">🧊 Refrigerant Charge Verification</option>
+                        <option value="airflow_test">🌬️ Airflow Test / Prueba de Flujo</option>
+                        <option value="combustion_test">🔥 Combustion Analysis</option>
+                      </optgroup>
+                      <optgroup label="🛡️ Seguridad y Cumplimiento">
+                        <option value="co_test">⚠️ Carbon Monoxide Test</option>
+                        <option value="gas_leak_test">🔥 Gas Leak Test</option>
+                        <option value="epa_compliance">🌿 EPA Compliance Report</option>
+                        <option value="asbestos_test">☣️ Asbestos / Lead Test</option>
+                      </optgroup>
+                      <optgroup label="📄 Otros Reportes">
+                        <option value="warranty_registration">📜 Warranty Registration</option>
+                        <option value="maintenance_report">🔧 Maintenance Report</option>
+                        <option value="proposal_letter">📝 Proposal Letter</option>
+                        <option value="other_report">📄 Otro Reporte</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="form-group"><label>Trabajo Relacionado</label>
+                    <select id="irJobId"><option value="">-- Sin trabajo --</option></select>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label>Cliente</label><input type="text" id="irClient" placeholder="Nombre del cliente"></div>
+                  <div class="form-group"><label>Dirección de la Propiedad</label><input type="text" id="irAddress" placeholder="Dirección donde se hizo la inspección"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label>Fecha de Inspección</label><input type="date" id="irDate"></div>
+                  <div class="form-group"><label>Inspector / Técnico</label><input type="text" id="irInspector" placeholder="Nombre del inspector"></div>
+                  <div class="form-group"><label>Calificación / Score</label><input type="text" id="irScore" placeholder="Ej: HERS 65, Pass, Fail"></div>
+                </div>
+                <div class="form-group"><label>Resultado / Resumen</label>
+                  <select id="irResult">
+                    <option value="pass">✅ Aprobado / Pass</option>
+                    <option value="fail">❌ Reprobado / Fail</option>
+                    <option value="conditional">⚠️ Condicional / Requiere Correcciones</option>
+                    <option value="pending">⏳ Pendiente de Resultados</option>
+                    <option value="info">ℹ️ Informativo (sin calificación)</option>
+                  </select>
+                </div>
+                <div class="form-group"><label>Notas / Hallazgos</label><textarea id="irNotes" rows="3" placeholder="Detalle los hallazgos, recomendaciones, deficiencias encontradas..."></textarea></div>
+                <div class="form-group">
+                  <label>📎 Subir Reporte (PDF, foto, scan)</label>
+                  <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:var(--bg-card);" onclick="document.getElementById('irFileInput').click()">
+                    <span style="font-size:28px;">📎</span>
+                    <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Haz clic para subir el reporte PDF, foto o scan</p>
+                    <img id="irFilePreview" src="" style="display:none;max-width:200px;margin-top:8px;border-radius:6px;">
+                    <span id="irFileName" style="display:none;font-size:12px;color:var(--primary);margin-top:6px;"></span>
+                  </div>
+                  <input type="file" id="irFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="previewInspReport(this)">
+                </div>
+                <div class="form-actions">
+                  <button class="btn-primary btn-sm" onclick="saveInspReport()">💾 Guardar Reporte</button>
+                  <button class="btn-secondary btn-sm" onclick="hideInspReportForm()">Cancelar</button>
+                </div>
+              </div>
+
+              <!-- Filter tabs -->
+              <div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;">
+                <button class="import-tab active" onclick="setIRTab('all')" id="irTabAll">📊 Todos</button>
+                <button class="import-tab" onclick="setIRTab('hers')" id="irTabHers">📊 HERS</button>
+                <button class="import-tab" onclick="setIRTab('inspection')" id="irTabInsp">🔍 Inspecciones</button>
+                <button class="import-tab" onclick="setIRTab('energy')" id="irTabEnergy">🔋 Energía</button>
+                <button class="import-tab" onclick="setIRTab('safety')" id="irTabSafety">🛡️ Seguridad</button>
+              </div>
+
+              <div id="inspReportsList"></div>
             </div>
           </div>
           <!-- ===== HOME ADVISORS (Vendedores) ===== -->
