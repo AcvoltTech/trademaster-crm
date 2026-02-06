@@ -139,13 +139,14 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Dashboard', calendar:'Calendario', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
+    var titles = { dashboard:'Dashboard', calendar:'Calendario', inbox:'Inbox - Comunicaciones', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
     document.getElementById('pageTitle').textContent = titles[name] || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
     if (al) al.classList.add('active');
     if (name === 'dashboard') { renderDashboardDynamic(); }
     if (name === 'calendar') { initCalendar(); }
+    if (name === 'inbox') { loadInbox(); }
     if (name === 'clients') { loadClients(); }
     if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
     if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
@@ -4701,6 +4702,286 @@ async function deleteServicePlan(id) {
         localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
     }
     loadServicePlans();
+}
+
+// ===== CALENDAR VIEW TOGGLE =====
+var calViewMode = 'month';
+var calWeekStart = null;
+
+function setCalView(mode) {
+    calViewMode = mode;
+    document.querySelectorAll('.cal-view-btn').forEach(function(b) { b.classList.remove('active'); });
+    var btn = document.getElementById('calView' + mode.charAt(0).toUpperCase() + mode.slice(1));
+    if (btn) btn.classList.add('active');
+    
+    document.getElementById('calendarGrid').style.display = mode === 'month' ? '' : 'none';
+    document.getElementById('calWeekGrid').style.display = mode === 'week' ? '' : 'none';
+    document.getElementById('calDayGrid').style.display = mode === 'day' ? '' : 'none';
+    
+    if (mode === 'month') renderCalendar();
+    if (mode === 'week') renderWeekView();
+    if (mode === 'day') renderDayView();
+}
+
+function getWeekDates(baseDate) {
+    var d = new Date(baseDate);
+    var day = d.getDay();
+    d.setDate(d.getDate() - day);
+    var dates = [];
+    for (var i = 0; i < 7; i++) {
+        dates.push(new Date(d));
+        d.setDate(d.getDate() + 1);
+    }
+    return dates;
+}
+
+function renderWeekView() {
+    var now = new Date(calYear, calMonth, calWeekStart || new Date().getDate());
+    var weekDates = getWeekDates(now);
+    var today = new Date();
+    var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    
+    var dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    
+    // Update label
+    var startD = weekDates[0]; var endD = weekDates[6];
+    document.getElementById('calMonthLabel').textContent = months[startD.getMonth()] + ' ' + startD.getDate() + ' - ' + months[endD.getMonth()] + ' ' + endD.getDate() + ', ' + endD.getFullYear();
+    
+    var h = '<div class="cal-week-header" style="border-right:1px solid var(--border);"></div>';
+    weekDates.forEach(function(d) {
+        var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        var isToday = ds === todayStr;
+        h += '<div class="cal-week-header' + (isToday ? ' today-col' : '') + '">' + dayNames[d.getDay()] + '<br><strong>' + d.getDate() + '</strong></div>';
+    });
+    
+    for (var hr = 7; hr <= 20; hr++) {
+        var timeLabel = hr <= 12 ? hr + (hr < 12 ? 'am' : 'pm') : (hr - 12) + 'pm';
+        h += '<div class="cal-week-time">' + timeLabel + '</div>';
+        weekDates.forEach(function(d) {
+            var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            var isToday = ds === todayStr;
+            var hrStr = String(hr).padStart(2,'0');
+            var appts = appointmentsData.filter(function(a) { return a.appointment_date === ds && a.start_time && a.start_time.substring(0,2) === hrStr; });
+            h += '<div class="cal-week-cell' + (isToday ? ' today-col' : '') + '" onclick="showDayAppts(\'' + ds + '\')">';
+            appts.forEach(function(a) { h += '<div class="cal-week-appt">' + (a.start_time || '') + ' ' + (a.title || '').substring(0,12) + '</div>'; });
+            h += '</div>';
+        });
+    }
+    document.getElementById('calWeekGrid').innerHTML = h;
+}
+
+function renderDayView() {
+    var now = new Date();
+    var dayDate = new Date(calYear, calMonth, calWeekStart || now.getDate());
+    var ds = dayDate.getFullYear() + '-' + String(dayDate.getMonth()+1).padStart(2,'0') + '-' + String(dayDate.getDate()).padStart(2,'0');
+    
+    var dayLabel = dayDate.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('calMonthLabel').textContent = dayLabel;
+    
+    var h = '<div class="cal-day-header">📅 ' + dayLabel + '</div>';
+    for (var hr = 6; hr <= 21; hr++) {
+        var timeLabel = hr <= 12 ? hr + ':00 ' + (hr < 12 ? 'AM' : 'PM') : (hr - 12) + ':00 PM';
+        var hrStr = String(hr).padStart(2,'0');
+        var appts = appointmentsData.filter(function(a) { return a.appointment_date === ds && a.start_time && a.start_time.substring(0,2) === hrStr; });
+        h += '<div class="cal-day-row">';
+        h += '<div class="cal-day-time">' + timeLabel + '</div>';
+        h += '<div class="cal-day-content">';
+        appts.forEach(function(a) {
+            var clientName = a.clients ? a.clients.name : '';
+            var techName = a.technicians ? a.technicians.name : '';
+            h += '<div class="cal-day-appt" onclick="showDayAppts(\'' + ds + '\')">' +
+                '<strong>' + (a.title || '') + '</strong>' +
+                '<small>' + (a.start_time || '') + ' - ' + (a.end_time || '') + 
+                (clientName ? ' | ' + clientName : '') + 
+                (techName ? ' | 👷 ' + techName : '') + '</small></div>';
+        });
+        h += '</div></div>';
+    }
+    document.getElementById('calDayGrid').innerHTML = h;
+}
+
+// Override calPrev/calNext for week/day modes
+var _origCalPrev = calPrev;
+var _origCalNext = calNext;
+calPrev = function() {
+    if (calViewMode === 'week') {
+        var d = new Date(calYear, calMonth, (calWeekStart || new Date().getDate()) - 7);
+        calYear = d.getFullYear(); calMonth = d.getMonth(); calWeekStart = d.getDate();
+        renderWeekView();
+    } else if (calViewMode === 'day') {
+        var d = new Date(calYear, calMonth, (calWeekStart || new Date().getDate()) - 1);
+        calYear = d.getFullYear(); calMonth = d.getMonth(); calWeekStart = d.getDate();
+        renderDayView();
+    } else { _origCalPrev(); }
+};
+calNext = function() {
+    if (calViewMode === 'week') {
+        var d = new Date(calYear, calMonth, (calWeekStart || new Date().getDate()) + 7);
+        calYear = d.getFullYear(); calMonth = d.getMonth(); calWeekStart = d.getDate();
+        renderWeekView();
+    } else if (calViewMode === 'day') {
+        var d = new Date(calYear, calMonth, (calWeekStart || new Date().getDate()) + 1);
+        calYear = d.getFullYear(); calMonth = d.getMonth(); calWeekStart = d.getDate();
+        renderDayView();
+    } else { _origCalNext(); }
+};
+
+// ===== INBOX / COMMUNICATION CENTER =====
+function loadInbox() {
+    populateInboxClientSelect();
+    renderInbox();
+}
+
+function populateInboxClientSelect() {
+    var sel = document.getElementById('inboxClient');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Seleccionar cliente...</option>';
+    clientsData.forEach(function(c) {
+        sel.innerHTML += '<option value="' + c.id + '">' + c.name + (c.phone ? ' - ' + c.phone : '') + '</option>';
+    });
+}
+
+function showInboxCompose() { document.getElementById('inboxComposeArea').style.display = 'block'; }
+function hideInboxCompose() { document.getElementById('inboxComposeArea').style.display = 'none'; }
+
+async function createInboxComm(event) {
+    event.preventDefault();
+    var clientId = document.getElementById('inboxClient').value;
+    var type = document.getElementById('inboxType').value;
+    var note = document.getElementById('inboxNote').value;
+    if (!clientId || !note) { alert('Selecciona cliente y agrega descripción'); return; }
+    
+    var cl = clientsData.find(function(x) { return x.id === clientId; });
+    if (!cl) return;
+    var comms = (cl.client_comms) ? cl.client_comms : [];
+    comms.unshift({ type: type, note: note, date: new Date().toLocaleString('es'), by: 'Admin' });
+    await sbClient.from('clients').update({ client_comms: comms }).eq('id', clientId);
+    cl.client_comms = comms;
+    
+    hideInboxCompose();
+    document.getElementById('inboxNote').value = '';
+    renderInbox();
+    alert('✅ Comunicación registrada');
+}
+
+function renderInbox() {
+    var c = document.getElementById('inboxList');
+    if (!c) return;
+    var filter = (document.getElementById('inboxFilter') || {}).value || 'all';
+    
+    // Collect all comms from all clients
+    var allComms = [];
+    clientsData.forEach(function(cl) {
+        var comms = cl.client_comms || [];
+        comms.forEach(function(cm) {
+            allComms.push({ clientId: cl.id, clientName: cl.name, clientPhone: cl.phone || '', type: cm.type, note: cm.note, date: cm.date, by: cm.by });
+        });
+    });
+    
+    // Sort newest first
+    allComms.sort(function(a, b) {
+        var da = a.date ? new Date(a.date) : new Date(0);
+        var db = b.date ? new Date(b.date) : new Date(0);
+        return db - da;
+    });
+    
+    // Filter
+    if (filter !== 'all') {
+        allComms = allComms.filter(function(cm) { return cm.type === filter; });
+    }
+    
+    if (allComms.length === 0) {
+        c.innerHTML = '<p class="empty-msg" style="padding:30px;">📭 Sin comunicaciones' + (filter !== 'all' ? ' de este tipo' : '') + '. Registra tu primera interacción con un cliente.</p>';
+        return;
+    }
+    
+    var typeIcons = { call_out:'📱', call_in:'📲', text:'💬', email:'📧', visit:'🏠', follow_up:'🔄' };
+    var typeLabels = { call_out:'Llamada Saliente', call_in:'Llamada Entrante', text:'Texto/SMS', email:'Email', visit:'Visita', follow_up:'Follow-Up' };
+    
+    c.innerHTML = allComms.slice(0, 50).map(function(cm) {
+        return '<div class="inbox-item" onclick="openClientProfile(\'' + cm.clientId + '\');setTimeout(function(){switchClientTab(\'comms\')},100);">' +
+            '<div class="inbox-avatar type-' + cm.type + '">' + (typeIcons[cm.type] || '💬') + '</div>' +
+            '<div class="inbox-body">' +
+            '<strong>' + cm.clientName + '</strong>' +
+            ' <span class="inbox-type-badge" style="background:var(--bg-input);color:var(--text-muted);">' + (typeLabels[cm.type] || cm.type) + '</span>' +
+            '<p>' + (cm.note || '') + '</p></div>' +
+            '<div class="inbox-meta">' + (cm.date || '') + (cm.clientPhone ? '<br>' + cm.clientPhone : '') + '</div></div>';
+    }).join('');
+}
+
+// ===== IMPORT CLIENTS CSV =====
+async function importClientsCSV(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+        var text = e.target.result;
+        var lines = text.split('\n').filter(function(l) { return l.trim(); });
+        if (lines.length < 2) { alert('⚠️ CSV vacío o sin datos'); return; }
+        
+        // Parse header
+        var headers = parseCSVLine(lines[0]).map(function(h) { return h.toLowerCase().trim(); });
+        var nameIdx = findColIndex(headers, ['nombre','name','display name','client','cliente']);
+        var phoneIdx = findColIndex(headers, ['telefono','teléfono','phone','mobile','celular']);
+        var emailIdx = findColIndex(headers, ['email','correo','e-mail']);
+        var addressIdx = findColIndex(headers, ['direccion','dirección','address','domicilio']);
+        var companyIdx = findColIndex(headers, ['empresa','company','compañía','negocio']);
+        
+        if (nameIdx < 0) { alert('⚠️ No se encontró columna de nombre. Asegúrate de tener una columna: Nombre, Name, o Client'); return; }
+        
+        var imported = 0;
+        var skipped = 0;
+        for (var i = 1; i < lines.length; i++) {
+            var cols = parseCSVLine(lines[i]);
+            var name = (cols[nameIdx] || '').trim();
+            if (!name) { skipped++; continue; }
+            
+            var phone = phoneIdx >= 0 ? (cols[phoneIdx] || '').trim() : '';
+            var email = emailIdx >= 0 ? (cols[emailIdx] || '').trim() : '';
+            var address = addressIdx >= 0 ? (cols[addressIdx] || '').trim() : '';
+            var company = companyIdx >= 0 ? (cols[companyIdx] || '').trim() : '';
+            
+            // Check duplicates
+            var exists = clientsData.find(function(c) { return c.name === name || (phone && c.phone === phone); });
+            if (exists) { skipped++; continue; }
+            
+            var res = await sbClient.from('clients').insert({
+                company_id: companyId, name: name, phone: phone, email: email,
+                address: address, company: company, source: 'csv_import'
+            }).select().single();
+            if (res.data) { clientsData.push(res.data); imported++; }
+        }
+        
+        alert('✅ Importación completa\n\n📥 Importados: ' + imported + '\n⏭️ Omitidos (duplicados/vacíos): ' + skipped);
+        renderClientsList();
+        updateKPIs();
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+function parseCSVLine(line) {
+    var result = [];
+    var current = '';
+    var inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+        else { current += ch; }
+    }
+    result.push(current);
+    return result;
+}
+
+function findColIndex(headers, options) {
+    for (var i = 0; i < headers.length; i++) {
+        for (var j = 0; j < options.length; j++) {
+            if (headers[i].indexOf(options[j]) >= 0) return i;
+        }
+    }
+    return -1;
 }
 
 // ===== SEED DEMO DATA =====
