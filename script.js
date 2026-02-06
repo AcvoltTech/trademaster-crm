@@ -1497,19 +1497,107 @@ function presentEstimateToClient() {
         html += estClause('💵', 'DOWN PAYMENT', cl.downPayment);
         html += estClause('🔗', 'MECHANICS LIEN WARNING', cl.lien);
         html += estClause('🛡️', 'WARRANTY', cl.warranty);
+        if (cl.epa) html += estClause('🌿', 'EPA / REFRIGERANTS', cl.epa);
+        if (cl.permits) html += estClause('📋', 'PERMITS & INSPECTIONS', cl.permits);
+        if (cl.insurance) html += estClause('🦺', 'INSURANCE & BONDING', cl.insurance);
         html += estClause('🔒', 'PRIVACY POLICY', cl.privacy);
+        if (cl.refuse) html += estClause('🚫', 'RIGHT TO REFUSE SERVICE', cl.refuse);
         if (cl.custom) html += estClause('📝', 'ADDITIONAL TERMS', cl.custom);
         html += '</div>';
     }
 
+    // ===== APPROVAL SECTION =====
+    html += '<div style="margin-top:24px;border-top:3px solid #10b981;padding-top:16px;">';
+    html += '<h3 style="font-size:16px;color:#10b981;margin-bottom:12px;">✅ APROBACIÓN DEL CLIENTE / CLIENT APPROVAL</h3>';
+
+    // Acceptance checkbox
+    html += '<div style="padding:12px;background:#f0fdf4;border:2px solid #10b981;border-radius:8px;margin-bottom:16px;">';
+    html += '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.5;">';
+    html += '<input type="checkbox" id="acceptTerms" style="margin-top:3px;width:20px;height:20px;accent-color:#10b981;" onchange="document.getElementById(\'approveBtn\').disabled=!this.checked;document.getElementById(\'approveBtn\').style.opacity=this.checked?\'1\':\'0.5\';">';
+    html += '<span>I, the undersigned client, have reviewed the estimated work, components, pricing, and all terms and conditions listed above. I understand and agree to the scope of work, payment terms, cancellation policy, and warranty conditions. I authorize the contractor to proceed with the work described in this estimate.<br><br>';
+    html += '<em>Yo, el cliente abajo firmante, he revisado el estimado de trabajo, componentes, precios y todos los términos y condiciones. Entiendo y acepto el alcance del trabajo, términos de pago, política de cancelación y condiciones de garantía. Autorizo al contratista a proceder con el trabajo descrito.</em></span>';
+    html += '</label></div>';
+
     // Signature section with canvas pads
     html += '<div class="sig-section">';
-    html += '<div class="sig-box"><label>✍️ Firma del Cliente</label><canvas id="sigClient" class="sig-canvas" width="300" height="120"></canvas>';
-    html += '<div class="sig-actions"><button onclick="clearSig(\'sigClient\')">🗑️ Borrar</button></div></div>';
-    html += '<div class="sig-box"><label>👷 Técnico</label><div class="tech-display">' + (techName || 'N/A') + '</div>';
+    html += '<div class="sig-box"><label>✍️ Firma del Cliente / Client Signature</label><canvas id="sigClient" class="sig-canvas" width="300" height="120"></canvas>';
+    html += '<div class="sig-actions"><button onclick="clearSig(\'sigClient\')">🗑️ Borrar</button></div>';
+    html += '<div style="margin-top:6px;"><label style="font-size:11px;color:#666;">Nombre / Print Name:</label><input type="text" id="clientPrintName" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:13px;" placeholder="Nombre completo del cliente"></div></div>';
+    html += '<div class="sig-box"><label>👷 Técnico / Technician</label><div class="tech-display">' + (techName || 'N/A') + '</div>';
     html += '<canvas id="sigTech" class="sig-canvas" width="300" height="120" style="margin-top:10px;"></canvas>';
     html += '<div class="sig-actions"><button onclick="clearSig(\'sigTech\')">🗑️ Borrar</button></div></div>';
     html += '<div class="date-box"><label>📅 Fecha</label><div class="date-display">' + dateStr + '</div></div>';
+    html += '</div>';
+
+    // Approve button
+    html += '<div style="text-align:center;margin:16px 0;">';
+    html += '<button id="approveBtn" disabled style="opacity:0.5;padding:14px 40px;font-size:16px;font-weight:bold;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;" onclick="approveEstimate()">✅ CLIENTE APRUEBA / CLIENT APPROVES</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // ===== PAYMENT COLLECTION SECTION =====
+    html += '<div id="paymentSection" style="display:none;margin-top:20px;border-top:3px solid #f47621;padding-top:16px;">';
+    html += '<h3 style="font-size:16px;color:#f47621;margin-bottom:12px;">💰 COLECCIÓN DE PAGO / PAYMENT COLLECTION</h3>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+
+    // Payment method
+    html += '<div>';
+    html += '<label style="font-size:12px;font-weight:bold;color:#333;display:block;margin-bottom:4px;">Método de Pago / Payment Method</label>';
+    html += '<select id="payMethod" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;" onchange="togglePayFields()">';
+    html += '<option value="">-- Seleccionar --</option>';
+    html += '<option value="cash">💵 Cash / Efectivo</option>';
+    html += '<option value="check">📝 Check / Cheque</option>';
+    html += '<option value="card">💳 Credit/Debit Card / Tarjeta</option>';
+    html += '<option value="zelle">⚡ Zelle</option>';
+    html += '<option value="venmo">📱 Venmo</option>';
+    html += '<option value="other">📋 Otro / Other</option>';
+    html += '</select></div>';
+
+    // Payment amount
+    html += '<div>';
+    html += '<label style="font-size:12px;font-weight:bold;color:#333;display:block;margin-bottom:4px;">Monto / Amount</label>';
+    html += '<div style="display:flex;gap:6px;">';
+    html += '<button type="button" onclick="document.getElementById(\'payAmount\').value=\'' + grandTotal.toFixed(2) + '\'" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">Total $' + grandTotal.toFixed(2) + '</button>';
+    html += '<input type="number" id="payAmount" step="0.01" min="0" value="' + grandTotal.toFixed(2) + '" style="flex:1;padding:10px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;">';
+    html += '</div></div>';
+
+    html += '</div>';
+
+    // Card fee notice
+    html += '<div id="cardFeeNotice" style="display:none;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;margin-bottom:12px;font-size:12px;">';
+    html += '⚠️ Credit card payments include a 3% processing fee. / Los pagos con tarjeta incluyen 3% de cargo por procesamiento.';
+    html += '<div style="margin-top:6px;font-weight:bold;">Total con fee: <span id="cardTotalWithFee">$0.00</span></div>';
+    html += '</div>';
+
+    // Check number field
+    html += '<div id="checkField" style="display:none;margin-bottom:12px;">';
+    html += '<label style="font-size:12px;font-weight:bold;color:#333;">Número de Cheque / Check Number</label>';
+    html += '<input type="text" id="payCheckNum" style="width:100%;padding:8px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;" placeholder="Check #"></div>';
+
+    // Reference field
+    html += '<div id="refField" style="display:none;margin-bottom:12px;">';
+    html += '<label style="font-size:12px;font-weight:bold;color:#333;">Referencia / Reference (Zelle, Venmo, Confirmation #)</label>';
+    html += '<input type="text" id="payReference" style="width:100%;padding:8px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;" placeholder="Transaction ID / Confirmation"></div>';
+
+    // Payment notes
+    html += '<div style="margin-bottom:12px;">';
+    html += '<label style="font-size:12px;font-weight:bold;color:#333;">Notas de Pago / Payment Notes</label>';
+    html += '<textarea id="payNotes" rows="2" style="width:100%;padding:8px;border:2px solid #e5e7eb;border-radius:6px;font-size:13px;" placeholder="Notas adicionales..."></textarea></div>';
+
+    // Collect Payment button
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">';
+    html += '<button onclick="collectPayment()" style="padding:14px 30px;font-size:15px;font-weight:bold;background:#f47621;color:white;border:none;border-radius:8px;cursor:pointer;">💰 Cobrar Pago / Collect Payment</button>';
+    html += '<button onclick="skipPayment()" style="padding:14px 30px;font-size:15px;font-weight:bold;background:#6b7280;color:white;border:none;border-radius:8px;cursor:pointer;">⏭️ Cobrar Después / Collect Later</button>';
+    html += '</div>';
+
+    html += '</div>'; // end paymentSection
+
+    // ===== CONFIRMATION SECTION (hidden initially) =====
+    html += '<div id="confirmSection" style="display:none;margin-top:20px;padding:20px;background:#f0fdf4;border:3px solid #10b981;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:48px;margin-bottom:10px;">✅</div>';
+    html += '<h2 style="color:#10b981;margin-bottom:8px;">Estimado Aprobado y Procesado</h2>';
+    html += '<p id="confirmMsg" style="font-size:14px;color:#666;"></p>';
     html += '</div>';
 
     // Print / Save / Convert bar
@@ -1520,8 +1608,9 @@ function presentEstimateToClient() {
 
     html += '<p style="text-align:center;margin-top:20px;color:#999;font-size:11px;">Generado por Trade Master CRM | trademastersusa.org</p>';
 
-    // Signature pad JavaScript
+    // ===== JAVASCRIPT =====
     html += '<script>';
+    // Signature pad code
     html += 'function initSigPad(canvasId){';
     html += '  var c=document.getElementById(canvasId),ctx=c.getContext("2d");';
     html += '  var drawing=false,lastX=0,lastY=0;';
@@ -1535,6 +1624,60 @@ function presentEstimateToClient() {
     html += '  c.addEventListener("touchstart",startDraw,{passive:false});c.addEventListener("touchmove",draw,{passive:false});c.addEventListener("touchend",stopDraw);';
     html += '}';
     html += 'function clearSig(id){var c=document.getElementById(id);var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);c.classList.remove("signed");}';
+
+    // Approve estimate function
+    html += 'function approveEstimate(){';
+    html += '  var sigCanvas=document.getElementById("sigClient");';
+    html += '  var hasSignature=sigCanvas.classList.contains("signed");';
+    html += '  if(!hasSignature){alert("⚠️ Se requiere la firma del cliente / Client signature required");return;}';
+    html += '  var clientName=document.getElementById("clientPrintName").value;';
+    html += '  if(!clientName.trim()){alert("⚠️ Escriba el nombre del cliente / Enter client name");return;}';
+    html += '  document.getElementById("paymentSection").style.display="block";';
+    html += '  document.getElementById("approveBtn").textContent="✅ APROBADO / APPROVED";';
+    html += '  document.getElementById("approveBtn").style.background="#059669";';
+    html += '  document.getElementById("approveBtn").disabled=true;';
+    html += '  document.getElementById("paymentSection").scrollIntoView({behavior:"smooth"});';
+    html += '  window.opener.postMessage({action:"estimateApproved",clientName:clientName,signature:sigCanvas.toDataURL()}, "*");';
+    html += '}';
+
+    // Toggle payment fields based on method
+    html += 'function togglePayFields(){';
+    html += '  var m=document.getElementById("payMethod").value;';
+    html += '  document.getElementById("cardFeeNotice").style.display=(m==="card")?"block":"none";';
+    html += '  document.getElementById("checkField").style.display=(m==="check")?"block":"none";';
+    html += '  document.getElementById("refField").style.display=(m==="zelle"||m==="venmo"||m==="other")?"block":"none";';
+    html += '  if(m==="card"){var amt=parseFloat(document.getElementById("payAmount").value)||0;document.getElementById("cardTotalWithFee").textContent="$"+(amt*1.03).toFixed(2);}';
+    html += '}';
+
+    // Collect payment
+    html += 'function collectPayment(){';
+    html += '  var method=document.getElementById("payMethod").value;';
+    html += '  var amount=parseFloat(document.getElementById("payAmount").value)||0;';
+    html += '  if(!method){alert("⚠️ Seleccione método de pago / Select payment method");return;}';
+    html += '  if(amount<=0){alert("⚠️ Ingrese monto válido / Enter valid amount");return;}';
+    html += '  var ref="";';
+    html += '  if(method==="check") ref=document.getElementById("payCheckNum").value;';
+    html += '  else if(method==="zelle"||method==="venmo"||method==="other") ref=document.getElementById("payReference").value;';
+    html += '  var finalAmount=amount;';
+    html += '  if(method==="card") finalAmount=amount*1.03;';
+    html += '  var payData={action:"collectPayment",method:method,amount:finalAmount,reference:ref,notes:document.getElementById("payNotes").value,clientName:document.getElementById("clientPrintName").value};';
+    html += '  window.opener.postMessage(payData,"*");';
+    html += '  document.getElementById("paymentSection").style.display="none";';
+    html += '  document.getElementById("confirmSection").style.display="block";';
+    html += '  var methodNames={cash:"Efectivo",check:"Cheque",card:"Tarjeta",zelle:"Zelle",venmo:"Venmo",other:"Otro"};';
+    html += '  document.getElementById("confirmMsg").innerHTML="<strong>Pago de $"+finalAmount.toFixed(2)+" recibido via "+methodNames[method]+"</strong>"+(ref?"<br>Ref: "+ref:"")+"<br><br>El estimado ha sido aprobado y el pago registrado.";';
+    html += '  document.getElementById("confirmSection").scrollIntoView({behavior:"smooth"});';
+    html += '}';
+
+    // Skip payment (collect later)
+    html += 'function skipPayment(){';
+    html += '  window.opener.postMessage({action:"estimateApprovedNoPay",clientName:document.getElementById("clientPrintName").value},"*");';
+    html += '  document.getElementById("paymentSection").style.display="none";';
+    html += '  document.getElementById("confirmSection").style.display="block";';
+    html += '  document.getElementById("confirmMsg").innerHTML="<strong>Estimado aprobado.</strong><br>Pago pendiente — se cobrará después.<br><br>Puede convertir este estimado a factura desde el CRM.";';
+    html += '  document.getElementById("confirmSection").scrollIntoView({behavior:"smooth"});';
+    html += '}';
+
     html += 'window.onload=function(){initSigPad("sigClient");initSigPad("sigTech");};';
     html += '<\/script>';
     html += '</body></html>';
@@ -1546,12 +1689,26 @@ function generateEstimatePDF() { presentEstimateToClient(); }
 
 // Listen for "Convert to Invoice" message from estimate popup
 window.addEventListener('message', function(event) {
-    if (event.data && event.data.action === 'convertEstimateToInvoice') {
+    if (!event.data || !event.data.action) return;
+    if (event.data.action === 'convertEstimateToInvoice') {
         convertEstimateToInvoice();
+    }
+    if (event.data.action === 'estimateApproved') {
+        console.log('✅ Estimate approved by:', event.data.clientName);
+        // Could save approval status to DB here
+    }
+    if (event.data.action === 'collectPayment') {
+        console.log('💰 Payment collected:', event.data);
+        // Auto-convert to invoice with payment
+        convertEstimateToInvoice(event.data);
+    }
+    if (event.data.action === 'estimateApprovedNoPay') {
+        console.log('⏭️ Estimate approved, payment later:', event.data.clientName);
+        convertEstimateToInvoice({ noPay: true });
     }
 });
 
-async function convertEstimateToInvoice() {
+async function convertEstimateToInvoice(paymentInfo) {
     if (!companyId) return;
     var decision = document.getElementById('estClientDecision').value;
     var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
@@ -1593,7 +1750,29 @@ async function convertEstimateToInvoice() {
         }
     }
 
+    // Override client name if provided from estimate approval
+    if (paymentInfo && paymentInfo.clientName) clientName = paymentInfo.clientName;
+
     var invNumber = 'INV-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(Math.floor(Math.random()*9000)+1000);
+
+    // Determine payment status
+    var amountPaid = 0;
+    var balanceDue = total;
+    var status = 'draft';
+    var paymentMethod = null;
+    var paymentRef = null;
+    var paymentDate = null;
+
+    if (paymentInfo && !paymentInfo.noPay && paymentInfo.amount) {
+        amountPaid = paymentInfo.amount;
+        balanceDue = Math.max(0, total - amountPaid);
+        paymentMethod = paymentInfo.method || null;
+        paymentRef = paymentInfo.reference || null;
+        paymentDate = new Date().toISOString();
+        status = balanceDue <= 0 ? 'paid' : 'partial';
+    } else if (paymentInfo && paymentInfo.noPay) {
+        status = 'sent'; // Approved but unpaid
+    }
 
     var data = {
         company_id: companyId,
@@ -1612,15 +1791,33 @@ async function convertEstimateToInvoice() {
         tax_percent: taxRate,
         tax_amount: taxAmt,
         total: total,
-        balance_due: total,
-        amount_paid: 0,
+        balance_due: balanceDue,
+        amount_paid: amountPaid,
+        payment_method: paymentMethod,
+        payment_reference: paymentRef,
+        payment_date: paymentDate,
         notes: document.getElementById('estNotes').value || '',
-        status: 'draft'
+        status: status
     };
 
     var res = await sbClient.from('invoices').insert(data).select().single();
     if (res.data) {
-        alert('✅ Factura ' + invNumber + ' creada por $' + total.toFixed(2) + '\n\nVe a Facturas para verla, editarla o enviarla.');
+        // If payment was collected, also log it in payments table
+        if (amountPaid > 0) {
+            await sbClient.from('payments').insert({
+                company_id: companyId,
+                invoice_id: res.data.id,
+                amount: amountPaid,
+                payment_method: paymentMethod,
+                reference: paymentRef,
+                notes: paymentInfo.notes || 'Pago al aprobar estimado'
+            });
+        }
+        var msg = '✅ Factura ' + invNumber + ' creada por $' + total.toFixed(2);
+        if (amountPaid > 0) msg += '\n💰 Pago de $' + amountPaid.toFixed(2) + ' registrado (' + paymentMethod + ')';
+        if (balanceDue > 0 && amountPaid > 0) msg += '\n📋 Balance pendiente: $' + balanceDue.toFixed(2);
+        msg += '\n\nVe a Facturas para verla.';
+        alert(msg);
         await loadInvoices();
     } else {
         alert('❌ Error al crear factura: ' + (res.error ? res.error.message : 'Error desconocido'));
@@ -2274,7 +2471,11 @@ function printInvoice(invId) {
     html += clauseBlock('💵', 'DOWN PAYMENT / ENGANCHE', cl.downPayment);
     html += clauseBlock('🔗', 'MECHANICS LIEN WARNING / AVISO DE LIENS', cl.lien);
     html += clauseBlock('🛡️', 'WARRANTY / GARANTÍA', cl.warranty);
+    if (cl.epa) html += clauseBlock('🌿', 'EPA / REFRIGERANTS & ENVIRONMENTAL', cl.epa);
+    if (cl.permits) html += clauseBlock('📋', 'PERMITS & INSPECTIONS / PERMISOS', cl.permits);
+    if (cl.insurance) html += clauseBlock('🦺', 'INSURANCE & BONDING / SEGURO', cl.insurance);
     html += clauseBlock('🔒', 'PRIVACY POLICY / POLÍTICA DE PRIVACIDAD', cl.privacy);
+    if (cl.refuse) html += clauseBlock('🚫', 'RIGHT TO REFUSE SERVICE / RESERVA DE DERECHO', cl.refuse);
     if (cl.custom) html += clauseBlock('📝', 'ADDITIONAL TERMS / TÉRMINOS ADICIONALES', cl.custom);
 
     // Signature block
@@ -2914,57 +3115,382 @@ function renderPipeline() {
 }
 
 // ===== CONTRACT CLAUSES (Editable per state) =====
+// ===== STATE REGULATION SUMMARIES =====
+var stateRegSummaries = {
+    CA: '🏛️ CSLB C-20 License Required | Bond: $25,000 | Down Payment Max: $1,000 or 10% | 3-Day Cancel (5 days for 65+) | Permits required for installations | HERS testing required',
+    TX: '🏛️ TDLR ACR License Required (Class A/B) | Insurance: $100K-$300K GL | No down payment limit by law | 3-Day Cancel (in-home sales) | TDLR regulates all AC&R work',
+    AZ: '🏛️ ROC License Required | Bond: $2,500-$15,000+ | 3-Day Cancel | ROC complaint process | Permits required by municipality',
+    NV: '🏛️ NSCB License Required | Bond: varies by class | Down Payment Max: 10% | 3-Day Cancel | Financial responsibility required',
+    FL: '🏛️ DBPR License Required (CAC/CFC) | Insurance: $100K GL + $25K property | No statutory down payment limit | 3-Day Cancel (home solicitation) | Building permits required',
+    NY: '🏛️ Local License/Registration Required | NYC: DCA License | 3-Day Cancel | Home Improvement Act protections | Insurance required by locality',
+    CO: '🏛️ State License NOT required (local jurisdictions vary) | Denver, Boulder, Aurora require local licenses | 3-Day Cancel | Permits by municipality',
+    GA: '🏛️ Low-Voltage & Conditioned Air License via SOS | Bond: $10,000+ | 3-Day Cancel | Georgia Residential & General Contractor Act',
+    IL: '🏛️ No statewide license (Chicago requires local license) | 3-Day Cancel (Home Repair & Remodeling Act) | Permits by municipality',
+    NJ: '🏛️ HVAC License via DCA | Registration required | 3-Day Cancel | Consumer Fraud Act protections | Permits required',
+    NC: '🏛️ State Board of Examiners license required (H-1, H-2, H-3) | Bond: $10,000 | 3-Day Cancel | Permits required',
+    OH: '🏛️ HVAC License via OCILB | Bond required | 3-Day Cancel (Home Solicitation Sales Act) | Permits by municipality',
+    PA: '🏛️ No statewide license (Philadelphia, Pittsburgh require local) | 3-Day Cancel (Consumer Protection Law) | Permits required',
+    VA: '🏛️ DPOR Class A/B/C Contractor License | Bond: $10,000-$50,000 | 3-Day Cancel | Virginia Contractor Transaction Recovery Fund',
+    WA: '🏛️ L&I Electrical/HVAC Specialty License | Bond: $12,000 | 3-Day Cancel | Permits required statewide',
+    OR: '🏛️ CCB License Required | Bond: $20,000 | 3-Day Cancel (Oregon Home Solicitation Sales Act) | Permits required',
+    MI: '🏛️ Mechanical Contractor License via LARA | Bond required | 3-Day Cancel (Home Improvement Finance Act) | Permits required',
+    MA: '🏛️ No statewide HVAC license (local permits required) | Home Improvement Contractor Registration | 3-Day Cancel',
+    TN: '🏛️ Board for Licensing Contractors (projects >$25,000) | Bond: $10,000+ | 3-Day Cancel | Permits by municipality',
+    MO: '🏛️ No statewide license (Kansas City, St. Louis require local) | 3-Day Cancel (Merchandising Practices Act) | Permits vary',
+    SC: '🏛️ LLR Mechanical Contractor License | Bond required | 3-Day Cancel | Reciprocity with TX & GA',
+    LA: '🏛️ LSLBC Mechanical License | Bond: $5,000-$15,000 | 3-Day Cancel | Permits required statewide',
+    MD: '🏛️ MHIC License Required | Bond: varies | 3-Day Cancel | Maryland Home Improvement Commission regulates',
+    MN: '🏛️ DLI License Required | Bond: $25,000 | 3-Day Cancel | Permits required statewide',
+    WI: '🏛️ DSPS Credential Required | Bond varies | 3-Day Cancel | Wisconsin Administrative Code regulates',
+    IN: '🏛️ No statewide license (local jurisdictions vary) | 3-Day Cancel | Permits by municipality',
+    UT: '🏛️ DOPL S350 License Required | Bond: $15,000 | 3-Day Cancel | Permits required',
+    OK: '🏛️ CIB Mechanical License | Bond: varies | 3-Day Cancel | Oklahoma Consumer Protection Act',
+    CT: '🏛️ DCP Registration Required (HIC) | Bond varies | 3-Day Cancel (Home Solicitation Sales Act) | Permits required',
+    NM: '🏛️ CID License Required (Mechanical) | Bond: varies | 3-Day Cancel | Permits required',
+    KY: '🏛️ HVAC License via DHBC (master/journeyman) | Bond varies | 3-Day Cancel | Permits required',
+    AL: '🏛️ ASBHCE License Required | Bond required | 3-Day Cancel (Alabama Home Solicitation Act) | Permits vary',
+    HI: '🏛️ DCCA C-16 Specialty License | Bond: $15,000 | 3-Day Cancel | Permits required statewide',
+    MS: '🏛️ Board of Contractors License (>$50K) | Bond varies | 3-Day Cancel | Permits by municipality',
+    AR: '🏛️ Contractors Licensing Board (>$50K) | Bond varies | 3-Day Cancel | Permits by municipality',
+    KS: '🏛️ No statewide license (local jurisdictions vary) | 3-Day Cancel | Permits by municipality',
+    IA: '🏛️ No statewide HVAC license | Mechanical permits required | 3-Day Cancel',
+    NE: '🏛️ No statewide license | Local mechanical permits | 3-Day Cancel',
+    ME: '🏛️ Oil & Solid Fuel Board (heating) | 3-Day Cancel | Permits required',
+    NH: '🏛️ No statewide license | Gas fitter license for gas work | 3-Day Cancel | Permits required',
+    VT: '🏛️ No statewide license | Permits by municipality | 3-Day Cancel',
+    WV: '🏛️ Division of Labor HVAC License | Bond varies | 3-Day Cancel | Permits required',
+    ND: '🏛️ No statewide license | Permits by municipality | 3-Day Cancel',
+    SD: '🏛️ No statewide license | Permits by municipality | 3-Day Cancel',
+    MT: '🏛️ No statewide license | Permits by municipality | 3-Day Cancel',
+    WY: '🏛️ No statewide license | Permits by municipality | 3-Day Cancel',
+    DE: '🏛️ DAPE License Required | Bond: $5,000 | 3-Day Cancel | Permits required',
+    RI: '🏛️ Contractor Registration Required | Bond: $10,000 | 3-Day Cancel | Permits required',
+    ID: '🏛️ HVAC License via DBS | Bond: $2,000 | 3-Day Cancel | Permits required',
+    DC: '🏛️ DCRA License Required | Bond required | 3-Day Cancel | All permits through DCRA',
+    PR: '🏛️ DACO regulates contractors | Bond varies | Cancellation per PR Consumer Affairs | Permits required'
+};
+
+var _commonRefuse = 'RIGHT TO REFUSE SERVICE\n\nWe reserve the right to decline or discontinue service to any customer whose behavior negatively affects our business operations, our team, or our company\'s reputation. This includes, but is not limited to:\n\n• Verbal abuse, threats, or harassment directed at our technicians or staff.\n• Posting unfounded, defamatory, or fraudulent reviews on social media, Google, Yelp, or any other review platform with the intent to damage our business reputation.\n• Refusal to allow safe working conditions or access to equipment.\n• Repeated failure to honor payment agreements.\n\nAll service disputes should be communicated directly to our office before any public action. We are committed to resolving issues professionally and fairly.';
+
+// ===== COMPREHENSIVE DEFAULT CLAUSES BY STATE =====
 var defaultClausesByState = {
     CA: {
-        payment: 'Payment is due upon completion of work unless otherwise agreed in writing. Accepted payment methods: Cash, Check, Debit Card, Credit Card, Zelle, and Venmo.\n\nCredit Card Payments: A processing fee of 3% will be applied to all credit card transactions.\n\nReturned/Bounced Checks: A fee of 10% of the check amount will be assessed for any returned or bounced check, in addition to any bank fees incurred.\n\nLate Payment: Invoices not paid within 30 days of the due date may be subject to a late fee of 1.5% per month (18% per annum) on the outstanding balance.',
-        cancel: 'California Business and Professions Code §7159 & Civil Code §1689.5-1689.14:\n\nYou, the buyer, may cancel this transaction at any time prior to midnight of the third business day after the date of this transaction. If you cancel, any property traded in, any payments made by you under the contract, and any negotiable instrument executed by you will be returned within 10 business days following receipt by the seller of your cancellation notice.\n\nThe "Three-Day Right to Cancel" does not apply to Service and Repair contracts under $750 where work begins immediately, or to contracts negotiated at the contractor\'s place of business.\n\nFor customers 65 years of age or older, the right to cancel is extended to FIVE (5) business days per California AB 2471.',
-        restock: 'If the customer cancels the contract after the 3-day right to cancel period has expired:\n\n• A 20% restocking fee will be applied to any materials and/or equipment that have been purchased, ordered, or reserved for the project, provided that a purchase receipt or proof of order is presented.\n• Any permits already pulled and paid for are non-refundable. The full cost of permits will be deducted from any refund.\n• If custom or special-order equipment has been ordered and cannot be returned to the supplier, the customer is responsible for the full cost of said equipment.\n• Labor already performed prior to cancellation will be billed at the agreed-upon rate.',
-        license: 'CSLB is the state consumer protection agency that licenses and regulates construction contractors.\n\nContact CSLB for information about the licensed contractor you are considering, including information about disclosable complaints, disciplinary actions, and civil judgments.\n\nCSLB Contact: 800-321-CSLB (2752) | Website: www.cslb.ca.gov | P.O. Box 26000, Sacramento, CA 95826\n\nIMPORTANT: Use only licensed contractors. If you file a complaint against a licensed contractor within the legal deadline (usually four years), CSLB has authority to investigate the complaint.',
-        downPayment: 'Per California law (BPC §7159), the down payment cannot exceed $1,000 or 10% of the contract price, whichever is less. Subsequent progress payments cannot exceed the value of work performed or materials delivered. There are no exceptions for special-order materials.',
-        lien: 'Anyone who helps improve your property but who is not paid may record what is called a mechanics lien on your property. A mechanics lien is a claim against your property, recorded at the County Recorder\'s Office, that could result in a court-ordered foreclosure sale of your property.',
-        warranty: 'All work performed is guaranteed for a period of one (1) year from the date of completion for labor and workmanship. Manufacturer warranties on equipment and parts are separate and may vary. All warranty claims must be reported in writing within the warranty period.',
-        privacy: 'We collect personal information solely for the purpose of providing HVAC services and maintaining service records. Your information will not be sold, shared, or distributed to third parties without your consent, except as required by law. Service records may be retained for warranty and regulatory compliance purposes.',
+        payment: 'Payment is due upon completion of work unless otherwise agreed in writing. Accepted methods: Cash, Check, Debit Card, Credit Card, Zelle, Venmo.\n\nCredit Card: A processing fee of 3% applies to all credit card transactions.\nReturned/Bounced Checks: A fee of 10% of the check amount will be assessed, plus any bank fees.\nLate Payment: Invoices not paid within 30 days are subject to a late fee of 1.5% per month (18% per annum).',
+        cancel: 'CALIFORNIA 3-DAY RIGHT TO CANCEL (BPC §7159 & Civil Code §1689.5-1689.14)\n\nYou, the buyer, may cancel this transaction at any time prior to midnight of the THIRD BUSINESS DAY after the date of this transaction. If you cancel, any property traded in, any payments made by you, and any negotiable instrument executed by you will be returned within 10 business days following receipt of your cancellation notice.\n\nEXCEPTIONS:\n• Service/repair contracts under $750 where work begins immediately.\n• Contracts negotiated at the contractor\'s place of business.\n\nSENIOR CITIZENS (65+): Per California AB 2471, you have FIVE (5) business days to cancel.\n\nTo cancel, mail or deliver a signed copy of the cancellation notice to the contractor at the address shown on this contract.',
+        restock: 'CANCELLATION AFTER 3-DAY PERIOD:\n\n• 20% restocking fee on materials/equipment purchased, ordered, or reserved (proof of purchase required).\n• Permits already pulled and paid for are non-refundable.\n• Custom or special-order equipment that cannot be returned: customer responsible for full cost.\n• Labor already performed billed at the agreed-upon rate.\n• All refunds processed within 15 business days.',
+        license: 'CALIFORNIA CONTRACTORS STATE LICENSE BOARD (CSLB) NOTICE\n\nCSLB is the state consumer protection agency that licenses and regulates construction contractors. Any contractor performing work valued at $1,000 or more (labor + materials) must hold a valid CSLB license. As of January 1, 2025 (AB 2622), the licensing threshold increased from $500 to $1,000.\n\nHVAC contractors must hold a C-20 (Warm-Air Heating, Ventilating & Air-Conditioning) license. Electrical work requires a separate C-10 license.\n\nContact CSLB for information about licensed contractors, complaints, disciplinary actions, and civil judgments.\n\nCSLB: 800-321-CSLB (2752) | www.cslb.ca.gov | P.O. Box 26000, Sacramento, CA 95826\n\nIMPORTANT: Always use licensed contractors. File complaints within 4 years for CSLB to investigate.',
+        downPayment: 'CALIFORNIA DOWN PAYMENT LIMIT (BPC §7159)\n\nThe down payment cannot exceed $1,000 or 10% of the contract price, WHICHEVER IS LESS. Subsequent progress payments cannot exceed the value of work performed or materials delivered.\n\nException: Licensees who carry a special Consumer Protection Bond (shown on CSLB website) may collect larger deposits. Verify at www.cslb.ca.gov.',
+        lien: 'MECHANICS LIEN WARNING (California Civil Code §8000-9566)\n\nAnyone who helps improve your property but is not paid may record a MECHANICS LIEN against your property at the County Recorder\'s Office. This could result in a court-ordered foreclosure sale.\n\nTo protect yourself:\n• Request lien waivers (conditional/unconditional) with each payment.\n• Keep copies of all contracts, change orders, and payment records.\n• Make checks payable to both the contractor and material supplier when appropriate.',
+        warranty: 'WARRANTY ON LABOR: All work is guaranteed for ONE (1) YEAR from date of completion for labor and workmanship.\n\nWARRANTY ON PARTS:\n• OEM (Original Equipment Manufacturer) Parts: 1 year manufacturer warranty.\n• Aftermarket/Generic Parts: 3 months warranty.\n• New Equipment Parts: Manufacturer warranty from 1 to 10 years depending on brand, model, and component (compressors typically 5-10 years, parts 1-5 years).\n\nAll warranty claims must be reported in writing within the warranty period. Warranty does NOT cover damage caused by: misuse, neglect, lack of maintenance, power surges, acts of nature, unauthorized modifications, or improper operation by the customer.',
+        epa: 'EPA SECTION 608 COMPLIANCE\n\nAll technicians handling refrigerants are EPA Section 608 certified as required by the Clean Air Act. Refrigerant recovery, recycling, and reclamation follow EPA regulations. Intentional venting of refrigerants is prohibited (fines up to $44,539 per day per violation).\n\nCALIFORNIA ADDITIONAL: CARB (California Air Resources Board) has additional regulations on refrigerant management and reporting. HFC phase-down under the AIM Act may affect equipment recommendations.',
+        permits: 'PERMITS & INSPECTIONS (California Building Code / Title 24)\n\nBuilding permits are REQUIRED for: all equipment replacements, new installations, duct modifications, and gas line work. Per California Title 24, HERS (Home Energy Rating System) testing and verification is required for HVAC installations.\n\n2025 Energy Code Update: Effective Jan 1, 2026, heat pump installations must comply with the 2025 Building Energy Efficiency Standards.\n\nThe contractor is responsible for pulling all required permits, scheduling inspections, and ensuring code compliance. Permit costs are included in the contract unless otherwise stated.',
+        insurance: 'INSURANCE & BONDING (California Requirements)\n\n• Contractor License Bond: $25,000 (required by CSLB for all active licenses).\n• Workers\' Compensation: Required for all employees (or exempt if sole proprietor with no employees).\n• General Liability Insurance: Recommended minimum $1,000,000.\n• Vehicle Insurance: All company vehicles are insured.\n\nVerify contractor insurance status at www.cslb.ca.gov.',
+        privacy: 'PRIVACY POLICY: Personal information is collected solely for providing HVAC services, scheduling, billing, and maintaining service records. Information will not be sold, shared, or distributed to third parties without consent, except as required by law. Service records retained for warranty and regulatory compliance (minimum 4 years per CSLB requirements).',
+        refuse: 'RIGHT TO REFUSE SERVICE\n\nWe reserve the right to decline or discontinue service to any customer whose behavior negatively affects our business operations, our team, or our company\'s reputation. This includes, but is not limited to:\n\n• Verbal abuse, threats, or harassment directed at our technicians or staff.\n• Posting unfounded, defamatory, or fraudulent reviews on social media, Google, Yelp, or any other review platform with the intent to damage our business reputation.\n• Refusal to allow safe working conditions or access to equipment.\n• Repeated failure to honor payment agreements.\n\nAll service disputes should be communicated directly to our office before any public action. We are committed to resolving issues professionally and fairly.',
         custom: ''
     },
     TX: {
-        payment: 'Payment is due upon completion of work unless otherwise agreed in writing. Accepted payment methods: Cash, Check, Debit Card, Credit Card, Zelle, and Venmo.\n\nCredit Card Payments: A processing fee of 3% will be applied to all credit card transactions.\n\nReturned/Bounced Checks: A fee of 10% of the check amount will be assessed for any returned or bounced check.',
-        cancel: 'Texas Property Code §53 & Texas Business and Commerce Code:\n\nYou, the buyer, may cancel this transaction at any time prior to midnight of the third business day after the date of this transaction. Written notice of cancellation must be sent to the contractor.\n\nThe right to cancel does not apply to emergency repairs or services requested by the homeowner where work has already begun.',
-        restock: 'If the customer cancels the contract after the cancellation period:\n\n• A 20% restocking fee will be applied to materials/equipment purchased with proof of receipt.\n• Permits already obtained are non-refundable.\n• Custom or special-order equipment costs are the customer\'s responsibility.\n• Labor already performed will be billed at the agreed rate.',
-        license: 'Texas does not require a statewide HVAC contractor license, but contractors must hold a license from the Texas Department of Licensing and Regulation (TDLR) for AC and Refrigeration work.\n\nTDLR Contact: (800) 803-9202 | Website: www.tdlr.texas.gov',
-        downPayment: 'Texas law does not set a specific limit on down payments for home improvement contracts. However, payments should not exceed the value of work completed or materials delivered.',
-        lien: 'Under Texas Property Code Chapter 53, contractors, subcontractors, and material suppliers may file a mechanics lien if not paid. Homeowners should request lien waivers with each payment.',
-        warranty: 'All work performed is guaranteed for a period of one (1) year from the date of completion for labor and workmanship. Manufacturer warranties are separate and may vary.',
-        privacy: 'We collect personal information solely for the purpose of providing HVAC services and maintaining service records. Your information will not be sold or shared with third parties without your consent.',
+        payment: 'Payment is due upon completion of work unless otherwise agreed in writing. Accepted methods: Cash, Check, Debit Card, Credit Card, Zelle, Venmo.\n\nCredit Card: 3% processing fee applies.\nReturned/Bounced Checks: 10% fee assessed plus bank charges.\nLate Payment: Invoices past 30 days subject to 1.5%/month late fee.',
+        cancel: 'TEXAS 3-DAY RIGHT TO CANCEL (Business & Commerce Code §601.052)\n\nFor contracts signed at the customer\'s residence (door-to-door/home solicitation), you may cancel within THREE (3) BUSINESS DAYS of signing. Written notice of cancellation must be delivered to the contractor.\n\nEXCEPTIONS:\n• Emergency repairs requested by the homeowner where work has begun.\n• Contracts negotiated at the contractor\'s place of business.\n• Work valued under $25.\n\nThe contractor must provide a written Notice of Cancellation form at the time of signing.',
+        restock: 'CANCELLATION AFTER 3-DAY PERIOD:\n\n• 20% restocking fee on materials/equipment purchased (proof of receipt required).\n• Permits already obtained are non-refundable.\n• Custom or special-order equipment: customer responsible for full cost.\n• Labor already performed billed at the agreed rate.\n• Refunds processed within 15 business days.',
+        license: 'TEXAS DEPARTMENT OF LICENSING AND REGULATION (TDLR) NOTICE\n\nAll contractors who install, repair, or maintain air conditioning, refrigeration, or heating systems MUST have a TDLR ACR (Air Conditioning & Refrigeration) License. Companies must employ a licensed ACR contractor at each permanent location.\n\nLicense Classes:\n• Class A: Unlimited capacity systems.\n• Class B: Systems up to 25 tons cooling / 1.5 million BTU heating.\n\nEndorsements: Environmental Air Conditioning, Commercial Refrigeration & Process Cooling.\n\nTDLR: (800) 803-9202 | www.tdlr.texas.gov | P.O. Box 12157, Austin, TX 78711',
+        downPayment: 'TEXAS DOWN PAYMENT: Texas law does not set a specific statutory limit on down payments for home improvement contracts. However, payments should reasonably correspond to the value of work completed or materials delivered. Large upfront payments without corresponding work may violate the Texas Deceptive Trade Practices Act (DTPA).',
+        lien: 'MECHANICS LIEN (Texas Property Code Chapter 53)\n\nContractors, subcontractors, and material suppliers may file a mechanics lien if not paid. Key deadlines:\n• Original contractor: lien must be filed by the 15th day of the 3rd month after work completed.\n• Subcontractors/suppliers: must send preliminary notice within specific timeframes.\n\nHomeowners should request lien waivers with each payment. Retain all payment records.',
+        warranty: 'WARRANTY ON LABOR: All work guaranteed for ONE (1) YEAR from completion.\n\nWARRANTY ON PARTS:\n• OEM Parts: 1 year manufacturer warranty.\n• Aftermarket/Generic Parts: 3 months warranty.\n• New Equipment: Manufacturer warranty 1-10 years depending on brand/model/component.\n\nClaims must be reported in writing. Excludes misuse, neglect, power surges, acts of nature, unauthorized modifications.',
+        epa: 'EPA SECTION 608 COMPLIANCE\n\nAll technicians are EPA Section 608 certified as required by the Clean Air Act. Refrigerant recovery, recycling, and reclamation follow federal regulations. Intentional venting prohibited (fines up to $44,539/day/violation).\n\nTEXAS ADDITIONAL: Texas Commission on Environmental Quality (TCEQ) has additional requirements for refrigerant management and equipment disposal.',
+        permits: 'PERMITS & INSPECTIONS (Texas Municipal Codes / IRC / IMC)\n\nPermit requirements vary by city and county. Most Texas municipalities require permits for: equipment replacements, new installations, gas line modifications, and ductwork changes.\n\nThe contractor is responsible for pulling permits and scheduling inspections where required. Some rural areas may not require permits — verify with your local jurisdiction. Permit costs are included unless otherwise stated.',
+        insurance: 'INSURANCE & BONDING (Texas TDLR Requirements)\n\n• General Liability Insurance: REQUIRED by TDLR.\n  - Class A: $300,000/occurrence, $600,000 aggregate.\n  - Class B: $100,000/occurrence, $200,000 aggregate.\n• Workers\' Compensation: Required if employees are on staff.\n• Vehicle Insurance: All company vehicles insured.\n\nVerify contractor license and insurance at www.tdlr.texas.gov.',
+        privacy: 'PRIVACY POLICY: Personal information collected for HVAC services, billing, and service records only. Not sold or shared without consent except as required by law.',
+        refuse: _commonRefuse,
         custom: ''
     },
     AZ: {
-        payment: 'Payment is due upon completion of work unless otherwise agreed in writing. Accepted payment methods: Cash, Check, Debit Card, Credit Card, Zelle, and Venmo.\n\nCredit Card Payments: A processing fee of 3% will be applied.\nReturned/Bounced Checks: A fee of 10% will be assessed.',
-        cancel: 'Arizona Revised Statutes §44-5001:\n\nYou may cancel this transaction within three business days of signing. Written cancellation notice must be delivered to the contractor.',
-        restock: 'Cancellation after the 3-day period:\n\n• 20% restocking fee on materials with purchase receipt.\n• Non-refundable permit costs deducted from refund.\n• Custom equipment costs are the customer\'s responsibility.\n• Completed labor billed at agreed rate.',
-        license: 'Arizona Registrar of Contractors (ROC) licenses and regulates contractors.\n\nROC Contact: (602) 542-1525 | Website: roc.az.gov',
-        downPayment: 'Arizona law allows contractors to collect a down payment, but the total of all payments cannot exceed the value of work performed and materials delivered, plus a reasonable allowance for overhead and profit.',
-        lien: 'Under Arizona law, contractors may file a mechanics lien for unpaid work. A preliminary 20-day notice is required to preserve lien rights.',
-        warranty: 'All work guaranteed for one (1) year from completion. Manufacturer warranties are separate.',
-        privacy: 'Personal information collected for HVAC service purposes only and will not be shared without consent.',
+        payment: 'Payment is due upon completion. Accepted methods: Cash, Check, Debit Card, Credit Card, Zelle, Venmo.\n\nCredit Card: 3% processing fee. Bounced Checks: 10% fee. Late Payment: 1.5%/month after 30 days.',
+        cancel: 'ARIZONA 3-DAY RIGHT TO CANCEL (ARS §44-5001 – Door-to-Door Sales)\n\nFor transactions at the buyer\'s residence, you may cancel within THREE (3) BUSINESS DAYS. The contractor must provide a written Notice of Cancellation.\n\nEXCEPTIONS: Emergency repairs, contracts at contractor\'s business location.',
+        restock: 'CANCELLATION AFTER 3-DAY PERIOD:\n\n• 20% restocking fee with proof of purchase.\n• Non-refundable permit costs deducted.\n• Custom equipment: customer responsible.\n• Completed labor billed at agreed rate.',
+        license: 'ARIZONA REGISTRAR OF CONTRACTORS (ROC) NOTICE\n\nAll contractors must be licensed by the ROC. HVAC work falls under the KA (Mechanical - Heating & Cooling) or KB (Plumbing) classifications depending on scope.\n\nROC investigates complaints and can order corrective work, assess penalties, suspend or revoke licenses.\n\nROC: (602) 542-1525 | roc.az.gov | 1700 W Washington St, Phoenix, AZ 85007\n\nReciprocity: Arizona has reciprocity agreements with several states for equivalent licensing.',
+        downPayment: 'ARIZONA DOWN PAYMENT: Arizona law requires that total payments cannot exceed the value of work performed and materials delivered, plus a reasonable allowance for overhead and profit. There is no specific statutory cap like California\'s 10%, but collecting excessive deposits before work begins may violate consumer protection laws.',
+        lien: 'MECHANICS LIEN (Arizona ARS §33-981 et seq.)\n\nContractors must serve a PRELIMINARY 20-DAY NOTICE to preserve lien rights. Lien must be recorded within 120 days after completion. Homeowners should request lien waivers with each payment.',
+        warranty: 'WARRANTY ON LABOR: One (1) year from completion.\n\nPARTS:\n• OEM Parts: 1 year warranty. • Aftermarket: 3 months. • New Equipment: 1-10 years per manufacturer.\n\nWritten claims required. Excludes misuse, neglect, acts of nature.',
+        epa: 'EPA SECTION 608 COMPLIANCE\n\nAll technicians EPA 608 certified. Refrigerant handled per Clean Air Act. Arizona Department of Environmental Quality (ADEQ) may have additional requirements for equipment disposal and refrigerant management.',
+        permits: 'PERMITS & INSPECTIONS\n\nPermit requirements vary by city/county. Most Arizona municipalities (Phoenix, Tucson, Mesa, etc.) require permits for HVAC installations and replacements. ROC may investigate unpermitted work.\n\nContractor responsible for permits and inspections. Desert climate considerations: proper sizing (Manual J) and insulation are critical.',
+        insurance: 'INSURANCE & BONDING (Arizona ROC Requirements)\n\nContractor Bond: Required by ROC, amount varies by license class ($2,500-$15,000+).\nGeneral Liability: Required.\nWorkers\' Compensation: Required if employees.\n\nVerify at roc.az.gov.',
+        privacy: 'PRIVACY: Information collected for HVAC services only. Not shared without consent except as required by law.',
+        refuse: _commonRefuse,
         custom: ''
     },
     NV: {
-        payment: 'Payment is due upon completion. Credit Card: +3% fee. Bounced Check: +10% fee. Late payment: 1.5%/month.',
-        cancel: 'Nevada Revised Statutes (NRS) Chapter 598:\n\nYou may cancel within three business days of signing. Written notice required.',
-        restock: 'Post-cancellation period: 20% restocking fee with receipt, non-refundable permits, custom equipment at customer cost.',
-        license: 'Nevada State Contractors Board (NSCB) regulates contractors.\n\nNSCB Contact: (702) 486-1100 | Website: nscb.nv.gov',
-        downPayment: 'Nevada law limits down payments to 10% of the contract price or the cost of materials, whichever is less.',
-        lien: 'Nevada mechanics lien rights require a Notice of Right to Lien within 15 days of first work or materials delivery.',
-        warranty: 'One (1) year labor warranty. Manufacturer warranties separate.',
-        privacy: 'Personal information used only for HVAC services and not shared without consent.',
+        payment: 'Payment due upon completion. Credit Card: +3%. Bounced Check: +10%. Late: 1.5%/month after 30 days.',
+        cancel: 'NEVADA 3-DAY RIGHT TO CANCEL (NRS Chapter 598)\n\nFor home solicitation sales, you may cancel within THREE (3) BUSINESS DAYS. Written notice required. Contractor must provide Notice of Cancellation form.',
+        restock: 'Post-cancellation: 20% restocking fee with receipt. Non-refundable permits. Custom equipment at customer cost. Labor billed at agreed rate.',
+        license: 'NEVADA STATE CONTRACTORS BOARD (NSCB) NOTICE\n\nAll contractors must hold a valid NSCB license. HVAC work requires the appropriate classification (C-21 Refrigeration & Air Conditioning, or C-1 Plumbing & Heating).\n\nNSCB: (702) 486-1100 (Las Vegas) | (775) 688-1141 (Reno) | nscb.nv.gov\n\nNevada offers reciprocity to HVAC professionals from states with comparable or stricter requirements.',
+        downPayment: 'NEVADA DOWN PAYMENT LIMIT (NRS 624.607): Deposits cannot exceed 10% of the contract price or the cost of initial materials, whichever is less, unless a bond covering the deposit amount is posted.',
+        lien: 'MECHANICS LIEN (NRS Chapter 108)\n\nNotice of Right to Lien must be given within 15 days of first work or materials delivery. Lien must be recorded within 90 days of completion. Request lien waivers with payments.',
+        warranty: 'One (1) year labor warranty. Parts: OEM 1 year, Aftermarket 3 months, New Equipment 1-10 years per manufacturer. Written claims required. Excludes misuse/neglect/acts of nature.',
+        epa: 'EPA Section 608 certified technicians. Refrigerant managed per Clean Air Act. Nevada Division of Environmental Protection (NDEP) regulates equipment disposal.',
+        permits: 'Permits required by municipality (Clark County, Washoe County, etc.). Contractor responsible for permits/inspections. Energy code compliance required.',
+        insurance: 'NSCB requires financial responsibility filing (bond, insurance, or combination). General liability and workers\' comp required. Verify at nscb.nv.gov.',
+        privacy: 'Information collected for HVAC services only. Not shared without consent.',
+        refuse: _commonRefuse,
+        custom: ''
+    },
+    FL: {
+        payment: 'Payment due upon completion. Credit Card: +3%. Bounced Check: +10%. Late: 1.5%/month after 30 days.',
+        cancel: 'FLORIDA 3-DAY RIGHT TO CANCEL (Home Solicitation Sales)\n\nFor transactions at the buyer\'s home, you may cancel within THREE (3) BUSINESS DAYS (72 hours). Written cancellation required.\n\nFlorida does NOT have a general statutory cooling-off period for all contracts — only specific types including home solicitation.\n\nEXCEPTIONS: Emergency repairs, contracts at contractor\'s business.',
+        restock: 'Post-cancellation: 20% restocking fee with receipt. Non-refundable permits. Custom equipment at customer cost. Labor billed at agreed rate.',
+        license: 'FLORIDA DEPARTMENT OF BUSINESS AND PROFESSIONAL REGULATION (DBPR) NOTICE\n\nFlorida requires HVAC contractors to hold a state license through DBPR:\n• CAC (Certified Air Conditioning Contractor): Work statewide.\n• CFC (Certified Plumbing/Mechanical Contractor): Combined scope.\n• Registered contractors: Limited to specific local areas.\n\nLicense Classes:\n• Class A: Unlimited capacity.\n• Class B: Up to 500,000 BTU heating / 25 tons cooling.\n\nDBPR: (850) 487-1395 | myfloridalicense.com',
+        downPayment: 'FLORIDA DOWN PAYMENT: Florida law does not set a specific statutory cap on deposits for HVAC work. However, the Florida Home Improvement Finance Act and consumer protection laws require that payments reasonably correspond to work performed.',
+        lien: 'MECHANICS LIEN (Florida Statutes Chapter 713)\n\nContractors must serve a Notice to Owner within the first 45 days of work. Lien must be recorded within 90 days of last work. Request lien waivers with each payment.',
+        warranty: 'One (1) year labor warranty. Parts: OEM 1 year, Aftermarket 3 months, New Equipment 1-10 years per manufacturer. Written claims required. Hurricane/flood/salt-air corrosion damage excluded.',
+        epa: 'EPA Section 608 certified. Florida Department of Environmental Protection (DEP) regulates equipment disposal. Coastal salt-air corrosion considerations apply.',
+        permits: 'BUILDING PERMITS REQUIRED for all HVAC installations, replacements, and major repairs per Florida Building Code. Inspections required. Contractor pulls permits. Hurricane strapping/anchoring requirements apply in coastal areas.',
+        insurance: 'FLORIDA REQUIREMENTS:\n• General Liability: $100,000 minimum.\n• Property Damage: $25,000 minimum.\n• Workers\' Compensation: Required for ALL contractors in building trades.\n\nVerify at myfloridalicense.com.',
+        privacy: 'Information collected for HVAC services only. Not shared without consent.',
+        refuse: _commonRefuse,
+        custom: ''
+    },
+    NY: {
+        payment: 'Payment due upon completion. Credit Card: +3%. Bounced Check: +10%. Late: 1.5%/month after 30 days.',
+        cancel: 'NEW YORK 3-DAY RIGHT TO CANCEL (General Business Law §36-A & Home Improvement Act §770)\n\nYou may cancel within THREE (3) BUSINESS DAYS of signing. Written notice must be sent to the contractor. The contractor must provide a Notice of Cancellation form.\n\nNew York expands cancellation rights for home improvement contracts and provides additional protections through the Home Improvement Contractor Registration program.',
+        restock: 'Post-cancellation: 20% restocking fee with receipt. Non-refundable permits. Custom equipment at customer cost. Labor billed at agreed rate.',
+        license: 'NEW YORK CONTRACTOR LICENSE NOTICE\n\nNew York requires home improvement contractors to register with the local county or city consumer affairs office.\n\nNYC: Contractors must be licensed by the Department of Consumer and Worker Protection (DCWP). License required for work over $200.\n\nWestchester, Nassau, Suffolk: County registration/licensing required.\n\nNew York State does not have a statewide HVAC contractor license, but local requirements apply.',
+        downPayment: 'NEW YORK: NYC Administrative Code limits deposits to one-third of the total contract price. Other jurisdictions may vary. Check local consumer protection laws.',
+        lien: 'MECHANICS LIEN (New York Lien Law Article 2)\n\nMechanics liens may be filed within 8 months after completion of work (4 months for single-family residential). Request lien waivers with payments.',
+        warranty: 'One (1) year labor warranty. Parts: OEM 1 year, Aftermarket 3 months, New Equipment 1-10 years per manufacturer. Written claims required.',
+        epa: 'EPA Section 608 certified. New York State DEC has additional refrigerant management requirements. NYC has local environmental regulations.',
+        permits: 'Permits required by municipality. NYC Department of Buildings (DOB) permits required for most HVAC work. Contractor responsible for permits/inspections.',
+        insurance: 'New York requires general liability insurance for licensed/registered contractors. Workers\' compensation required. NYC may have additional insurance requirements. Verify with local consumer affairs office.',
+        privacy: 'Information collected for HVAC services only. Not shared without consent.',
+        refuse: _commonRefuse,
         custom: ''
     }
 };
 
-// Copy defaults for FL, NY, OTHER
-defaultClausesByState.FL = Object.assign({}, defaultClausesByState.TX, { license: 'Florida requires HVAC contractors to hold a state license through the Department of Business and Professional Regulation (DBPR).\n\nDBPR Contact: (850) 487-1395 | Website: myfloridalicense.com', downPayment: 'Florida law limits down payments to 10% of the contract amount for contracts over $1,000.' });
-defaultClausesByState.NY = Object.assign({}, defaultClausesByState.TX, { license: 'New York requires home improvement contractors to register with the local county or city consumer affairs office. NYC contractors must be licensed by the Department of Consumer and Worker Protection.', cancel: 'New York General Business Law §36-A & Home Improvement Act:\n\nYou may cancel within three business days of signing. Written notice must be sent to the contractor.' });
-defaultClausesByState.OTHER = Object.assign({}, defaultClausesByState.TX, { license: 'Contact your state contractor licensing board for specific requirements in your area.', cancel: 'Check your state laws for specific cancellation rights. Many states provide a three-day right to cancel.' });
+// ===== GENERATE CLAUSES FOR ALL OTHER STATES =====
+(function buildAllStateClauses() {
+    // Common payment, restock, warranty, epa, privacy, permits templates
+    var commonPayment = 'Payment due upon completion. Accepted: Cash, Check, Card, Zelle, Venmo.\nCredit Card: +3%. Bounced Check: +10%. Late: 1.5%/month after 30 days.';
+    var commonRestock = 'Post-cancellation: 20% restocking fee with receipt. Non-refundable permits. Custom equipment at customer cost. Labor billed at agreed rate.';
+    var commonWarranty = 'WARRANTY ON LABOR: All work is guaranteed for ONE (1) YEAR from date of completion for labor and workmanship.\n\nWARRANTY ON PARTS:\n• OEM (Original Equipment Manufacturer) Parts: 1 year manufacturer warranty.\n• Aftermarket/Generic Parts: 3 months warranty.\n• New Equipment Parts: Manufacturer warranty from 1 to 10 years depending on brand, model, and component (compressors typically 5-10 years, parts 1-5 years).\n\nAll warranty claims must be reported in writing within the warranty period. Warranty does NOT cover damage caused by: misuse, neglect, lack of maintenance, power surges, acts of nature, unauthorized modifications, or improper operation by the customer.';
+    var commonEpa = 'EPA SECTION 608: All technicians EPA 608 certified per Clean Air Act. Refrigerant recovery/recycling per federal regulations. Intentional venting prohibited (fines up to $44,539/day).';
+    var commonPrivacy = 'Personal information collected for HVAC services, billing, and records only. Not sold or shared without consent except as required by law.';
+    var commonRefuse = _commonRefuse;
+    var commonPermits = 'Permits required per local building department. Contractor responsible for pulling permits, scheduling inspections, and ensuring code compliance. Permit costs included unless otherwise stated.';
+    var commonInsurance = 'Contractor maintains general liability insurance, workers\' compensation (where required), and vehicle insurance. Verify license and insurance with your state licensing board.';
+
+    // State-specific data: [license text, cancel text, downPayment text, lien text, specialInsurance, specialPermits]
+    var stateData = {
+        CO: [
+            'COLORADO: No statewide HVAC contractor license required. However, local jurisdictions (Denver, Boulder, Aurora, Colorado Springs) require their own mechanical contractor licenses and permits.\n\nAlways verify local requirements with your city/county building department.',
+            'COLORADO 3-DAY RIGHT TO CANCEL (CRS §6-1-708 – Home Solicitation Sales)\n\nFor home solicitation sales, cancel within 3 business days. Written notice required.',
+            'Colorado does not set a statewide statutory limit on deposits. Payments should correspond to work performed.',
+            'Mechanics Lien (CRS §38-22): Must file a statement of lien within 4 months of completion. Preliminary notice recommended. Request lien waivers.', null, null
+        ],
+        GA: [
+            'GEORGIA CONTRACTOR LICENSE\n\nConditioned Air Contractor License required through the Secretary of State\'s Construction Industry Licensing Board. Georgia has reciprocity with Texas and South Carolina.\n\nSOS: (404) 656-3900 | sos.ga.gov',
+            'GEORGIA 3-DAY RIGHT TO CANCEL (OCGA §10-1-6 – Home Solicitation Sales)\n\nCancel within 3 business days for home solicitations. Written notice required.',
+            'No specific statutory cap. Georgia Residential & General Contractor Act applies.',
+            'Mechanics Lien (OCGA §44-14-361): Preliminary notice required. Lien filed within 90 days of completion.',
+            'Bond: $10,000+ required. General liability required. Workers\' comp required if 3+ employees.', null
+        ],
+        IL: [
+            'ILLINOIS: No statewide HVAC contractor license. HOWEVER, Chicago and many suburbs require local licenses and permits.\n\nChicago: Department of Buildings license required. Other municipalities vary.',
+            'ILLINOIS 3-DAY RIGHT TO CANCEL (Home Repair & Remodeling Act, 815 ILCS 513)\n\nCancel within 3 business days. The Home Repair Act requires written contracts for work over $1,000 and provides consumer protections.',
+            'Illinois does not set a specific cap. Home Repair Act requires written agreement on payment schedule.',
+            'Mechanics Lien (770 ILCS 60): Subcontractors must serve 60-day notice. Lien filed within 4 months.', null, null
+        ],
+        NJ: [
+            'NEW JERSEY HVAC LICENSE\n\nHVAC contractors must register with the NJ Division of Consumer Affairs (DCA). Home improvement contractors must register under the Contractor Registration Act.\n\nDCA: (973) 504-6200 | njconsumeraffairs.gov',
+            'NEW JERSEY 3-DAY RIGHT TO CANCEL (Consumer Fraud Act & Home Improvement Practices Regulations)\n\nCancel within 3 business days for home solicitations. NJ Consumer Fraud Act provides additional protections.',
+            'No specific statutory cap. NJ regulations require written contracts for work over $500.',
+            'Mechanics Lien (NRS §2A:44A): NJ Construction Lien Law requires preliminary notice. File within 90 days.', null, null
+        ],
+        NC: [
+            'NORTH CAROLINA STATE BOARD OF EXAMINERS\n\nHVAC License Required:\n• H-1: Heating Group 1 (unlimited)\n• H-2: Heating Group 2 (limited)\n• H-3: Heating Group 3 (limited)\n• Plumbing/Mechanical combined licenses available.\n\nBoard: (919) 875-3612 | nclicensing.org',
+            'NORTH CAROLINA 3-DAY RIGHT TO CANCEL (GS §25A-39 – Home Solicitation Sales)\n\nCancel within 3 business days. Written notice required.',
+            'No specific statutory cap. Bond: $10,000 required by licensing board.',
+            'Mechanics Lien (GS Chapter 44A): Subcontractors must give Notice to Lien Agent. File within 120 days.', null, null
+        ],
+        OH: [
+            'OHIO CONSTRUCTION INDUSTRY LICENSING BOARD (OCILB)\n\nHVAC contractors must be licensed. Ohio requires both state and local licensing in many jurisdictions.\n\nOCILB: (614) 644-3493 | com.ohio.gov',
+            'OHIO 3-DAY RIGHT TO CANCEL (Home Solicitation Sales Act, ORC §1345.21-1345.28)\n\nCancel within 3 business days for home solicitations. Ohio Consumer Sales Practices Act provides additional protections.',
+            'No specific statutory cap. Ohio Consumer Sales Practices Act applies.',
+            'Mechanics Lien (ORC §1311.01): Must serve affidavit within 60 days. File lien within 75 days.', null, null
+        ],
+        PA: [
+            'PENNSYLVANIA: No statewide HVAC contractor license. Philadelphia and Pittsburgh require local licenses.\n\nPhiladelphia: L&I License required. Pittsburgh: Mechanical contractor permit required.\n\nPA Home Improvement Consumer Protection Act applies statewide for projects over $500.',
+            'PENNSYLVANIA 3-DAY RIGHT TO CANCEL (Consumer Protection Law, 73 PS §201-7)\n\nCancel within 3 business days for home solicitations. PA Unfair Trade Practices Act provides consumer protections.',
+            'PA Home Improvement Consumer Protection Act: No more than one-third of contract price as initial payment.',
+            'Mechanics Lien (49 PS §1301): Must file within 6 months of completion. Preliminary notice required for subcontractors.', null, null
+        ],
+        VA: [
+            'VIRGINIA DEPT OF PROFESSIONAL & OCCUPATIONAL REGULATION (DPOR)\n\nContractor License Required:\n• Class A: Projects over $120,000.\n• Class B: $10,000-$120,000.\n• Class C: $1,000-$10,000.\n\nHVAC falls under HVA specialty. Tradesmen must also hold DPOR tradesman license.\n\nDPOR: (804) 367-8511 | dpor.virginia.gov',
+            'VIRGINIA 3-DAY RIGHT TO CANCEL (VA Code §59.1-21.2 – Home Solicitation Sales)\n\nCancel within 3 business days. Virginia Contractor Transaction Recovery Fund provides additional consumer protection.',
+            'Virginia does not set a specific deposit cap. Payments should align with work completed.',
+            'Mechanics Lien (VA Code §43-1): File memorandum within 90 days of completion. Preliminary notice within 30 days for subcontractors.',
+            'Bond: $10,000 (Class C) to $50,000 (Class A). GL required. Workers\' comp required.', null
+        ],
+        WA: [
+            'WASHINGTON STATE DEPT OF LABOR & INDUSTRIES (L&I)\n\nHVAC contractors must hold an Electrical/HVAC specialty license. Registration with L&I required.\n\nL&I: (800) 647-0982 | lni.wa.gov',
+            'WASHINGTON 3-DAY RIGHT TO CANCEL (RCW 63.14 – Home Solicitation Sales)\n\nCancel within 3 business days. Washington Consumer Protection Act provides additional rights.',
+            'No specific statutory cap. $12,000 surety bond required by L&I.',
+            'Mechanics Lien (RCW 60.04): Must serve pre-claim notice within 60 days. File lien within 90 days of completion.', null, null
+        ],
+        OR: [
+            'OREGON CONSTRUCTION CONTRACTORS BOARD (CCB)\n\nAll contractors must be licensed with CCB. HVAC falls under plumbing/mechanical specialty.\n\nCCB: (503) 378-4621 | ccb.oregon.gov',
+            'OREGON 3-DAY RIGHT TO CANCEL (Home Solicitation Sales Act, ORS 83.710-83.750)\n\nCancel within 3 business days for home solicitations.',
+            'Oregon requires a $20,000 surety bond. No specific deposit cap.',
+            'Mechanics Lien (ORS 87.010): Must file within 75 days of completion. Preliminary notice required.',
+            'Bond: $20,000. GL and workers\' comp required.', null
+        ],
+        MI: [
+            'MICHIGAN DEPT OF LICENSING & REGULATORY AFFAIRS (LARA)\n\nMechanical Contractor License required for HVAC work.\n\nLARA: (517) 241-9300 | michigan.gov/lara',
+            'MICHIGAN 3-DAY RIGHT TO CANCEL (Home Improvement Finance Act, MCL 445.1101)\n\nCancel within 3 business days. Michigan Consumer Protection Act provides additional rights.',
+            'No specific statutory deposit cap. Written contract required for work over $600.',
+            'Mechanics Lien (MCL 570.1101): Must file within 90 days of last work.', null, null
+        ],
+        MA: [
+            'MASSACHUSETTS: No statewide HVAC license. Home Improvement Contractor Registration (HIC) required.\n\nRegistration: (617) 973-8787 | mass.gov/hic',
+            'MASSACHUSETTS 3-DAY RIGHT TO CANCEL (MGL c.93 §48 – Home Solicitation Sales)\n\nCancel within 3 business days. MA Consumer Protection Act (93A) provides additional rights.',
+            'MA requires written contract for work over $1,000. One-third deposit limit common practice.',
+            'Mechanics Lien (MGL c.254): Must file within 120 days of completion.', null, null
+        ],
+        TN: [
+            'TENNESSEE BOARD FOR LICENSING CONTRACTORS\n\nLicense required for projects exceeding $25,000. HVAC falls under Mechanical-Heating Ventilation classification.\n\nBoard: (615) 741-8307 | tn.gov/commerce/regboards/contractors',
+            'TENNESSEE 3-DAY RIGHT TO CANCEL (TCA §47-18-109 – Consumer Protection Act)\n\nCancel within 3 business days for home solicitations.',
+            'No specific statutory cap. Bond: $10,000+ required by licensing board.',
+            'Mechanics Lien (TCA §66-11): Must file within 90 days of completion.', null, null
+        ],
+        SC: [
+            'SOUTH CAROLINA DEPT OF LABOR, LICENSING & REGULATION (LLR)\n\nMechanical Contractor License required. SC has reciprocity with Texas and Georgia.\n\nLLR: (803) 896-4300 | llr.sc.gov',
+            'SOUTH CAROLINA 3-DAY RIGHT TO CANCEL\n\nCancel within 3 business days for home solicitations.',
+            'No specific statutory cap. Bond required by LLR.',
+            'Mechanics Lien (SC Code §29-5): Must file within 90 days of completion.', null, null
+        ],
+        LA: [
+            'LOUISIANA STATE LICENSING BOARD FOR CONTRACTORS (LSLBC)\n\nMechanical License required for HVAC work over $50,000 (commercial) or residential work.\n\nLSLBC: (225) 765-2301 | lslbc.louisiana.gov',
+            'LOUISIANA 3-DAY RIGHT TO CANCEL (RS 51:1401 – Home Solicitation Sales)\n\nCancel within 3 business days. Louisiana Unfair Trade Practices Act provides additional protection.',
+            'Bond: $5,000-$15,000. No specific deposit cap.',
+            'Mechanics Lien (RS 9:4801): Private Works Act governs. File notice within 30 days.', null, null
+        ],
+        MD: [
+            'MARYLAND HOME IMPROVEMENT COMMISSION (MHIC)\n\nAll home improvement contractors must be licensed by MHIC. HVAC work included.\n\nMHIC: (410) 230-6176 | dllr.maryland.gov/license/mhic',
+            'MARYLAND 3-DAY RIGHT TO CANCEL (Commercial Law §14-1301)\n\nCancel within 3 business days for door-to-door sales. MHIC provides Home Improvement Guaranty Fund for consumer protection.',
+            'MHIC regulates deposits. Down payment should not exceed one-third of contract price.',
+            'Mechanics Lien (Real Property §9-101): Must file within 180 days of completion.', null, null
+        ],
+        MN: [
+            'MINNESOTA DEPT OF LABOR & INDUSTRY (DLI)\n\nHVAC License required. DLI regulates mechanical contractors.\n\nDLI: (651) 284-5005 | dli.mn.gov',
+            'MINNESOTA 3-DAY RIGHT TO CANCEL (Statute §325G.06 – Home Solicitation Sales)\n\nCancel within 3 business days.',
+            'Bond: $25,000 required. No specific deposit cap.',
+            'Mechanics Lien (Statute §514.01): Must file within 120 days of completion.', null, null
+        ],
+        WI: [
+            'WISCONSIN DSPS (Dept of Safety & Professional Services)\n\nHVAC Credential required for HVAC work.\n\nDSPS: (608) 266-2112 | dsps.wi.gov',
+            'WISCONSIN 3-DAY RIGHT TO CANCEL (Statute §423.203 – Home Solicitation Sales)\n\nCancel within 3 business days.',
+            'No specific statutory cap. Written contract required.',
+            'Mechanics Lien (Statute §779.01): Must file within 6 months of completion.', null, null
+        ],
+        UT: [
+            'UTAH DIVISION OF OCCUPATIONAL & PROFESSIONAL LICENSING (DOPL)\n\nS350 HVAC License required. Journeyman and Master designations available.\n\nDOPL: (801) 530-6628 | dopl.utah.gov',
+            'UTAH 3-DAY RIGHT TO CANCEL (UCA §70C-5-103 – Home Solicitation Sales)\n\nCancel within 3 business days.',
+            'Bond: $15,000 required. No specific deposit cap by law.',
+            'Mechanics Lien (UCA §38-1a): Must file preliminary notice within 20 days. Lien within 180 days.', null, null
+        ]
+    };
+
+    // Build clauses for each state
+    for (var st in stateData) {
+        var d = stateData[st];
+        if (!defaultClausesByState[st]) {
+            defaultClausesByState[st] = {
+                payment: commonPayment,
+                cancel: d[1],
+                restock: commonRestock,
+                license: d[0],
+                downPayment: d[2],
+                lien: d[3],
+                warranty: commonWarranty,
+                epa: d[4] ? commonEpa + '\n\n' + d[4] : commonEpa,
+                permits: d[5] || commonPermits,
+                insurance: d[4] || commonInsurance,
+                privacy: commonPrivacy,
+                refuse: _commonRefuse,
+                custom: ''
+            };
+        }
+    }
+
+    // States with no specific HVAC license (use generic template)
+    var noLicenseStates = ['AL','AK','AR','DE','HI','ID','IN','IA','KS','KY','ME','MS','MO','MT','NE','NH','ND','SD','VT','WV','WY','DC','PR','RI'];
+    var noLicenseData = {
+        AL: ['Alabama State Board of Heating, Air Conditioning & Refrigeration Contractors (ASBHCE)\nLicense required.\n\nASBHCE: (334) 242-5550', 'Alabama Home Solicitation Act: 3 business days.', 'Bond required. No specific deposit cap.', 'Mechanics Lien: File within 6 months.'],
+        AK: ['Alaska: No statewide HVAC contractor license. Local permits may be required.\n\nAlaska Dept of Commerce: commerce.alaska.gov', '3-day cancel for home solicitations per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien (AS §34.35): File within 120 days.'],
+        AR: ['Arkansas Contractors Licensing Board: License required for projects >$50,000.\n\n(501) 372-4661 | aclb.arkansas.gov', '3-day cancel per FTC Cooling-Off Rule.', 'No specific deposit cap.', 'Mechanics Lien (ACA §18-44): File within 120 days.'],
+        DE: ['Delaware DAPE: License required for HVAC.\n\n(302) 744-4500', '3-day cancel for home solicitations.', 'Bond: $5,000. No specific deposit cap.', 'Mechanics Lien: File within 120 days.'],
+        HI: ['Hawaii DCCA: C-16 Specialty License required.\n\n(808) 586-2700 | cca.hawaii.gov', '3-day cancel for home solicitations.', 'Bond: $15,000.', 'Mechanics Lien: File within 90 days.'],
+        ID: ['Idaho DBS: HVAC License required.\n\n(208) 334-3950 | dbs.idaho.gov', '3-day cancel per FTC rule.', 'Bond: $2,000.', 'Mechanics Lien: File within 90 days.'],
+        IN: ['Indiana: No statewide HVAC license. Local permits required.\n\nIndiana PLA: pla.in.gov', '3-day cancel per FTC rule & Indiana Home Improvement Contracts Act.', 'No specific deposit cap.', 'Mechanics Lien (IC §32-28-3): File within 90 days.'],
+        IA: ['Iowa: No statewide HVAC license. Mechanical permits required by municipality.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 90 days.'],
+        KS: ['Kansas: No statewide license. Local jurisdictions vary.\n\nVerify with your city/county building department.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 5 months.'],
+        KY: ['Kentucky DHBC: HVAC License required (Master or Journeyman).\n\n(502) 573-0397 | dhbc.ky.gov', '3-day cancel for home solicitations.', 'No specific deposit cap.', 'Mechanics Lien (KRS §376): File within 6 months.'],
+        ME: ['Maine: Oil & Solid Fuel Board for heating. No general HVAC license.\n\nOil Board: (207) 624-8603', '3-day cancel for home solicitations.', 'No specific deposit cap.', 'Mechanics Lien: File within 90 days.'],
+        MS: ['Mississippi Board of Contractors: License required for projects >$50,000.\n\n(601) 354-6161 | msboc.us', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 3 months.'],
+        MO: ['Missouri: No statewide license. Kansas City and St. Louis require local licenses.\n\nVerify local requirements.', '3-day cancel per Merchandising Practices Act.', 'No specific deposit cap.', 'Mechanics Lien (RSMo §429): File within 6 months.'],
+        MT: ['Montana: No statewide HVAC license. Local permits may be required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 90 days.'],
+        NE: ['Nebraska: No statewide license. Local mechanical permits required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 120 days.'],
+        NH: ['New Hampshire: No statewide HVAC license. Gas fitter license required for gas work.\n\nNH Fire Marshal: (603) 223-4289', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 120 days.'],
+        ND: ['North Dakota: No statewide license. Local permits required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 90 days.'],
+        SD: ['South Dakota: No statewide license. Local permits required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 120 days.'],
+        VT: ['Vermont: No statewide license. Local permits required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 180 days.'],
+        WV: ['West Virginia Division of Labor: HVAC License required.\n\n(304) 558-7890 | labor.wv.gov', '3-day cancel for home solicitations.', 'No specific deposit cap.', 'Mechanics Lien: File within 100 days.'],
+        WY: ['Wyoming: No statewide license. Local permits required.', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 150 days.'],
+        DC: ['Washington D.C. DCRA: Contractor License required.\n\n(202) 442-4400 | dcra.dc.gov', '3-day cancel per FTC rule.', 'Bond required.', 'Mechanics Lien: File within 90 days.'],
+        PR: ['Puerto Rico DACO: Contractor registration required.\n\nDACO: (787) 722-7555', 'Cancellation per PR Consumer Affairs regulations.', 'No specific deposit cap.', 'File claims per PR Property Code.'],
+        RI: ['Rhode Island: Contractor Registration required.\n\nContractors\' Board: (401) 462-9500', '3-day cancel for home solicitations.', 'Bond: $10,000.', 'Mechanics Lien: File within 200 days.'],
+        NM: ['New Mexico Construction Industries Division (CID): Mechanical license required.\n\nCID: (505) 476-4700 | rld.nm.gov', '3-day cancel per FTC rule.', 'No specific deposit cap.', 'Mechanics Lien: File within 120 days.'],
+        OK: ['Oklahoma Construction Industries Board (CIB): Mechanical License required.\n\nCIB: (405) 521-6550 | cib.ok.gov', '3-day cancel per Oklahoma Consumer Protection Act.', 'No specific deposit cap.', 'Mechanics Lien: File within 90 days.'],
+        CT: ['Connecticut DCP: Home Improvement Contractor Registration (HIC) required.\n\nDCP: (860) 713-6100 | ct.gov/dcp', 'Connecticut 3-day cancel (Home Solicitation Sales Act).', 'No deposit may exceed one-third of contract.', 'Mechanics Lien: File within 90 days.']
+    };
+
+    for (var nst in noLicenseData) {
+        if (!defaultClausesByState[nst]) {
+            var nd = noLicenseData[nst];
+            defaultClausesByState[nst] = {
+                payment: commonPayment,
+                cancel: nd[1],
+                restock: commonRestock,
+                license: nd[0],
+                downPayment: nd[2],
+                lien: nd[3],
+                warranty: commonWarranty,
+                epa: commonEpa,
+                permits: commonPermits,
+                insurance: commonInsurance,
+                privacy: commonPrivacy,
+                refuse: _commonRefuse,
+                custom: ''
+            };
+        }
+    }
+
+    // Fallback for any state not explicitly defined
+    defaultClausesByState.OTHER = {
+        payment: commonPayment,
+        cancel: 'FTC COOLING-OFF RULE (Federal)\n\nFor door-to-door sales or sales at temporary locations over $25, you may cancel within 3 business days. Written notice required.\n\nCheck your specific state laws for additional cancellation rights.',
+        restock: commonRestock,
+        license: 'Contact your state contractor licensing board for specific HVAC contractor requirements in your area.\n\nNot all states require a statewide HVAC license — some regulate at the city or county level.',
+        downPayment: 'Check your state laws for specific deposit/down payment limits. Many states do not have a statutory cap but require payments to correspond to work performed.',
+        lien: 'Mechanics lien laws vary by state. Contractors may have the right to file a lien on your property for unpaid work. Request lien waivers with each payment.',
+        warranty: commonWarranty,
+        epa: commonEpa,
+        permits: commonPermits,
+        insurance: commonInsurance,
+        privacy: commonPrivacy,
+        refuse: _commonRefuse,
+        custom: ''
+    };
+})();
 
 function loadDefaultClauses() {
     var state = document.getElementById('clauseState').value || 'CA';
@@ -2976,8 +3502,20 @@ function loadDefaultClauses() {
     document.getElementById('clauseDownPayment').value = defaults.downPayment;
     document.getElementById('clauseLien').value = defaults.lien;
     document.getElementById('clauseWarranty').value = defaults.warranty;
+    document.getElementById('clauseEpa').value = defaults.epa || '';
+    document.getElementById('clausePermits').value = defaults.permits || '';
+    document.getElementById('clauseInsurance').value = defaults.insurance || '';
     document.getElementById('clausePrivacy').value = defaults.privacy;
+    document.getElementById('clauseRefuse').value = defaults.refuse || '';
     document.getElementById('clauseCustom').value = defaults.custom || '';
+    var summaryEl = document.getElementById('stateRegSummary');
+    if (stateRegSummaries[state]) {
+        summaryEl.innerHTML = '<strong>' + state + ':</strong> ' + stateRegSummaries[state];
+        summaryEl.style.display = 'block';
+    } else {
+        summaryEl.innerHTML = '<strong>' + state + ':</strong> Selecciona tu estado para ver un resumen de regulaciones HVACR.';
+        summaryEl.style.display = 'block';
+    }
 }
 
 function loadClausesFromData(clauses) {
@@ -2990,8 +3528,18 @@ function loadClausesFromData(clauses) {
     document.getElementById('clauseDownPayment').value = clauses.downPayment || '';
     document.getElementById('clauseLien').value = clauses.lien || '';
     document.getElementById('clauseWarranty').value = clauses.warranty || '';
+    document.getElementById('clauseEpa').value = clauses.epa || '';
+    document.getElementById('clausePermits').value = clauses.permits || '';
+    document.getElementById('clauseInsurance').value = clauses.insurance || '';
     document.getElementById('clausePrivacy').value = clauses.privacy || '';
+    document.getElementById('clauseRefuse').value = clauses.refuse || '';
     document.getElementById('clauseCustom').value = clauses.custom || '';
+    var state = clauses.state || 'CA';
+    var summaryEl = document.getElementById('stateRegSummary');
+    if (stateRegSummaries[state]) {
+        summaryEl.innerHTML = '<strong>' + state + ':</strong> ' + stateRegSummaries[state];
+        summaryEl.style.display = 'block';
+    }
 }
 
 function getClausesData() {
@@ -3004,7 +3552,11 @@ function getClausesData() {
         downPayment: document.getElementById('clauseDownPayment').value,
         lien: document.getElementById('clauseLien').value,
         warranty: document.getElementById('clauseWarranty').value,
+        epa: document.getElementById('clauseEpa').value,
+        permits: document.getElementById('clausePermits').value,
+        insurance: document.getElementById('clauseInsurance').value,
         privacy: document.getElementById('clausePrivacy').value,
+        refuse: document.getElementById('clauseRefuse').value,
         custom: document.getElementById('clauseCustom').value
     };
 }
@@ -3014,7 +3566,7 @@ async function saveClauses() {
     var clauses = getClausesData();
     await sbClient.from('companies').update({ contract_clauses: clauses }).eq('id', companyId);
     if (window._companyInfo) window._companyInfo.contract_clauses = clauses;
-    alert('✅ Cláusulas guardadas exitosamente!');
+    alert('✅ Cláusulas guardadas para ' + clauses.state + ' exitosamente!');
 }
 
 // ===== SEED DEMO DATA =====
