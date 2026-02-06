@@ -1180,17 +1180,6 @@ function updateEstimateTotals() {
     document.getElementById('estimateTotals').innerHTML = h;
 }
 
-    var h = '<div class="totals-grid">';
-    h += '<div class="total-row"><span>Partes:</span><span>$' + partsTotal.toFixed(2) + '</span></div>';
-    h += '<div class="total-row"><span>Labor:</span><span>$' + laborTotal.toFixed(2) + '</span></div>';
-    h += '<div class="total-row"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
-    if (discount > 0) h += '<div class="total-row discount"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
-    h += '<div class="total-row"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
-    h += '<div class="total-row grand"><span>TOTAL:</span><span>$' + total.toFixed(2) + '</span></div>';
-    h += '</div>';
-    document.getElementById('estimateTotals').innerHTML = h;
-}
-
 function loadEstimateJob() {
     var sel = document.getElementById('estJobSelect');
     var info = document.getElementById('estJobInfo');
