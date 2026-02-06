@@ -199,6 +199,13 @@
               <div class="kpi-card"><span class="kpi-label">Técnicos</span><span class="kpi-value" id="techCountKPI">0</span><span class="kpi-sub">Registrados</span></div>
               <div class="kpi-card"><span class="kpi-label">Clientes</span><span class="kpi-value" id="clientCountKPI">0</span><span class="kpi-sub">Clientes activos</span></div>
             </div>
+            <!-- Advanced KPIs -->
+            <div class="kpi-grid" style="margin-top:8px;">
+              <div class="kpi-card" style="border-left:3px solid #10b981;"><span class="kpi-label">💰 Revenue Earned</span><span class="kpi-value" id="revenueKPI" style="color:#10b981;">$0</span><span class="kpi-sub">Total cobrado</span></div>
+              <div class="kpi-card" style="border-left:3px solid #3b82f6;"><span class="kpi-label">✅ Jobs Completed</span><span class="kpi-value" id="jobsCompletedKPI" style="color:#3b82f6;">0</span><span class="kpi-sub">Trabajos terminados</span></div>
+              <div class="kpi-card" style="border-left:3px solid #f59e0b;"><span class="kpi-label">📊 Avg Job Size</span><span class="kpi-value" id="avgJobKPI" style="color:#f59e0b;">$0</span><span class="kpi-sub">Ticket promedio</span></div>
+              <div class="kpi-card" style="border-left:3px solid #8b5cf6;"><span class="kpi-label">📋 Open Estimates</span><span class="kpi-value" id="openEstKPI" style="color:#8b5cf6;">0</span><span class="kpi-sub">Estimados abiertos</span></div>
+            </div>
 
             <!-- Estimates Pipeline -->
             <div class="card" style="margin-bottom:16px;">
@@ -740,11 +747,21 @@
           <!-- ===== OTHER SECTIONS ===== -->
           <!-- ===== CLIENTS ===== -->
           <div id="clients-section" class="section">
-            <div class="card">
+            <!-- Client List View -->
+            <div id="clientListView" class="card">
               <div class="card-top">
-                <h3>👥 Clientes</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
+                <h3>👥 Clientes <span id="clientCount" style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h3>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                   <input type="text" id="clientSearchInput" placeholder="🔍 Buscar cliente..." oninput="renderClientsList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px;">
+                  <select id="clientFilterTag" onchange="renderClientsList()" style="padding:8px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                    <option value="">Todos</option>
+                    <option value="Residencial">🏠 Residencial</option>
+                    <option value="Comercial">🏢 Comercial</option>
+                    <option value="Industrial">🏭 Industrial</option>
+                    <option value="VIP">⭐ VIP</option>
+                    <option value="Service Plan">🛡️ Service Plan</option>
+                  </select>
+                  <button class="btn-secondary btn-sm" onclick="exportClientsCSV()" title="Exportar">📥 Exportar</button>
                   <button class="btn-primary btn-sm" onclick="showClientForm()">+ Nuevo Cliente</button>
                 </div>
               </div>
@@ -755,15 +772,27 @@
                 <form id="clientForm" onsubmit="handleClientCreate(event)">
                   <div class="form-row">
                     <div class="form-group"><label>Nombre</label><input type="text" id="clientName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="clientPhone" placeholder="(555) 123-4567"></div>
+                    <div class="form-group"><label>Empresa / Company</label><input type="text" id="clientCompany" placeholder="Nombre de empresa (opcional)"></div>
                   </div>
                   <div class="form-row">
+                    <div class="form-group"><label>Teléfono</label><input type="tel" id="clientPhone" placeholder="(555) 123-4567"></div>
                     <div class="form-group"><label>Email</label><input type="email" id="clientEmail" placeholder="email@cliente.com"></div>
+                  </div>
+                  <div class="form-row">
                     <div class="form-group"><label>Tipo de Propiedad</label>
                       <select id="clientPropertyType">
-                        <option value="Residencial">Residencial</option>
-                        <option value="Comercial">Comercial</option>
-                        <option value="Industrial">Industrial</option>
+                        <option value="Residencial">🏠 Residencial</option>
+                        <option value="Comercial">🏢 Comercial</option>
+                        <option value="Industrial">🏭 Industrial</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Tags / Etiquetas</label>
+                      <select id="clientTags" multiple style="height:60px;">
+                        <option value="VIP">⭐ VIP</option>
+                        <option value="Service Plan">🛡️ Service Plan</option>
+                        <option value="New Construction">🏗️ New Construction</option>
+                        <option value="Referral">🤝 Referral</option>
+                        <option value="Warranty">🔧 Warranty</option>
                       </select>
                     </div>
                   </div>
@@ -777,6 +806,109 @@
               </div>
 
               <div id="clientsList"></div>
+            </div>
+
+            <!-- Client Profile View (hidden by default) -->
+            <div id="clientProfileView" style="display:none;">
+              <div class="card" style="margin-bottom:0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                  <button class="btn-secondary btn-sm" onclick="closeClientProfile()">← Regresar</button>
+                  <span style="color:var(--text-muted);font-size:12px;">Clientes &gt;</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                  <div>
+                    <h2 id="cpName" style="font-size:24px;color:var(--text-primary);margin-bottom:4px;">—</h2>
+                    <div id="cpCompany" style="font-size:13px;color:var(--text-muted);margin-bottom:6px;"></div>
+                    <div id="cpTags" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-primary btn-sm" onclick="cpQuickAction('job')">+ Trabajo</button>
+                    <button class="btn-primary btn-sm" onclick="cpQuickAction('estimate')">+ Estimado</button>
+                    <button class="btn-primary btn-sm" onclick="cpQuickAction('appointment')">+ Cita</button>
+                    <button class="btn-secondary btn-sm" onclick="showClientForm(currentProfileClientId)">✏️ Editar</button>
+                  </div>
+                </div>
+                <div id="cpContact" style="font-size:13px;margin-top:10px;line-height:1.8;"></div>
+
+                <!-- Client Tabs -->
+                <div class="cp-tabs" style="margin-top:16px;">
+                  <button class="cp-tab active" onclick="switchClientTab('profile')">📋 Perfil</button>
+                  <button class="cp-tab" onclick="switchClientTab('jobs')">🔧 Trabajos</button>
+                  <button class="cp-tab" onclick="switchClientTab('estimates')">💰 Estimados</button>
+                  <button class="cp-tab" onclick="switchClientTab('invoices')">📄 Facturas</button>
+                  <button class="cp-tab" onclick="switchClientTab('notes')">📝 Notas</button>
+                  <button class="cp-tab" onclick="switchClientTab('attachments')">📎 Archivos</button>
+                  <button class="cp-tab" onclick="switchClientTab('comms')">💬 Comunicación</button>
+                </div>
+              </div>
+
+              <!-- Tab Contents -->
+              <div class="card" style="margin-top:2px;border-top-left-radius:0;border-top-right-radius:0;">
+                <div id="cpTabProfile" class="cp-tab-content active">
+                  <div class="cards-row">
+                    <div>
+                      <h4 style="color:var(--primary);margin-bottom:8px;">📊 Resumen del Cliente</h4>
+                      <div id="cpStats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+                    </div>
+                    <div>
+                      <h4 style="color:var(--primary);margin-bottom:8px;">📍 Ubicación</h4>
+                      <div id="cpAddress" style="font-size:13px;color:var(--text-muted);"></div>
+                      <div id="cpPropertyType" style="font-size:12px;margin-top:4px;"></div>
+                    </div>
+                  </div>
+                  <div style="margin-top:16px;">
+                    <h4 style="color:var(--primary);margin-bottom:8px;">⏱️ Historial Reciente</h4>
+                    <div id="cpTimeline" style="font-size:12px;"></div>
+                  </div>
+                </div>
+                <div id="cpTabJobs" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">🔧 Trabajos de este cliente</h4>
+                  <div id="cpJobsList"></div>
+                </div>
+                <div id="cpTabEstimates" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">💰 Estimados de este cliente</h4>
+                  <div id="cpEstimatesList"></div>
+                </div>
+                <div id="cpTabInvoices" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">📄 Facturas de este cliente</h4>
+                  <div id="cpInvoicesList"></div>
+                </div>
+                <div id="cpTabNotes" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">📝 Notas Internas</h4>
+                  <div style="margin-bottom:12px;">
+                    <textarea id="cpNewNote" rows="2" placeholder="Agregar nota..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"></textarea>
+                    <button class="btn-primary btn-sm" onclick="addClientNote()" style="margin-top:6px;">💾 Guardar Nota</button>
+                  </div>
+                  <div id="cpNotesList"></div>
+                </div>
+                <div id="cpTabAttachments" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">📎 Archivos Adjuntos</h4>
+                  <div style="margin-bottom:12px;">
+                    <label class="btn-secondary btn-sm" style="cursor:pointer;">
+                      📤 Subir Archivo
+                      <input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="uploadClientAttachment(this)">
+                    </label>
+                    <span style="font-size:10px;color:var(--text-muted);margin-left:8px;">PDF, JPG, PNG, DOC (máx 5MB)</span>
+                  </div>
+                  <div id="cpAttachmentsList"></div>
+                </div>
+                <div id="cpTabComms" class="cp-tab-content" style="display:none;">
+                  <h4 style="color:var(--primary);margin-bottom:10px;">💬 Registro de Comunicación</h4>
+                  <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <select id="cpCommType" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="call_out">📱 Llamada Saliente</option>
+                      <option value="call_in">📲 Llamada Entrante</option>
+                      <option value="text">💬 Texto/SMS</option>
+                      <option value="email">📧 Email</option>
+                      <option value="visit">🏠 Visita</option>
+                      <option value="follow_up">🔄 Follow-Up</option>
+                    </select>
+                    <input type="text" id="cpCommNote" placeholder="Descripción..." style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                    <button class="btn-primary btn-sm" onclick="addClientComm()">+ Registrar</button>
+                  </div>
+                  <div id="cpCommsList"></div>
+                </div>
+              </div>
             </div>
           </div>
           <div id="jobs-section" class="section">
