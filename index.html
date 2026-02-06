@@ -129,6 +129,7 @@
             <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> Clientes</a>
             <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> Trabajos</a>
             <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> Técnicos</a>
+            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> Home Advisors</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title">Finanzas</span>
@@ -415,6 +416,27 @@
                       <input type="number" id="estLaborHours" value="1" min="0.5" step="0.5" onchange="updateEstimateTotals()">
                     </div>
                   </div>
+                  <div id="advisorReferralBox" style="display:none;margin-top:12px;">
+                    <div class="referral-box">
+                      <h5>🏠 Referir a Home Advisor</h5>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label>Seleccionar Advisor</label>
+                          <select id="estAdvisorSelect"><option value="">Seleccionar...</option></select>
+                        </div>
+                        <div class="form-group">
+                          <label>Urgencia</label>
+                          <select id="referralUrgency">
+                            <option value="normal">Normal</option>
+                            <option value="urgente">Urgente</option>
+                            <option value="programar">Programar visita</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="form-group"><label>Notas para el Advisor</label><textarea id="referralNotes" rows="2" placeholder="Estado del equipo, lo que necesita el cliente..."></textarea></div>
+                      <button class="btn-primary btn-sm" onclick="sendReferralToAdvisor()">📩 Enviar Referencia al Advisor</button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Step 4: Select Components (only if approved) -->
@@ -445,6 +467,42 @@
               <div id="savedEstimates"><p class="empty-msg">No hay estimados guardados</p></div>
             </div>
           </div>
+          <!-- ===== HOME ADVISORS (Vendedores) ===== -->
+          <div id="advisors-section" class="section">
+            <div class="card">
+              <div class="card-top"><h3>🏠 Home Advisors (Vendedores)</h3><button class="btn-primary btn-sm" onclick="showAdvisorForm()">+ Nuevo Advisor</button></div>
+              <div id="advisorFormContainer" style="display:none;margin-bottom:16px;">
+                <form id="advisorForm" onsubmit="handleAdvisorCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label>Nombre</label><input type="text" id="advisorName" required placeholder="Nombre completo"></div>
+                    <div class="form-group"><label>Teléfono</label><input type="tel" id="advisorPhone" required placeholder="(555) 123-4567"></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Email</label><input type="email" id="advisorEmail" placeholder="email@empresa.com"></div>
+                    <div class="form-group"><label>Especialidad</label>
+                      <select id="advisorSpecialty">
+                        <option value="Residencial">Residencial</option>
+                        <option value="Comercial">Comercial</option>
+                        <option value="Residencial y Comercial">Residencial y Comercial</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group"><label>Zona de cobertura</label><input type="text" id="advisorZone" placeholder="Ej: Inland Empire, San Bernardino, Riverside"></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">Guardar</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideAdvisorForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+              <div id="advisorsList"></div>
+            </div>
+            <div class="card">
+              <div class="card-top"><h3>📋 Órdenes Referidas</h3></div>
+              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Trabajos referidos por técnicos para reemplazo de equipo</p>
+              <div id="referralsList"></div>
+            </div>
+          </div>
+
           <div id="invoices-section" class="section"><div class="card"><h3>Facturas</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="collections-section" class="section"><div class="card"><h3>Cobranza</h3><p class="empty-msg">Módulo en desarrollo</p></div></div>
           <div id="settings-section" class="section">
