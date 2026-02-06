@@ -1,868 +1,364 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Master - CRM HVACR</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkHcL1QcgKzxABmI4IJeEmjjvnZz_Xtys"></script>
-  </head>
-  <body>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-    <!-- ==================== AUTH PAGE ==================== -->
-    <div id="authPage" class="auth-container">
-      <div class="auth-card">
-        <div class="auth-left">
-          <div class="auth-brand">
-            <div class="brand-icon">🔧</div>
-            <h1>Trade Master</h1>
-            <p class="brand-subtitle">CRM HVACR - Sistema Multi-Empresa</p>
-            <ul class="feature-list">
-              <li><span class="check">✅</span> Gestión completa de clientes y trabajos</li>
-              <li><span class="check">✅</span> Despacho de técnicos con GPS</li>
-              <li><span class="check">✅</span> Facturación y cobranza integrada</li>
-              <li><span class="check">✅</span> Seguimiento de leads con Google Maps</li>
-            </ul>
-          </div>
-        </div>
-        <div class="auth-right">
-          <div class="auth-tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
-            <button class="tab-btn" onclick="switchTab('register')">Registrar Empresa</button>
-          </div>
-          <div id="loginForm" class="auth-form active">
-            <h2>Bienvenido</h2>
-            <div id="loginError" class="error-msg" style="display:none;"></div>
-            <form onsubmit="handleLogin(event)">
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="tu@email.com" required>
-              </div>
-              <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="loginPassword" placeholder="Contraseña" required>
-              </div>
-              <button type="submit" class="btn-primary" id="loginBtn">Iniciar Sesión</button>
-            </form>
-            <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
-          </div>
-          <div id="registerForm" class="auth-form">
-            <h2>Crear Cuenta Empresarial</h2>
-            <div id="registerError" class="error-msg" style="display:none;"></div>
-            <div id="registerSuccess" class="success-msg" style="display:none;"></div>
-            <form onsubmit="handleRegister(event)">
-              <div class="form-group">
-                <label>Nombre de la Empresa</label>
-                <input type="text" id="companyName" placeholder="Nombre de la Empresa" required>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Nombre</label>
-                  <input type="text" id="firstName" placeholder="Nombre" required>
-                </div>
-                <div class="form-group">
-                  <label>Apellido</label>
-                  <input type="text" id="lastName" placeholder="Apellido" required>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="registerEmail" placeholder="tu@email.com" required>
-              </div>
-              <div class="form-group">
-                <label>Teléfono</label>
-                <input type="tel" id="phone" placeholder="(555) 123-4567" required>
-              </div>
-              <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
-              </div>
-              <div class="form-group">
-                <label>Confirmar Contraseña</label>
-                <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required>
-              </div>
-              <button type="submit" class="btn-primary" id="registerBtn">Crear Cuenta Empresarial</button>
-            </form>
-            <p class="auth-link">¿Ya tienes cuenta? <a href="#" onclick="switchTab('login')">Inicia sesión</a></p>
-          </div>
-        </div>
-      </div>
-    </div>
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-    <!-- ==================== DASHBOARD PAGE ==================== -->
-    <div id="dashboardPage" class="dashboard-container" style="display:none;">
-      <aside class="sidebar">
-        <div class="sidebar-brand">
-          <div class="brand-logo" id="companyLogo">
-            <svg viewBox="0 0 60 60" width="44" height="44">
-              <!-- Blue gauge (low pressure) -->
-              <circle cx="18" cy="22" r="14" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
-              <circle cx="18" cy="22" r="11" fill="#1e293b"/>
-              <path d="M18 22 L12 15" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-              <text x="18" y="34" text-anchor="middle" fill="#3b82f6" font-size="4" font-weight="bold">LO</text>
-              <!-- Red gauge (high pressure) -->
-              <circle cx="42" cy="22" r="14" fill="none" stroke="#ef4444" stroke-width="2.5"/>
-              <circle cx="42" cy="22" r="11" fill="#1e293b"/>
-              <path d="M42 22 L48 15" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-              <text x="42" y="34" text-anchor="middle" fill="#ef4444" font-size="4" font-weight="bold">HI</text>
-              <!-- Amp clamp meter -->
-              <rect x="22" y="42" width="16" height="14" rx="2" fill="#f59e0b" stroke="#ca8a04" stroke-width="1"/>
-              <text x="30" y="51" text-anchor="middle" fill="#1e293b" font-size="5" font-weight="bold">A</text>
-              <path d="M26 42 L26 38 Q26 36 28 36 L32 36 Q34 36 34 38 L34 42" fill="none" stroke="#f59e0b" stroke-width="2"/>
-              <!-- Connection hoses -->
-              <line x1="18" y1="36" x2="18" y2="44" stroke="#3b82f6" stroke-width="1.5"/>
-              <line x1="42" y1="36" x2="42" y2="44" stroke="#ef4444" stroke-width="1.5"/>
-            </svg>
-          </div>
-          <h2>Trade Master</h2>
-        </div>
-        <nav class="sidebar-nav">
-          <div class="nav-group">
-            <span class="nav-group-title">Principal</span>
-            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> Dashboard</a>
-            <a href="#" onclick="showSection('calendar')" class="nav-link"><span>📅</span> Calendario</a>
-            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> Leads</a>
-            <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> Dispatch</a>
-          </div>
-          <div class="nav-group">
-            <span class="nav-group-title">Gestión</span>
-            <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> Clientes</a>
-            <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> Trabajos</a>
-            <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> Técnicos</a>
-            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> Home Advisors</a>
-          </div>
-          <div class="nav-group">
-            <span class="nav-group-title">Finanzas</span>
-            <a href="#" onclick="showSection('invoices')" class="nav-link"><span>📄</span> Facturas</a>
-            <a href="#" onclick="showSection('collections')" class="nav-link"><span>💰</span> Cobranza</a>
-          </div>
-          <div class="nav-group">
-            <span class="nav-group-title">Sistema</span>
-            <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> Configuración</a>
-          </div>
-        </nav>
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-avatar-sm" id="sidebarInitials">M</div>
-            <span id="sidebarUserName" class="user-name-text">Usuario</span>
-          </div>
-          <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
-        </div>
-      </aside>
+:root {
+    --primary: #1e3a5f;
+    --primary-dark: #152d4a;
+    --primary-light: #2a5080;
+    --accent: #f47621;
+    --accent-dark: #d4631a;
+    --accent-light: #ff8f42;
+    --bg-dark: #f0f4f8;
+    --bg-card: #ffffff;
+    --bg-input: #f8fafc;
+    --border: #e2e8f0;
+    --border-hover: #cbd5e1;
+    --text-white: #1e293b;
+    --text-light: #475569;
+    --text-muted: #94a3b8;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --blue: #3b82f6;
+    --success: #10b981;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
 
-      <main class="main-content">
-        <header class="top-bar">
-          <h1 id="pageTitle">Dashboard</h1>
-          <div class="top-bar-right">
-            <span id="companyDisplay" class="company-name"></span>
-            <div id="userInitials" class="user-avatar">M</div>
-          </div>
-        </header>
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f4f8;
+    color: var(--text-white); min-height: 100vh; line-height: 1.5;
+}
 
-        <div class="content-area">
+/* ==================== AUTH ==================== */
+.auth-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: linear-gradient(135deg, #1e3a5f 0%, #2a5080 50%, #1e3a5f 100%); }
+.auth-card { display: grid; grid-template-columns: 1fr 1fr; max-width: 960px; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); }
+.auth-left { background: linear-gradient(160deg, #1e3a5f 0%, #2a5080 50%, #152d4a 100%); padding: 60px 50px; display: flex; flex-direction: column; justify-content: center; color: white; }
+.brand-icon { font-size: 56px; margin-bottom: 24px; }
+.auth-brand h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+.brand-subtitle { font-size: 14px; opacity: 0.85; margin-bottom: 40px; font-weight: 500; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.feature-list li { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; opacity: 0.95; }
+.auth-right { background: #ffffff; padding: 50px 45px; display: flex; flex-direction: column; justify-content: center; }
+.auth-tabs { display: flex; margin-bottom: 32px; border-bottom: 2px solid #e2e8f0; }
+.tab-btn { flex: 1; padding: 14px 16px; background: none; border: none; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; }
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.auth-form { display: none; animation: fadeIn 0.3s ease; }
+.auth-form.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.auth-form h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 24px; }
+.auth-right .form-group { margin-bottom: 16px; }
+.auth-right .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.auth-right .form-group input { width: 100%; padding: 12px 14px; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; color: #1e293b; transition: all 0.2s ease; }
+.auth-right .form-group input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244, 118, 33, 0.12); }
+.auth-right .form-group input::placeholder { color: #94a3b8; }
+.auth-right .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.auth-link { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
+.auth-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+.success-msg { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
 
-          <!-- ===== DASHBOARD ===== -->
-          <div id="dashboard-section" class="section active">
-            <div class="kpi-grid">
-              <div class="kpi-card"><span class="kpi-label">Leads</span><span class="kpi-value" id="leadCountKPI">0</span><span class="kpi-sub">Total de leads</span></div>
-              <div class="kpi-card"><span class="kpi-label">Trabajos Activos</span><span class="kpi-value" id="jobCountKPI">0</span><span class="kpi-sub">En progreso</span></div>
-              <div class="kpi-card"><span class="kpi-label">Técnicos</span><span class="kpi-value" id="techCountKPI">0</span><span class="kpi-sub">Registrados</span></div>
-              <div class="kpi-card"><span class="kpi-label">Clientes</span><span class="kpi-value" id="clientCountKPI">0</span><span class="kpi-sub">Clientes activos</span></div>
-            </div>
+/* ==================== BUTTONS ==================== */
+.btn-primary { width: 100%; padding: 13px 24px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: white; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s ease; margin-top: 8px; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(244, 118, 33, 0.35); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-sm { width: auto; padding: 10px 20px; font-size: 13px; }
+.btn-secondary { padding: 10px 20px; background: transparent; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.25s ease; }
+.btn-secondary:hover { background: rgba(30, 58, 95, 0.06); }
+.btn-logout { width: 100%; padding: 10px; background: rgba(239, 68, 68, 0.08); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+.btn-logout:hover { background: rgba(239, 68, 68, 0.2); color: #fecaca; }
+.btn-nav { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--primary); color: white; border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-nav:hover { background: var(--primary-dark); }
+.btn-danger-sm { padding: 6px 12px; background: rgba(239,68,68,0.06); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; }
 
-            <!-- Revenue Pipeline -->
-            <div class="card" style="margin-bottom:16px;">
-              <div class="card-top">
-                <h3>💰 Pipeline / Cashflow</h3>
-                <select id="pipelineYear" class="inline-select" onchange="renderPipeline()" style="padding:8px 12px;">
-                </select>
-              </div>
-              <div id="pipelineChart" class="pipeline-chart"></div>
-              <div id="pipelineStats" class="pipeline-stats"></div>
-            </div>
+/* ==================== DASHBOARD ==================== */
+.dashboard-container { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; background: var(--bg-dark); }
+.sidebar { background: var(--primary); border-right: none; padding: 24px 20px; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+.sidebar-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+.sidebar-icon { font-size: 28px; }
+.sidebar-brand h2 { font-size: 18px; font-weight: 700; color: #ffffff; }
+.sidebar-nav { flex: 1; }
+.nav-group { margin-bottom: 28px; }
+.nav-group-title { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,0.4); padding: 0 12px; margin-bottom: 10px; }
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s ease; }
+.nav-link:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+.nav-link.active { background: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 8px rgba(244,118,33,0.3); }
+.sidebar-footer { padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.15); margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-avatar-sm { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 700; }
+.user-name-text { font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 500; }
+.main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--bg-dark); }
+.top-bar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 30px; height: 64px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); }
+.top-bar h1 { font-size: 20px; font-weight: 700; color: var(--primary); }
+.top-bar-right { display: flex; align-items: center; gap: 20px; }
+.company-name { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.user-avatar { width: 36px; height: 36px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; cursor: pointer; }
+.content-area { flex: 1; overflow-y: auto; padding: 28px; }
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.3s ease; }
 
-            <div class="cards-row">
-              <!-- Recent Jobs -->
-              <div class="card">
-                <h3>🔧 Trabajos Recientes</h3>
-                <div id="dashRecentJobs"></div>
-              </div>
-              <!-- Upcoming Appointments -->
-              <div class="card">
-                <h3>📅 Próximas Citas</h3>
-                <div id="dashUpcomingAppts"></div>
-              </div>
-            </div>
+/* KPIs & Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 6px; transition: all 0.25s ease; box-shadow: var(--shadow-sm); }
+.kpi-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.kpi-value { font-size: 30px; font-weight: 800; color: var(--accent); }
+.kpi-sub { font-size: 12px; color: var(--text-muted); }
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.card h3 { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 16px; }
+.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.card-top h3 { margin: 0; }
+.cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.empty-msg { color: var(--text-muted); font-size: 14px; text-align: center; padding: 32px 16px; }
 
-            <!-- Overdue Invoices Alert -->
-            <div id="dashOverdueAlert" style="display:none;" class="card">
-              <h3>🔴 Facturas Vencidas</h3>
-              <div id="dashOverdueList"></div>
-            </div>
-          </div>
+/* Forms */
+.content-area .form-group { margin-bottom: 16px; }
+.content-area .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.content-area .form-group input, .content-area .form-group select, .content-area .form-group textarea { width: 100%; padding: 11px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.2s ease; }
+.content-area .form-group input:focus, .content-area .form-group select:focus, .content-area .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244, 118, 33, 0.1); }
+.content-area .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-actions { display: flex; gap: 10px; margin-top: 8px; }
+.settings-form { display: flex; flex-direction: column; gap: 16px; max-width: 420px; }
 
-          <!-- ===== CALENDAR / SCHEDULE ===== -->
-          <div id="calendar-section" class="section">
-            <div class="card">
-              <div class="card-top">
-                <h3>📅 Calendario de Citas</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <button class="btn-secondary btn-sm" onclick="calPrev()" style="padding:6px 12px;">◀</button>
-                  <span id="calMonthLabel" style="font-weight:700;font-size:15px;color:var(--primary);min-width:160px;text-align:center;"></span>
-                  <button class="btn-secondary btn-sm" onclick="calNext()" style="padding:6px 12px;">▶</button>
-                  <button class="btn-secondary btn-sm" onclick="calToday()" style="margin-left:8px;">Hoy</button>
-                  <button class="btn-primary btn-sm" onclick="showApptForm()">+ Nueva Cita</button>
-                </div>
-              </div>
+/* Tables */
+.leads-table, .dispatch-table, .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.leads-table thead, .dispatch-table thead, .data-table thead { background: var(--primary); }
+.leads-table th, .dispatch-table th, .data-table th { padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; border-bottom: 2px solid var(--border); }
+.leads-table td, .dispatch-table td, .data-table td { padding: 12px 14px; font-size: 13px; color: var(--text-light); border-bottom: 1px solid var(--border); }
+.leads-table tr:hover, .dispatch-table tr:hover, .data-table tr:hover { background: rgba(30, 58, 95, 0.03); }
+.lead-status, .tech-status, .job-status { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.lead-status.new, .tech-status.available { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.tech-status.busy { background: rgba(244, 118, 33, 0.1); color: var(--accent); }
+.tech-status.offline { background: rgba(148, 163, 184, 0.12); color: var(--text-muted); }
+.job-status.pending { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+.job-status.in_progress { background: rgba(244, 118, 33, 0.1); color: var(--accent); }
+.job-status.completed { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.priority-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.priority-badge.urgent { background: rgba(239,68,68,0.08); color: var(--danger); }
+.priority-badge.high { background: rgba(244,118,33,0.08); color: var(--accent); }
+.priority-badge.normal { background: rgba(148,163,184,0.08); color: var(--text-muted); }
 
-              <!-- Appointment Form -->
-              <div id="apptFormContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
-                <h4 style="margin-bottom:16px;color:var(--primary);" id="apptFormTitle">📅 Nueva Cita</h4>
-                <form id="apptForm" onsubmit="handleApptCreate(event)">
-                  <div class="form-row">
-                    <div class="form-group"><label>Título / Servicio</label><input type="text" id="apptTitle" required placeholder="Ej: Tune-Up AC, Reparación Furnace..."></div>
-                    <div class="form-group"><label>Cliente</label>
-                      <select id="apptClientSelect" onchange="loadApptClientInfo()">
-                        <option value="">Seleccionar o crear...</option>
-                        <option value="__new__">➕ Nuevo Cliente</option>
-                      </select>
-                    </div>
-                  </div>
-                  <!-- New client fields (hidden by default) -->
-                  <div id="apptNewClientFields" style="display:none;">
-                    <div class="form-row">
-                      <div class="form-group"><label>Nombre del Cliente</label><input type="text" id="apptNewClientName" placeholder="Nombre completo"></div>
-                      <div class="form-group"><label>Teléfono</label><input type="tel" id="apptNewClientPhone" placeholder="(555) 123-4567"></div>
-                    </div>
-                    <div class="form-group"><label>Email</label><input type="email" id="apptNewClientEmail" placeholder="email@cliente.com"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Fecha</label><input type="date" id="apptDate" required></div>
-                    <div class="form-group"><label>Hora Inicio</label><input type="time" id="apptStartTime" value="09:00"></div>
-                    <div class="form-group"><label>Hora Fin</label><input type="time" id="apptEndTime" value="10:00"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Técnico</label>
-                      <select id="apptTechSelect"><option value="">Sin asignar</option></select>
-                    </div>
-                    <div class="form-group"><label>Dirección</label><input type="text" id="apptAddress" placeholder="Dirección del servicio"></div>
-                  </div>
-                  <div class="form-group"><label>Notas</label><textarea id="apptNotes" rows="2" placeholder="Detalles adicionales..."></textarea></div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn-primary btn-sm" id="apptSubmitBtn">💾 Crear Cita</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideApptForm()">Cancelar</button>
-                  </div>
-                </form>
-              </div>
+/* Dispatch */
+.dispatch-legend { display: flex; gap: 16px; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+.tech-dot { background: var(--blue); }
+.job-dot { background: var(--accent); }
+.client-dot { background: var(--success); }
+.dispatch-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.lead-actions, .tech-actions, .job-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-icon { padding: 5px 10px; background: rgba(30, 58, 95, 0.05); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-icon:hover { background: var(--primary); color: white; }
+.btn-zillow { background: rgba(228,77,37,0.06) !important; color: #e44d25 !important; border-color: #e44d25 !important; }
+.btn-zillow:hover { background: #e44d25 !important; color: white !important; }
+.btn-edit { background: rgba(139,92,246,0.06) !important; color: #8b5cf6 !important; border-color: #8b5cf6 !important; }
+.btn-edit:hover { background: #8b5cf6 !important; color: white !important; }
+.edit-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+.edit-modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.edit-modal h3 { color: var(--primary); margin-bottom: 16px; }
+.edit-modal .form-group { margin-bottom: 12px; }
+.edit-modal label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+.edit-modal input, .edit-modal select, .edit-modal textarea { width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 13px; }
+.edit-modal input:focus, .edit-modal select:focus, .edit-modal textarea:focus { border-color: var(--accent); outline: none; }
+.edit-modal .form-actions { display: flex; gap: 8px; margin-top: 16px; }
 
-              <!-- Calendar Grid -->
-              <div id="calendarGrid" class="calendar-grid"></div>
-            </div>
+/* === ESTIMATES === */
+.estimate-step { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.estimate-step h4 { color: var(--primary); margin-bottom: 12px; font-size: 15px; }
+.equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.equip-btn { padding: 16px 12px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 10px; color: var(--text-white); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.4; }
+.equip-btn:hover { border-color: var(--accent); background: rgba(244,118,33,0.03); }
+.equip-btn.selected { border-color: var(--accent); background: rgba(244,118,33,0.06); box-shadow: 0 0 12px rgba(244,118,33,0.12); }
+.equip-btn small { font-size: 10px; color: var(--text-muted); }
+.comp-catalog { max-height: 400px; overflow-y: auto; }
+.comp-category { margin-bottom: 16px; }
+.comp-category h5 { color: var(--text-light); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.comp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 4px; cursor: pointer; transition: all 0.15s; background: var(--bg-card); }
+.comp-item:hover { border-color: var(--accent); background: rgba(244,118,33,0.02); }
+.comp-item.selected { border-color: var(--accent); background: rgba(244,118,33,0.05); }
+.comp-info { flex: 1; }
+.comp-name { font-size: 13px; color: var(--text-white); font-weight: 500; display: block; }
+.comp-detail { font-size: 11px; color: var(--text-muted); }
+.comp-price { font-size: 14px; font-weight: 700; color: var(--accent); min-width: 70px; text-align: right; }
+.comp-qty input { width: 40px; padding: 2px 4px; background: var(--bg-input); border: 1px solid var(--accent); border-radius: 4px; color: var(--text-white); text-align: center; font-size: 12px; }
+.est-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.est-table th { background: var(--primary); color: white; padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; }
+.est-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.totals-grid { max-width: 300px; margin-left: auto; }
+.total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: var(--text-light); }
+.total-row.discount { color: var(--danger); }
+.total-row.grand { font-size: 20px; font-weight: 700; color: var(--accent); border-top: 2px solid var(--accent); padding-top: 8px; margin-top: 8px; }
+.est-job-info { padding: 10px; background: rgba(30,58,95,0.03); border: 1px solid var(--border); border-radius: 6px; margin-top: 8px; font-size: 13px; color: var(--text-light); }
 
-            <!-- Day Detail -->
-            <div class="card" style="margin-top:16px;">
-              <h3 id="calDayTitle">📋 Citas del Día</h3>
-              <div id="calDayAppts"></div>
-            </div>
-          </div>
+/* Service Call Options */
+.service-call-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.sc-option { cursor: pointer; }
+.sc-option input { display: none; }
+.sc-card { padding: 14px 20px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s; background: var(--bg-card); min-width: 100px; }
+.sc-option input:checked + .sc-card { border-color: var(--accent); background: rgba(244,118,33,0.05); }
+.sc-card:hover { border-color: var(--accent); }
+.sc-price { display: block; font-size: 22px; font-weight: 700; color: var(--accent); }
+.sc-desc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sc-row { color: var(--accent) !important; font-weight: 600; border-bottom: 1px dashed var(--border); padding-bottom: 6px; margin-bottom: 4px; }
 
-          <!-- ===== LEADS ===== -->
-          <div id="leads-section" class="section">
-            <div class="card">
-              <div class="card-top"><h3>Leads Registrados</h3><button class="btn-primary btn-sm" onclick="showLeadForm()">+ Nuevo Lead</button></div>
-              <div id="leadFormContainer" style="display:none; margin-bottom:20px;">
-                <form id="leadForm" onsubmit="handleLeadCreate(event)">
-                  <div class="form-row">
-                    <div class="form-group"><label>Nombre</label><input type="text" id="leadName" placeholder="Nombre del cliente" required></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="leadPhone" placeholder="Teléfono" required></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Email</label><input type="email" id="leadEmail" placeholder="Email"></div>
-                    <div class="form-group">
-                      <label>Servicio</label>
-                      <select id="leadService" required>
-                        <option value="">Seleccionar</option>
-                        <option value="Instalación AC">Instalación AC</option>
-                        <option value="Reparación AC">Reparación AC</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
-                        <option value="Calefacción">Calefacción</option>
-                        <option value="Refrigeración">Refrigeración</option>
-                        <option value="Ductos">Ductos</option>
-                        <option value="Otro">Otro</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label>Tipo de Propiedad</label>
-                      <select id="leadPropertyType">
-                        <option value="residential">🏠 Residencial</option>
-                        <option value="commercial">🏢 Comercial</option>
-                        <option value="industrial">🏭 Industrial</option>
-                        <option value="restaurant">🍽️ Restaurante</option>
-                      </select>
-                    </div>
-                    <div class="form-group"><label>Dirección</label><input type="text" id="leadAddress" placeholder="Dirección completa" required><input type="hidden" id="leadLat"><input type="hidden" id="leadLng"></div>
-                  </div>
-                  <div class="form-group"><label>Notas</label><textarea id="leadNotes" rows="3" placeholder="Notas adicionales"></textarea></div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn-primary btn-sm">Guardar Lead</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideLeadForm()">Cancelar</button>
-                  </div>
-                </form>
-              </div>
-              <div id="leadsList"></div>
-            </div>
-            <div class="card"><h3>Mapa de Leads</h3><div id="leadsMap" style="width:100%;height:500px;border-radius:8px;"></div></div>
-          </div>
+/* Photo Grid */
+.photo-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.photo-thumb { position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb button { position: absolute; top: 2px; right: 2px; background: rgba(239,68,68,0.9); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; }
 
-          <!-- ===== DISPATCH ===== -->
-          <div id="dispatch-section" class="section">
-            <div class="card">
-              <div class="card-top">
-                <h3>🗺️ Mapa de Dispatch en Tiempo Real</h3>
-                <div class="dispatch-legend">
-                  <span class="legend-item"><span style="color:#3b82f6;">🚐</span> Disponible</span>
-                  <span class="legend-item"><span style="color:#f59e0b;">🚐</span> Ocupado</span>
-                  <span class="legend-item"><span style="color:#8b5cf6;">🚐</span> En Ruta</span>
-                  <span class="legend-item"><span class="legend-dot job-dot"></span> Trabajos</span>
-                  <span class="legend-item"><span class="legend-dot client-dot"></span> Clientes</span>
-                </div>
-              </div>
-              <div id="dispatchMap" style="width:100%;height:500px;border-radius:8px;"></div>
-            </div>
-            <div class="dispatch-panels">
-              <div class="card">
-                <div class="card-top"><h3>👷 Técnicos</h3><button class="btn-primary btn-sm" onclick="showTechForm()">+ Agregar Técnico</button></div>
-                <div id="techFormContainer" style="display:none; margin-bottom:16px;">
-                  <form id="techForm" onsubmit="handleTechCreate(event)">
-                    <div class="form-row">
-                      <div class="form-group"><label>Nombre</label><input type="text" id="techName" required placeholder="Nombre completo"></div>
-                      <div class="form-group"><label>Teléfono</label><input type="tel" id="techPhone" placeholder="Teléfono"></div>
-                    </div>
-                    <div class="form-row">
-                      <div class="form-group"><label>Email</label><input type="email" id="techEmail" placeholder="Email"></div>
-                      <div class="form-group">
-                        <label>Especialidad</label>
-                        <select id="techSpecialty">
-                          <option value="HVAC">HVAC</option>
-                          <option value="Refrigeración">Refrigeración</option>
-                          <option value="Eléctrico">Eléctrico</option>
-                          <option value="Plomería">Plomería</option>
-                          <option value="General">General</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="form-actions">
-                      <button type="submit" class="btn-primary btn-sm">Guardar</button>
-                      <button type="button" class="btn-secondary btn-sm" onclick="hideTechForm()">Cancelar</button>
-                    </div>
-                  </form>
-                </div>
-                <div id="techniciansList"></div>
-              </div>
-              <div class="card">
-                <div class="card-top"><h3>📋 Trabajos Pendientes</h3><button class="btn-primary btn-sm" onclick="showJobForm()">+ Nuevo Trabajo</button></div>
-                <div id="jobFormContainer" style="display:none; margin-bottom:16px;">
-                  <form id="jobForm" onsubmit="handleJobCreate(event)">
-                    <div class="form-group"><label>Título</label><input type="text" id="jobTitle" required placeholder="Descripción del trabajo"></div>
-                    <div class="form-row">
-                      <div class="form-group">
-                        <label>Tipo de Servicio</label>
-                        <select id="jobServiceType">
-                          <option value="Instalación">Instalación</option>
-                          <option value="Reparación">Reparación</option>
-                          <option value="Mantenimiento">Mantenimiento</option>
-                          <option value="Emergencia">Emergencia</option>
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label>Prioridad</label>
-                        <select id="jobPriority">
-                          <option value="normal">Normal</option>
-                          <option value="high">Alta</option>
-                          <option value="urgent">Urgente</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="form-group"><label>Dirección</label><input type="text" id="jobAddress" required placeholder="Dirección del trabajo"><input type="hidden" id="jobLat"><input type="hidden" id="jobLng"></div>
-                    <div class="form-row">
-                      <div class="form-group"><label>Fecha</label><input type="date" id="jobDate"></div>
-                      <div class="form-group">
-                        <label>Asignar Técnico</label>
-                        <select id="jobTechId"><option value="">Sin asignar</option></select>
-                      </div>
-                    </div>
-                    <div class="form-group"><label>Notas</label><textarea id="jobNotes" rows="2" placeholder="Notas"></textarea></div>
-                    <div class="form-actions">
-                      <button type="submit" class="btn-primary btn-sm">Crear Trabajo</button>
-                      <button type="button" class="btn-secondary btn-sm" onclick="hideJobForm()">Cancelar</button>
-                    </div>
-                  </form>
-                </div>
-                <div id="jobsList"></div>
-              </div>
-            </div>
-          </div>
+/* Age Warning */
+.age-warning { margin-top: 12px; padding: 12px; background: rgba(244,118,33,0.05); border: 1px solid var(--accent); border-radius: 8px; color: var(--accent-dark); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn-warning-sm { padding: 6px 14px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-warning-sm:hover { background: var(--accent-dark); }
 
-          <!-- ===== TÉCNICOS ===== -->
-          <div id="technicians-section" class="section">
-            <div class="card">
-              <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Dispatch</button></div>
-              <div id="techniciansFullList"></div>
-            </div>
-            <div class="card">
-              <h3>📱 Link de Tracking para Técnicos</h3>
-              <p style="color:var(--text-light);font-size:14px;margin-bottom:12px;">Comparte este link con tus técnicos para que reporten su ubicación en tiempo real desde su celular:</p>
-              <div id="trackingLinkContainer" class="tracking-link-box"></div>
-            </div>
-          </div>
+/* Referral Box */
+.referral-box { padding: 16px; background: rgba(30,58,95,0.02); border: 1px solid var(--primary); border-radius: 10px; }
+.referral-box h5 { color: var(--primary); margin-bottom: 12px; font-size: 14px; }
+.form-select { width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-size: 14px; }
 
-          <!-- ===== OTHER SECTIONS ===== -->
-          <!-- ===== CLIENTS ===== -->
-          <div id="clients-section" class="section">
-            <div class="card">
-              <div class="card-top">
-                <h3>👥 Clientes</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <input type="text" id="clientSearchInput" placeholder="🔍 Buscar cliente..." oninput="renderClientsList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px;">
-                  <button class="btn-primary btn-sm" onclick="showClientForm()">+ Nuevo Cliente</button>
-                </div>
-              </div>
+/* === BRAND LOGO === */
+.brand-logo { flex-shrink: 0; }
+.brand-logo svg { display: block; }
+.brand-logo img { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; }
+.logo-upload-area { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.logo-preview { width: 80px; height: 80px; border: 2px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
+.logo-preview span { font-size: 10px; color: var(--text-muted); text-align: center; padding: 4px; }
+.logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+.inline-select { padding: 4px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 11px; cursor: pointer; }
+.inline-select:focus { border-color: var(--accent); outline: none; }
+.contact-btns { display: flex; gap: 4px; margin-top: 4px; }
+.btn-call, .btn-text { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+.btn-call { background: rgba(16,185,129,0.06); color: var(--success); border: 1px solid var(--success); }
+.btn-call:hover { background: var(--success); color: white; }
+.btn-text { background: rgba(59,130,246,0.06); color: var(--blue); border: 1px solid var(--blue); }
+.btn-text:hover { background: var(--blue); color: white; }
+.contact-log { display: block; margin-top: 4px; font-size: 10px; font-weight: 600; color: var(--accent); background: rgba(244,118,33,0.06); padding: 2px 6px; border-radius: 4px; }
+#leadsMap, #dispatchMap { border: 1px solid var(--border); border-radius: 8px; }
 
-              <!-- Client Form -->
-              <div id="clientFormContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
-                <h4 style="margin-bottom:16px;color:var(--primary);" id="clientFormTitle">👥 Nuevo Cliente</h4>
-                <form id="clientForm" onsubmit="handleClientCreate(event)">
-                  <div class="form-row">
-                    <div class="form-group"><label>Nombre</label><input type="text" id="clientName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="clientPhone" placeholder="(555) 123-4567"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Email</label><input type="email" id="clientEmail" placeholder="email@cliente.com"></div>
-                    <div class="form-group"><label>Tipo de Propiedad</label>
-                      <select id="clientPropertyType">
-                        <option value="Residencial">Residencial</option>
-                        <option value="Comercial">Comercial</option>
-                        <option value="Industrial">Industrial</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group"><label>Dirección</label><input type="text" id="clientAddress" placeholder="Dirección completa"></div>
-                  <div class="form-group"><label>Notas</label><textarea id="clientNotes" rows="2" placeholder="Notas sobre el cliente..."></textarea></div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn-primary btn-sm" id="clientSubmitBtn">💾 Guardar</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideClientForm()">Cancelar</button>
-                  </div>
-                </form>
-              </div>
+/* Tracking page */
+.tracking-container { max-width: 500px; margin: 40px auto; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); text-align: center; box-shadow: var(--shadow-md); }
+.tracking-header { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+.tracking-header span { font-size: 32px; }
+.tracking-header h2 { font-size: 20px; color: var(--primary); }
+.tracking-status { padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; background: rgba(30,58,95,0.05); color: var(--primary); }
+.tracking-status.active { background: rgba(16,185,129,0.08); color: var(--success); }
+.tracking-status.error { background: rgba(239,68,68,0.06); color: var(--danger); }
+.btn-clockout { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; }
+.btn-clockout:hover { box-shadow: 0 6px 20px rgba(239,68,68,0.35) !important; }
+.tracking-hours-info { margin-top: 20px; padding: 16px; background: rgba(30,58,95,0.02); border: 1px solid var(--border); border-radius: 8px; }
+.tracking-hours-info p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.status-select-available { border-color: var(--success) !important; color: var(--success) !important; }
+.status-select-busy { border-color: var(--accent) !important; color: var(--accent) !important; }
+.status-select-on_route { border-color: #8b5cf6 !important; color: #8b5cf6 !important; }
+.status-select-offline { border-color: var(--text-muted) !important; color: var(--text-muted) !important; }
+.tracking-link-box { background: var(--bg-input); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: var(--primary); word-break: break-all; border: 1px solid var(--border); }
 
-              <div id="clientsList"></div>
-            </div>
-          </div>
-          <div id="jobs-section" class="section">
-            <div class="card">
-              <div class="card-top"><h3>💰 Crear Estimado / Presentación</h3></div>
-              <div id="estimateBuilder">
-                <!-- Step 1: Select Job -->
-                <div class="estimate-step">
-                  <h4>1. Seleccionar Trabajo</h4>
-                  <select id="estJobSelect" class="form-select" onchange="loadEstimateJob()">
-                    <option value="">Seleccionar trabajo...</option>
-                  </select>
-                  <div id="estJobInfo" style="display:none;" class="est-job-info"></div>
-                </div>
+/* ==================== CALENDAR ==================== */
+.cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-bottom: 2px; }
+.cal-day-header { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 8px 0; }
+.cal-body { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.cal-cell { min-height: 90px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg-card); transition: all 0.15s; }
+.cal-cell:hover { border-color: var(--accent); background: rgba(244,118,33,0.02); }
+.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell.today { border-color: var(--accent); background: rgba(244,118,33,0.04); }
+.cal-cell.today .cal-date { background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; }
+.cal-cell.has-appts { border-color: var(--primary); }
+.cal-date { font-size: 13px; font-weight: 600; color: var(--text-white); display: block; margin-bottom: 4px; }
+.cal-appts { display: flex; flex-direction: column; gap: 2px; }
+.cal-appt { font-size: 10px; padding: 2px 4px; background: rgba(244,118,33,0.1); color: var(--accent-dark); border-radius: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-left: 2px solid var(--accent); }
+.cal-appt.appt-done { background: rgba(16,185,129,0.1); color: var(--success); border-left-color: var(--success); }
+.cal-appt.appt-cancel { background: rgba(148,163,184,0.1); color: var(--text-muted); border-left-color: var(--text-muted); text-decoration: line-through; }
+.cal-more { font-size: 10px; color: var(--accent); font-weight: 600; padding: 2px 4px; }
+.appt-time { font-weight: 700; }
+.appt-card { margin-bottom: 10px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg-card); }
+.appt-card-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-input); border-bottom: 1px solid var(--border); }
+.appt-card-body { padding: 12px 14px; font-size: 13px; line-height: 1.6; }
+.appt-assign-row { display: flex; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.appt-assign { flex: 1; }
+.appt-assign label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.appt-assign .inline-select { width: 100%; padding: 6px 10px; font-size: 12px; }
 
-                <!-- Step 2: Equipment Info -->
-                <div class="estimate-step">
-                  <h4>2. Información del Equipo</h4>
-                  <div class="equip-grid">
-                    <button class="equip-btn" onclick="selectEquipType('ac_single')">❄️<br>AC Single Stage</button>
-                    <button class="equip-btn" onclick="selectEquipType('heat_pump')">🔄<br>Heat Pump Single Stage</button>
-                    <button class="equip-btn" onclick="selectEquipType('furnace_80')">🔥<br>Furnace 80% AFUE<br><small>Cat I - Induced Draft</small></button>
-                    <button class="equip-btn" onclick="selectEquipType('furnace_90')">🔥<br>Furnace 90%+ AFUE<br><small>Cat IV - Condensing</small></button>
-                    <button class="equip-btn" onclick="selectEquipType('mini_split')">🌬️<br>Mini Split</button>
-                    <button class="equip-btn" onclick="selectEquipType('package_unit')">📦<br>Package Unit</button>
-                  </div>
-                  <div class="equip-details" style="margin-top:16px;">
-                    <div class="form-row">
-                      <div class="form-group"><label>Modelo #</label><input type="text" id="estModelNum" placeholder="Ej: GSX140361"></div>
-                      <div class="form-group"><label>Serial #</label><input type="text" id="estSerialNum" placeholder="Ej: 1234567890"></div>
-                    </div>
-                    <div class="form-row">
-                      <div class="form-group"><label>Marca</label>
-                        <select id="estBrand"><option value="">Seleccionar...</option><option>Goodman</option><option>Carrier</option><option>Trane</option><option>Lennox</option><option>Rheem</option><option>Ruud</option><option>York</option><option>Bryant</option><option>Amana</option><option>Daikin</option><option>Mitsubishi</option><option>Fujitsu</option><option>Bosch</option><option>American Standard</option><option>Otra</option></select>
-                      </div>
-                      <div class="form-group"><label>Edad Aprox (años)</label><input type="number" id="estEquipAge" placeholder="Ej: 15" min="0" max="50"></div>
-                    </div>
-                    <div class="form-group">
-                      <label>📷 Fotos del Equipo (modelo, serial, data plate, condición)</label>
-                      <input type="file" id="estPhotos" multiple accept="image/*" onchange="handleEquipPhotos(event)">
-                      <div id="photoPreviewGrid" class="photo-grid"></div>
-                    </div>
-                    <div id="equipAgeWarning" style="display:none;" class="age-warning">
-                      ⚠️ Equipo con más de 15 años — considerar reemplazo
-                      <button class="btn-warning-sm" onclick="referToAdvisor()">🏠 Referir a Home Advisor para Reemplazo</button>
-                    </div>
-                  </div>
-                </div>
+/* ==================== PIPELINE / CASHFLOW ==================== */
+.pipeline-chart { padding: 16px 0; }
+.pipeline-bars { display: flex; justify-content: space-between; align-items: flex-end; gap: 4px; padding: 0 4px; }
+.pipe-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.pipe-col.current .pipe-label { color: var(--accent); font-weight: 700; }
+.pipe-bar-container { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 1px; }
+.pipe-bar { width: 100%; max-width: 40px; border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s; }
+.pipe-paid { background: linear-gradient(180deg, var(--success) 0%, #059669 100%); }
+.pipe-pending { background: linear-gradient(180deg, var(--warning) 0%, #d97706 100%); }
+.pipe-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+.pipe-amount { font-size: 10px; font-weight: 700; color: var(--text-light); }
+.pipe-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; }
+.pipe-leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.pipe-dot { width: 10px; height: 10px; border-radius: 3px; }
+.pipe-dot.paid { background: var(--success); }
+.pipe-dot.pending { background: var(--warning); }
+.pipeline-stats { padding: 12px 0; }
+.pipeline-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.pipe-stat { text-align: center; padding: 10px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border); }
+.pipe-stat-val { display: block; font-size: 20px; font-weight: 800; }
+.pipe-stat-lbl { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
-                <!-- Step 3: Service Call Fee -->
-                <div class="estimate-step">
-                  <h4>3. Llamada de Servicio (Service Call)</h4>
-                  <p style="color:var(--text-muted);font-size:12px;margin-bottom:10px;">⚡ La llamada de servicio SIEMPRE se cobra — si el cliente decide hacer el trabajo, se cobra ADICIONAL a labor + partes.</p>
-                  <div class="service-call-options">
-                    <label class="sc-option" onclick="selectServiceCall(70)">
-                      <input type="radio" name="serviceCall" value="70">
-                      <div class="sc-card"><span class="sc-price">$70</span><span class="sc-desc">0-10 millas</span></div>
-                    </label>
-                    <label class="sc-option" onclick="selectServiceCall(120)">
-                      <input type="radio" name="serviceCall" value="120">
-                      <div class="sc-card"><span class="sc-price">$120</span><span class="sc-desc">10-20 millas</span></div>
-                    </label>
-                    <label class="sc-option" onclick="selectServiceCall(200)">
-                      <input type="radio" name="serviceCall" value="200">
-                      <div class="sc-card"><span class="sc-price">$200</span><span class="sc-desc">20+ millas</span></div>
-                    </label>
-                    <label class="sc-option" onclick="selectServiceCall(-1)">
-                      <input type="radio" name="serviceCall" value="custom">
-                      <div class="sc-card"><span class="sc-price">$?</span><span class="sc-desc">Custom</span></div>
-                    </label>
-                  </div>
-                  <div id="customServiceCall" style="display:none;margin-top:8px;">
-                    <div class="form-group"><label>Monto personalizado</label><input type="number" id="customSCAmount" placeholder="$" onchange="selectServiceCall(parseFloat(this.value))"></div>
-                  </div>
-                  <div class="form-row" style="margin-top:12px;">
-                    <div class="form-group">
-                      <label>¿Cliente aprueba el trabajo?</label>
-                      <select id="estClientDecision" onchange="handleClientDecision()">
-                        <option value="">Pendiente...</option>
-                        <option value="yes">✅ SÍ — Hacer reparación</option>
-                        <option value="no">❌ NO — Solo cobrar service call</option>
-                        <option value="replace">🔄 Quiere equipo nuevo (referir)</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label>Horas de labor</label>
-                      <input type="number" id="estLaborHours" value="1" min="0.5" step="0.5" onchange="updateEstimateTotals()">
-                    </div>
-                  </div>
-                  <div id="advisorReferralBox" style="display:none;margin-top:12px;">
-                    <div class="referral-box">
-                      <h5>🏠 Referir a Home Advisor</h5>
-                      <div class="form-row">
-                        <div class="form-group">
-                          <label>Seleccionar Advisor</label>
-                          <select id="estAdvisorSelect"><option value="">Seleccionar...</option></select>
-                        </div>
-                        <div class="form-group">
-                          <label>Urgencia</label>
-                          <select id="referralUrgency">
-                            <option value="normal">Normal</option>
-                            <option value="urgente">Urgente</option>
-                            <option value="programar">Programar visita</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="form-group"><label>Notas para el Advisor</label><textarea id="referralNotes" rows="2" placeholder="Estado del equipo, lo que necesita el cliente..."></textarea></div>
-                      <button class="btn-primary btn-sm" onclick="sendReferralToAdvisor()">📩 Enviar Referencia al Advisor</button>
-                    </div>
-                  </div>
-                </div>
+/* ==================== DASHBOARD DYNAMIC ==================== */
+.dash-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.dash-item:last-child { border-bottom: none; }
+.dash-icon { font-size: 18px; flex-shrink: 0; }
+.dash-info { flex: 1; min-width: 0; }
+.dash-info strong { display: block; font-size: 13px; color: var(--text-white); }
+.dash-info span { display: block; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-                <!-- Step 4: Select Components (only if approved) -->
-                <div class="estimate-step" id="componentsStep">
-                  <h4>4. Componentes y Reparaciones</h4>
-                  <div id="componentsList"></div>
-                </div>
+/* ==================== INVOICES ==================== */
+.payment-method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.pay-option { cursor: pointer; }
+.pay-option input { display: none; }
+.pay-card { padding: 12px 8px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s; background: var(--bg-card); }
+.pay-option input:checked + .pay-card { border-color: var(--accent); background: rgba(244,118,33,0.05); box-shadow: 0 0 8px rgba(244,118,33,0.15); }
+.pay-card:hover { border-color: var(--accent); }
+.pay-icon { display: block; font-size: 24px; margin-bottom: 4px; }
+.pay-card span { display: block; font-size: 12px; font-weight: 700; color: var(--text-white); }
+.pay-card small { display: block; font-size: 10px; color: var(--success); margin-top: 2px; }
+.invoice-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+.inv-kpi { padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+.inv-kpi.warn { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.03); }
+.inv-kpi-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+.inv-kpi-value { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+.inv-kpi.warn .inv-kpi-value { color: var(--danger); }
+.inv-kpi-label { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.inv-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.inv-draft { background: #f3f4f6; color: #6b7280; }
+.inv-sent { background: #dbeafe; color: #2563eb; }
+.inv-paid { background: #dcfce7; color: #16a34a; }
+.inv-partial { background: #fef9c3; color: #ca8a04; }
+.inv-overdue { background: #fef2f2; color: #dc2626; }
+.inv-cancelled { background: #f3f4f6; color: #9ca3af; }
+.inv-table th { font-size: 11px; }
+.inv-table td { font-size: 12px; vertical-align: top; }
+.invoice-line-row { margin-bottom: 6px; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+.invoice-line-row .form-row { gap: 8px; margin-bottom: 0; }
+.invoice-line-row .form-group { margin-bottom: 0; }
+.invoice-line-row .form-group label { font-size: 10px; }
+.invoice-line-row .form-group input { padding: 8px; font-size: 12px; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.btn-icon:hover { background: rgba(244,118,33,0.08); border-color: var(--accent); }
+.btn-icon.btn-edit { background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.3); }
 
-                <!-- Step 5: Summary -->
-                <div class="estimate-step">
-                  <h4>5. Resumen del Estimado</h4>
-                  <div id="estimateSummary"></div>
-                  <div class="form-row" style="margin-top:12px;">
-                    <div class="form-group"><label>Descuento (%)</label><input type="number" id="estDiscount" value="0" min="0" max="100" onchange="updateEstimateTotals()"></div>
-                    <div class="form-group"><label>Tax (%)</label><input type="number" id="estTax" value="8.75" step="0.25" onchange="updateEstimateTotals()"></div>
-                  </div>
-                  <div id="estimateTotals" class="est-totals"></div>
-                  <div class="form-group" style="margin-top:12px;"><label>Notas para el cliente</label><textarea id="estNotes" rows="3" placeholder="Garantía, condiciones, recomendaciones..."></textarea></div>
-                  <div class="form-actions" style="margin-top:16px;">
-                    <button class="btn-primary" onclick="generateEstimatePDF()">📄 Generar Estimado PDF</button>
-                    <button class="btn-secondary" onclick="presentEstimateToClient()">📱 Presentar al Cliente</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <h3>📋 Estimados Guardados</h3>
-              <div id="savedEstimates"><p class="empty-msg">No hay estimados guardados</p></div>
-            </div>
-          </div>
-          <!-- ===== HOME ADVISORS (Vendedores) ===== -->
-          <div id="advisors-section" class="section">
-            <div class="card">
-              <div class="card-top"><h3>🏠 Home Advisors (Vendedores)</h3><button class="btn-primary btn-sm" onclick="showAdvisorForm()">+ Nuevo Advisor</button></div>
-              <div id="advisorFormContainer" style="display:none;margin-bottom:16px;">
-                <form id="advisorForm" onsubmit="handleAdvisorCreate(event)">
-                  <div class="form-row">
-                    <div class="form-group"><label>Nombre</label><input type="text" id="advisorName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="advisorPhone" required placeholder="(555) 123-4567"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Email</label><input type="email" id="advisorEmail" placeholder="email@empresa.com"></div>
-                    <div class="form-group"><label>Especialidad</label>
-                      <select id="advisorSpecialty">
-                        <option value="Residencial">Residencial</option>
-                        <option value="Comercial">Comercial</option>
-                        <option value="Residencial y Comercial">Residencial y Comercial</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group"><label>Zona de cobertura</label><input type="text" id="advisorZone" placeholder="Ej: Inland Empire, San Bernardino, Riverside"></div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn-primary btn-sm">Guardar</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideAdvisorForm()">Cancelar</button>
-                  </div>
-                </form>
-              </div>
-              <div id="advisorsList"></div>
-            </div>
-            <div class="card">
-              <div class="card-top"><h3>📋 Órdenes Referidas</h3></div>
-              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Trabajos referidos por técnicos para reemplazo de equipo</p>
-              <div id="referralsList"></div>
-            </div>
-          </div>
-
-          <!-- ===== INVOICES (Facturas) ===== -->
-          <div id="invoices-section" class="section">
-            <div class="card">
-              <div class="card-top">
-                <h3>📄 Facturas</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <select id="invoiceFilterStatus" class="inline-select" onchange="renderInvoicesTable()" style="padding:8px 12px;font-size:12px;">
-                    <option value="all">Todas</option>
-                    <option value="draft">Borrador</option>
-                    <option value="sent">Enviadas</option>
-                    <option value="paid">Pagadas</option>
-                    <option value="partial">Pago Parcial</option>
-                    <option value="overdue">Vencidas</option>
-                    <option value="cancelled">Canceladas</option>
-                  </select>
-                  <button class="btn-primary btn-sm" onclick="showInvoiceForm()">+ Nueva Factura</button>
-                </div>
-              </div>
-
-              <!-- Invoice KPIs -->
-              <div class="invoice-kpis" id="invoiceKPIs"></div>
-
-              <!-- Invoice Form -->
-              <div id="invoiceFormContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
-                <h4 style="margin-bottom:16px;color:var(--primary);">📄 Nueva Factura</h4>
-                <form id="invoiceForm" onsubmit="handleInvoiceCreate(event)">
-                  <!-- Source: from job or manual -->
-                  <div class="form-group">
-                    <label>Crear desde Trabajo (opcional)</label>
-                    <select id="invJobSelect" onchange="loadInvoiceFromJob()">
-                      <option value="">— Factura manual —</option>
-                    </select>
-                  </div>
-
-                  <div class="form-row">
-                    <div class="form-group"><label>Nombre del Cliente</label><input type="text" id="invClientName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="invClientPhone" placeholder="(555) 123-4567"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Email</label><input type="email" id="invClientEmail" placeholder="email@cliente.com"></div>
-                    <div class="form-group"><label>Dirección</label><input type="text" id="invClientAddress" placeholder="Dirección del servicio"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Técnico</label>
-                      <select id="invTechSelect"><option value="">Seleccionar...</option></select>
-                    </div>
-                    <div class="form-group"><label>Fecha de Vencimiento</label><input type="date" id="invDueDate"></div>
-                  </div>
-
-                  <!-- Line Items -->
-                  <div style="margin:16px 0;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                      <label style="font-weight:600;font-size:13px;color:var(--primary);">Líneas de Factura</label>
-                      <button type="button" class="btn-secondary btn-sm" onclick="addInvoiceLine()" style="padding:6px 12px;font-size:11px;">+ Agregar Línea</button>
-                    </div>
-                    <div id="invoiceLines"></div>
-                  </div>
-
-                  <!-- Service Call -->
-                  <div class="form-row">
-                    <div class="form-group"><label>Service Call Fee ($)</label><input type="number" id="invServiceCall" value="0" min="0" step="0.01" onchange="calcInvoiceTotals()"></div>
-                    <div class="form-group"><label>Descuento (%)</label><input type="number" id="invDiscount" value="0" min="0" max="100" onchange="calcInvoiceTotals()"></div>
-                    <div class="form-group"><label>Tax (%)</label><input type="number" id="invTax" value="8.75" step="0.25" onchange="calcInvoiceTotals()"></div>
-                  </div>
-
-                  <!-- Totals Preview -->
-                  <div id="invoiceTotalsPreview" class="est-totals" style="margin:12px 0;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;"></div>
-
-                  <div class="form-group"><label>Notas para el Cliente</label><textarea id="invNotes" rows="2" placeholder="Garantía, términos, condiciones..."></textarea></div>
-                  <div class="form-group"><label>Notas Internas (no se muestran al cliente)</label><textarea id="invInternalNotes" rows="2" placeholder="Notas internas..."></textarea></div>
-
-                  <div class="form-actions" style="margin-top:12px;">
-                    <button type="submit" class="btn-primary btn-sm">💾 Guardar Factura</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideInvoiceForm()">Cancelar</button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Invoice Table -->
-              <div id="invoicesTable"></div>
-            </div>
-
-            <!-- Invoice Detail Modal -->
-            <div id="invoiceDetailModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
-              <div style="max-width:700px;margin:40px auto;background:var(--bg-card);border-radius:12px;padding:30px;position:relative;">
-                <button onclick="closeInvoiceDetail()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
-                <div id="invoiceDetailContent"></div>
-              </div>
-            </div>
-          </div>
-          <!-- ===== COLLECTIONS (Cobranza) ===== -->
-          <div id="collections-section" class="section">
-            <div class="card">
-              <div class="card-top">
-                <h3>💰 Cobranza</h3>
-                <select id="collectionsFilter" class="inline-select" onchange="renderCollections()" style="padding:8px 12px;font-size:12px;">
-                  <option value="all_due">Todas con Balance</option>
-                  <option value="overdue">Vencidas</option>
-                  <option value="partial">Pago Parcial</option>
-                  <option value="sent">Enviadas (sin pago)</option>
-                  <option value="recent_paid">Recién Pagadas</option>
-                </select>
-              </div>
-
-              <!-- Collections KPIs -->
-              <div id="collectionsKPIs" class="invoice-kpi-row"></div>
-
-              <!-- Collections Table -->
-              <div id="collectionsTable"></div>
-            </div>
-
-            <!-- Payment History -->
-            <div class="card" style="margin-top:16px;">
-              <h3>📋 Historial de Pagos</h3>
-              <div id="paymentsHistory"></div>
-            </div>
-          </div>
-          <div id="settings-section" class="section">
-            <div class="card">
-              <h3>Configuración de la Empresa</h3>
-              <div class="settings-form">
-                <div class="form-group">
-                  <label>Logo de la Empresa</label>
-                  <div class="logo-upload-area">
-                    <div id="logoPreview" class="logo-preview">
-                      <span>Haz clic para subir logo</span>
-                    </div>
-                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)" style="display:none;">
-                    <button class="btn-secondary btn-sm" onclick="document.getElementById('logoFileInput').click()">📷 Cambiar Logo</button>
-                    <button class="btn-secondary btn-sm" onclick="resetLogo()">↩️ Logo Default</button>
-                  </div>
-                </div>
-                <div class="form-group"><label>Nombre de la Empresa</label><input type="text" id="settingsCompanyName" placeholder="Nombre"></div>
-                <div class="form-group"><label>Teléfono</label><input type="tel" id="settingsPhone" placeholder="Teléfono"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="settingsEmail" placeholder="Email"></div>
-                <button class="btn-primary btn-sm" onclick="saveSettings()">Guardar Configuración</button>
-                
-                <hr style="margin:20px 0;border-color:var(--border);">
-                <h4 style="color:var(--primary);margin-bottom:4px;">📋 Cláusulas del Contrato / Invoice</h4>
-                <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Personaliza los términos legales que aparecen en tus facturas e invoices. Edita según las leyes de tu estado.</p>
-                
-                <div class="form-group">
-                  <label>Estado / State</label>
-                  <select id="clauseState" onchange="loadDefaultClauses()" style="max-width:300px;">
-                    <option value="CA">California</option>
-                    <option value="TX">Texas</option>
-                    <option value="AZ">Arizona</option>
-                    <option value="NV">Nevada</option>
-                    <option value="FL">Florida</option>
-                    <option value="NY">New York</option>
-                    <option value="OTHER">Otro Estado</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>💰 Términos de Pago / Payment Terms</label>
-                  <textarea id="clausePayment" rows="4" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>⚠️ Derecho de Cancelación / Right to Cancel</label>
-                  <textarea id="clauseCancel" rows="5" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>🔄 Cancelación & Restocking Fee</label>
-                  <textarea id="clauseRestock" rows="5" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>🏛️ Aviso de Licencia del Contratista (CSLB / State Board)</label>
-                  <textarea id="clauseLicense" rows="4" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>💵 Enganche / Down Payment Limit</label>
-                  <textarea id="clauseDownPayment" rows="3" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>🔗 Aviso de Liens / Mechanics Lien Warning</label>
-                  <textarea id="clauseLien" rows="3" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>🛡️ Garantía / Warranty</label>
-                  <textarea id="clauseWarranty" rows="3" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>🔒 Política de Privacidad / Privacy Policy</label>
-                  <textarea id="clausePrivacy" rows="3" style="font-size:12px;"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>📝 Cláusula Adicional (Opcional)</label>
-                  <textarea id="clauseCustom" rows="3" style="font-size:12px;" placeholder="Agrega cualquier término adicional aquí..."></textarea>
-                </div>
-
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                  <button class="btn-primary btn-sm" onclick="saveClauses()">💾 Guardar Cláusulas</button>
-                  <button class="btn-secondary btn-sm" onclick="loadDefaultClauses()">🔄 Restaurar Defaults</button>
-                </div>
-
-                <hr style="margin:20px 0;border-color:var(--border);">
-                <h4 style="color:var(--primary);margin-bottom:12px;">🧪 Datos de Demostración</h4>
-                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Crea técnicos, clientes, leads y citas de ejemplo para probar el sistema.</p>
-                <button class="btn-secondary btn-sm" onclick="seedDemoData()">🎲 Crear Datos Demo</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </main>
-    </div>
-
-    <!-- ==================== TECH TRACKING PAGE (separate URL) ==================== -->
-    <div id="techTrackingPage" style="display:none;">
-      <div class="tracking-container">
-        <div class="tracking-header">
-          <span>🔧</span>
-          <h2>Trade Master - GPS Tracking</h2>
-        </div>
-        <h3 id="trackingTechName" style="text-align:center;color:var(--primary);margin-bottom:12px;">Técnico</h3>
-        <div id="trackingStatus" class="tracking-status">Conectando...</div>
-        <div id="trackingMap" style="width:100%;height:350px;border-radius:8px;margin:16px 0;"></div>
-        <button id="clockInBtn" class="btn-primary" onclick="toggleClockIn()">🟢 Iniciar Jornada (Clock In)</button>
-        <button id="trackingBtn" class="btn-primary" onclick="toggleTracking()" style="display:none;margin-top:10px;">⏸️ Pausar Tracking GPS</button>
-        <p id="trackingInfo" style="color:#94a3b8;font-size:13px;text-align:center;margin-top:12px;"></p>
-        <div class="tracking-hours-info">
-          <p>📍 Tu ubicación se envía cada 30 segundos mientras estés en servicio</p>
-          <p>🔴 Al terminar tu jornada, haz Clock Out para dejar de compartir ubicación</p>
-        </div>
-      </div>
-    </div>
-
-    <script src="script.js"></script>
-  </body>
-</html>
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .auth-card { grid-template-columns: 1fr; }
+    .auth-left { display: none; }
+    .dashboard-container { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .dispatch-panels { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .content-area .form-row { grid-template-columns: 1fr; }
+    .invoice-kpi-row { grid-template-columns: 1fr 1fr; }
+    .pipeline-stat-row { grid-template-columns: 1fr 1fr; }
+    .cal-cell { min-height: 60px; }
+    .cal-appts { display: none; }
+    .cal-cell.has-appts::after { content:'●'; color:var(--accent); font-size:8px; display:block; text-align:center; }
+}
