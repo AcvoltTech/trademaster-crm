@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -2280,7 +2281,7 @@
               <div class="card-top">
                 <h3>💵 <span data-i18n="money_transactions">Transacciones</span></h3>
                 <div style="display:flex;gap:8px;">
-                  <button class="btn-primary btn-sm" onclick="showExpenseForm()" data-i18n="money_add_expense">+ Agregar Gasto</button>
+                  <button class="btn-primary btn-sm" onclick="showMoneyExpenseForm()" data-i18n="money_add_expense">+ Agregar Gasto</button>
                   <select id="moneyPeriodFilter" class="inline-select" onchange="renderMyMoney()" style="padding:6px 10px;font-size:12px;">
                     <option value="month" data-i18n="money_f_month">Este Mes</option>
                     <option value="quarter" data-i18n="money_f_quarter">Este Trimestre</option>
@@ -2290,16 +2291,16 @@
               </div>
 
               <!-- Expense Form -->
-              <div id="expenseFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+              <div id="moneyExpFormContainer" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
                 <h4 style="color:var(--primary);margin-bottom:10px;" data-i18n="money_new_expense">Nuevo Gasto</h4>
-                <form onsubmit="handleExpenseCreate(event)">
+                <form onsubmit="handleMoneyExpCreate(event)">
                   <div class="form-row">
-                    <div class="form-group"><label data-i18n="money_desc">Descripción</label><input type="text" id="expDesc" required placeholder="Ej: Materiales, Herramientas..."></div>
-                    <div class="form-group"><label data-i18n="money_amount">Monto</label><input type="number" id="expAmount" required min="0" step="0.01" placeholder="0.00"></div>
+                    <div class="form-group"><label data-i18n="money_desc">Descripción</label><input type="text" id="moneyExpDesc" required placeholder="Ej: Materiales, Herramientas..."></div>
+                    <div class="form-group"><label data-i18n="money_amount">Monto</label><input type="number" id="moneyExpAmount" required min="0" step="0.01" placeholder="0.00"></div>
                   </div>
                   <div class="form-row">
                     <div class="form-group"><label data-i18n="money_category">Categoría</label>
-                      <select id="expCategory">
+                      <select id="moneyExpCat">
                         <option value="materials">Materiales / Parts</option>
                         <option value="tools">Herramientas</option>
                         <option value="fuel">Gasolina / Fuel</option>
@@ -2313,12 +2314,12 @@
                         <option value="other">Otro / Other</option>
                       </select>
                     </div>
-                    <div class="form-group"><label data-i18n="money_date">Fecha</label><input type="date" id="expDate"></div>
+                    <div class="form-group"><label data-i18n="money_date">Fecha</label><input type="date" id="moneyExpDate"></div>
                   </div>
-                  <div class="form-group"><label data-i18n="money_notes">Notas</label><textarea id="expNotes" rows="2" placeholder="Notas adicionales..."></textarea></div>
+                  <div class="form-group"><label data-i18n="money_notes">Notas</label><textarea id="moneyExpNotes2" rows="2" placeholder="Notas adicionales..."></textarea></div>
                   <div class="form-actions">
                     <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="money_save">Guardar</span></button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideExpenseForm()" data-i18n="btn_cancel">Cancelar</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideMoneyExpenseForm()" data-i18n="btn_cancel">Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -2809,8 +2810,8 @@
               </div>
               <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">💡 <strong>Tip:</strong> Exporta tus recibos y gastos como CSV y súbelos a QuickBooks para mantener tu contabilidad al día. Tu contador puede acceder directamente a QuickBooks con su propia cuenta.</p>
               <div style="margin-top:8px;display:flex;gap:8px;">
-                <button class="btn-primary btn-sm" onclick="exportReceiptsCSV()">📥 Exportar Recibos CSV</button>
-                <button class="btn-primary btn-sm" onclick="exportExpensesCSV()">📥 Exportar Gastos CSV</button>
+                <button class="btn-primary btn-sm" style="background:#10b981;" onclick="exportReceiptsCSV()">🧾 Exportar Recibos CSV</button>
+                <button class="btn-primary btn-sm" style="background:#ef4444;" onclick="exportExpensesCSV()">🏢 Exportar Gastos CSV</button>
               </div>
             </div>
           </div>
