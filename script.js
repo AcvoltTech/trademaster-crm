@@ -108,16 +108,19 @@ async function loadAllData() {
     await loadLeadsData();
     await loadJobs();
     try { await loadInvoices(); } catch(e) { console.log('Invoices table not ready'); }
+    try { await loadClients(); } catch(e) { console.log('Clients table not ready'); }
+    try { await loadAppointments(); } catch(e) { console.log('Appointments table not ready'); }
     try { await loadAdvisors(); } catch(e) {}
     try { await loadReferrals(); } catch(e) {}
     updateKPIs();
+    renderDashboardDynamic();
 }
 
 function updateKPIs() {
     document.getElementById('leadCountKPI').textContent = leadsData.length;
     document.getElementById('techCountKPI').textContent = techsData.length;
-    document.getElementById('jobCountKPI').textContent = jobsData.filter(function(j) { return j.status !== 'completed'; }).length;
-    document.getElementById('clientCountKPI').textContent = '0';
+    document.getElementById('jobCountKPI').textContent = jobsData.filter(function(j) { return j.status !== 'completed' && j.status !== 'cancelled'; }).length;
+    document.getElementById('clientCountKPI').textContent = clientsData.length;
 }
 
 // ===== NAVIGATION =====
@@ -125,11 +128,14 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Dashboard', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
+    var titles = { dashboard:'Dashboard', calendar:'Calendario', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
     document.getElementById('pageTitle').textContent = titles[name] || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
     if (al) al.classList.add('active');
+    if (name === 'dashboard') { renderDashboardDynamic(); }
+    if (name === 'calendar') { initCalendar(); }
+    if (name === 'clients') { loadClients(); }
     if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
     if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
     if (name === 'technicians') { renderTechFullList(); generateTrackingLinks(); }
@@ -237,6 +243,12 @@ async function convertLeadToJob(leadId) {
     var lead = leadsData.find(function(l) { return l.id === leadId; });
     if (!lead) return;
     if (!confirm('¿Convertir lead "' + lead.name + '" en trabajo?')) return;
+    
+    // Auto-create client from lead
+    try {
+        await autoCreateClient(lead.name, lead.phone, lead.email, lead.address, 'lead', leadId);
+    } catch(e) { console.log('Client auto-create skipped'); }
+
     var res = await sbClient.from('work_orders').insert({
         company_id: companyId, title: lead.service + ' - ' + lead.name,
         service_type: lead.service, address: lead.address,
@@ -251,7 +263,7 @@ async function convertLeadToJob(leadId) {
     }
     await sbClient.from('leads').update({ status: 'won' }).eq('id', leadId);
     await loadLeadsData(); await loadJobs(); updateKPIs();
-    alert('¡Lead convertido a trabajo! Ve a Dispatch para verlo.');
+    alert('¡Lead convertido a trabajo y cliente creado! Ve a Dispatch para verlo.');
 }
 
 async function deleteLead(id) {
@@ -2112,4 +2124,517 @@ function renderPaymentsHistory() {
         h += '<td style="color:var(--text-muted);">' + (p.reference || '—') + '</td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+// ===== CLIENTS MODULE =====
+var clientsData = [];
+var editingClientId = null;
+
+async function loadClients() {
+    if (!companyId) return;
+    var res = await sbClient.from('clients').select('*').eq('company_id', companyId).order('name', { ascending: true });
+    clientsData = res.data || [];
+    renderClientsList();
+}
+
+function showClientForm(cId) {
+    document.getElementById('clientFormContainer').style.display = 'block';
+    document.getElementById('clientForm').reset();
+    editingClientId = null;
+    document.getElementById('clientFormTitle').textContent = '👥 Nuevo Cliente';
+    document.getElementById('clientSubmitBtn').textContent = '💾 Guardar';
+    if (cId) {
+        var c = clientsData.find(function(x) { return x.id === cId; });
+        if (!c) return;
+        editingClientId = cId;
+        document.getElementById('clientFormTitle').textContent = '✏️ Editar Cliente';
+        document.getElementById('clientSubmitBtn').textContent = '💾 Actualizar';
+        document.getElementById('clientName').value = c.name || '';
+        document.getElementById('clientPhone').value = c.phone || '';
+        document.getElementById('clientEmail').value = c.email || '';
+        document.getElementById('clientAddress').value = c.address || '';
+        document.getElementById('clientPropertyType').value = c.property_type || 'Residencial';
+        document.getElementById('clientNotes').value = c.notes || '';
+    }
+}
+function hideClientForm() { document.getElementById('clientFormContainer').style.display = 'none'; editingClientId = null; }
+
+async function handleClientCreate(event) {
+    event.preventDefault();
+    var data = {
+        company_id: companyId,
+        name: document.getElementById('clientName').value,
+        phone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value,
+        address: document.getElementById('clientAddress').value,
+        property_type: document.getElementById('clientPropertyType').value,
+        notes: document.getElementById('clientNotes').value,
+        source: 'manual'
+    };
+    if (editingClientId) {
+        delete data.company_id; delete data.source;
+        await sbClient.from('clients').update(data).eq('id', editingClientId);
+    } else {
+        await sbClient.from('clients').insert(data);
+    }
+    hideClientForm(); await loadClients(); updateKPIs();
+}
+
+async function deleteClient(id) {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    await sbClient.from('clients').delete().eq('id', id);
+    await loadClients(); updateKPIs();
+}
+
+function renderClientsList() {
+    var c = document.getElementById('clientsList');
+    var search = (document.getElementById('clientSearchInput').value || '').toLowerCase();
+    var filtered = clientsData.filter(function(cl) {
+        if (!search) return true;
+        return (cl.name || '').toLowerCase().indexOf(search) >= 0 ||
+               (cl.phone || '').indexOf(search) >= 0 ||
+               (cl.email || '').toLowerCase().indexOf(search) >= 0 ||
+               (cl.address || '').toLowerCase().indexOf(search) >= 0;
+    });
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay clientes' + (search ? ' que coincidan' : '') + '.</p>'; return; }
+
+    var srcLabels = { manual: '✋ Manual', lead: '🎯 Lead', invoice: '📄 Factura', referral: '🏠 Referencia' };
+    var h = '<table class="dispatch-table"><thead><tr><th>Cliente</th><th>Contacto</th><th>Dirección</th><th>Tipo</th><th>Origen</th><th>Acciones</th></tr></thead><tbody>';
+    filtered.forEach(function(cl) {
+        h += '<tr><td><strong>' + cl.name + '</strong>';
+        if (cl.notes) h += '<br><span style="font-size:10px;color:var(--text-muted);">📝 ' + cl.notes.substring(0,50) + '</span>';
+        h += '</td>';
+        h += '<td style="font-size:12px;">';
+        if (cl.phone) h += '<a href="tel:' + cl.phone + '" class="btn-call">📱 ' + cl.phone + '</a> ';
+        if (cl.email) h += '<br><span style="color:var(--text-muted);">' + cl.email + '</span>';
+        h += '</td>';
+        h += '<td style="font-size:12px;">' + (cl.address || '—') + '</td>';
+        h += '<td><span style="font-size:11px;">' + (cl.property_type || '') + '</span></td>';
+        h += '<td><span style="font-size:11px;">' + (srcLabels[cl.source] || cl.source || '') + '</span></td>';
+        h += '<td><div class="job-actions">';
+        h += '<button class="btn-icon" onclick="showClientForm(\'' + cl.id + '\')" title="Editar">✏️</button>';
+        h += '<button class="btn-icon" onclick="createApptForClient(\'' + cl.id + '\')" title="Crear Cita">📅</button>';
+        h += '<button class="btn-danger-sm" onclick="deleteClient(\'' + cl.id + '\')" style="padding:4px 8px;">X</button>';
+        h += '</div></td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+// Auto-create client from lead conversion
+async function autoCreateClient(name, phone, email, address, sourceType, sourceId) {
+    if (!companyId) return;
+    // Check if client already exists by phone
+    var existing = clientsData.find(function(c) { return c.phone === phone && phone; });
+    if (existing) return existing.id;
+    var res = await sbClient.from('clients').insert({
+        company_id: companyId, name: name, phone: phone, email: email,
+        address: address, source: sourceType, source_id: sourceId
+    }).select().single();
+    if (res.data) { clientsData.push(res.data); return res.data.id; }
+    return null;
+}
+
+function createApptForClient(clientId) {
+    showSection('calendar');
+    setTimeout(function() {
+        showApptForm();
+        document.getElementById('apptClientSelect').value = clientId;
+        loadApptClientInfo();
+    }, 200);
+}
+
+// ===== CALENDAR / APPOINTMENTS MODULE =====
+var appointmentsData = [];
+var calYear, calMonth;
+var editingApptId = null;
+
+async function loadAppointments() {
+    if (!companyId) return;
+    var res = await sbClient.from('appointments').select('*, clients(name, phone), technicians(name)').eq('company_id', companyId).order('appointment_date', { ascending: true });
+    appointmentsData = res.data || [];
+}
+
+function initCalendar() {
+    if (!calYear) { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
+    loadAppointments().then(function() { renderCalendar(); });
+    populateApptSelects();
+}
+
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+function calToday() { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); renderCalendar(); }
+
+function renderCalendar() {
+    var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('calMonthLabel').textContent = months[calMonth] + ' ' + calYear;
+
+    var firstDay = new Date(calYear, calMonth, 1).getDay();
+    var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    var today = new Date();
+    var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+    var days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    var h = '<div class="cal-header-row">';
+    days.forEach(function(d) { h += '<div class="cal-day-header">' + d + '</div>'; });
+    h += '</div><div class="cal-body">';
+
+    // Empty cells before first day
+    for (var i = 0; i < firstDay; i++) h += '<div class="cal-cell empty"></div>';
+
+    for (var d = 1; d <= daysInMonth; d++) {
+        var dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var isToday = dateStr === todayStr;
+        var dayAppts = appointmentsData.filter(function(a) { return a.appointment_date === dateStr; });
+
+        h += '<div class="cal-cell' + (isToday ? ' today' : '') + (dayAppts.length > 0 ? ' has-appts' : '') + '" onclick="showDayAppts(\'' + dateStr + '\')">';
+        h += '<span class="cal-date">' + d + '</span>';
+        if (dayAppts.length > 0) {
+            h += '<div class="cal-appts">';
+            dayAppts.slice(0, 3).forEach(function(a) {
+                var statusClass = a.status === 'completed' ? 'appt-done' : a.status === 'cancelled' ? 'appt-cancel' : '';
+                h += '<div class="cal-appt ' + statusClass + '">';
+                h += '<span class="appt-time">' + (a.start_time || '') + '</span> ';
+                h += '<span class="appt-name">' + a.title.substring(0,15) + '</span>';
+                h += '</div>';
+            });
+            if (dayAppts.length > 3) h += '<div class="cal-more">+' + (dayAppts.length - 3) + ' más</div>';
+            h += '</div>';
+        }
+        h += '</div>';
+    }
+    h += '</div>';
+    document.getElementById('calendarGrid').innerHTML = h;
+
+    // Show today's appointments by default
+    showDayAppts(todayStr);
+}
+
+function showDayAppts(dateStr) {
+    var dayAppts = appointmentsData.filter(function(a) { return a.appointment_date === dateStr; });
+    var dateObj = new Date(dateStr + 'T12:00:00');
+    var dayLabel = dateObj.toLocaleDateString('es-MX', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('calDayTitle').textContent = '📋 ' + dayLabel;
+
+    var c = document.getElementById('calDayAppts');
+    if (dayAppts.length === 0) {
+        c.innerHTML = '<p class="empty-msg">No hay citas este día. <a href="#" onclick="showApptForm();document.getElementById(\'apptDate\').value=\'' + dateStr + '\';" style="color:var(--accent);">+ Crear cita</a></p>';
+        return;
+    }
+
+    dayAppts.sort(function(a,b) { return (a.start_time || '').localeCompare(b.start_time || ''); });
+    var statusLabels = { scheduled:'📅 Programada', confirmed:'✅ Confirmada', completed:'✔️ Completada', cancelled:'❌ Cancelada', no_show:'⚠️ No Show' };
+
+    var h = '';
+    dayAppts.forEach(function(a) {
+        var clientName = a.clients ? a.clients.name : 'Sin cliente';
+        var techName = a.technicians ? a.technicians.name : 'Sin asignar';
+        h += '<div class="appt-card">';
+        h += '<div class="appt-card-header">';
+        h += '<div><strong>' + (a.start_time || '—') + (a.end_time ? ' - ' + a.end_time : '') + '</strong>';
+        h += ' <span class="inv-badge inv-' + (a.status === 'completed' ? 'paid' : a.status === 'cancelled' ? 'cancelled' : 'sent') + '">' + (statusLabels[a.status] || a.status) + '</span></div>';
+        h += '<div class="job-actions">';
+        if (a.status === 'scheduled') h += '<button class="btn-icon" onclick="changeApptStatus(\'' + a.id + '\',\'confirmed\')" title="Confirmar">✅</button>';
+        if (a.status !== 'completed' && a.status !== 'cancelled') {
+            h += '<button class="btn-icon" onclick="changeApptStatus(\'' + a.id + '\',\'completed\')" title="Completar">✔️</button>';
+            h += '<button class="btn-icon" onclick="editAppt(\'' + a.id + '\')" title="Editar">✏️</button>';
+            h += '<button class="btn-icon" onclick="changeApptStatus(\'' + a.id + '\',\'cancelled\')" title="Cancelar">❌</button>';
+        }
+        h += '<button class="btn-danger-sm" onclick="deleteAppt(\'' + a.id + '\')" style="padding:4px 8px;">X</button>';
+        h += '</div></div>';
+        h += '<div class="appt-card-body">';
+        h += '<strong>' + a.title + '</strong><br>';
+        h += '👤 ' + clientName + ' &nbsp;|&nbsp; 👷 ' + techName;
+        if (a.address) h += '<br>📍 ' + a.address;
+        if (a.description) h += '<br><span style="font-size:12px;color:var(--text-muted);">📝 ' + a.description + '</span>';
+        h += '</div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function populateApptSelects() {
+    var clientSel = document.getElementById('apptClientSelect');
+    if (!clientSel) return;
+    clientSel.innerHTML = '<option value="">Seleccionar cliente...</option><option value="__new__">➕ Nuevo Cliente</option>';
+    clientsData.forEach(function(cl) {
+        clientSel.innerHTML += '<option value="' + cl.id + '">' + cl.name + (cl.phone ? ' - ' + cl.phone : '') + '</option>';
+    });
+    var techSel = document.getElementById('apptTechSelect');
+    techSel.innerHTML = '<option value="">Sin asignar</option>';
+    techsData.forEach(function(t) {
+        techSel.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
+    });
+}
+
+function loadApptClientInfo() {
+    var val = document.getElementById('apptClientSelect').value;
+    var newFields = document.getElementById('apptNewClientFields');
+    if (val === '__new__') { newFields.style.display = 'block'; return; }
+    newFields.style.display = 'none';
+    if (val) {
+        var cl = clientsData.find(function(c) { return c.id === val; });
+        if (cl && cl.address) document.getElementById('apptAddress').value = cl.address;
+    }
+}
+
+function showApptForm(apptId) {
+    document.getElementById('apptFormContainer').style.display = 'block';
+    document.getElementById('apptForm').reset();
+    document.getElementById('apptNewClientFields').style.display = 'none';
+    editingApptId = null;
+    document.getElementById('apptFormTitle').textContent = '📅 Nueva Cita';
+    document.getElementById('apptSubmitBtn').textContent = '💾 Crear Cita';
+    populateApptSelects();
+    // Default date = today
+    document.getElementById('apptDate').value = new Date().toISOString().split('T')[0];
+
+    if (apptId) {
+        var a = appointmentsData.find(function(x) { return x.id === apptId; });
+        if (!a) return;
+        editingApptId = apptId;
+        document.getElementById('apptFormTitle').textContent = '✏️ Editar Cita';
+        document.getElementById('apptSubmitBtn').textContent = '💾 Actualizar';
+        document.getElementById('apptTitle').value = a.title || '';
+        document.getElementById('apptDate').value = a.appointment_date || '';
+        document.getElementById('apptStartTime').value = a.start_time || '09:00';
+        document.getElementById('apptEndTime').value = a.end_time || '10:00';
+        if (a.client_id) document.getElementById('apptClientSelect').value = a.client_id;
+        if (a.technician_id) document.getElementById('apptTechSelect').value = a.technician_id;
+        document.getElementById('apptAddress').value = a.address || '';
+        document.getElementById('apptNotes').value = a.description || '';
+    }
+}
+function hideApptForm() { document.getElementById('apptFormContainer').style.display = 'none'; editingApptId = null; }
+function editAppt(id) { showApptForm(id); }
+
+async function handleApptCreate(event) {
+    event.preventDefault();
+    var clientId = document.getElementById('apptClientSelect').value;
+
+    // If new client, create it first
+    if (clientId === '__new__') {
+        var newName = document.getElementById('apptNewClientName').value;
+        if (!newName) { alert('Ingresa el nombre del nuevo cliente'); return; }
+        clientId = await autoCreateClient(
+            newName,
+            document.getElementById('apptNewClientPhone').value,
+            document.getElementById('apptNewClientEmail').value,
+            document.getElementById('apptAddress').value,
+            'manual', null
+        );
+        await loadClients();
+    }
+
+    var data = {
+        company_id: companyId,
+        client_id: clientId || null,
+        technician_id: document.getElementById('apptTechSelect').value || null,
+        title: document.getElementById('apptTitle').value,
+        appointment_date: document.getElementById('apptDate').value,
+        start_time: document.getElementById('apptStartTime').value,
+        end_time: document.getElementById('apptEndTime').value,
+        address: document.getElementById('apptAddress').value,
+        description: document.getElementById('apptNotes').value
+    };
+
+    if (editingApptId) {
+        delete data.company_id;
+        await sbClient.from('appointments').update(data).eq('id', editingApptId);
+    } else {
+        await sbClient.from('appointments').insert(data);
+    }
+    hideApptForm();
+    await loadAppointments();
+    renderCalendar();
+}
+
+async function changeApptStatus(id, status) {
+    await sbClient.from('appointments').update({ status: status }).eq('id', id);
+    await loadAppointments(); renderCalendar();
+}
+
+async function deleteAppt(id) {
+    if (!confirm('¿Eliminar esta cita?')) return;
+    await sbClient.from('appointments').delete().eq('id', id);
+    await loadAppointments(); renderCalendar();
+}
+
+// ===== DYNAMIC DASHBOARD =====
+function renderDashboardDynamic() {
+    renderRecentJobs();
+    renderUpcomingAppts();
+    renderOverdueAlert();
+    renderPipeline();
+}
+
+function renderRecentJobs() {
+    var c = document.getElementById('dashRecentJobs');
+    if (!c) return;
+    var recent = jobsData.slice(0, 5);
+    if (recent.length === 0) { c.innerHTML = '<p class="empty-msg">No hay trabajos recientes</p>'; return; }
+    var statusIcons = { pending:'🟡', in_progress:'🔵', completed:'✅', cancelled:'❌' };
+    var h = '';
+    recent.forEach(function(j) {
+        var icon = statusIcons[j.status] || '⚪';
+        var tech = j.technicians ? j.technicians.name : 'Sin asignar';
+        h += '<div class="dash-item">';
+        h += '<span class="dash-icon">' + icon + '</span>';
+        h += '<div class="dash-info"><strong>' + j.title + '</strong><span>' + tech + ' · ' + (j.address || '').substring(0,30) + '</span></div>';
+        h += '</div>';
+    });
+    c.innerHTML = h;
+}
+
+function renderUpcomingAppts() {
+    var c = document.getElementById('dashUpcomingAppts');
+    if (!c) return;
+    var today = new Date().toISOString().split('T')[0];
+    var upcoming = appointmentsData.filter(function(a) {
+        return a.appointment_date >= today && a.status !== 'cancelled' && a.status !== 'completed';
+    }).slice(0, 5);
+    if (upcoming.length === 0) { c.innerHTML = '<p class="empty-msg">No hay citas próximas</p>'; return; }
+    var h = '';
+    upcoming.forEach(function(a) {
+        var clientName = a.clients ? a.clients.name : '';
+        var dateObj = new Date(a.appointment_date + 'T12:00:00');
+        var dateLabel = dateObj.toLocaleDateString('es-MX', {weekday:'short', month:'short', day:'numeric'});
+        h += '<div class="dash-item">';
+        h += '<span class="dash-icon">📅</span>';
+        h += '<div class="dash-info"><strong>' + a.title + '</strong><span>' + dateLabel + ' ' + (a.start_time || '') + ' · ' + clientName + '</span></div>';
+        h += '</div>';
+    });
+    c.innerHTML = h;
+}
+
+function renderOverdueAlert() {
+    var container = document.getElementById('dashOverdueAlert');
+    var c = document.getElementById('dashOverdueList');
+    if (!container || !c) return;
+    var overdue = invoicesData.filter(function(i) { return i.status === 'overdue'; });
+    if (overdue.length === 0) { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    var h = '';
+    overdue.forEach(function(inv) {
+        h += '<div class="dash-item" style="border-left:3px solid var(--danger);padding-left:12px;">';
+        h += '<span class="dash-icon">🔴</span>';
+        h += '<div class="dash-info"><strong>' + inv.invoice_number + ' - ' + inv.client_name + '</strong>';
+        h += '<span>Balance: $' + parseFloat(inv.balance_due).toFixed(2) + ' · Vence: ' + (inv.due_date || '') + '</span></div>';
+        h += '<button class="btn-nav" onclick="showSection(\'collections\')" style="font-size:11px;padding:4px 10px;">Cobrar</button>';
+        h += '</div>';
+    });
+    c.innerHTML = h;
+}
+
+function renderPipeline() {
+    // Setup year selector
+    var yearSel = document.getElementById('pipelineYear');
+    if (yearSel && yearSel.options.length === 0) {
+        var curYear = new Date().getFullYear();
+        for (var y = curYear; y >= curYear - 2; y--) {
+            yearSel.innerHTML += '<option value="' + y + '">' + y + '</option>';
+        }
+    }
+    var selYear = parseInt((yearSel && yearSel.value) || new Date().getFullYear());
+    var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    // Aggregate by month
+    var paid = new Array(12).fill(0);
+    var pending = new Array(12).fill(0);
+    var jobs_count = new Array(12).fill(0);
+
+    invoicesData.forEach(function(inv) {
+        var created = new Date(inv.created_at);
+        if (created.getFullYear() !== selYear) return;
+        var m = created.getMonth();
+        if (inv.status === 'paid') paid[m] += parseFloat(inv.total) || 0;
+        else if (inv.status !== 'cancelled' && inv.status !== 'draft') pending[m] += parseFloat(inv.balance_due) || 0;
+    });
+
+    jobsData.forEach(function(j) {
+        var created = new Date(j.created_at);
+        if (created.getFullYear() !== selYear) return;
+        jobs_count[created.getMonth()]++;
+    });
+
+    // Find max for scaling
+    var maxVal = 1;
+    for (var i = 0; i < 12; i++) { var total = paid[i] + pending[i]; if (total > maxVal) maxVal = total; }
+
+    var curMonth = new Date().getMonth();
+    var h = '<div class="pipeline-bars">';
+    months.forEach(function(m, idx) {
+        var paidH = Math.round((paid[idx] / maxVal) * 160);
+        var pendH = Math.round((pending[idx] / maxVal) * 160);
+        var isCurrent = (idx === curMonth && selYear === new Date().getFullYear());
+        h += '<div class="pipe-col' + (isCurrent ? ' current' : '') + '">';
+        h += '<div class="pipe-bar-container" style="height:170px;">';
+        if (pending[idx] > 0) h += '<div class="pipe-bar pipe-pending" style="height:' + pendH + 'px;" title="Pendiente: $' + pending[idx].toFixed(0) + '"></div>';
+        if (paid[idx] > 0) h += '<div class="pipe-bar pipe-paid" style="height:' + paidH + 'px;" title="Cobrado: $' + paid[idx].toFixed(0) + '"></div>';
+        h += '</div>';
+        h += '<div class="pipe-label">' + m + '</div>';
+        if (paid[idx] + pending[idx] > 0) h += '<div class="pipe-amount">$' + ((paid[idx] + pending[idx]) / 1000).toFixed(1) + 'k</div>';
+        else h += '<div class="pipe-amount" style="color:var(--text-muted);">—</div>';
+        h += '</div>';
+    });
+    h += '</div>';
+    h += '<div class="pipe-legend"><span class="pipe-leg-item"><span class="pipe-dot paid"></span> Cobrado</span><span class="pipe-leg-item"><span class="pipe-dot pending"></span> Pendiente</span></div>';
+    document.getElementById('pipelineChart').innerHTML = h;
+
+    // Stats summary
+    var yearPaid = paid.reduce(function(a,b) { return a+b; }, 0);
+    var yearPending = pending.reduce(function(a,b) { return a+b; }, 0);
+    var yearJobs = jobs_count.reduce(function(a,b) { return a+b; }, 0);
+    var avgTicket = yearPaid > 0 ? yearPaid / invoicesData.filter(function(i) { return i.status === 'paid' && new Date(i.created_at).getFullYear() === selYear; }).length : 0;
+
+    var sh = '<div class="pipeline-stat-row">';
+    sh += '<div class="pipe-stat"><span class="pipe-stat-val" style="color:var(--success);">$' + yearPaid.toLocaleString('en-US', {minimumFractionDigits:0}) + '</span><span class="pipe-stat-lbl">Cobrado ' + selYear + '</span></div>';
+    sh += '<div class="pipe-stat"><span class="pipe-stat-val" style="color:var(--warning);">$' + yearPending.toLocaleString('en-US', {minimumFractionDigits:0}) + '</span><span class="pipe-stat-lbl">Pendiente</span></div>';
+    sh += '<div class="pipe-stat"><span class="pipe-stat-val" style="color:var(--primary);">' + yearJobs + '</span><span class="pipe-stat-lbl">Trabajos</span></div>';
+    sh += '<div class="pipe-stat"><span class="pipe-stat-val" style="color:var(--accent);">$' + (avgTicket || 0).toFixed(0) + '</span><span class="pipe-stat-lbl">Ticket Promedio</span></div>';
+    sh += '</div>';
+    document.getElementById('pipelineStats').innerHTML = sh;
+}
+
+// ===== SEED DEMO DATA =====
+async function seedDemoData() {
+    if (!companyId) return;
+    // Check if data already exists
+    if (leadsData.length > 0 || clientsData.length > 0) return;
+
+    // Create demo technician
+    await sbClient.from('technicians').insert([
+        { company_id: companyId, name: 'Carlos Ramírez', phone: '(909) 555-1234', email: 'carlos@trademaster.com', specialty: 'HVAC', status: 'available' },
+        { company_id: companyId, name: 'Miguel Torres', phone: '(909) 555-5678', email: 'miguel@trademaster.com', specialty: 'Refrigeración', status: 'available' }
+    ]);
+
+    // Create demo clients
+    var clientRes = await sbClient.from('clients').insert([
+        { company_id: companyId, name: 'María González', phone: '(909) 555-0001', email: 'maria.g@email.com', address: '1234 Oak St, San Bernardino, CA 92401', property_type: 'Residencial', source: 'manual' },
+        { company_id: companyId, name: 'Roberto Silva', phone: '(909) 555-0002', email: 'roberto.s@email.com', address: '5678 Maple Ave, Riverside, CA 92501', property_type: 'Comercial', source: 'manual' },
+        { company_id: companyId, name: 'Ana Martínez', phone: '(951) 555-0003', email: 'ana.m@email.com', address: '910 Pine Dr, Fontana, CA 92335', property_type: 'Residencial', source: 'manual' }
+    ]).select();
+
+    // Create demo lead
+    await sbClient.from('leads').insert({
+        company_id: companyId, name: 'Pedro López', phone: '(909) 555-9999',
+        email: 'pedro.l@email.com', service: 'Reparación AC',
+        address: '456 Cedar Blvd, Rancho Cucamonga, CA 91730',
+        property_type: 'Residencial', lat: 34.1064, lng: -117.5931,
+        notes: 'AC no enfría, tiene 8 años. Quiere presupuesto.'
+    });
+
+    // Create demo appointments
+    var today = new Date();
+    var clients = clientRes.data || [];
+    if (clients.length >= 2) {
+        var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+        var nextWeek = new Date(today); nextWeek.setDate(nextWeek.getDate() + 3);
+        await sbClient.from('appointments').insert([
+            { company_id: companyId, client_id: clients[0].id, title: 'Tune-Up AC Sistema Split', appointment_date: tomorrow.toISOString().split('T')[0], start_time: '09:00', end_time: '10:30', address: clients[0].address, status: 'scheduled' },
+            { company_id: companyId, client_id: clients[1].id, title: 'Reparación Furnace 90%', appointment_date: nextWeek.toISOString().split('T')[0], start_time: '14:00', end_time: '16:00', address: clients[1].address, status: 'confirmed' }
+        ]);
+    }
+
+    // Reload everything
+    await loadAllData();
+    alert('✅ Datos de demostración creados: 2 técnicos, 3 clientes, 1 lead, 2 citas');
 }
