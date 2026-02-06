@@ -148,16 +148,65 @@ async function loadLeadsData() {
 function renderLeadsTable() {
     var c = document.getElementById('leadsList');
     if (leadsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay leads. Crea uno para comenzar.</p>'; return; }
-    var h = '<table class="leads-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Servicio</th><th>Estado</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody>';
+    // Build tech options for assign dropdown
+    var techOpts = '<option value="">Asignar técnico...</option>';
+    techsData.forEach(function(t) { techOpts += '<option value="' + t.id + '">' + t.name + '</option>'; });
+    var statusOpts = ['new','contacted','quoted','won','lost'];
+    var statusLabels = {new:'Nuevo',contacted:'Contactado',quoted:'Cotizado',won:'Ganado',lost:'Perdido'};
+
+    var h = '<table class="leads-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Servicio</th><th>Estado</th><th>Técnico</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody>';
     leadsData.forEach(function(l) {
-        h += '<tr><td>' + l.name + '</td><td>' + l.phone + '</td><td>' + l.service + '</td>';
-        h += '<td><span class="lead-status ' + l.status + '">' + l.status + '</span></td>';
-        h += '<td>' + l.address + '</td><td><div class="lead-actions">';
-        h += '<button class="btn-nav" onclick="navigateTo(' + l.lat + ',' + l.lng + ')">🧭 Navegar</button>';
-        h += '<button class="btn-danger-sm" onclick="deleteLead(\'' + l.id + '\')">Eliminar</button>';
+        var assignedTech = '';
+        if (l.technician_id) {
+            var found = techsData.find(function(t) { return t.id === l.technician_id; });
+            assignedTech = found ? found.name : '';
+        }
+        // Status dropdown
+        var statusSelect = '<select class="inline-select" onchange="changeLeadStatus(\'' + l.id + '\', this.value)">';
+        statusOpts.forEach(function(s) { statusSelect += '<option value="' + s + '"' + (l.status === s ? ' selected' : '') + '>' + statusLabels[s] + '</option>'; });
+        statusSelect += '</select>';
+
+        h += '<tr><td><strong>' + l.name + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (l.email || '') + '</span></td>';
+        h += '<td>' + l.phone + '</td><td>' + l.service + '</td>';
+        h += '<td>' + statusSelect + '</td>';
+        h += '<td>';
+        if (assignedTech) { h += '<span style="color:var(--primary);font-weight:600;">' + assignedTech + '</span>'; }
+        else { h += '<select class="inline-select" onchange="assignLeadTech(\'' + l.id + '\', this.value)">' + techOpts + '</select>'; }
+        h += '</td>';
+        h += '<td style="font-size:12px;">' + l.address + '</td><td><div class="lead-actions">';
+        h += '<button class="btn-nav" onclick="navigateTo(' + l.lat + ',' + l.lng + ')">🧭</button>';
+        h += '<button class="btn-icon" onclick="convertLeadToJob(\'' + l.id + '\')">📋 Trabajo</button>';
+        h += '<button class="btn-danger-sm" onclick="deleteLead(\'' + l.id + '\')">X</button>';
         h += '</div></td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+async function changeLeadStatus(id, status) {
+    await sbClient.from('leads').update({ status: status }).eq('id', id);
+    await loadLeadsData(); updateKPIs();
+}
+
+async function assignLeadTech(leadId, techId) {
+    if (!techId) return;
+    await sbClient.from('leads').update({ technician_id: techId }).eq('id', leadId);
+    await loadLeadsData();
+}
+
+async function convertLeadToJob(leadId) {
+    var lead = leadsData.find(function(l) { return l.id === leadId; });
+    if (!lead) return;
+    if (!confirm('¿Convertir lead "' + lead.name + '" en trabajo?')) return;
+    await sbClient.from('work_orders').insert({
+        company_id: companyId, title: lead.service + ' - ' + lead.name,
+        service_type: lead.service, address: lead.address,
+        lat: lead.lat, lng: lead.lng,
+        technician_id: lead.technician_id || null,
+        notes: 'Lead: ' + lead.name + ' | Tel: ' + lead.phone + (lead.notes ? ' | ' + lead.notes : '')
+    });
+    await sbClient.from('leads').update({ status: 'won' }).eq('id', leadId);
+    await loadLeadsData(); await loadJobs(); updateKPIs();
+    alert('¡Lead convertido a trabajo! Ve a Dispatch para verlo.');
 }
 
 async function deleteLead(id) {
