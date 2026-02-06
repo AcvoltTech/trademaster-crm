@@ -217,13 +217,18 @@ async function convertLeadToJob(leadId) {
     var lead = leadsData.find(function(l) { return l.id === leadId; });
     if (!lead) return;
     if (!confirm('¿Convertir lead "' + lead.name + '" en trabajo?')) return;
-    await sbClient.from('work_orders').insert({
+    var res = await sbClient.from('work_orders').insert({
         company_id: companyId, title: lead.service + ' - ' + lead.name,
         service_type: lead.service, address: lead.address,
         lat: lead.lat, lng: lead.lng,
         technician_id: lead.technician_id || null,
         notes: 'Lead: ' + lead.name + ' | Tel: ' + lead.phone + (lead.notes ? ' | ' + lead.notes : '')
-    });
+    }).select();
+    if (res.error) { 
+        console.error('Error converting lead:', res.error);
+        alert('Error: ' + res.error.message + '\nDetalle: ' + (res.error.details || '') + '\nHint: ' + (res.error.hint || ''));
+        return;
+    }
     await sbClient.from('leads').update({ status: 'won' }).eq('id', leadId);
     await loadLeadsData(); await loadJobs(); updateKPIs();
     alert('¡Lead convertido a trabajo! Ve a Dispatch para verlo.');
@@ -449,16 +454,19 @@ function updateDispatchMap() {
     var bounds = new google.maps.LatLngBounds();
     var hasMarkers = false;
 
-    // Técnicos en azul (solo si NO están offline)
+    // Técnicos con icono de vehículo (solo si NO están offline)
+    // Van/truck SVG path
+    var vanPath = 'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z';
     techsData.forEach(function(t) {
         if (!t.current_lat || !t.current_lng) return;
         if (t.status === 'offline') return;
         var pos = { lat: parseFloat(t.current_lat), lng: parseFloat(t.current_lng) };
         var statusColors = {available:'#3b82f6', busy:'#f59e0b', on_route:'#8b5cf6'};
+        var statusLabels = {available:'🟢 Disponible', busy:'🟡 Ocupado', on_route:'🟣 En Ruta'};
         var pinColor = statusColors[t.status] || '#3b82f6';
         var m = new google.maps.Marker({ position: pos, map: dispatchMap, title: t.name,
-            icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 7, fillColor: pinColor, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2, rotation: 0 } });
-        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '') + '<br>🔧 ' + (t.specialty || '') + '<br>Estado: ' + t.status + '<br><a href="tel:' + (t.phone || '') + '" style="color:#059669;font-weight:bold;">📞 Llamar</a> | <a href="sms:' + (t.phone || '') + '" style="color:#3b82f6;font-weight:bold;">💬 Texto</a></div>' });
+            icon: { path: vanPath, fillColor: pinColor, fillOpacity: 1, strokeColor: 'white', strokeWeight: 1.5, scale: 1.4, anchor: new google.maps.Point(12, 12) } });
+        var iw = new google.maps.InfoWindow({ content: '<div style="color:#333;padding:8px;font-size:13px;"><strong>🚐 ' + t.name + '</strong><br>📱 ' + (t.phone || '') + '<br>🔧 ' + (t.specialty || '') + '<br>' + (statusLabels[t.status] || t.status) + '<br><div style="margin-top:6px;"><a href="tel:' + (t.phone || '') + '" style="color:#059669;font-weight:bold;">📞 Llamar</a> | <a href="sms:' + (t.phone || '') + '" style="color:#3b82f6;font-weight:bold;">💬 Texto</a></div></div>' });
         m.addListener('click', function() { iw.open(dispatchMap, m); });
         dispatchMarkers.push(m); bounds.extend(pos); hasMarkers = true;
     });
