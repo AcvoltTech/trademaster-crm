@@ -147,6 +147,12 @@ body {
 .btn-icon:hover { background: var(--primary); color: white; }
 .inline-select { padding: 4px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 11px; cursor: pointer; }
 .inline-select:focus { border-color: var(--primary); outline: none; }
+.contact-btns { display: flex; gap: 4px; margin-top: 4px; }
+.btn-call, .btn-text { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+.btn-call { background: rgba(16,185,129,0.12); color: var(--primary); border: 1px solid var(--primary); }
+.btn-call:hover { background: var(--primary); color: white; }
+.btn-text { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid var(--blue); }
+.btn-text:hover { background: var(--blue); color: white; }
 #leadsMap, #dispatchMap { border: 1px solid var(--border); border-radius: 8px; }
 
 /* Tracking page */
