@@ -349,7 +349,7 @@
                 <div class="clock-controls">
                   <div class="form-row" style="margin-bottom:10px;">
                     <div class="form-group" style="margin:0;">
-                      <label style="font-size:11px;margin-bottom:4px;" data-i18n="clock_select_tech">Seleccionar Técnico</label>
+                      <label style="font-size:11px;margin-bottom:4px;" data-i18n="clock_select_tech">Seleccionar Persona</label>
                       <select id="clockTechSelect" onchange="onClockTechChange()" style="padding:8px;font-size:12px;"></select>
                     </div>
                     <div class="form-group" style="margin:0;">
@@ -853,14 +853,69 @@
           <!-- ===== TÉCNICOS ===== -->
           <div id="technicians-section" class="section">
             <div class="card">
-              <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Despacho</button></div>
+              <div class="card-top">
+                <h3>👷 Gestión de Técnicos</h3>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-primary btn-sm" onclick="showTechFormInTechSection()">+ Agregar Técnico</button>
+                  <button class="btn-secondary btn-sm" onclick="showSection('dispatch')">🎯 Ir a Despacho</button>
+                </div>
+              </div>
+
+              <!-- Tech Form (same as dispatch but works here too) -->
+              <div id="techFormContainerAlt" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:12px;">👷 Nuevo Técnico</h4>
+                <form onsubmit="handleTechCreateAlt(event)">
+                  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                    <div style="text-align:center;min-width:120px;">
+                      <div id="techPhotoPreviewAlt" style="width:110px;height:130px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;background:var(--bg-card);cursor:pointer;" onclick="document.getElementById('techPhotoInputAlt').click()">
+                        <span style="font-size:11px;color:var(--text-muted);text-align:center;">📷 Foto del<br>Técnico</span>
+                      </div>
+                      <input type="file" id="techPhotoInputAlt" accept="image/*" style="display:none" onchange="previewTechPhotoAlt(this)">
+                      <button type="button" class="btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick="document.getElementById('techPhotoInputAlt').click()">📤 Subir Foto</button>
+                    </div>
+                    <div style="flex:1;min-width:280px;">
+                      <div class="form-row">
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="techNameAlt" required placeholder="Ej: Juan Pérez"></div>
+                        <div class="form-group"><label>Teléfono</label><input type="tel" id="techPhoneAlt" placeholder="(555) 123-4567"></div>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group"><label>Email</label><input type="email" id="techEmailAlt" placeholder="tecnico@email.com"></div>
+                        <div class="form-group"><label>Especialidad</label>
+                          <select id="techSpecialtyAlt">
+                            <option value="HVAC">HVAC</option>
+                            <option value="Refrigeración">Refrigeración</option>
+                            <option value="Eléctrico">Eléctrico</option>
+                            <option value="Plomería">Plomería</option>
+                            <option value="General">General</option>
+                          </select>
+                        </div>
+                      </div>
+                      <h5 style="color:var(--primary);margin:8px 0 4px;font-size:12px;">🚐 Vehículo Asignado</h5>
+                      <div class="form-row">
+                        <div class="form-group"><label>Vehículo</label><input type="text" id="techVehicleAlt" placeholder="Ej: 2022 Ford Transit"></div>
+                        <div class="form-group"><label>Placas</label><input type="text" id="techPlateAlt" placeholder="Ej: ABC1234"></div>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group"><label>VIN #</label><input type="text" id="techVinAlt" placeholder="Número de identificación del vehículo"></div>
+                        <div class="form-group"><label>Color</label><input type="text" id="techVehicleColorAlt" placeholder="Ej: Blanco"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-actions" style="margin-top:10px;">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar Técnico</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideTechFormAlt()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Technicians List with cards -->
               <div id="techniciansFullList"></div>
             </div>
 
             <!-- Technician Credentials -->
             <div class="card">
               <div class="card-top">
-                <h3>📜 Credenciales de Técnicos / Technician Credentials</h3>
+                <h3>📜 Credenciales de Técnicos</h3>
               </div>
               <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Sube las credenciales y certificaciones de cada técnico. Estos documentos se pueden incluir en estimados y facturas para cumplir con requisitos de empresas y clientes comerciales.</p>
               
@@ -2370,6 +2425,130 @@
               </div>
             </div>
 
+            <!-- ===== PLATAFORMAS DE GENERACIÓN DE LEADS ===== -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>🎯 Plataformas de Generación de Leads</h3>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Accede directamente a tus plataformas para administrar campañas, responder leads y monitorear resultados.</p>
+
+              <h5 style="color:var(--primary);margin-bottom:8px;font-size:12px;">📢 Plataformas de Publicidad y Leads</h5>
+              <div class="supplier-grid" style="margin-bottom:16px;">
+                <a class="supplier-card" href="https://www.facebook.com/marketplace" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#1877f2;">f</div>
+                  <div class="supplier-info"><strong>Facebook Marketplace</strong><small>Publica servicios y genera leads locales</small></div>
+                </a>
+                <a class="supplier-card" href="https://business.facebook.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#1877f2;">FB</div>
+                  <div class="supplier-info"><strong>Facebook Business / Ads</strong><small>Administra campañas y anuncios pagados</small></div>
+                </a>
+                <a class="supplier-card" href="https://business.google.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#4285f4;">G</div>
+                  <div class="supplier-info"><strong>Google My Business</strong><small>Perfil de negocio, reseñas, fotos</small></div>
+                </a>
+                <a class="supplier-card" href="https://ads.google.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#34a853;">GA</div>
+                  <div class="supplier-info"><strong>Google Ads</strong><small>Campañas de búsqueda y display</small></div>
+                </a>
+                <a class="supplier-card" href="https://biz.yelp.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#d32323;">Y</div>
+                  <div class="supplier-info"><strong>Yelp para Negocios</strong><small>Reseñas, fotos, responde a clientes</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.angi.com/pro" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ff6153;">AL</div>
+                  <div class="supplier-info"><strong>Angi Leads (Angie's List)</strong><small>Leads de proyectos de hogar</small></div>
+                </a>
+                <a class="supplier-card" href="https://pro.homeadvisor.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#f68b24;">HA</div>
+                  <div class="supplier-info"><strong>HomeAdvisor Pro</strong><small>Leads de servicios del hogar</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.thumbtack.com/pro" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#009fd9;">TT</div>
+                  <div class="supplier-info"><strong>Thumbtack Pro</strong><small>Leads de servicios locales</small></div>
+                </a>
+                <a class="supplier-card" href="https://nextdoor.com/business" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#8ed500;">ND</div>
+                  <div class="supplier-info"><strong>Nextdoor Business</strong><small>Recomendaciones del vecindario</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.bbb.org" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#005a8c;">BB</div>
+                  <div class="supplier-info"><strong>Better Business Bureau</strong><small>Acreditación y confianza</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.bark.com/en/us/pro" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#00c4cc;">BK</div>
+                  <div class="supplier-info"><strong>Bark Pro</strong><small>Leads de servicios profesionales</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.networx.com/contractor" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#0073bb;">NX</div>
+                  <div class="supplier-info"><strong>Networx</strong><small>Leads de contratistas del hogar</small></div>
+                </a>
+              </div>
+
+              <h5 style="color:var(--primary);margin-bottom:8px;font-size:12px;">📱 Redes Sociales y Contenido</h5>
+              <div class="supplier-grid" style="margin-bottom:16px;">
+                <a class="supplier-card" href="https://www.facebook.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#1877f2;">f</div>
+                  <div class="supplier-info"><strong>Facebook</strong><small>Publica contenido, interactúa con clientes</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.instagram.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">IG</div>
+                  <div class="supplier-info"><strong>Instagram</strong><small>Fotos y reels de trabajos completados</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#010101;">TK</div>
+                  <div class="supplier-info"><strong>TikTok</strong><small>Videos cortos, tutoriales, tendencias</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.youtube.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ff0000;">YT</div>
+                  <div class="supplier-info"><strong>YouTube</strong><small>Videos largos, tutoriales, canal de marca</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.linkedin.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#0a66c2;">in</div>
+                  <div class="supplier-info"><strong>LinkedIn</strong><small>Red profesional, comercial e industrial</small></div>
+                </a>
+                <a class="supplier-card" href="https://x.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#000000;">𝕏</div>
+                  <div class="supplier-info"><strong>X (Twitter)</strong><small>Noticias, actualizaciones rápidas</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.pinterest.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#e60023;">P</div>
+                  <div class="supplier-info"><strong>Pinterest</strong><small>Fotos de proyectos, antes/después</small></div>
+                </a>
+                <a class="supplier-card" href="https://business.whatsapp.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#25d366;">WA</div>
+                  <div class="supplier-info"><strong>WhatsApp Business</strong><small>Comunicación directa con clientes</small></div>
+                </a>
+              </div>
+
+              <h5 style="color:var(--primary);margin-bottom:8px;font-size:12px;">🛠️ Herramientas de Mercadotecnia</h5>
+              <div class="supplier-grid">
+                <a class="supplier-card" href="https://www.canva.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#7d2ae8;">C</div>
+                  <div class="supplier-info"><strong>Canva</strong><small>Diseña flyers, posts, tarjetas</small></div>
+                </a>
+                <a class="supplier-card" href="https://mailchimp.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ffe01b;color:#000;"><strong>MC</strong></div>
+                  <div class="supplier-info"><strong>Mailchimp</strong><small>Email marketing y automatización</small></div>
+                </a>
+                <a class="supplier-card" href="https://analytics.google.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#e37400;">📊</div>
+                  <div class="supplier-info"><strong>Google Analytics</strong><small>Analítica web y tráfico</small></div>
+                </a>
+                <a class="supplier-card" href="https://search.google.com/search-console" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#4285f4;">SC</div>
+                  <div class="supplier-info"><strong>Google Search Console</strong><small>SEO y posicionamiento web</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.housecallpro.com/login" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ff6b35;">HC</div>
+                  <div class="supplier-info"><strong>Housecall Pro</strong><small>CRM, reviews, booking online</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.servicetitan.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#1b2a4a;">ST</div>
+                  <div class="supplier-info"><strong>ServiceTitan</strong><small>Plataforma de gestión de servicios</small></div>
+                </a>
+              </div>
+            </div>
+
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
                 <h3>📣 <span data-i18n="mkt_title">Mercadotecnia</span></h3>
@@ -2449,7 +2628,7 @@
               <div class="supplier-grid">
                 <a class="supplier-card" href="https://www.ferguson.com/category/hvac" target="_blank" rel="noopener">
                   <div class="supplier-logo" style="background:#003da5;">F</div>
-                  <div class="supplier-info"><strong>Ferguson?"HVAC</strong><small>Tubería, conexiones, equipos</small></div>
+                  <div class="supplier-info"><strong>Ferguson HVAC</strong><small>Tubería, conexiones, equipos</small></div>
                 </a>
                 <a class="supplier-card" href="https://www.johnstonewaregroup.com" target="_blank" rel="noopener">
                   <div class="supplier-logo" style="background:#e31837;">JS</div>
