@@ -257,6 +257,32 @@ body {
 .status-select-offline { border-color: var(--text-muted) !important; color: var(--text-muted) !important; }
 .tracking-link-box { background: var(--bg-input); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: var(--primary); word-break: break-all; border: 1px solid var(--border); }
 
+/* ==================== INVOICES ==================== */
+.invoice-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+.inv-kpi { padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+.inv-kpi.warn { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.03); }
+.inv-kpi-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+.inv-kpi-value { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+.inv-kpi.warn .inv-kpi-value { color: var(--danger); }
+.inv-kpi-label { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.inv-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.inv-draft { background: #f3f4f6; color: #6b7280; }
+.inv-sent { background: #dbeafe; color: #2563eb; }
+.inv-paid { background: #dcfce7; color: #16a34a; }
+.inv-partial { background: #fef9c3; color: #ca8a04; }
+.inv-overdue { background: #fef2f2; color: #dc2626; }
+.inv-cancelled { background: #f3f4f6; color: #9ca3af; }
+.inv-table th { font-size: 11px; }
+.inv-table td { font-size: 12px; vertical-align: top; }
+.invoice-line-row { margin-bottom: 6px; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+.invoice-line-row .form-row { gap: 8px; margin-bottom: 0; }
+.invoice-line-row .form-group { margin-bottom: 0; }
+.invoice-line-row .form-group label { font-size: 10px; }
+.invoice-line-row .form-group input { padding: 8px; font-size: 12px; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.btn-icon:hover { background: rgba(244,118,33,0.08); border-color: var(--accent); }
+.btn-icon.btn-edit { background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.3); }
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
     .auth-card { grid-template-columns: 1fr; }
@@ -266,4 +292,5 @@ body {
     .dispatch-panels { grid-template-columns: 1fr; }
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .content-area .form-row { grid-template-columns: 1fr; }
+    .invoice-kpi-row { grid-template-columns: 1fr 1fr; }
 }
