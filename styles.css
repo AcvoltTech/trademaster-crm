@@ -679,3 +679,26 @@ body {
 .dispatch-avatar-container{cursor:default;border:3px solid var(--primary);box-shadow:0 2px 8px rgba(59,130,246,0.2)}
 .dc-photo-preview{width:80px;height:80px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex-shrink:0;transition:all .2s}
 .dc-photo-preview:hover{border-color:var(--primary)}
+
+/* ===== TECHNICIAN CARDS GRID ===== */
+.tech-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px}
+.tech-full-card{display:flex;gap:12px;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card);transition:all .2s}
+.tech-full-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.tech-full-photo{position:relative;flex-shrink:0}
+.tech-full-photo img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--primary)}
+.tech-full-initials{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.tech-status-dot{position:absolute;bottom:2px;right:2px;width:14px;height:14px;border-radius:50%;border:2px solid var(--bg-card)}
+.tech-full-info{flex:1;min-width:0}
+.tech-full-info h4{font-size:14px;color:var(--text-primary);margin-bottom:4px}
+@media(max-width:480px){.tech-cards-grid{grid-template-columns:1fr}}
+
+/* ===== CLIENT ACTION BUTTONS ===== */
+.client-action-btns{display:flex;gap:4px;flex-wrap:nowrap}
+.client-action-btn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:white;transition:all .15s;white-space:nowrap}
+.client-btn-view{color:var(--primary)}
+.client-btn-view:hover{background:var(--primary);color:white;border-color:var(--primary)}
+.client-btn-edit{color:#f59e0b}
+.client-btn-edit:hover{background:#f59e0b;color:white;border-color:#f59e0b}
+.client-btn-delete{color:#ef4444;border-color:#fecaca}
+.client-btn-delete:hover{background:#ef4444;color:white;border-color:#ef4444}
+.client-bulk-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;color:#92400e}
