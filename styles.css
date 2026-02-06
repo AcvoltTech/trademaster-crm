@@ -145,6 +145,8 @@ body {
 .lead-actions, .tech-actions, .job-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn-icon { padding: 5px 10px; background: rgba(16, 185, 129, 0.08); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-icon:hover { background: var(--primary); color: white; }
+.inline-select { padding: 4px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 11px; cursor: pointer; }
+.inline-select:focus { border-color: var(--primary); outline: none; }
 #leadsMap, #dispatchMap { border: 1px solid var(--border); border-radius: 8px; }
 
 /* Tracking page */
