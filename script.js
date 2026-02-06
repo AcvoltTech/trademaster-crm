@@ -748,11 +748,50 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (leadAddr) leadAddr.addEventListener('blur', function() { if (this.value) geocodeAddress(this.value, 'leadLat', 'leadLng'); });
     var jobAddr = document.getElementById('jobAddress');
     if (jobAddr) jobAddr.addEventListener('blur', function() { if (this.value) geocodeAddress(this.value, 'jobLat', 'jobLng'); });
+
+    // Equipment age check
+    var ageInput = document.getElementById('estEquipAge');
+    if (ageInput) ageInput.addEventListener('change', checkEquipAge);
+
+    // Load saved logo
+    loadSavedLogo();
 });
+
+// ===== COMPANY LOGO =====
+function handleLogoUpload(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        localStorage.setItem('tm_company_logo', dataUrl);
+        applyLogo(dataUrl);
+    };
+    reader.readAsDataURL(file);
+}
+
+function applyLogo(dataUrl) {
+    var logoContainer = document.getElementById('companyLogo');
+    if (logoContainer) logoContainer.innerHTML = '<img src="' + dataUrl + '" alt="Logo">';
+    var preview = document.getElementById('logoPreview');
+    if (preview) preview.innerHTML = '<img src="' + dataUrl + '" alt="Logo">';
+}
+
+function resetLogo() {
+    localStorage.removeItem('tm_company_logo');
+    location.reload();
+}
+
+function loadSavedLogo() {
+    var saved = localStorage.getItem('tm_company_logo');
+    if (saved) applyLogo(saved);
+}
 
 // ===== ESTIMATE / PRICING CATALOG =====
 var selectedEstItems = [];
 var currentEquipType = null;
+var serviceCallFee = 0;
+var equipPhotos = [];
 
 // Component catalog with pricing per equipment type
 var componentCatalog = {
@@ -919,7 +958,93 @@ function selectEquipType(type) {
     selectedEstItems = [];
     document.querySelectorAll('.equip-btn').forEach(function(b) { b.classList.remove('selected'); });
     event.target.closest('.equip-btn').classList.add('selected');
+    checkEquipAge();
     renderComponentList();
+}
+
+function checkEquipAge() {
+    var age = parseInt(document.getElementById('estEquipAge').value) || 0;
+    var warn = document.getElementById('equipAgeWarning');
+    if (age >= 15) { warn.style.display = 'block'; } else { warn.style.display = 'none'; }
+}
+
+function selectServiceCall(amount) {
+    if (amount === -1) {
+        document.getElementById('customServiceCall').style.display = 'block';
+        serviceCallFee = 0;
+    } else {
+        document.getElementById('customServiceCall').style.display = 'none';
+        serviceCallFee = amount;
+    }
+    updateEstimateTotals();
+}
+
+function handleClientDecision() {
+    var decision = document.getElementById('estClientDecision').value;
+    var compStep = document.getElementById('componentsStep');
+    if (decision === 'yes') {
+        compStep.style.display = 'block';
+    } else if (decision === 'no') {
+        compStep.style.display = 'none';
+        selectedEstItems = [];
+        updateEstimateSummary();
+    } else if (decision === 'replace') {
+        compStep.style.display = 'none';
+        referToAdvisor();
+    } else {
+        compStep.style.display = 'block';
+    }
+    updateEstimateTotals();
+}
+
+function handleEquipPhotos(event) {
+    var files = event.target.files;
+    var grid = document.getElementById('photoPreviewGrid');
+    equipPhotos = [];
+    grid.innerHTML = '';
+    for (var i = 0; i < files.length && i < 6; i++) {
+        (function(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                equipPhotos.push(e.target.result);
+                var img = document.createElement('div');
+                img.className = 'photo-thumb';
+                img.innerHTML = '<img src="' + e.target.result + '"><button onclick="this.parentElement.remove()">X</button>';
+                grid.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        })(files[i]);
+    }
+}
+
+function referToAdvisor() {
+    var jobSel = document.getElementById('estJobSelect');
+    var job = jobsData.find(function(j) { return j.id === jobSel.value; });
+    var model = document.getElementById('estModelNum').value;
+    var serial = document.getElementById('estSerialNum').value;
+    var brand = document.getElementById('estBrand').value;
+    var age = document.getElementById('estEquipAge').value;
+    var equipType = currentEquipType ? componentCatalog[currentEquipType].label : 'N/A';
+
+    var msg = '🏠 REFERENCIA PARA REEMPLAZO DE EQUIPO\n\n';
+    msg += 'Cliente: ' + (job ? job.title : 'N/A') + '\n';
+    msg += 'Dirección: ' + (job ? job.address : 'N/A') + '\n';
+    msg += 'Equipo: ' + equipType + '\n';
+    msg += 'Marca: ' + (brand || 'N/A') + '\n';
+    msg += 'Modelo: ' + (model || 'N/A') + '\n';
+    msg += 'Serial: ' + (serial || 'N/A') + '\n';
+    msg += 'Edad: ' + (age || '?') + ' años\n';
+    msg += 'Razón: Equipo viejo - cliente quiere reemplazo\n';
+
+    // Open Home Advisor / generate referral
+    if (confirm('¿Referir este trabajo a Home Advisor para reemplazo?\n\n' + msg)) {
+        // Copy to clipboard
+        navigator.clipboard.writeText(msg).then(function() {
+            alert('✅ Información copiada al portapapeles.\n\nAbre Home Advisor o envía por email/texto al advisor de tu empresa.');
+        });
+        // Open Home Advisor
+        window.open('https://www.homeadvisor.com/', '_blank');
+    }
 }
 
 function renderComponentList() {
@@ -985,7 +1110,17 @@ function updateCompQty(compId, qty) {
 
 function updateEstimateSummary() {
     var c = document.getElementById('estimateSummary');
-    if (selectedEstItems.length === 0) { c.innerHTML = '<p class="empty-msg">Selecciona componentes arriba</p>'; document.getElementById('estimateTotals').innerHTML = ''; return; }
+    var decision = document.getElementById('estClientDecision').value;
+    if (selectedEstItems.length === 0 && decision !== 'no') { 
+        c.innerHTML = '<p class="empty-msg">Selecciona componentes arriba</p>'; 
+        updateEstimateTotals();
+        return; 
+    }
+    if (decision === 'no') {
+        c.innerHTML = '<div style="padding:12px;background:rgba(245,158,11,0.05);border-radius:8px;color:var(--warning);text-align:center;"><strong>⚠️ Cliente declinó reparación — Solo Service Call</strong></div>';
+        updateEstimateTotals();
+        return;
+    }
     var h = '<table class="est-table"><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th><th></th></tr></thead><tbody>';
     selectedEstItems.forEach(function(item) {
         var lineTotal = (item.price + item.labor) * item.qty;
@@ -1006,17 +1141,44 @@ function removeEstItem(compId) {
 
 function updateEstimateTotals() {
     var subtotal = 0, partsTotal = 0, laborTotal = 0;
+    var decision = document.getElementById('estClientDecision').value;
+    
     selectedEstItems.forEach(function(item) {
         partsTotal += item.price * item.qty;
         laborTotal += item.labor * item.qty;
     });
     subtotal = partsTotal + laborTotal;
+    
     var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
     var discountAmt = subtotal * (discount / 100);
     var afterDiscount = subtotal - discountAmt;
     var taxRate = parseFloat(document.getElementById('estTax').value) || 0;
     var taxAmt = afterDiscount * (taxRate / 100);
-    var total = afterDiscount + taxAmt;
+    var repairTotal = afterDiscount + taxAmt;
+    
+    // Service call ALWAYS added
+    var scFee = serviceCallFee || 0;
+    var grandTotal = repairTotal + scFee;
+
+    // If client declines, only charge service call
+    if (decision === 'no') { grandTotal = scFee; }
+
+    var h = '<div class="totals-grid">';
+    h += '<div class="total-row sc-row"><span>🚐 Service Call:</span><span>$' + scFee.toFixed(2) + '</span></div>';
+    if (decision !== 'no') {
+        h += '<div class="total-row"><span>Partes:</span><span>$' + partsTotal.toFixed(2) + '</span></div>';
+        h += '<div class="total-row"><span>Labor:</span><span>$' + laborTotal.toFixed(2) + '</span></div>';
+        h += '<div class="total-row"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
+        if (discount > 0) h += '<div class="total-row discount"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
+        h += '<div class="total-row"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
+    }
+    if (decision === 'no') {
+        h += '<div class="total-row" style="color:var(--warning);"><span>⚠️ Cliente declinó reparación</span><span></span></div>';
+    }
+    h += '<div class="total-row grand"><span>TOTAL:</span><span>$' + grandTotal.toFixed(2) + '</span></div>';
+    h += '</div>';
+    document.getElementById('estimateTotals').innerHTML = h;
+}
 
     var h = '<div class="totals-grid">';
     h += '<div class="total-row"><span>Partes:</span><span>$' + partsTotal.toFixed(2) + '</span></div>';
@@ -1058,30 +1220,101 @@ function presentEstimateToClient() {
     var taxAmt = afterDiscount * (taxRate / 100);
     var total = afterDiscount + taxAmt;
 
+    // Get tech name from selected job
+    var techName = '';
+    var jobSel = document.getElementById('estJobSelect');
+    if (jobSel && jobSel.value) {
+        var job = jobsData.find(function(j) { return j.id === jobSel.value; });
+        if (job && job.technicians) techName = job.technicians.name;
+    }
+    // Get today's date formatted
+    var today = new Date();
+    var dateStr = (today.getMonth()+1) + '/' + today.getDate() + '/' + today.getFullYear();
+
     var w = window.open('', '_blank');
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Estimado - Trade Master</title>';
-    html += '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#f9fafb}';
+    html += '<style>';
+    html += '*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#f9fafb}';
     html += '.header{text-align:center;padding:20px;border-bottom:3px solid #10b981;margin-bottom:20px}';
     html += '.header h1{color:#10b981;font-size:24px}.header p{color:#666;font-size:14px}';
     html += 'table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#10b981;color:white;padding:10px;text-align:left;font-size:13px}';
-    html += 'td{padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px}.total-section{margin-top:20px;text-align:right}';
-    html += '.total-line{display:flex;justify-content:flex-end;gap:40px;padding:4px 0;font-size:14px}.grand{font-size:20px;font-weight:bold;color:#10b981;border-top:2px solid #10b981;padding-top:8px;margin-top:8px}';
-    html += '.notes{margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;font-size:13px}.sig{margin-top:40px;display:flex;gap:40px}.sig-line{flex:1;border-top:1px solid #333;padding-top:8px;font-size:12px;color:#666}';
-    html += '@media print{body{padding:0}}</style></head><body>';
+    html += 'td{padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px}';
+    html += '.total-section{margin-top:20px;text-align:right}';
+    html += '.total-line{display:flex;justify-content:flex-end;gap:40px;padding:4px 0;font-size:14px}';
+    html += '.grand{font-size:20px;font-weight:bold;color:#10b981;border-top:2px solid #10b981;padding-top:8px;margin-top:8px}';
+    html += '.notes{margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;font-size:13px}';
+    html += '.sig-section{margin-top:30px;display:flex;gap:20px;flex-wrap:wrap}';
+    html += '.sig-box{flex:1;min-width:250px;text-align:center}';
+    html += '.sig-box label{display:block;font-size:13px;font-weight:bold;color:#333;margin-bottom:6px}';
+    html += '.sig-canvas{border:2px solid #ccc;border-radius:8px;background:white;cursor:crosshair;touch-action:none;width:100%;height:120px}';
+    html += '.sig-canvas.signed{border-color:#10b981}';
+    html += '.sig-actions{margin-top:4px;display:flex;gap:8px;justify-content:center}';
+    html += '.sig-actions button{padding:4px 12px;font-size:11px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#f9fafb}';
+    html += '.sig-actions button:hover{background:#e5e7eb}';
+    html += '.date-box{flex:0 0 200px;text-align:center}';
+    html += '.date-display{font-size:18px;font-weight:bold;color:#333;padding:10px;border:2px solid #10b981;border-radius:8px;background:#f0fdf4;margin-top:6px}';
+    html += '.tech-display{font-size:16px;font-weight:bold;color:#10b981;margin-top:6px}';
+    html += '.print-bar{text-align:center;margin:20px 0;padding:16px;background:#f0fdf4;border-radius:8px}';
+    html += '.print-bar button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:6px;cursor:pointer;margin:0 6px}';
+    html += '.btn-print{background:#10b981;color:white}.btn-print:hover{background:#059669}';
+    html += '.btn-save{background:#3b82f6;color:white}.btn-save:hover{background:#2563eb}';
+    html += '@media print{.print-bar{display:none}.sig-actions{display:none}}';
+    html += '</style></head><body>';
+
+    // Header
     html += '<div class="header"><h1>🔧 Trade Master</h1><p>Estimado de Servicio</p><p style="margin-top:8px;">' + equip.label + '</p></div>';
+
+    // Table
     html += '<table><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th></tr></thead><tbody>';
     selectedEstItems.forEach(function(i) {
         html += '<tr><td>' + i.name + '</td><td>' + i.qty + '</td><td>$' + (i.price*i.qty).toFixed(2) + '</td><td>$' + (i.labor*i.qty).toFixed(2) + '</td><td><strong>$' + ((i.price+i.labor)*i.qty).toFixed(2) + '</strong></td></tr>';
     });
     html += '</tbody></table>';
+
+    // Totals
     html += '<div class="total-section"><div class="total-line"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
     if (discount > 0) html += '<div class="total-line"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
     html += '<div class="total-line"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
     html += '<div class="total-line grand"><span>TOTAL:</span><span>$' + total.toFixed(2) + '</span></div></div>';
+
+    // Notes
     var notes = document.getElementById('estNotes').value;
     if (notes) html += '<div class="notes"><strong>Notas:</strong><br>' + notes + '</div>';
-    html += '<div class="sig"><div class="sig-line">Firma del Cliente</div><div class="sig-line">Firma del Técnico</div><div class="sig-line">Fecha</div></div>';
-    html += '<p style="text-align:center;margin-top:30px;color:#999;font-size:11px;">Generado por Trade Master CRM | trademastersusa.org</p>';
+
+    // Signature section with canvas pads
+    html += '<div class="sig-section">';
+    html += '<div class="sig-box"><label>✍️ Firma del Cliente</label><canvas id="sigClient" class="sig-canvas" width="300" height="120"></canvas>';
+    html += '<div class="sig-actions"><button onclick="clearSig(\'sigClient\')">🗑️ Borrar</button></div></div>';
+    html += '<div class="sig-box"><label>👷 Técnico</label><div class="tech-display">' + (techName || 'N/A') + '</div>';
+    html += '<canvas id="sigTech" class="sig-canvas" width="300" height="120" style="margin-top:10px;"></canvas>';
+    html += '<div class="sig-actions"><button onclick="clearSig(\'sigTech\')">🗑️ Borrar</button></div></div>';
+    html += '<div class="date-box"><label>📅 Fecha</label><div class="date-display">' + dateStr + '</div></div>';
+    html += '</div>';
+
+    // Print / Save bar
+    html += '<div class="print-bar">';
+    html += '<button class="btn-print" onclick="window.print()">🖨️ Imprimir / PDF</button>';
+    html += '</div>';
+
+    html += '<p style="text-align:center;margin-top:20px;color:#999;font-size:11px;">Generado por Trade Master CRM | trademastersusa.org</p>';
+
+    // Signature pad JavaScript
+    html += '<script>';
+    html += 'function initSigPad(canvasId){';
+    html += '  var c=document.getElementById(canvasId),ctx=c.getContext("2d");';
+    html += '  var drawing=false,lastX=0,lastY=0;';
+    html += '  c.width=c.offsetWidth;c.height=c.offsetHeight;';
+    html += '  ctx.strokeStyle="#333";ctx.lineWidth=2;ctx.lineCap="round";ctx.lineJoin="round";';
+    html += '  function getPos(e){var r=c.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}';
+    html += '  function startDraw(e){e.preventDefault();drawing=true;var p=getPos(e);lastX=p.x;lastY=p.y;}';
+    html += '  function draw(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();lastX=p.x;lastY=p.y;}';
+    html += '  function stopDraw(){if(drawing){drawing=false;c.classList.add("signed");}}';
+    html += '  c.addEventListener("mousedown",startDraw);c.addEventListener("mousemove",draw);c.addEventListener("mouseup",stopDraw);c.addEventListener("mouseleave",stopDraw);';
+    html += '  c.addEventListener("touchstart",startDraw,{passive:false});c.addEventListener("touchmove",draw,{passive:false});c.addEventListener("touchend",stopDraw);';
+    html += '}';
+    html += 'function clearSig(id){var c=document.getElementById(id);var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);c.classList.remove("signed");}';
+    html += 'window.onload=function(){initSigPad("sigClient");initSigPad("sigTech");};';
+    html += '<\/script>';
     html += '</body></html>';
     w.document.write(html);
     w.document.close();
