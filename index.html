@@ -155,6 +155,7 @@
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_system">Sistema</span>
+            <a href="#" onclick="showSection('team')" class="nav-link"><span>👥</span> Usuarios y Equipo</a>
             <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> <span data-i18n="nav_settings">Configuración</span></a>
           </div>
         </nav>
@@ -1761,6 +1762,92 @@
               <div id="paymentsHistory"></div>
             </div>
           </div>
+
+          <!-- ===== USUARIOS Y EQUIPO ===== -->
+          <div id="team-section" class="section">
+            <div class="card" style="margin-bottom:16px;border:2px solid var(--primary);">
+              <div class="card-top">
+                <h3>👥 Usuarios y Control de Acceso</h3>
+                <button class="btn-primary btn-sm" onclick="showTeamUserForm()">+ Agregar Usuario</button>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Administra quién puede acceder al CRM y qué secciones puede ver. Solo el <strong>Dueño/CEO</strong> puede administrar usuarios.</p>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px;">
+                <div style="padding:12px;border:1px solid #3b82f6;border-radius:8px;background:#eff6ff;">
+                  <h5 style="color:#1d4ed8;font-size:13px;">👑 Dueño / CEO</h5>
+                  <p style="font-size:10px;color:#1e40af;line-height:1.5;">Acceso total. Mi Dinero, cuenta bancaria, configuración, usuarios. <strong>Solo 1 por empresa.</strong></p>
+                </div>
+                <div style="padding:12px;border:1px solid #8b5cf6;border-radius:8px;background:#f5f3ff;">
+                  <h5 style="color:#6d28d9;font-size:13px;">📊 Contabilidad / Admin</h5>
+                  <p style="font-size:10px;color:#5b21b6;line-height:1.5;">Nómina, gastos, recibos, facturas, QuickBooks, reportes. <strong>No ve Mi Dinero ni cuenta bancaria.</strong></p>
+                </div>
+                <div style="padding:12px;border:1px solid #f59e0b;border-radius:8px;background:#fffbeb;">
+                  <h5 style="color:#b45309;font-size:13px;">🎯 Coordinador de Despacho</h5>
+                  <p style="font-size:10px;color:#92400e;line-height:1.5;">Despacho, trabajos, técnicos, clientes, correo, agenda. <strong>No ve finanzas ni nómina.</strong></p>
+                </div>
+                <div style="padding:12px;border:1px solid #10b981;border-radius:8px;background:#ecfdf5;">
+                  <h5 style="color:#047857;font-size:13px;">🔧 Técnico</h5>
+                  <p style="font-size:10px;color:#065f46;line-height:1.5;">Solo sus trabajos asignados, reloj de entrada/salida. <strong>No ve otros datos.</strong></p>
+                </div>
+                <div style="padding:12px;border:1px solid #94a3b8;border-radius:8px;background:#f8fafc;">
+                  <h5 style="color:#475569;font-size:13px;">👁️ Solo Vista</h5>
+                  <p style="font-size:10px;color:#64748b;line-height:1.5;">Puede ver tablero y reportes pero no puede editar ni crear nada.</p>
+                </div>
+              </div>
+
+              <div id="teamUserForm" style="display:none;margin:16px 0;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">👤 Nuevo Usuario</h4>
+                <div class="form-row">
+                  <div class="form-group"><label>Nombre Completo</label><input type="text" id="tuName" required placeholder="Ej: María García"></div>
+                  <div class="form-group"><label>Email</label><input type="email" id="tuEmail" required placeholder="usuario@empresa.com"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label>Teléfono</label><input type="tel" id="tuPhone" placeholder="(555) 123-4567"></div>
+                  <div class="form-group"><label>Nombre de Usuario</label><input type="text" id="tuUsername" required placeholder="Ej: maria.garcia"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label>Contraseña</label><input type="password" id="tuPassword" required placeholder="Mínimo 6 caracteres"></div>
+                  <div class="form-group"><label>Confirmar Contraseña</label><input type="password" id="tuPasswordConfirm" required placeholder="Repetir contraseña"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label>Rol / Puesto</label>
+                    <select id="tuRole" onchange="previewRolePerms()">
+                      <option value="owner">👑 Dueño / CEO</option>
+                      <option value="accounting">📊 Contabilidad / Admin</option>
+                      <option value="dispatcher">🎯 Coordinador de Despacho</option>
+                      <option value="technician">🔧 Técnico</option>
+                      <option value="viewer">👁️ Solo Vista</option>
+                    </select>
+                  </div>
+                  <div class="form-group"><label>Estado</label>
+                    <select id="tuStatus">
+                      <option value="active">✅ Activo</option>
+                      <option value="inactive">⛔ Inactivo</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="tuPermPreview" style="margin:12px 0;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
+                  <h5 style="font-size:12px;color:var(--primary);margin-bottom:6px;">🔐 Permisos de este Rol:</h5>
+                  <div id="tuPermList" style="font-size:11px;color:var(--text-muted);line-height:1.8;"></div>
+                </div>
+                <div class="form-group"><label>Notas</label><textarea id="tuNotes" rows="2" placeholder="Responsabilidades, horario, etc."></textarea></div>
+                <div class="form-actions">
+                  <button class="btn-primary btn-sm" onclick="saveTeamUser()">💾 Guardar Usuario</button>
+                  <button class="btn-secondary btn-sm" onclick="hideTeamUserForm()">Cancelar</button>
+                </div>
+              </div>
+
+              <div id="teamUsersList"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-top"><h3>🟢 Sesiones Activas</h3></div>
+              <div id="teamActiveSessions">
+                <p class="empty-msg">Las sesiones activas aparecerán aquí cuando los usuarios inicien sesión.</p>
+              </div>
+            </div>
+          </div>
+
           <div id="settings-section" class="section">
             <div class="card">
               <h3>Configuración de la Empresa</h3>
