@@ -69,8 +69,12 @@ async function createCompany() {
 }
 
 async function loadCompanyId() {
-    var res = await sbClient.from('companies').select('id').eq('created_by', currentUser.id).single();
-    if (res.data) companyId = res.data.id;
+    var res = await sbClient.from('companies').select('id, name, phone, email').eq('created_by', currentUser.id).single();
+    if (res.data) {
+        companyId = res.data.id;
+        // Store company info for settings
+        window._companyInfo = res.data;
+    }
 }
 
 // ===== DASHBOARD =====
@@ -78,14 +82,23 @@ function showDashboard() {
     if (!currentUser) return;
     var meta = currentUser.user_metadata || {};
     var name = meta.first_name || currentUser.email.split('@')[0];
-    var company = meta.company_name || 'Mi Empresa';
+    var company = (window._companyInfo && window._companyInfo.name) ? window._companyInfo.name : (meta.company_name || 'Mi Empresa');
     var ini = name.charAt(0).toUpperCase();
     document.getElementById('authPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'grid';
     document.getElementById('companyDisplay').textContent = company;
+    var sidebarName = document.querySelector('.sidebar-brand h2');
+    if (sidebarName) sidebarName.textContent = company;
+    document.title = company + ' - CRM HVACR';
     document.getElementById('userInitials').textContent = ini;
     document.getElementById('sidebarInitials').textContent = ini;
     document.getElementById('sidebarUserName').textContent = name;
+    // Pre-fill settings
+    if (window._companyInfo) {
+        document.getElementById('settingsCompanyName').value = window._companyInfo.name || '';
+        document.getElementById('settingsPhone').value = window._companyInfo.phone || '';
+        document.getElementById('settingsEmail').value = window._companyInfo.email || '';
+    }
     showSection('dashboard');
     loadAllData();
 }
@@ -109,7 +122,7 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Dashboard', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
+    var titles = { dashboard:'Dashboard', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
     document.getElementById('pageTitle').textContent = titles[name] || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
@@ -117,7 +130,8 @@ function showSection(name) {
     if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
     if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
     if (name === 'technicians') { renderTechFullList(); generateTrackingLinks(); }
-    if (name === 'jobs') { populateEstimateJobs(); }
+    if (name === 'jobs') { populateEstimateJobs(); loadAdvisors(); }
+    if (name === 'advisors') { loadAdvisors(); loadReferrals(); }
 }
 
 // ===== LEADS =====
@@ -708,7 +722,20 @@ function sendLocation() {
 }
 
 // ===== SETTINGS =====
-function saveSettings() { alert('Configuración guardada'); }
+async function saveSettings() {
+    if (!companyId) { alert('No hay empresa configurada'); return; }
+    var name = document.getElementById('settingsCompanyName').value;
+    var phone = document.getElementById('settingsPhone').value;
+    var email = document.getElementById('settingsEmail').value;
+    var res = await sbClient.from('companies').update({ name: name, phone: phone, email: email }).eq('id', companyId);
+    if (res.error) { alert('Error: ' + res.error.message); return; }
+    // Update all displays
+    document.getElementById('companyDisplay').textContent = name;
+    var sidebarName = document.querySelector('.sidebar-brand h2');
+    if (sidebarName) sidebarName.textContent = name;
+    document.title = name + ' - CRM HVACR';
+    alert('✅ Configuración guardada');
+}
 
 // ===== LOGOUT =====
 async function logout() { if (confirm('¿Cerrar sesión?')) { await sbClient.auth.signOut(); location.reload(); } }
@@ -1018,33 +1045,151 @@ function handleEquipPhotos(event) {
 }
 
 function referToAdvisor() {
+    document.getElementById('advisorReferralBox').style.display = 'block';
+    populateAdvisorSelect();
+}
+
+// ===== HOME ADVISORS MODULE =====
+var advisorsData = [];
+
+function showAdvisorForm() { document.getElementById('advisorFormContainer').style.display = 'block'; }
+function hideAdvisorForm() { document.getElementById('advisorFormContainer').style.display = 'none'; }
+
+async function handleAdvisorCreate(e) {
+    e.preventDefault();
+    var advisor = {
+        company_id: companyId,
+        name: document.getElementById('advisorName').value,
+        phone: document.getElementById('advisorPhone').value,
+        email: document.getElementById('advisorEmail').value || null,
+        specialty: document.getElementById('advisorSpecialty').value,
+        zone: document.getElementById('advisorZone').value || null,
+        status: 'active'
+    };
+    var res = await sbClient.from('home_advisors').insert([advisor]).select();
+    if (res.error) { alert('Error: ' + res.error.message); return; }
+    document.getElementById('advisorForm').reset();
+    hideAdvisorForm();
+    loadAdvisors();
+}
+
+async function loadAdvisors() {
+    if (!companyId) return;
+    var res = await sbClient.from('home_advisors').select('*').eq('company_id', companyId).order('name');
+    advisorsData = res.data || [];
+    renderAdvisorsList();
+}
+
+function renderAdvisorsList() {
+    var c = document.getElementById('advisorsList');
+    if (!c) return;
+    if (advisorsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay Home Advisors registrados</p>'; return; }
+    var h = '<table class="data-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Especialidad</th><th>Zona</th><th>Status</th><th>Acciones</th></tr></thead><tbody>';
+    advisorsData.forEach(function(a) {
+        var statusColor = a.status === 'active' ? '#10b981' : '#94a3b8';
+        h += '<tr>';
+        h += '<td><strong>🏠 ' + a.name + '</strong></td>';
+        h += '<td><a href="tel:' + a.phone + '">' + a.phone + '</a></td>';
+        h += '<td>' + (a.email || '-') + '</td>';
+        h += '<td>' + (a.specialty || '-') + '</td>';
+        h += '<td>' + (a.zone || '-') + '</td>';
+        h += '<td><span style="color:' + statusColor + ';font-weight:600;">' + (a.status === 'active' ? '🟢 Activo' : '⚫ Inactivo') + '</span></td>';
+        h += '<td><button class="btn-sm" onclick="callAdvisor(\'' + a.phone + '\')">📞</button> <button class="btn-sm" onclick="textAdvisor(\'' + a.phone + '\')">💬</button></td>';
+        h += '</tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+function callAdvisor(phone) { window.open('tel:' + phone); }
+function textAdvisor(phone) { window.open('sms:' + phone); }
+
+function populateAdvisorSelect() {
+    var sel = document.getElementById('estAdvisorSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Seleccionar Advisor...</option>';
+    advisorsData.forEach(function(a) {
+        if (a.status === 'active') sel.innerHTML += '<option value="' + a.id + '">' + a.name + ' - ' + a.phone + ' (' + (a.specialty || '') + ')</option>';
+    });
+}
+
+async function sendReferralToAdvisor() {
+    var advisorId = document.getElementById('estAdvisorSelect').value;
+    if (!advisorId) { alert('Selecciona un Home Advisor'); return; }
+    var advisor = advisorsData.find(function(a) { return a.id === advisorId; });
+
     var jobSel = document.getElementById('estJobSelect');
-    var job = jobsData.find(function(j) { return j.id === jobSel.value; });
+    var job = jobSel.value ? jobsData.find(function(j) { return j.id === jobSel.value; }) : null;
     var model = document.getElementById('estModelNum').value;
     var serial = document.getElementById('estSerialNum').value;
     var brand = document.getElementById('estBrand').value;
     var age = document.getElementById('estEquipAge').value;
     var equipType = currentEquipType ? componentCatalog[currentEquipType].label : 'N/A';
+    var urgency = document.getElementById('referralUrgency').value;
+    var notes = document.getElementById('referralNotes').value;
 
-    var msg = '🏠 REFERENCIA PARA REEMPLAZO DE EQUIPO\n\n';
-    msg += 'Cliente: ' + (job ? job.title : 'N/A') + '\n';
-    msg += 'Dirección: ' + (job ? job.address : 'N/A') + '\n';
-    msg += 'Equipo: ' + equipType + '\n';
-    msg += 'Marca: ' + (brand || 'N/A') + '\n';
-    msg += 'Modelo: ' + (model || 'N/A') + '\n';
-    msg += 'Serial: ' + (serial || 'N/A') + '\n';
-    msg += 'Edad: ' + (age || '?') + ' años\n';
-    msg += 'Razón: Equipo viejo - cliente quiere reemplazo\n';
-
-    // Open Home Advisor / generate referral
-    if (confirm('¿Referir este trabajo a Home Advisor para reemplazo?\n\n' + msg)) {
-        // Copy to clipboard
-        navigator.clipboard.writeText(msg).then(function() {
-            alert('✅ Información copiada al portapapeles.\n\nAbre Home Advisor o envía por email/texto al advisor de tu empresa.');
-        });
-        // Open Home Advisor
-        window.open('https://www.homeadvisor.com/', '_blank');
+    // Save referral to DB
+    var referral = {
+        company_id: companyId,
+        advisor_id: advisorId,
+        job_id: job ? job.id : null,
+        client_name: job ? job.title : 'N/A',
+        address: job ? job.address : 'N/A',
+        phone: job ? job.phone : '',
+        equipment_type: equipType,
+        brand: brand || null,
+        model_number: model || null,
+        serial_number: serial || null,
+        equipment_age: age ? parseInt(age) : null,
+        urgency: urgency,
+        notes: notes || null,
+        status: 'pending'
+    };
+    var res = await sbClient.from('advisor_referrals').insert([referral]).select();
+    if (res.error) { 
+        alert('Error guardando referencia: ' + res.error.message + '\n\nNota: Puede que necesites crear la tabla advisor_referrals en Supabase.'); 
     }
+
+    // Send SMS to advisor
+    var msg = '🏠 NUEVA REFERENCIA - Trade Master\n\n';
+    msg += 'Cliente: ' + (job ? job.title : 'N/A') + '\n';
+    msg += 'Dir: ' + (job ? job.address : 'N/A') + '\n';
+    msg += 'Tel: ' + (job ? (job.phone || '') : '') + '\n';
+    msg += 'Equipo: ' + equipType + '\n';
+    msg += 'Marca: ' + (brand || '?') + ' | Modelo: ' + (model || '?') + '\n';
+    msg += 'Edad: ' + (age || '?') + ' años\n';
+    msg += 'Urgencia: ' + urgency + '\n';
+    if (notes) msg += 'Notas: ' + notes + '\n';
+
+    // Open SMS to advisor
+    window.open('sms:' + advisor.phone + '?body=' + encodeURIComponent(msg));
+    alert('✅ Referencia enviada a ' + advisor.name + '\n\nSe abrirá SMS para confirmar.');
+    loadReferrals();
+}
+
+async function loadReferrals() {
+    if (!companyId) return;
+    var res = await sbClient.from('advisor_referrals').select('*, home_advisors(name, phone)').eq('company_id', companyId).order('created_at', { ascending: false }).limit(20);
+    var referrals = res.data || [];
+    renderReferrals(referrals);
+}
+
+function renderReferrals(referrals) {
+    var c = document.getElementById('referralsList');
+    if (!c) return;
+    if (referrals.length === 0) { c.innerHTML = '<p class="empty-msg">No hay referencias todavía</p>'; return; }
+    var h = '<table class="data-table"><thead><tr><th>Cliente</th><th>Equipo</th><th>Advisor</th><th>Urgencia</th><th>Status</th></tr></thead><tbody>';
+    referrals.forEach(function(r) {
+        var urgColor = r.urgency === 'urgente' ? '#ef4444' : r.urgency === 'programar' ? '#3b82f6' : '#94a3b8';
+        var statusBadge = r.status === 'pending' ? '🟡 Pendiente' : r.status === 'contacted' ? '🔵 Contactado' : r.status === 'sold' ? '🟢 Vendido' : '⚫ ' + r.status;
+        h += '<tr>';
+        h += '<td><strong>' + (r.client_name || '-') + '</strong><br><small>' + (r.address || '') + '</small></td>';
+        h += '<td>' + (r.equipment_type || '-') + '<br><small>' + (r.brand || '') + ' ' + (r.model_number || '') + '</small></td>';
+        h += '<td>' + (r.home_advisors ? r.home_advisors.name : '-') + '</td>';
+        h += '<td style="color:' + urgColor + ';font-weight:600;">' + r.urgency + '</td>';
+        h += '<td>' + statusBadge + '</td>';
+        h += '</tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
 }
 
 function renderComponentList() {
@@ -1160,8 +1305,11 @@ function updateEstimateTotals() {
     var scFee = serviceCallFee || 0;
     var grandTotal = repairTotal + scFee;
 
-    // If client declines, only charge service call
-    if (decision === 'no') { grandTotal = scFee; }
+    // If client declines, only charge service call + tax on service call
+    if (decision === 'no') { 
+        var scTax = scFee * (taxRate / 100);
+        grandTotal = scFee + scTax; 
+    }
 
     var h = '<div class="totals-grid">';
     h += '<div class="total-row sc-row"><span>🚐 Service Call:</span><span>$' + scFee.toFixed(2) + '</span></div>';
@@ -1171,8 +1319,9 @@ function updateEstimateTotals() {
         h += '<div class="total-row"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
         if (discount > 0) h += '<div class="total-row discount"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
         h += '<div class="total-row"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
-    }
-    if (decision === 'no') {
+    } else {
+        var scTaxAmt = scFee * (taxRate / 100);
+        h += '<div class="total-row"><span>Tax (' + taxRate + '%):</span><span>$' + scTaxAmt.toFixed(2) + '</span></div>';
         h += '<div class="total-row" style="color:var(--warning);"><span>⚠️ Cliente declinó reparación</span><span></span></div>';
     }
     h += '<div class="total-row grand"><span>TOTAL:</span><span>$' + grandTotal.toFixed(2) + '</span></div>';
@@ -1198,8 +1347,10 @@ function populateEstimateJobs() {
 }
 
 function presentEstimateToClient() {
-    if (selectedEstItems.length === 0) { alert('Agrega componentes primero'); return; }
-    var equip = componentCatalog[currentEquipType];
+    var decision = document.getElementById('estClientDecision').value;
+    if (selectedEstItems.length === 0 && decision !== 'no') { alert('Agrega componentes primero'); return; }
+    if (!serviceCallFee && serviceCallFee !== 0) { alert('Selecciona tarifa de Service Call'); return; }
+    var equip = currentEquipType ? componentCatalog[currentEquipType] : { label: 'Servicio General' };
     var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
     var taxRate = parseFloat(document.getElementById('estTax').value) || 0;
     var subtotal = 0;
@@ -1207,7 +1358,10 @@ function presentEstimateToClient() {
     var discountAmt = subtotal * (discount / 100);
     var afterDiscount = subtotal - discountAmt;
     var taxAmt = afterDiscount * (taxRate / 100);
-    var total = afterDiscount + taxAmt;
+    var repairTotal = afterDiscount + taxAmt;
+    var scFee = serviceCallFee || 0;
+    var scTax = scFee * (taxRate / 100);
+    var grandTotal = (decision === 'no') ? (scFee + scTax) : (repairTotal + scFee);
 
     // Get tech name from selected job
     var techName = '';
@@ -1251,20 +1405,40 @@ function presentEstimateToClient() {
     html += '</style></head><body>';
 
     // Header
-    html += '<div class="header"><h1>🔧 Trade Master</h1><p>Estimado de Servicio</p><p style="margin-top:8px;">' + equip.label + '</p></div>';
+    html += '<div class="header"><h1>🔧 Trade Master</h1><p>' + (decision === 'no' ? 'Recibo de Service Call' : 'Estimado de Servicio') + '</p><p style="margin-top:8px;">' + equip.label + '</p></div>';
 
-    // Table
-    html += '<table><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th></tr></thead><tbody>';
-    selectedEstItems.forEach(function(i) {
-        html += '<tr><td>' + i.name + '</td><td>' + i.qty + '</td><td>$' + (i.price*i.qty).toFixed(2) + '</td><td>$' + (i.labor*i.qty).toFixed(2) + '</td><td><strong>$' + ((i.price+i.labor)*i.qty).toFixed(2) + '</strong></td></tr>';
-    });
-    html += '</tbody></table>';
+    // Equipment info
+    var model = document.getElementById('estModelNum').value;
+    var serial = document.getElementById('estSerialNum').value;
+    var brand = document.getElementById('estBrand').value;
+    if (model || serial || brand) {
+        html += '<div style="padding:10px;background:#f0fdf4;border-radius:8px;margin-bottom:16px;font-size:13px;">';
+        if (brand) html += '<strong>Marca:</strong> ' + brand + ' &nbsp;|&nbsp; ';
+        if (model) html += '<strong>Modelo:</strong> ' + model + ' &nbsp;|&nbsp; ';
+        if (serial) html += '<strong>Serial:</strong> ' + serial;
+        html += '</div>';
+    }
+
+    // Table (only if repair approved)
+    if (decision !== 'no' && selectedEstItems.length > 0) {
+        html += '<table><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th></tr></thead><tbody>';
+        selectedEstItems.forEach(function(i) {
+            html += '<tr><td>' + i.name + '</td><td>' + i.qty + '</td><td>$' + (i.price*i.qty).toFixed(2) + '</td><td>$' + (i.labor*i.qty).toFixed(2) + '</td><td><strong>$' + ((i.price+i.labor)*i.qty).toFixed(2) + '</strong></td></tr>';
+        });
+        html += '</tbody></table>';
+    }
 
     // Totals
-    html += '<div class="total-section"><div class="total-line"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
-    if (discount > 0) html += '<div class="total-line"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
-    html += '<div class="total-line"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
-    html += '<div class="total-line grand"><span>TOTAL:</span><span>$' + total.toFixed(2) + '</span></div></div>';
+    html += '<div class="total-section">';
+    html += '<div class="total-line" style="color:#e67e22;font-weight:bold;"><span>🚐 Service Call:</span><span>$' + scFee.toFixed(2) + '</span></div>';
+    if (decision !== 'no' && selectedEstItems.length > 0) {
+        html += '<div class="total-line"><span>Partes + Labor:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
+        if (discount > 0) html += '<div class="total-line"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
+        html += '<div class="total-line"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
+    } else {
+        html += '<div class="total-line"><span>Tax (' + taxRate + '%):</span><span>$' + scTax.toFixed(2) + '</span></div>';
+    }
+    html += '<div class="total-line grand"><span>TOTAL:</span><span>$' + grandTotal.toFixed(2) + '</span></div></div>';
 
     // Notes
     var notes = document.getElementById('estNotes').value;
