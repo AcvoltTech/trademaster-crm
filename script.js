@@ -69,7 +69,7 @@ async function createCompany() {
 }
 
 async function loadCompanyId() {
-    var res = await sbClient.from('companies').select('id, name, phone, email, contract_clauses').eq('created_by', currentUser.id).single();
+    var res = await sbClient.from('companies').select('id, name, phone, email, contract_clauses, company_documents').eq('created_by', currentUser.id).single();
     if (res.data) {
         companyId = res.data.id;
         // Store company info for settings
@@ -102,6 +102,10 @@ function showDashboard() {
             loadClausesFromData(window._companyInfo.contract_clauses);
         } else {
             loadDefaultClauses();
+        }
+        // Load company documents
+        if (window._companyInfo.company_documents) {
+            loadCompanyDocs(window._companyInfo.company_documents);
         }
     } else {
         loadDefaultClauses();
@@ -281,13 +285,40 @@ async function deleteLead(id) {
 function showTechForm() { document.getElementById('techFormContainer').style.display = 'block'; document.getElementById('techForm').reset(); }
 function hideTechForm() { document.getElementById('techFormContainer').style.display = 'none'; }
 
+var _techPhotoData = null;
+
+function previewTechPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 3*1024*1024) { alert('⚠️ Foto máx 3MB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        _techPhotoData = e.target.result;
+        var preview = document.getElementById('techPhotoPreview');
+        preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+    };
+    reader.readAsDataURL(file);
+}
+
 async function handleTechCreate(event) {
     event.preventDefault();
-    await sbClient.from('technicians').insert({
-        company_id: companyId, name: document.getElementById('techName').value,
-        phone: document.getElementById('techPhone').value, email: document.getElementById('techEmail').value,
-        specialty: document.getElementById('techSpecialty').value
-    });
+    var data = {
+        company_id: companyId,
+        name: document.getElementById('techName').value,
+        phone: document.getElementById('techPhone').value,
+        email: document.getElementById('techEmail').value,
+        specialty: document.getElementById('techSpecialty').value,
+        vehicle_info: {
+            vehicle: document.getElementById('techVehicle').value || '',
+            plate: document.getElementById('techPlate').value || '',
+            vin: document.getElementById('techVin').value || '',
+            color: document.getElementById('techVehicleColor').value || ''
+        }
+    };
+    if (_techPhotoData) data.photo = _techPhotoData;
+    await sbClient.from('technicians').insert(data);
+    _techPhotoData = null;
+    document.getElementById('techPhotoPreview').innerHTML = '<span style="font-size:11px;color:var(--text-muted);text-align:center;">📷 Foto del<br>Técnico</span>';
     hideTechForm(); await loadTechnicians(); updateKPIs(); alert('¡Técnico agregado!');
 }
 
@@ -295,7 +326,7 @@ async function loadTechnicians() {
     if (!companyId) return;
     var res = await sbClient.from('technicians').select('*').eq('company_id', companyId).order('name');
     techsData = res.data || [];
-    renderTechList(); updateTechSelect();
+    renderTechList(); updateTechSelect(); updateTechCredSelect();
 }
 
 function renderTechList() {
@@ -391,6 +422,7 @@ async function loadJobs() {
     var res = await sbClient.from('work_orders').select('*, technicians(name)').eq('company_id', companyId).order('created_at', { ascending: false });
     jobsData = res.data || [];
     renderJobsList();
+    updateJobPermitSelect();
 }
 
 function renderJobsList() {
@@ -1425,8 +1457,18 @@ function presentEstimateToClient() {
     html += '.print-bar button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:6px;cursor:pointer;margin:0 6px}';
     html += '.btn-print{background:#10b981;color:white}.btn-print:hover{background:#059669}';
     html += '.btn-save{background:#3b82f6;color:white}.btn-save:hover{background:#2563eb}';
-    html += '@media print{.print-bar{display:none}.sig-actions{display:none}}';
+    html += '@media print{.print-bar{display:none}.sig-actions{display:none}.nav-bar{display:none}}';
+    html += '.nav-bar{position:sticky;top:0;z-index:100;background:#1e293b;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;margin:-20px -20px 20px -20px}';
+    html += '.nav-bar a,.nav-bar button{color:white;text-decoration:none;font-size:14px;font-weight:bold;cursor:pointer;border:none;background:none;display:flex;align-items:center;gap:6px}';
+    html += '.nav-bar a:hover,.nav-bar button:hover{color:#10b981}';
     html += '</style></head><body>';
+
+    // Navigation bar
+    html += '<div class="nav-bar">';
+    html += '<a href="#" onclick="window.opener?window.opener.focus():null;window.close();return false;">← Regresar al CRM</a>';
+    html += '<span style="color:#10b981;font-weight:bold;font-size:14px;">🔧 Trade Master</span>';
+    html += '<button onclick="window.print()">🖨️ Imprimir</button>';
+    html += '</div>';
 
     // Header
     html += '<div class="header"><h1>🔧 Trade Master</h1><p>' + (decision === 'no' ? 'Recibo de Service Call' : 'Estimado de Servicio') + '</p><p style="margin-top:8px;">' + equip.label + '</p></div>';
@@ -1504,6 +1546,23 @@ function presentEstimateToClient() {
         if (cl.refuse) html += estClause('🚫', 'RIGHT TO REFUSE SERVICE', cl.refuse);
         if (cl.custom) html += estClause('📝', 'ADDITIONAL TERMS', cl.custom);
         html += '</div>';
+    }
+
+    // ===== COMPANY DOCUMENTS SECTION =====
+    var estDocs = (typeof getCompanyDocsForEstimate === 'function') ? getCompanyDocsForEstimate() : [];
+    if (estDocs.length > 0) {
+        html += '<div style="margin-top:20px;border-top:2px solid #3b82f6;padding-top:16px;">';
+        html += '<h3 style="font-size:14px;color:#3b82f6;margin-bottom:12px;">📁 CONTRACTOR DOCUMENTS / DOCUMENTOS DEL CONTRATISTA</h3>';
+        html += '<p style="font-size:11px;color:#666;margin-bottom:10px;">The following company documents are available for your review. / Los siguientes documentos de la empresa están disponibles para su revisión.</p>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
+        estDocs.forEach(function(d, idx) {
+            html += '<div style="padding:10px;background:#f0f9ff;border:1px solid #93c5fd;border-radius:8px;text-align:center;">';
+            html += '<div style="font-size:12px;font-weight:bold;color:#1e40af;margin-bottom:4px;">' + d.label + '</div>';
+            html += '<div style="font-size:10px;color:#666;margin-bottom:6px;">' + d.name + '</div>';
+            html += '<button onclick="openDoc(' + idx + ')" style="padding:4px 12px;font-size:11px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;">👁️ Ver / View</button>';
+            html += '</div>';
+        });
+        html += '</div></div>';
     }
 
     // ===== APPROVAL SECTION =====
@@ -1610,6 +1669,13 @@ function presentEstimateToClient() {
 
     // ===== JAVASCRIPT =====
     html += '<script>';
+    // Pass document data to estimate window
+    html += 'var _estDocs=' + JSON.stringify(estDocs.map(function(d){ return {label:d.label, name:d.name, data:d.data, fileType:d.fileType}; })) + ';';
+    html += 'function openDoc(idx){var d=_estDocs[idx];if(!d)return;var w=window.open("","_blank");';
+    html += 'if(d.fileType&&d.fileType.startsWith("image/")){w.document.write("<html><body style=\\"margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f5f9\\"><img src=\\""+d.data+"\\" style=\\"max-width:100%;max-height:95vh\\"></body></html>");}';
+    html += 'else{w.document.write("<html><body style=\\"margin:0\\"><iframe src=\\""+d.data+"\\" style=\\"width:100%;height:100vh;border:none\\"></iframe></body></html>");}';
+    html += 'w.document.close();}';
+
     // Signature pad code
     html += 'function initSigPad(canvasId){';
     html += '  var c=document.getElementById(canvasId),ctx=c.getContext("2d");';
@@ -3567,6 +3633,454 @@ async function saveClauses() {
     await sbClient.from('companies').update({ contract_clauses: clauses }).eq('id', companyId);
     if (window._companyInfo) window._companyInfo.contract_clauses = clauses;
     alert('✅ Cláusulas guardadas para ' + clauses.state + ' exitosamente!');
+}
+
+// ===== COMPANY DOCUMENTS MANAGEMENT =====
+var companyDocs = {};
+var DOC_TYPES = ['workers_comp','general_liability','w9','bond','contractor_license','epa_608','vehicle_insurance','other'];
+
+function uploadCompanyDoc(docType, input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { alert('⚠️ Archivo demasiado grande. Máximo 5MB.'); return; }
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        companyDocs[docType] = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: e.target.result,
+            uploadedAt: new Date().toISOString()
+        };
+        updateDocCardUI(docType, true);
+        saveCompanyDocs();
+    };
+    reader.readAsDataURL(file);
+}
+
+function viewCompanyDoc(docType) {
+    var doc = companyDocs[docType];
+    if (!doc) return;
+    var w = window.open('', '_blank');
+    if (doc.type && doc.type.startsWith('image/')) {
+        w.document.write('<html><head><title>' + doc.name + '</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f5f9;"><img src="' + doc.data + '" style="max-width:100%;max-height:95vh;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);"></body></html>');
+    } else if (doc.type === 'application/pdf') {
+        w.document.write('<html><head><title>' + doc.name + '</title></head><body style="margin:0;"><iframe src="' + doc.data + '" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+    } else {
+        w.document.write('<html><body><p>Archivo: ' + doc.name + '</p><a href="' + doc.data + '" download="' + doc.name + '">Descargar</a></body></html>');
+    }
+    w.document.close();
+}
+
+function removeCompanyDoc(docType) {
+    if (!confirm('¿Eliminar este documento?')) return;
+    delete companyDocs[docType];
+    updateDocCardUI(docType, false);
+    saveCompanyDocs();
+}
+
+function updateDocCardUI(docType, uploaded) {
+    var card = document.getElementById('docCard_' + docType);
+    var statusEl = document.getElementById('docStatus_' + docType);
+    var viewBtn = document.getElementById('docView_' + docType);
+    var removeBtn = document.getElementById('docRemove_' + docType);
+    if (!card) return;
+    
+    if (uploaded && companyDocs[docType]) {
+        card.classList.add('doc-uploaded');
+        statusEl.innerHTML = '<span class="doc-badge doc-uploaded-badge">✅ ' + companyDocs[docType].name + '</span>';
+        if (viewBtn) viewBtn.style.display = 'inline-block';
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+    } else {
+        card.classList.remove('doc-uploaded');
+        statusEl.innerHTML = '<span class="doc-badge doc-missing">No subido</span>';
+        if (viewBtn) viewBtn.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+    
+    // Check expiry
+    var expiryInput = document.getElementById('docExpiry_' + docType);
+    if (expiryInput && expiryInput.value && uploaded) {
+        var expDate = new Date(expiryInput.value);
+        var now = new Date();
+        var daysUntil = Math.floor((expDate - now) / (1000*60*60*24));
+        if (daysUntil < 0) {
+            statusEl.innerHTML += ' <span class="doc-badge doc-expiring" style="background:#fef2f2;color:#ef4444;border-color:#fca5a5;">⚠️ EXPIRADO</span>';
+        } else if (daysUntil < 30) {
+            statusEl.innerHTML += ' <span class="doc-badge doc-expiring">⏰ Vence en ' + daysUntil + ' días</span>';
+        }
+    }
+}
+
+function saveDocExpiry(docType) {
+    saveCompanyDocs();
+    updateDocCardUI(docType, !!companyDocs[docType]);
+}
+
+function saveDocSettings() {
+    saveCompanyDocs();
+}
+
+async function saveCompanyDocs() {
+    if (!companyId) return;
+    var docMeta = {};
+    DOC_TYPES.forEach(function(t) {
+        if (companyDocs[t]) {
+            docMeta[t] = {
+                name: companyDocs[t].name,
+                type: companyDocs[t].type,
+                size: companyDocs[t].size,
+                data: companyDocs[t].data,
+                uploadedAt: companyDocs[t].uploadedAt
+            };
+        }
+        var expiryInput = document.getElementById('docExpiry_' + t);
+        if (expiryInput && expiryInput.value) {
+            if (!docMeta[t]) docMeta[t] = {};
+            docMeta[t].expiry = expiryInput.value;
+        }
+    });
+    var includeInEstimates = document.getElementById('includeDocsInEstimates');
+    docMeta._settings = { includeInEstimates: includeInEstimates ? includeInEstimates.checked : true };
+    
+    await sbClient.from('companies').update({ company_documents: docMeta }).eq('id', companyId);
+    if (window._companyInfo) window._companyInfo.company_documents = docMeta;
+}
+
+function loadCompanyDocs(data) {
+    if (!data) return;
+    companyDocs = {};
+    DOC_TYPES.forEach(function(t) {
+        if (data[t] && data[t].data) {
+            companyDocs[t] = data[t];
+            updateDocCardUI(t, true);
+        }
+        var expiryInput = document.getElementById('docExpiry_' + t);
+        if (expiryInput && data[t] && data[t].expiry) {
+            expiryInput.value = data[t].expiry;
+            updateDocCardUI(t, !!companyDocs[t]);
+        }
+    });
+    if (data._settings) {
+        var cb = document.getElementById('includeDocsInEstimates');
+        if (cb) cb.checked = data._settings.includeInEstimates !== false;
+    }
+}
+
+function getCompanyDocsForEstimate() {
+    var cb = document.getElementById('includeDocsInEstimates');
+    if (cb && !cb.checked) return [];
+    var docs = [];
+    var labels = {
+        workers_comp: '🛡️ Workers\' Compensation',
+        general_liability: '🏢 General Liability Insurance',
+        w9: '📋 W-9 Form',
+        bond: '💰 Contractor License Bond',
+        contractor_license: '🏛️ Contractor License',
+        epa_608: '🌿 EPA Section 608 Certification',
+        vehicle_insurance: '🚐 Vehicle Insurance',
+        other: '📄 Additional Document'
+    };
+    DOC_TYPES.forEach(function(t) {
+        if (companyDocs[t] && companyDocs[t].data) {
+            docs.push({ type: t, label: labels[t] || t, name: companyDocs[t].name, data: companyDocs[t].data, fileType: companyDocs[t].type });
+        }
+    });
+    return docs;
+}
+
+// ===== TECHNICIAN CREDENTIALS =====
+var techCredentials = {};
+var currentTechCredId = null;
+var TECH_CRED_TYPES = ['drivers_license','epa_608','nate','osha','hvac_excellence','school_cert','nccer','other_cert','vehicle_reg','vehicle_insurance'];
+
+function updateTechCredSelect() {
+    var sel = document.getElementById('techCredSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
+    techsData.forEach(function(t) { sel.innerHTML += '<option value="' + t.id + '">' + t.name + ' (' + (t.specialty||'') + ')</option>'; });
+}
+
+function loadTechCredentials() {
+    var sel = document.getElementById('techCredSelect');
+    var area = document.getElementById('techCredArea');
+    currentTechCredId = sel ? sel.value : '';
+    if (!currentTechCredId) { if (area) area.style.display = 'none'; return; }
+    if (area) area.style.display = 'block';
+    
+    var tech = techsData.find(function(t) { return t.id === currentTechCredId; });
+    techCredentials = (tech && tech.credentials) ? tech.credentials : {};
+    TECH_CRED_TYPES.forEach(function(t) { updateTechCredCardUI(t, !!(techCredentials[t] && techCredentials[t].data)); });
+
+    // Populate profile card
+    var nameEl = document.getElementById('techCredName');
+    var specEl = document.getElementById('techCredSpecialty');
+    var photoEl = document.getElementById('techCredPhoto');
+    var vehInfoEl = document.getElementById('techCredVehicleInfo');
+    if (nameEl) nameEl.textContent = tech ? tech.name : '—';
+    if (specEl) specEl.textContent = tech ? (tech.specialty || '—') + ' | ' + (tech.phone || '') : '—';
+    
+    // Photo
+    if (photoEl) {
+        if (tech && tech.photo) {
+            photoEl.innerHTML = '<img src="' + tech.photo + '" style="width:100%;height:100%;object-fit:cover;">';
+        } else {
+            photoEl.innerHTML = '<span style="font-size:40px;">👤</span>';
+        }
+    }
+    
+    // Vehicle info display
+    var vi = (tech && tech.vehicle_info) ? tech.vehicle_info : {};
+    if (vehInfoEl) {
+        if (vi.vehicle || vi.plate) {
+            vehInfoEl.innerHTML = '<strong>🚐 Vehículo:</strong> ' + (vi.vehicle || 'N/A') + '<br>' +
+                '<strong>Placas:</strong> ' + (vi.plate || 'N/A') + 
+                (vi.vin ? ' | <strong>VIN:</strong> ' + vi.vin : '') +
+                (vi.color ? ' | <strong>Color:</strong> ' + vi.color : '');
+        } else {
+            vehInfoEl.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">Sin vehículo asignado</span>';
+        }
+    }
+    
+    // Fill vehicle edit fields
+    var vf = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+    vf('tcVehicle', vi.vehicle);
+    vf('tcPlate', vi.plate);
+    vf('tcVin', vi.vin);
+    vf('tcVehicleColor', vi.color);
+}
+
+function uploadTechCred(credType, input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 5*1024*1024) { alert('⚠️ Max 5MB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        techCredentials[credType] = { name: file.name, type: file.type, size: file.size, data: e.target.result, uploadedAt: new Date().toISOString() };
+        updateTechCredCardUI(credType, true);
+    };
+    reader.readAsDataURL(file);
+}
+
+function viewTechCred(credType) {
+    var doc = techCredentials[credType];
+    if (!doc) return;
+    var w = window.open('','_blank');
+    if (doc.type && doc.type.startsWith('image/')) w.document.write('<html><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f5f9"><img src="'+doc.data+'" style="max-width:100%;max-height:95vh"></body></html>');
+    else w.document.write('<html><body style="margin:0"><iframe src="'+doc.data+'" style="width:100%;height:100vh;border:none"></iframe></body></html>');
+    w.document.close();
+}
+
+function removeTechCred(credType) {
+    if (!confirm('¿Eliminar?')) return;
+    delete techCredentials[credType];
+    updateTechCredCardUI(credType, false);
+}
+
+function updateTechCredCardUI(credType, uploaded) {
+    var card = document.getElementById('tcCard_' + credType);
+    var status = document.getElementById('tcStatus_' + credType);
+    var viewBtn = document.getElementById('tcView_' + credType);
+    var removeBtn = document.getElementById('tcRemove_' + credType);
+    if (!card) return;
+    if (uploaded && techCredentials[credType]) {
+        card.classList.add('doc-uploaded');
+        status.innerHTML = '<span class="doc-badge doc-uploaded-badge">✅ ' + techCredentials[credType].name + '</span>';
+        if (viewBtn) viewBtn.style.display = 'inline-block';
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+    } else {
+        card.classList.remove('doc-uploaded');
+        status.innerHTML = '<span class="doc-badge doc-missing">No subido</span>';
+        if (viewBtn) viewBtn.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+    var expiryInput = document.getElementById('tcExpiry_' + credType);
+    if (expiryInput && expiryInput.value && uploaded) {
+        var daysUntil = Math.floor((new Date(expiryInput.value) - new Date()) / (1000*60*60*24));
+        if (daysUntil < 0) status.innerHTML += ' <span class="doc-badge" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;">EXPIRADO</span>';
+        else if (daysUntil < 30) status.innerHTML += ' <span class="doc-badge doc-expiring">⏰ ' + daysUntil + ' días</span>';
+    }
+}
+
+function uploadTechPhoto(input) {
+    if (!input.files || !input.files[0] || !currentTechCredId) return;
+    var file = input.files[0];
+    if (file.size > 3*1024*1024) { alert('⚠️ Foto máx 3MB'); return; }
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+        var photoData = e.target.result;
+        await sbClient.from('technicians').update({ photo: photoData }).eq('id', currentTechCredId);
+        document.getElementById('techCredPhoto').innerHTML = '<img src="' + photoData + '" style="width:100%;height:100%;object-fit:cover;">';
+        await loadTechnicians();
+        alert('✅ Foto actualizada');
+    };
+    reader.readAsDataURL(file);
+}
+
+function generateTechIDCard() {
+    if (!currentTechCredId) return;
+    var tech = techsData.find(function(t) { return t.id === currentTechCredId; });
+    if (!tech) return;
+    var company = (window._companyInfo && window._companyInfo.name) ? window._companyInfo.name : 'Trade Master';
+    var companyPhone = (window._companyInfo && window._companyInfo.phone) ? window._companyInfo.phone : '';
+    var vi = tech.vehicle_info || {};
+
+    var w = window.open('', '_blank');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ID - ' + tech.name + '</title>';
+    html += '<style>';
+    html += '*{margin:0;padding:0;box-sizing:border-box}body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#e5e7eb;font-family:Arial,sans-serif}';
+    html += '.id-card{width:340px;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.15)}';
+    html += '.id-header{background:linear-gradient(135deg,#1e3a5f,#f47621);color:white;padding:16px;text-align:center}';
+    html += '.id-header h2{font-size:18px;margin-bottom:2px}.id-header p{font-size:11px;opacity:0.9}';
+    html += '.id-body{padding:16px;display:flex;gap:12px;align-items:flex-start}';
+    html += '.id-photo{width:100px;height:120px;border:3px solid #1e3a5f;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f3f4f6}';
+    html += '.id-photo img{width:100%;height:100%;object-fit:cover}';
+    html += '.id-info{flex:1;font-size:12px;line-height:1.8}';
+    html += '.id-info strong{color:#1e3a5f}.id-name{font-size:16px;font-weight:bold;color:#1e3a5f;margin-bottom:4px}';
+    html += '.id-vehicle{margin-top:8px;padding:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;font-size:11px}';
+    html += '.id-footer{background:#f3f4f6;padding:10px 16px;text-align:center;font-size:9px;color:#666;border-top:1px solid #e5e7eb}';
+    html += '.id-footer strong{color:#f47621}';
+    html += '.print-bar{text-align:center;margin:16px;padding:10px}';
+    html += '.print-bar button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;background:#1e3a5f;color:white;margin:0 6px}';
+    html += '@media print{.print-bar{display:none}body{background:white}}';
+    html += '</style></head><body>';
+
+    html += '<div>';
+    html += '<div class="id-card">';
+    html += '<div class="id-header"><h2>' + company + '</h2><p>HVACR Contractor | Employee Identification</p></div>';
+    html += '<div class="id-body">';
+    html += '<div class="id-photo">';
+    if (tech.photo) html += '<img src="' + tech.photo + '">';
+    else html += '<span style="font-size:36px;">👤</span>';
+    html += '</div>';
+    html += '<div class="id-info">';
+    html += '<div class="id-name">' + tech.name + '</div>';
+    html += '<strong>Puesto:</strong> ' + (tech.specialty || 'Técnico') + '<br>';
+    if (tech.phone) html += '<strong>Tel:</strong> ' + tech.phone + '<br>';
+    html += '<strong>ID:</strong> ' + tech.id.substring(0,8).toUpperCase() + '<br>';
+    if (vi.vehicle || vi.plate) {
+        html += '<div class="id-vehicle">';
+        html += '🚐 <strong>' + (vi.vehicle || '') + '</strong><br>';
+        if (vi.plate) html += 'Placas: <strong>' + vi.plate + '</strong>';
+        if (vi.color) html += ' | Color: ' + vi.color;
+        html += '</div>';
+    }
+    html += '</div></div>';
+    html += '<div class="id-footer"><strong>ESTE IDENTIFICADOR DEBE PORTARSE EN TODO MOMENTO DURANTE HORAS DE TRABAJO</strong><br>This ID must be worn at all times during working hours<br>' + (companyPhone || '') + '</div>';
+    html += '</div>';
+
+    html += '<div class="print-bar"><button onclick="window.print()">🖨️ Imprimir ID Card</button></div>';
+    html += '</div></body></html>';
+    w.document.write(html);
+    w.document.close();
+}
+
+async function saveTechCredentials() {
+    if (!currentTechCredId || !companyId) return;
+    var credData = {};
+    TECH_CRED_TYPES.forEach(function(t) {
+        if (techCredentials[t]) credData[t] = techCredentials[t];
+        var exp = document.getElementById('tcExpiry_' + t);
+        if (exp && exp.value) { if (!credData[t]) credData[t] = {}; credData[t].expiry = exp.value; }
+    });
+    
+    // Save vehicle info from edit fields
+    var vehicleInfo = {
+        vehicle: (document.getElementById('tcVehicle') || {}).value || '',
+        plate: (document.getElementById('tcPlate') || {}).value || '',
+        vin: (document.getElementById('tcVin') || {}).value || '',
+        color: (document.getElementById('tcVehicleColor') || {}).value || ''
+    };
+    
+    var res = await sbClient.from('technicians').update({ credentials: credData, vehicle_info: vehicleInfo }).eq('id', currentTechCredId);
+    if (res.error) alert('❌ Error: ' + res.error.message);
+    else alert('✅ Credenciales y vehículo guardados');
+    await loadTechnicians();
+    loadTechCredentials(); // Refresh profile card
+}
+
+// ===== JOB PERMITS & DOCUMENTS =====
+var jobPermitDocs = {};
+var currentJobPermitId = null;
+var JOB_PERMIT_TYPES = ['building_permit','mechanical_permit','inspection_pass','before_photos','after_photos','other_permit'];
+
+function updateJobPermitSelect() {
+    var sel = document.getElementById('jobPermitSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Seleccionar Trabajo --</option>';
+    jobsData.forEach(function(j) {
+        var label = (j.title || 'Trabajo') + ' - ' + (j.address || '').substring(0,30);
+        sel.innerHTML += '<option value="' + j.id + '">' + label + '</option>';
+    });
+}
+
+function loadJobPermits() {
+    var sel = document.getElementById('jobPermitSelect');
+    var area = document.getElementById('jobPermitArea');
+    currentJobPermitId = sel ? sel.value : '';
+    if (!currentJobPermitId) { if (area) area.style.display = 'none'; return; }
+    if (area) area.style.display = 'block';
+    
+    var job = jobsData.find(function(j) { return j.id === currentJobPermitId; });
+    jobPermitDocs = (job && job.permits) ? job.permits : {};
+    JOB_PERMIT_TYPES.forEach(function(t) { updateJobPermitCardUI(t, !!(jobPermitDocs[t] && jobPermitDocs[t].data)); });
+}
+
+function uploadJobPermit(permitType, input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 5*1024*1024) { alert('⚠️ Max 5MB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        jobPermitDocs[permitType] = { name: file.name, type: file.type, size: file.size, data: e.target.result, uploadedAt: new Date().toISOString() };
+        updateJobPermitCardUI(permitType, true);
+    };
+    reader.readAsDataURL(file);
+}
+
+function viewJobPermit(permitType) {
+    var doc = jobPermitDocs[permitType];
+    if (!doc) return;
+    var w = window.open('','_blank');
+    if (doc.type && doc.type.startsWith('image/')) w.document.write('<html><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f5f9"><img src="'+doc.data+'" style="max-width:100%;max-height:95vh"></body></html>');
+    else w.document.write('<html><body style="margin:0"><iframe src="'+doc.data+'" style="width:100%;height:100vh;border:none"></iframe></body></html>');
+    w.document.close();
+}
+
+function removeJobPermit(permitType) {
+    if (!confirm('¿Eliminar?')) return;
+    delete jobPermitDocs[permitType];
+    updateJobPermitCardUI(permitType, false);
+}
+
+function updateJobPermitCardUI(permitType, uploaded) {
+    var card = document.getElementById('jpCard_' + permitType);
+    var status = document.getElementById('jpStatus_' + permitType);
+    var viewBtn = document.getElementById('jpView_' + permitType);
+    var removeBtn = document.getElementById('jpRemove_' + permitType);
+    if (!card) return;
+    if (uploaded && jobPermitDocs[permitType]) {
+        card.classList.add('doc-uploaded');
+        status.innerHTML = '<span class="doc-badge doc-uploaded-badge">✅ ' + jobPermitDocs[permitType].name + '</span>';
+        if (viewBtn) viewBtn.style.display = 'inline-block';
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+    } else {
+        card.classList.remove('doc-uploaded');
+        status.innerHTML = '<span class="doc-badge doc-missing">No subido</span>';
+        if (viewBtn) viewBtn.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+}
+
+async function saveJobPermits() {
+    if (!currentJobPermitId || !companyId) return;
+    var permitData = {};
+    JOB_PERMIT_TYPES.forEach(function(t) { if (jobPermitDocs[t]) permitData[t] = jobPermitDocs[t]; });
+    var res = await sbClient.from('jobs').update({ permits: permitData }).eq('id', currentJobPermitId);
+    if (res.error) alert('❌ Error: ' + res.error.message);
+    else alert('✅ Permisos guardados');
+    await loadJobs();
 }
 
 // ===== SEED DEMO DATA =====
