@@ -122,6 +122,7 @@
             <span class="nav-group-title">Principal</span>
             <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> Dashboard</a>
             <a href="#" onclick="showSection('calendar')" class="nav-link"><span>📅</span> Calendario</a>
+            <a href="#" onclick="showSection('inbox')" class="nav-link"><span>📬</span> Inbox</a>
             <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> Leads</a>
             <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> Dispatch</a>
           </div>
@@ -323,7 +324,12 @@
             <div class="card">
               <div class="card-top">
                 <h3>📅 Calendario de Citas</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <div class="cal-view-toggle">
+                    <button class="cal-view-btn active" id="calViewMonth" onclick="setCalView('month')">Mes</button>
+                    <button class="cal-view-btn" id="calViewWeek" onclick="setCalView('week')">Semana</button>
+                    <button class="cal-view-btn" id="calViewDay" onclick="setCalView('day')">Día</button>
+                  </div>
                   <button class="btn-secondary btn-sm" onclick="calPrev()" style="padding:6px 12px;">◀</button>
                   <span id="calMonthLabel" style="font-weight:700;font-size:15px;color:var(--primary);min-width:160px;text-align:center;"></span>
                   <button class="btn-secondary btn-sm" onclick="calNext()" style="padding:6px 12px;">▶</button>
@@ -374,12 +380,66 @@
 
               <!-- Calendar Grid -->
               <div id="calendarGrid" class="calendar-grid"></div>
+              <div id="calWeekGrid" class="cal-week-grid" style="display:none;"></div>
+              <div id="calDayGrid" class="cal-day-grid" style="display:none;"></div>
             </div>
 
             <!-- Day Detail -->
             <div class="card" style="margin-top:16px;">
               <h3 id="calDayTitle">📋 Citas del Día</h3>
               <div id="calDayAppts"></div>
+            </div>
+          </div>
+
+          <!-- ===== INBOX ===== -->
+          <div id="inbox-section" class="section">
+            <div class="card">
+              <div class="card-top">
+                <h3>📬 Inbox - Centro de Comunicación</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <select id="inboxFilter" onchange="renderInbox()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                    <option value="all">📋 Todas</option>
+                    <option value="call_out">📱 Llamadas Salientes</option>
+                    <option value="call_in">📲 Llamadas Entrantes</option>
+                    <option value="text">💬 Texto/SMS</option>
+                    <option value="email">📧 Email</option>
+                    <option value="visit">🏠 Visitas</option>
+                    <option value="follow_up">🔄 Follow-Ups</option>
+                  </select>
+                  <button class="btn-primary btn-sm" onclick="showInboxCompose()">+ Nueva Comunicación</button>
+                </div>
+              </div>
+              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Registro centralizado de todas las comunicaciones con clientes. Llamadas, textos, emails, visitas y follow-ups.</p>
+              
+              <div id="inboxComposeArea" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">📝 Registrar Comunicación</h4>
+                <form onsubmit="createInboxComm(event)">
+                  <div class="form-row">
+                    <div class="form-group"><label>Cliente</label>
+                      <select id="inboxClient" required>
+                        <option value="">Seleccionar cliente...</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Tipo</label>
+                      <select id="inboxType">
+                        <option value="call_out">📱 Llamada Saliente</option>
+                        <option value="call_in">📲 Llamada Entrante</option>
+                        <option value="text">💬 Texto/SMS</option>
+                        <option value="email">📧 Email</option>
+                        <option value="visit">🏠 Visita</option>
+                        <option value="follow_up">🔄 Follow-Up</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group"><label>Descripción</label><textarea id="inboxNote" rows="2" required placeholder="Resumen de la comunicación..."></textarea></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-sm">💾 Guardar</button>
+                    <button type="button" class="btn-secondary btn-sm" onclick="hideInboxCompose()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+              
+              <div id="inboxList"></div>
             </div>
           </div>
 
@@ -762,6 +822,9 @@
                     <option value="Service Plan">🛡️ Service Plan</option>
                   </select>
                   <button class="btn-secondary btn-sm" onclick="exportClientsCSV()" title="Exportar">📥 Exportar</button>
+                  <label class="btn-secondary btn-sm" style="cursor:pointer;" title="Importar CSV">📤 Importar CSV
+                    <input type="file" accept=".csv" onchange="importClientsCSV(this)" style="display:none;">
+                  </label>
                   <button class="btn-primary btn-sm" onclick="showClientForm()">+ Nuevo Cliente</button>
                 </div>
               </div>
