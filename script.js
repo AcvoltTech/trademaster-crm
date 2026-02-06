@@ -2800,16 +2800,25 @@ function renderClientsList() {
         var typeClass = cl.property_type === 'Comercial' ? 'tag-com' : cl.property_type === 'Industrial' ? 'tag-ind' : 'tag-res';
         if (cl.property_type) h += '<span class="client-tag ' + typeClass + '">' + cl.property_type + '</span> ';
         (cl.tags || []).forEach(function(t) {
-            var tc = t === 'VIP' ? 'tag-vip' : t === 'Service Plan' ? 'tag-sp' : 'tag-default';
+            var tc = t === 'VIP' ? 'tag-vip' : t === 'Plan de Servicio' ? 'tag-sp' : 'tag-default';
             h += '<span class="client-tag ' + tc + '">' + t + '</span> ';
         });
         return h;
     };
     
-    var srcLabels = { manual: '✋ Manual', lead: '🎯 Lead', invoice: '📄 Factura', referral: '🏠 Referencia' };
-    var h = '<table class="dispatch-table"><thead><tr><th>Cliente</th><th>Empresa</th><th>Contacto</th><th>Dirección</th><th>Tags</th><th>Acciones</th></tr></thead><tbody>';
+    // Bulk actions bar
+    var h = '<div id="clientBulkBar" class="client-bulk-bar" style="display:none;">';
+    h += '<span id="clientSelectedCount">0 seleccionados</span>';
+    h += '<button class="btn-sm" style="background:#ef4444;color:white;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;" onclick="deleteSelectedClients()">🗑️ Eliminar Seleccionados</button>';
+    h += '<button class="btn-secondary btn-sm" onclick="clearClientSelection()">Cancelar</button>';
+    h += '</div>';
+
+    h += '<table class="dispatch-table"><thead><tr>';
+    h += '<th style="width:36px;"><input type="checkbox" id="clientSelectAll" onchange="toggleAllClients(this.checked)" title="Seleccionar todos"></th>';
+    h += '<th>Cliente</th><th>Empresa</th><th>Contacto</th><th>Dirección</th><th>Tags</th><th>Acciones</th></tr></thead><tbody>';
     filtered.forEach(function(cl) {
-        h += '<tr>';
+        h += '<tr id="clientRow_' + cl.id + '">';
+        h += '<td><input type="checkbox" class="client-checkbox" value="' + cl.id + '" onchange="updateClientBulkBar()"></td>';
         h += '<td><a href="#" onclick="openClientProfile(\'' + cl.id + '\');return false;" style="color:var(--primary);font-weight:700;text-decoration:none;">' + cl.name + '</a></td>';
         h += '<td style="font-size:12px;color:var(--text-muted);">' + (cl.company || '—') + '</td>';
         h += '<td style="font-size:12px;">';
@@ -2818,14 +2827,57 @@ function renderClientsList() {
         h += '</td>';
         h += '<td style="font-size:11px;">' + (cl.address || '—') + '</td>';
         h += '<td>' + tagHTML(cl) + '</td>';
-        h += '<td><div class="job-actions">';
-        h += '<button class="btn-icon" onclick="openClientProfile(\'' + cl.id + '\')" title="Ver Perfil">👁️</button>';
-        h += '<button class="btn-icon" onclick="showClientForm(\'' + cl.id + '\')" title="Editar">✏️</button>';
-        h += '<button class="btn-icon" onclick="createApptForClient(\'' + cl.id + '\')" title="Crear Cita">📅</button>';
-        h += '<button class="btn-danger-sm" onclick="deleteClient(\'' + cl.id + '\')" style="padding:4px 8px;">X</button>';
+        h += '<td><div class="client-action-btns">';
+        h += '<button class="client-action-btn client-btn-view" onclick="openClientProfile(\'' + cl.id + '\')" title="Ver Perfil">👁️ Ver</button>';
+        h += '<button class="client-action-btn client-btn-edit" onclick="showClientForm(\'' + cl.id + '\')" title="Editar">✏️ Editar</button>';
+        h += '<button class="client-action-btn client-btn-delete" onclick="deleteClient(\'' + cl.id + '\')" title="Eliminar">🗑️</button>';
         h += '</div></td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+function toggleAllClients(checked) {
+    document.querySelectorAll('.client-checkbox').forEach(function(cb) { cb.checked = checked; });
+    updateClientBulkBar();
+}
+
+function updateClientBulkBar() {
+    var checked = document.querySelectorAll('.client-checkbox:checked');
+    var bar = document.getElementById('clientBulkBar');
+    var countSpan = document.getElementById('clientSelectedCount');
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        countSpan.textContent = checked.length + ' seleccionado' + (checked.length > 1 ? 's' : '');
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+function clearClientSelection() {
+    document.querySelectorAll('.client-checkbox').forEach(function(cb) { cb.checked = false; });
+    var selectAll = document.getElementById('clientSelectAll');
+    if (selectAll) selectAll.checked = false;
+    updateClientBulkBar();
+}
+
+async function deleteSelectedClients() {
+    var checked = document.querySelectorAll('.client-checkbox:checked');
+    var ids = [];
+    checked.forEach(function(cb) { ids.push(cb.value); });
+    if (ids.length === 0) return;
+    if (!confirm('¿Eliminar ' + ids.length + ' cliente' + (ids.length > 1 ? 's' : '') + '?\n\n⚠️ Esta acción no se puede deshacer.')) return;
+    
+    var deleted = 0;
+    for (var i = 0; i < ids.length; i++) {
+        try {
+            var res = await sbClient.from('clients').delete().eq('id', ids[i]);
+            if (!res.error) deleted++;
+        } catch(e) {}
+    }
+    
+    alert('✅ ' + deleted + ' cliente' + (deleted > 1 ? 's eliminados' : ' eliminado'));
+    await loadClients();
+    updateKPIs();
 }
 
 function exportClientsCSV() {
@@ -5494,17 +5546,56 @@ function startDashClock() {
 
 function initClockWidget() {
     startDashClock();
-    // Populate tech select
+    // Populate tech select with all available personnel
     var sel = document.getElementById('clockTechSelect');
     if (!sel) return;
-    sel.innerHTML = '<option value="">' + (currentLang === 'en' ? '-- Select Technician --' : '-- Seleccionar Técnico --') + '</option>';
-    techsData.forEach(function(t) {
-        sel.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
-    });
+    sel.innerHTML = '<option value="">' + (currentLang === 'en' ? '-- Select Person --' : '-- Seleccionar Persona --') + '</option>';
+    
+    // Add owner/admin from dispatch coordinator
+    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    if (dc.name) {
+        sel.innerHTML += '<option value="owner_dc">👔 ' + dc.name + ' (Coordinador)</option>';
+    }
+    
+    // Add logged in user / company owner
+    var settings = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+    var ownerName = settings.ownerName || settings.companyName || '';
+    if (ownerName && ownerName !== dc.name) {
+        sel.innerHTML += '<option value="owner_main">👔 ' + ownerName + ' (Dueño)</option>';
+    }
+    
+    // Add technicians from Supabase
+    if (techsData && techsData.length > 0) {
+        sel.innerHTML += '<option disabled>── Técnicos ──</option>';
+        techsData.forEach(function(t) {
+            sel.innerHTML += '<option value="' + t.id + '">🔧 ' + t.name + '</option>';
+        });
+    }
+    
+    // Add employees from payroll (localStorage)
+    var payrollEmployees = JSON.parse(localStorage.getItem('tm_payroll_employees_' + companyId) || '[]');
+    if (payrollEmployees.length > 0) {
+        sel.innerHTML += '<option disabled>── Empleados ──</option>';
+        payrollEmployees.forEach(function(emp) {
+            sel.innerHTML += '<option value="emp_' + emp.id + '">👷 ' + emp.name + '</option>';
+        });
+    }
+    
+    // Add manual entry option
+    sel.innerHTML += '<option disabled>──────────</option>';
+    sel.innerHTML += '<option value="__manual__">✏️ Escribir nombre manualmente...</option>';
+    
     // Restore active session
     var today = new Date().toISOString().split('T')[0];
     if (clockData.activeSession && clockData.activeSession.date === today) {
-        sel.value = clockData.activeSession.tech_id || '';
+        // Try to restore selection
+        var savedId = clockData.activeSession.tech_id || '';
+        if (savedId.indexOf('__custom_') === 0) {
+            // Custom name - add it as option
+            var customName = clockData.activeSession.tech_name || 'Personal';
+            sel.innerHTML += '<option value="' + savedId + '">' + customName + '</option>';
+        }
+        sel.value = savedId;
         document.getElementById('clockHourlyRate').value = clockData.activeSession.rate || 0;
         updateClockBtnState(true);
         startClockTimer();
@@ -5515,6 +5606,26 @@ function initClockWidget() {
 function onClockTechChange() {
     var techId = document.getElementById('clockTechSelect').value;
     if (!techId) return;
+    
+    // Handle manual entry
+    if (techId === '__manual__') {
+        var customName = prompt(currentLang === 'en' ? 'Enter person name:' : 'Escribe el nombre de la persona:');
+        if (!customName || !customName.trim()) {
+            document.getElementById('clockTechSelect').value = '';
+            return;
+        }
+        customName = customName.trim();
+        var customId = '__custom_' + Date.now();
+        var sel = document.getElementById('clockTechSelect');
+        var opt = document.createElement('option');
+        opt.value = customId;
+        opt.textContent = '👤 ' + customName;
+        opt.setAttribute('data-custom-name', customName);
+        sel.insertBefore(opt, sel.lastElementChild);
+        sel.value = customId;
+        return;
+    }
+    
     // Load saved rate for this tech
     var rates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}');
     var rate = rates[techId] || 0;
@@ -5551,13 +5662,30 @@ function toggleDashClockInOut() {
         var techId = document.getElementById('clockTechSelect').value;
         var rate = parseFloat(document.getElementById('clockHourlyRate').value) || 0;
         if (!techId) {
-            alert(currentLang === 'en' ? '¡Selecciona un técnico primero!' : '¡Selecciona un técnico primero!');
+            alert('¡Selecciona una persona primero!');
             return;
         }
+        // Resolve name from various sources
+        var techName = 'Personal';
         var tech = techsData.find(function(t) { return t.id === techId; });
+        if (tech) {
+            techName = tech.name;
+        } else if (techId === 'owner_dc') {
+            var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+            techName = dc.name || 'Coordinador';
+        } else if (techId === 'owner_main') {
+            var stg = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+            techName = stg.ownerName || stg.companyName || 'Dueño';
+        } else if (techId.indexOf('__custom_') === 0) {
+            var selOpt = document.getElementById('clockTechSelect').selectedOptions[0];
+            techName = selOpt ? selOpt.getAttribute('data-custom-name') || selOpt.textContent.replace('👤 ','') : 'Personal';
+        } else if (techId.indexOf('emp_') === 0) {
+            var selOpt2 = document.getElementById('clockTechSelect').selectedOptions[0];
+            techName = selOpt2 ? selOpt2.textContent.replace('👷 ','') : 'Empleado';
+        }
         clockData.activeSession = {
             tech_id: techId,
-            tech_name: tech ? tech.name : 'Técnico',
+            tech_name: techName,
             rate: rate,
             clockIn: new Date().toISOString(),
             clockOut: null,
@@ -6344,3 +6472,128 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 500);
 });
+
+// ============================================================
+// ===== TECHNICIANS SECTION - ADD TECH FORM =====
+// ============================================================
+function showTechFormInTechSection() {
+    document.getElementById('techFormContainerAlt').style.display = 'block';
+    document.getElementById('techFormContainerAlt').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideTechFormAlt() {
+    document.getElementById('techFormContainerAlt').style.display = 'none';
+}
+
+function previewTechPhotoAlt(input) {
+    if (!input.files || !input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('techPhotoPreviewAlt').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">';
+        window._techPhotoAlt = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+async function handleTechCreateAlt(e) {
+    e.preventDefault();
+    var name = document.getElementById('techNameAlt').value.trim();
+    if (!name) { alert('Ingresa el nombre del técnico'); return; }
+
+    var techData = {
+        company_id: companyId,
+        name: name,
+        phone: document.getElementById('techPhoneAlt').value.trim(),
+        email: document.getElementById('techEmailAlt').value.trim(),
+        specialty: document.getElementById('techSpecialtyAlt').value,
+        status: 'available'
+    };
+
+    try {
+        var res = await sbClient.from('technicians').insert(techData).select().single();
+        if (res.error) { alert('Error: ' + res.error.message); return; }
+        if (res.data) {
+            techsData.push(res.data);
+
+            // Save vehicle info
+            var vehicleInfo = {
+                vehicle: document.getElementById('techVehicleAlt').value,
+                plate: document.getElementById('techPlateAlt').value,
+                vin: document.getElementById('techVinAlt').value,
+                color: document.getElementById('techVehicleColorAlt').value
+            };
+            if (vehicleInfo.vehicle || vehicleInfo.plate) {
+                localStorage.setItem('techVehicle_' + res.data.id, JSON.stringify(vehicleInfo));
+            }
+
+            // Save photo
+            if (window._techPhotoAlt) {
+                localStorage.setItem('techPhoto_' + res.data.id, window._techPhotoAlt);
+                window._techPhotoAlt = null;
+            }
+
+            alert('✅ Técnico "' + name + '" creado exitosamente');
+            hideTechFormAlt();
+            e.target.reset();
+            document.getElementById('techPhotoPreviewAlt').innerHTML = '<span style="font-size:11px;color:var(--text-muted);text-align:center;">📷 Foto del<br>Técnico</span>';
+            renderTechniciansList();
+            renderTechFullList();
+            updateKPIs();
+        }
+    } catch(err) {
+        alert('Error al crear técnico: ' + err.message);
+    }
+}
+
+// Improve technicians full list rendering
+function renderTechFullList() {
+    var container = document.getElementById('techniciansFullList');
+    if (!container) return;
+    if (techsData.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px 20px;"><span style="font-size:48px;">👷</span><h3 style="color:var(--text-primary);margin:12px 0 8px;">Sin técnicos registrados</h3><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Agrega tu primer técnico para comenzar a despachar trabajos.</p><button class="btn-primary btn-sm" onclick="showTechFormInTechSection()">+ Agregar Primer Técnico</button></div>';
+        return;
+    }
+    var html = '<div class="tech-cards-grid">';
+    techsData.forEach(function(t) {
+        var photo = localStorage.getItem('techPhoto_' + t.id);
+        var vehicle = JSON.parse(localStorage.getItem('techVehicle_' + t.id) || '{}');
+        var statusColors = {available:'#10b981', busy:'#f59e0b', offline:'#94a3b8', on_job:'#3b82f6'};
+        var statusLabels = {available:'Disponible', busy:'Ocupado', offline:'Fuera de línea', on_job:'En trabajo'};
+        var statusColor = statusColors[t.status] || '#94a3b8';
+        var statusLabel = statusLabels[t.status] || t.status;
+        var jobCount = jobsData.filter(function(j) { return j.tech_id === t.id && j.status !== 'completed' && j.status !== 'cancelled'; }).length;
+
+        html += '<div class="tech-full-card">';
+        html += '<div class="tech-full-photo">';
+        if (photo) {
+            html += '<img src="' + photo + '" alt="' + t.name + '">';
+        } else {
+            var initials = t.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+            html += '<div class="tech-full-initials">' + initials + '</div>';
+        }
+        html += '<span class="tech-status-dot" style="background:' + statusColor + ';"></span>';
+        html += '</div>';
+        html += '<div class="tech-full-info">';
+        html += '<h4>' + t.name + '</h4>';
+        html += '<span class="badge" style="background:' + statusColor + '22;color:' + statusColor + ';">' + statusLabel + '</span>';
+        html += '<p style="font-size:11px;color:var(--text-muted);margin-top:4px;">🔧 ' + (t.specialty || 'General') + '</p>';
+        if (t.phone) html += '<p style="font-size:11px;color:var(--text-muted);">📱 ' + t.phone + '</p>';
+        if (t.email) html += '<p style="font-size:11px;color:var(--text-muted);">📧 ' + t.email + '</p>';
+        if (vehicle.vehicle) html += '<p style="font-size:11px;color:var(--text-muted);">🚐 ' + vehicle.vehicle + (vehicle.plate ? ' | ' + vehicle.plate : '') + '</p>';
+        html += '<p style="font-size:11px;margin-top:6px;"><strong style="color:var(--primary);">' + jobCount + '</strong> trabajos activos</p>';
+        html += '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Override showSection to call renderTechFullList when showing technicians
+var _origShowSection = window.showSection;
+if (_origShowSection && !window._showSectionPatched) {
+    window.showSection = function(name) {
+        _origShowSection(name);
+        if (name === 'technicians') renderTechFullList();
+    };
+    window._showSectionPatched = true;
+}
