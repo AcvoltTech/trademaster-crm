@@ -362,3 +362,19 @@ body {
     .cal-appts { display: none; }
     .cal-cell.has-appts::after { content:'●'; color:var(--accent); font-size:8px; display:block; text-align:center; }
 }
+
+/* ===== COMPANY DOCUMENTS ===== */
+.doc-upload-card{background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s}
+.doc-upload-card.doc-uploaded{border-color:#10b981;background:#f0fdf4}
+.doc-upload-card .doc-icon{font-size:28px;text-align:center}
+.doc-upload-card .doc-info{text-align:center}
+.doc-upload-card .doc-info strong{font-size:13px;color:var(--text-primary);display:block}
+.doc-upload-card .doc-info small{font-size:10px;color:var(--text-muted)}
+.doc-upload-card .doc-status{text-align:center}
+.doc-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:600}
+.doc-badge.doc-missing{background:#fef2f2;color:#ef4444;border:1px solid #fca5a5}
+.doc-badge.doc-uploaded-badge{background:#f0fdf4;color:#10b981;border:1px solid #86efac}
+.doc-badge.doc-expiring{background:#fffbeb;color:#d97706;border:1px solid #fcd34d}
+.doc-upload-card .doc-actions{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+.doc-upload-btn{cursor:pointer;padding:4px 12px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+.doc-upload-card .doc-expiry{text-align:center}
