@@ -98,7 +98,7 @@ function showDashboard() {
         document.getElementById('settingsCompanyName').value = window._companyInfo.name || '';
         document.getElementById('settingsPhone').value = window._companyInfo.phone || '';
         document.getElementById('settingsEmail').value = window._companyInfo.email || '';
-        if (window._companyInfo.contract_clauses) {
+        if (window._companyInfo.contract_clauses && window._companyInfo.contract_clauses.payment) {
             loadClausesFromData(window._companyInfo.contract_clauses);
         } else {
             loadDefaultClauses();
@@ -1468,6 +1468,40 @@ function presentEstimateToClient() {
     var notes = document.getElementById('estNotes').value;
     if (notes) html += '<div class="notes"><strong>Notas:</strong><br>' + notes + '</div>';
 
+    // ===== LEGAL TERMS (from editable clauses) =====
+    var cl = (window._companyInfo && window._companyInfo.contract_clauses) ? window._companyInfo.contract_clauses : null;
+    if (!cl || !cl.payment) {
+        var st = (cl && cl.state) || 'CA';
+        cl = (typeof defaultClausesByState !== 'undefined') ? (defaultClausesByState[st] || defaultClausesByState.CA) : null;
+    }
+    if (cl) {
+        html += '<div style="margin-top:24px;border-top:2px solid #10b981;padding-top:16px;">';
+        html += '<h3 style="font-size:13px;color:#10b981;margin-bottom:10px;">📋 TERMS & CONDITIONS</h3>';
+
+        function estClause(icon, title, text) {
+            if (!text) return '';
+            return '<div style="margin-bottom:10px;font-size:10px;line-height:1.5;color:#444;"><strong style="font-size:11px;color:#333;">' + icon + ' ' + title + '</strong><br>' + text.replace(/\n/g, '<br>') + '</div>';
+        }
+
+        html += estClause('💰', 'PAYMENT TERMS', cl.payment);
+
+        if (cl.cancel) {
+            html += '<div style="margin-bottom:10px;font-size:10px;line-height:1.5;padding:8px;border:1.5px solid #f47621;border-radius:6px;background:#fff8f0;">';
+            html += '<strong style="font-size:11px;color:#f47621;">⚠️ RIGHT TO CANCEL</strong><br>';
+            html += cl.cancel.replace(/\n/g, '<br>');
+            html += '</div>';
+        }
+
+        html += estClause('🔄', 'CANCELLATION & RESTOCKING', cl.restock);
+        html += estClause('🏛️', 'CONTRACTOR LICENSE', cl.license);
+        html += estClause('💵', 'DOWN PAYMENT', cl.downPayment);
+        html += estClause('🔗', 'MECHANICS LIEN WARNING', cl.lien);
+        html += estClause('🛡️', 'WARRANTY', cl.warranty);
+        html += estClause('🔒', 'PRIVACY POLICY', cl.privacy);
+        if (cl.custom) html += estClause('📝', 'ADDITIONAL TERMS', cl.custom);
+        html += '</div>';
+    }
+
     // Signature section with canvas pads
     html += '<div class="sig-section">';
     html += '<div class="sig-box"><label>✍️ Firma del Cliente</label><canvas id="sigClient" class="sig-canvas" width="300" height="120"></canvas>';
@@ -1478,9 +1512,10 @@ function presentEstimateToClient() {
     html += '<div class="date-box"><label>📅 Fecha</label><div class="date-display">' + dateStr + '</div></div>';
     html += '</div>';
 
-    // Print / Save bar
+    // Print / Save / Convert bar
     html += '<div class="print-bar">';
     html += '<button class="btn-print" onclick="window.print()">🖨️ Imprimir / PDF</button>';
+    html += '<button class="btn-save" onclick="window.opener.postMessage({action:\'convertEstimateToInvoice\'},\'*\');this.textContent=\'✅ Enviado!\';this.disabled=true;">📄 Convertir a Factura</button>';
     html += '</div>';
 
     html += '<p style="text-align:center;margin-top:20px;color:#999;font-size:11px;">Generado por Trade Master CRM | trademastersusa.org</p>';
@@ -1508,6 +1543,89 @@ function presentEstimateToClient() {
 }
 
 function generateEstimatePDF() { presentEstimateToClient(); }
+
+// Listen for "Convert to Invoice" message from estimate popup
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.action === 'convertEstimateToInvoice') {
+        convertEstimateToInvoice();
+    }
+});
+
+async function convertEstimateToInvoice() {
+    if (!companyId) return;
+    var decision = document.getElementById('estClientDecision').value;
+    var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
+    var taxRate = parseFloat(document.getElementById('estTax').value) || 0;
+    var scFee = serviceCallFee || 0;
+
+    // Build line items from estimate
+    var lines = [];
+    if (decision !== 'no') {
+        selectedEstItems.forEach(function(i) {
+            lines.push({
+                name: i.name,
+                qty: i.qty,
+                unit_price: i.price,
+                labor: i.labor,
+                total: (i.price + i.labor) * i.qty
+            });
+        });
+    }
+
+    // Calculate totals
+    var subtotal = 0;
+    lines.forEach(function(l) { subtotal += l.total; });
+    var discAmt = subtotal * (discount / 100);
+    var afterDisc = subtotal - discAmt;
+    var taxAmt = (afterDisc + scFee) * (taxRate / 100);
+    var total = afterDisc + scFee + taxAmt;
+
+    // Get client info from job if available
+    var clientName = '', clientPhone = '', clientEmail = '', clientAddr = '', techId = null, jobId = null;
+    var jobSel = document.getElementById('estJobSelect');
+    if (jobSel && jobSel.value) {
+        jobId = jobSel.value;
+        var job = jobsData.find(function(j) { return j.id === jobSel.value; });
+        if (job) {
+            clientName = job.client_name || job.title || '';
+            clientAddr = job.address || '';
+            techId = job.technician_id || null;
+        }
+    }
+
+    var invNumber = 'INV-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(Math.floor(Math.random()*9000)+1000);
+
+    var data = {
+        company_id: companyId,
+        invoice_number: invNumber,
+        job_id: jobId,
+        technician_id: techId,
+        client_name: clientName,
+        client_phone: clientPhone,
+        client_email: clientEmail,
+        client_address: clientAddr,
+        line_items: lines,
+        service_call_fee: scFee,
+        subtotal: subtotal,
+        discount_percent: discount,
+        discount_amount: discAmt,
+        tax_percent: taxRate,
+        tax_amount: taxAmt,
+        total: total,
+        balance_due: total,
+        amount_paid: 0,
+        notes: document.getElementById('estNotes').value || '',
+        status: 'draft'
+    };
+
+    var res = await sbClient.from('invoices').insert(data).select().single();
+    if (res.data) {
+        alert('✅ Factura ' + invNumber + ' creada por $' + total.toFixed(2) + '\n\nVe a Facturas para verla, editarla o enviarla.');
+        await loadInvoices();
+    } else {
+        alert('❌ Error al crear factura: ' + (res.error ? res.error.message : 'Error desconocido'));
+    }
+}
 
 // ===== INVOICES MODULE =====
 var invoicesData = [];
