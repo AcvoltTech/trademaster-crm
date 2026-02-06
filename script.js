@@ -357,20 +357,128 @@ async function loadJobs() {
 function renderJobsList() {
     var c = document.getElementById('jobsList');
     if (jobsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay trabajos pendientes.</p>'; return; }
+
+    var jobStatuses = ['pending','in_progress','completed','cancelled'];
+    var jobStatusLabels = {pending:'Pendiente',in_progress:'En Progreso',completed:'Completado',cancelled:'Cancelado'};
+
+    var priorities = ['low','medium','high','urgent'];
+    var priorityLabels = {low:'Baja',medium:'Normal',high:'Alta',urgent:'Urgente'};
+
     var h = '<table class="dispatch-table"><thead><tr><th>Trabajo</th><th>Prioridad</th><th>Técnico</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
     jobsData.forEach(function(j) {
-        var techName = j.technicians ? j.technicians.name : 'Sin asignar';
         var status = j.status || 'pending';
-        h += '<tr><td>' + j.title + '<br><span style="font-size:11px;color:#94a3b8;">' + (j.address || '') + '</span></td>';
-        h += '<td><span class="priority-badge ' + j.priority + '">' + j.priority + '</span></td>';
-        h += '<td>' + techName + '</td>';
-        h += '<td><span class="job-status ' + status + '">' + status + '</span></td>';
+        var priority = j.priority || 'medium';
+
+        // Tech dropdown
+        var techSelect = '<select class="inline-select" onchange="changeJobTech(\'' + j.id + '\', this.value)">';
+        techSelect += '<option value="">Sin asignar</option>';
+        techsData.forEach(function(t) { 
+            techSelect += '<option value="' + t.id + '"' + (j.technician_id === t.id ? ' selected' : '') + '>' + t.name + '</option>'; 
+        });
+        techSelect += '</select>';
+
+        // Status dropdown
+        var statusSelect = '<select class="inline-select" onchange="changeJobStatus(\'' + j.id + '\', this.value)">';
+        jobStatuses.forEach(function(s) { statusSelect += '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + jobStatusLabels[s] + '</option>'; });
+        statusSelect += '</select>';
+
+        // Priority dropdown
+        var prioSelect = '<select class="inline-select" onchange="changeJobPriority(\'' + j.id + '\', this.value)">';
+        priorities.forEach(function(p) { prioSelect += '<option value="' + p + '"' + (priority === p ? ' selected' : '') + '>' + priorityLabels[p] + '</option>'; });
+        prioSelect += '</select>';
+
+        h += '<tr><td><strong>' + j.title + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (j.address || '') + '</span>';
+        if (j.notes) h += '<br><span style="font-size:10px;color:#64748b;">📝 ' + j.notes + '</span>';
+        h += '</td>';
+        h += '<td>' + prioSelect + '</td>';
+        h += '<td>' + techSelect + '</td>';
+        h += '<td>' + statusSelect + '</td>';
         h += '<td><div class="job-actions">';
-        if (j.lat && j.lng) h += '<button class="btn-nav" onclick="navigateTo(' + j.lat + ',' + j.lng + ')">🧭 Navegar</button>';
+        h += '<button class="btn-icon btn-edit" onclick="editJob(\'' + j.id + '\')">✏️</button>';
+        if (j.lat && j.lng) h += '<button class="btn-nav" onclick="navigateTo(' + j.lat + ',' + j.lng + ')">🧭</button>';
+        if (j.lat && j.lng) h += '<button class="btn-icon" onclick="openStreetView(' + j.lat + ',' + j.lng + ')">📸</button>';
         h += '<button class="btn-danger-sm" onclick="deleteJob(\'' + j.id + '\')">X</button>';
         h += '</div></td></tr>';
     });
     c.innerHTML = h + '</tbody></table>';
+}
+
+function editJob(jobId) {
+    var j = jobsData.find(function(x) { return x.id === jobId; });
+    if (!j) return;
+    var modal = document.getElementById('editJobModal');
+    if (!modal) {
+        // Create modal
+        var div = document.createElement('div');
+        div.id = 'editJobModal';
+        div.className = 'edit-modal-overlay';
+        div.innerHTML = '<div class="edit-modal">' +
+            '<h3>✏️ Editar Trabajo</h3>' +
+            '<div class="form-group"><label>Título / Tipo de Trabajo</label><input type="text" id="editJobTitle"></div>' +
+            '<div class="form-group"><label>Tipo de Servicio</label>' +
+            '<select id="editJobService"><option value="Instalación AC">Instalación AC</option><option value="Reparación AC">Reparación AC</option><option value="Mantenimiento">Mantenimiento</option><option value="Calefacción">Calefacción</option><option value="Refrigeración">Refrigeración</option><option value="Ductos">Ductos</option><option value="Otro">Otro</option></select></div>' +
+            '<div class="form-group"><label>Dirección</label><input type="text" id="editJobAddress"><input type="hidden" id="editJobLat"><input type="hidden" id="editJobLng"></div>' +
+            '<div class="form-group"><label>Teléfono del Cliente</label><input type="tel" id="editJobPhone"></div>' +
+            '<div class="form-group"><label>Notas</label><textarea id="editJobNotes" rows="3"></textarea></div>' +
+            '<input type="hidden" id="editJobId">' +
+            '<div class="form-actions">' +
+            '<button class="btn-primary btn-sm" onclick="saveJobEdit()">💾 Guardar Cambios</button>' +
+            '<button class="btn-secondary btn-sm" onclick="closeEditJob()">Cancelar</button>' +
+            '</div></div>';
+        document.body.appendChild(div);
+        // Add geocoding to edit address
+        document.getElementById('editJobAddress').addEventListener('blur', function() {
+            if (this.value) geocodeAddress(this.value, 'editJobLat', 'editJobLng');
+        });
+        modal = div;
+    }
+    // Fill values
+    document.getElementById('editJobId').value = j.id;
+    document.getElementById('editJobTitle').value = j.title || '';
+    document.getElementById('editJobService').value = j.service_type || 'Otro';
+    document.getElementById('editJobAddress').value = j.address || '';
+    document.getElementById('editJobLat').value = j.lat || '';
+    document.getElementById('editJobLng').value = j.lng || '';
+    document.getElementById('editJobPhone').value = j.phone || '';
+    document.getElementById('editJobNotes').value = j.notes || '';
+    modal.style.display = 'flex';
+}
+
+function closeEditJob() { document.getElementById('editJobModal').style.display = 'none'; }
+
+async function saveJobEdit() {
+    var id = document.getElementById('editJobId').value;
+    var lat = document.getElementById('editJobLat').value;
+    var lng = document.getElementById('editJobLng').value;
+    var update = {
+        title: document.getElementById('editJobTitle').value,
+        service_type: document.getElementById('editJobService').value,
+        address: document.getElementById('editJobAddress').value,
+        phone: document.getElementById('editJobPhone').value,
+        notes: document.getElementById('editJobNotes').value
+    };
+    if (lat) update.lat = parseFloat(lat);
+    if (lng) update.lng = parseFloat(lng);
+    var res = await sbClient.from('work_orders').update(update).eq('id', id);
+    if (res.error) { alert('Error: ' + res.error.message); return; }
+    closeEditJob();
+    await loadJobs(); if (dispatchMap) updateDispatchMap();
+    alert('✅ Trabajo actualizado');
+}
+
+async function changeJobTech(jobId, techId) {
+    await sbClient.from('work_orders').update({ technician_id: techId || null }).eq('id', jobId);
+    await loadJobs(); if (dispatchMap) updateDispatchMap();
+}
+
+async function changeJobStatus(jobId, status) {
+    await sbClient.from('work_orders').update({ status: status }).eq('id', jobId);
+    await loadJobs(); updateKPIs();
+}
+
+async function changeJobPriority(jobId, priority) {
+    await sbClient.from('work_orders').update({ priority: priority }).eq('id', jobId);
+    await loadJobs();
 }
 
 async function deleteJob(id) {
