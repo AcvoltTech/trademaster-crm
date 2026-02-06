@@ -2597,14 +2597,7 @@ function renderPipeline() {
 // ===== SEED DEMO DATA =====
 async function seedDemoData() {
     if (!companyId) return;
-    // Check if data already exists
-    if (leadsData.length > 0 || clientsData.length > 0) return;
-
-    // Create demo technician
-    await sbClient.from('technicians').insert([
-        { company_id: companyId, name: 'Carlos Ramírez', phone: '(909) 555-1234', email: 'carlos@trademaster.com', specialty: 'HVAC', status: 'available' },
-        { company_id: companyId, name: 'Miguel Torres', phone: '(909) 555-5678', email: 'miguel@trademaster.com', specialty: 'Refrigeración', status: 'available' }
-    ]);
+    if (!confirm('¿Crear datos de demostración? (3 clientes, 1 lead, 2 citas)')) return;
 
     // Create demo clients
     var clientRes = await sbClient.from('clients').insert([
