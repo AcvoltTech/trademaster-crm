@@ -257,6 +257,57 @@ body {
 .status-select-offline { border-color: var(--text-muted) !important; color: var(--text-muted) !important; }
 .tracking-link-box { background: var(--bg-input); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: var(--primary); word-break: break-all; border: 1px solid var(--border); }
 
+/* ==================== CALENDAR ==================== */
+.cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-bottom: 2px; }
+.cal-day-header { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding: 8px 0; }
+.cal-body { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.cal-cell { min-height: 90px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg-card); transition: all 0.15s; }
+.cal-cell:hover { border-color: var(--accent); background: rgba(244,118,33,0.02); }
+.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell.today { border-color: var(--accent); background: rgba(244,118,33,0.04); }
+.cal-cell.today .cal-date { background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; }
+.cal-cell.has-appts { border-color: var(--primary); }
+.cal-date { font-size: 13px; font-weight: 600; color: var(--text-white); display: block; margin-bottom: 4px; }
+.cal-appts { display: flex; flex-direction: column; gap: 2px; }
+.cal-appt { font-size: 10px; padding: 2px 4px; background: rgba(244,118,33,0.1); color: var(--accent-dark); border-radius: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-left: 2px solid var(--accent); }
+.cal-appt.appt-done { background: rgba(16,185,129,0.1); color: var(--success); border-left-color: var(--success); }
+.cal-appt.appt-cancel { background: rgba(148,163,184,0.1); color: var(--text-muted); border-left-color: var(--text-muted); text-decoration: line-through; }
+.cal-more { font-size: 10px; color: var(--accent); font-weight: 600; padding: 2px 4px; }
+.appt-time { font-weight: 700; }
+.appt-card { margin-bottom: 10px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg-card); }
+.appt-card-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-input); border-bottom: 1px solid var(--border); }
+.appt-card-body { padding: 12px 14px; font-size: 13px; line-height: 1.6; }
+
+/* ==================== PIPELINE / CASHFLOW ==================== */
+.pipeline-chart { padding: 16px 0; }
+.pipeline-bars { display: flex; justify-content: space-between; align-items: flex-end; gap: 4px; padding: 0 4px; }
+.pipe-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.pipe-col.current .pipe-label { color: var(--accent); font-weight: 700; }
+.pipe-bar-container { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 1px; }
+.pipe-bar { width: 100%; max-width: 40px; border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s; }
+.pipe-paid { background: linear-gradient(180deg, var(--success) 0%, #059669 100%); }
+.pipe-pending { background: linear-gradient(180deg, var(--warning) 0%, #d97706 100%); }
+.pipe-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+.pipe-amount { font-size: 10px; font-weight: 700; color: var(--text-light); }
+.pipe-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; }
+.pipe-leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.pipe-dot { width: 10px; height: 10px; border-radius: 3px; }
+.pipe-dot.paid { background: var(--success); }
+.pipe-dot.pending { background: var(--warning); }
+.pipeline-stats { padding: 12px 0; }
+.pipeline-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.pipe-stat { text-align: center; padding: 10px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border); }
+.pipe-stat-val { display: block; font-size: 20px; font-weight: 800; }
+.pipe-stat-lbl { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+/* ==================== DASHBOARD DYNAMIC ==================== */
+.dash-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.dash-item:last-child { border-bottom: none; }
+.dash-icon { font-size: 18px; flex-shrink: 0; }
+.dash-info { flex: 1; min-width: 0; }
+.dash-info strong { display: block; font-size: 13px; color: var(--text-white); }
+.dash-info span { display: block; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ==================== INVOICES ==================== */
 .invoice-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
 .inv-kpi { padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
@@ -293,4 +344,8 @@ body {
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .content-area .form-row { grid-template-columns: 1fr; }
     .invoice-kpi-row { grid-template-columns: 1fr 1fr; }
+    .pipeline-stat-row { grid-template-columns: 1fr 1fr; }
+    .cal-cell { min-height: 60px; }
+    .cal-appts { display: none; }
+    .cal-cell.has-appts::after { content:'●'; color:var(--accent); font-size:8px; display:block; text-align:center; }
 }
