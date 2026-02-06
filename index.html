@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -95,7 +94,27 @@
     <div id="dashboardPage" class="dashboard-container" style="display:none;">
       <aside class="sidebar">
         <div class="sidebar-brand">
-          <span class="sidebar-icon">🔧</span>
+          <div class="brand-logo" id="companyLogo">
+            <svg viewBox="0 0 60 60" width="44" height="44">
+              <!-- Blue gauge (low pressure) -->
+              <circle cx="18" cy="22" r="14" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+              <circle cx="18" cy="22" r="11" fill="#1e293b"/>
+              <path d="M18 22 L12 15" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+              <text x="18" y="34" text-anchor="middle" fill="#3b82f6" font-size="4" font-weight="bold">LO</text>
+              <!-- Red gauge (high pressure) -->
+              <circle cx="42" cy="22" r="14" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+              <circle cx="42" cy="22" r="11" fill="#1e293b"/>
+              <path d="M42 22 L48 15" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+              <text x="42" y="34" text-anchor="middle" fill="#ef4444" font-size="4" font-weight="bold">HI</text>
+              <!-- Amp clamp meter -->
+              <rect x="22" y="42" width="16" height="14" rx="2" fill="#f59e0b" stroke="#ca8a04" stroke-width="1"/>
+              <text x="30" y="51" text-anchor="middle" fill="#1e293b" font-size="5" font-weight="bold">A</text>
+              <path d="M26 42 L26 38 Q26 36 28 36 L32 36 Q34 36 34 38 L34 42" fill="none" stroke="#f59e0b" stroke-width="2"/>
+              <!-- Connection hoses -->
+              <line x1="18" y1="36" x2="18" y2="44" stroke="#3b82f6" stroke-width="1.5"/>
+              <line x1="42" y1="36" x2="42" y2="44" stroke="#ef4444" stroke-width="1.5"/>
+            </svg>
+          </div>
           <h2>Trade Master</h2>
         </div>
         <nav class="sidebar-nav">
@@ -322,9 +341,9 @@
                   <div id="estJobInfo" style="display:none;" class="est-job-info"></div>
                 </div>
 
-                <!-- Step 2: Equipment Type -->
+                <!-- Step 2: Equipment Info -->
                 <div class="estimate-step">
-                  <h4>2. Tipo de Equipo</h4>
+                  <h4>2. Información del Equipo</h4>
                   <div class="equip-grid">
                     <button class="equip-btn" onclick="selectEquipType('ac_single')">❄️<br>AC Single Stage</button>
                     <button class="equip-btn" onclick="selectEquipType('heat_pump')">🔄<br>Heat Pump Single Stage</button>
@@ -333,17 +352,80 @@
                     <button class="equip-btn" onclick="selectEquipType('mini_split')">🌬️<br>Mini Split</button>
                     <button class="equip-btn" onclick="selectEquipType('package_unit')">📦<br>Package Unit</button>
                   </div>
+                  <div class="equip-details" style="margin-top:16px;">
+                    <div class="form-row">
+                      <div class="form-group"><label>Modelo #</label><input type="text" id="estModelNum" placeholder="Ej: GSX140361"></div>
+                      <div class="form-group"><label>Serial #</label><input type="text" id="estSerialNum" placeholder="Ej: 1234567890"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Marca</label>
+                        <select id="estBrand"><option value="">Seleccionar...</option><option>Goodman</option><option>Carrier</option><option>Trane</option><option>Lennox</option><option>Rheem</option><option>Ruud</option><option>York</option><option>Bryant</option><option>Amana</option><option>Daikin</option><option>Mitsubishi</option><option>Fujitsu</option><option>Bosch</option><option>American Standard</option><option>Otra</option></select>
+                      </div>
+                      <div class="form-group"><label>Edad Aprox (años)</label><input type="number" id="estEquipAge" placeholder="Ej: 15" min="0" max="50"></div>
+                    </div>
+                    <div class="form-group">
+                      <label>📷 Fotos del Equipo (modelo, serial, data plate, condición)</label>
+                      <input type="file" id="estPhotos" multiple accept="image/*" onchange="handleEquipPhotos(event)">
+                      <div id="photoPreviewGrid" class="photo-grid"></div>
+                    </div>
+                    <div id="equipAgeWarning" style="display:none;" class="age-warning">
+                      ⚠️ Equipo con más de 15 años — considerar reemplazo
+                      <button class="btn-warning-sm" onclick="referToAdvisor()">🏠 Referir a Home Advisor para Reemplazo</button>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Step 3: Select Components -->
+                <!-- Step 3: Service Call Fee -->
                 <div class="estimate-step">
-                  <h4>3. Componentes y Reparaciones</h4>
+                  <h4>3. Llamada de Servicio (Service Call)</h4>
+                  <p style="color:var(--text-muted);font-size:12px;margin-bottom:10px;">⚡ La llamada de servicio SIEMPRE se cobra — si el cliente decide hacer el trabajo, se cobra ADICIONAL a labor + partes.</p>
+                  <div class="service-call-options">
+                    <label class="sc-option" onclick="selectServiceCall(70)">
+                      <input type="radio" name="serviceCall" value="70">
+                      <div class="sc-card"><span class="sc-price">$70</span><span class="sc-desc">0-10 millas</span></div>
+                    </label>
+                    <label class="sc-option" onclick="selectServiceCall(120)">
+                      <input type="radio" name="serviceCall" value="120">
+                      <div class="sc-card"><span class="sc-price">$120</span><span class="sc-desc">10-20 millas</span></div>
+                    </label>
+                    <label class="sc-option" onclick="selectServiceCall(200)">
+                      <input type="radio" name="serviceCall" value="200">
+                      <div class="sc-card"><span class="sc-price">$200</span><span class="sc-desc">20+ millas</span></div>
+                    </label>
+                    <label class="sc-option" onclick="selectServiceCall(-1)">
+                      <input type="radio" name="serviceCall" value="custom">
+                      <div class="sc-card"><span class="sc-price">$?</span><span class="sc-desc">Custom</span></div>
+                    </label>
+                  </div>
+                  <div id="customServiceCall" style="display:none;margin-top:8px;">
+                    <div class="form-group"><label>Monto personalizado</label><input type="number" id="customSCAmount" placeholder="$" onchange="selectServiceCall(parseFloat(this.value))"></div>
+                  </div>
+                  <div class="form-row" style="margin-top:12px;">
+                    <div class="form-group">
+                      <label>¿Cliente aprueba el trabajo?</label>
+                      <select id="estClientDecision" onchange="handleClientDecision()">
+                        <option value="">Pendiente...</option>
+                        <option value="yes">✅ SÍ — Hacer reparación</option>
+                        <option value="no">❌ NO — Solo cobrar service call</option>
+                        <option value="replace">🔄 Quiere equipo nuevo (referir)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Horas de labor</label>
+                      <input type="number" id="estLaborHours" value="1" min="0.5" step="0.5" onchange="updateEstimateTotals()">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 4: Select Components (only if approved) -->
+                <div class="estimate-step" id="componentsStep">
+                  <h4>4. Componentes y Reparaciones</h4>
                   <div id="componentsList"></div>
                 </div>
 
-                <!-- Step 4: Summary -->
+                <!-- Step 5: Summary -->
                 <div class="estimate-step">
-                  <h4>4. Resumen del Estimado</h4>
+                  <h4>5. Resumen del Estimado</h4>
                   <div id="estimateSummary"></div>
                   <div class="form-row" style="margin-top:12px;">
                     <div class="form-group"><label>Descuento (%)</label><input type="number" id="estDiscount" value="0" min="0" max="100" onchange="updateEstimateTotals()"></div>
@@ -369,6 +451,17 @@
             <div class="card">
               <h3>Configuración de la Empresa</h3>
               <div class="settings-form">
+                <div class="form-group">
+                  <label>Logo de la Empresa</label>
+                  <div class="logo-upload-area">
+                    <div id="logoPreview" class="logo-preview">
+                      <span>Haz clic para subir logo</span>
+                    </div>
+                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)" style="display:none;">
+                    <button class="btn-secondary btn-sm" onclick="document.getElementById('logoFileInput').click()">📷 Cambiar Logo</button>
+                    <button class="btn-secondary btn-sm" onclick="resetLogo()">↩️ Logo Default</button>
+                  </div>
+                </div>
                 <div class="form-group"><label>Nombre de la Empresa</label><input type="text" id="settingsCompanyName" placeholder="Nombre"></div>
                 <div class="form-group"><label>Teléfono</label><input type="tel" id="settingsPhone" placeholder="Teléfono"></div>
                 <div class="form-group"><label>Email</label><input type="email" id="settingsEmail" placeholder="Email"></div>
