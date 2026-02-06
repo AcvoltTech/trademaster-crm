@@ -117,6 +117,7 @@ function showSection(name) {
     if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
     if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
     if (name === 'technicians') { renderTechFullList(); generateTrackingLinks(); }
+    if (name === 'jobs') { populateEstimateJobs(); }
 }
 
 // ===== LEADS =====
@@ -748,3 +749,342 @@ document.addEventListener('DOMContentLoaded', async function() {
     var jobAddr = document.getElementById('jobAddress');
     if (jobAddr) jobAddr.addEventListener('blur', function() { if (this.value) geocodeAddress(this.value, 'jobLat', 'jobLng'); });
 });
+
+// ===== ESTIMATE / PRICING CATALOG =====
+var selectedEstItems = [];
+var currentEquipType = null;
+
+// Component catalog with pricing per equipment type
+var componentCatalog = {
+    ac_single: {
+        label: '❄️ AC Single Stage',
+        components: [
+            { cat: 'Compresor', name: 'Compresor Single Stage (reemplazo)', price: 1850, labor: 650 },
+            { cat: 'Compresor', name: 'Compresor - Diagnóstico y recarga', price: 85, labor: 150 },
+            { cat: 'Condensador', name: 'Condensador de arranque (Start Capacitor)', price: 35, labor: 95 },
+            { cat: 'Condensador', name: 'Condensador de marcha (Run Capacitor)', price: 25, labor: 95 },
+            { cat: 'Condensador', name: 'Condensador Dual Run', price: 45, labor: 95 },
+            { cat: 'Motor', name: 'Motor de Condensador (Condenser Fan Motor)', price: 285, labor: 185 },
+            { cat: 'Motor', name: 'Motor del Evaporador (Blower Motor)', price: 350, labor: 225 },
+            { cat: 'Contactor', name: 'Contactor (reemplazo)', price: 45, labor: 95 },
+            { cat: 'Refrigerante', name: 'R-410A (por libra)', price: 85, labor: 0 },
+            { cat: 'Refrigerante', name: 'R-22 (por libra)', price: 165, labor: 0 },
+            { cat: 'Coil', name: 'Evaporator Coil (reemplazo)', price: 850, labor: 450 },
+            { cat: 'Coil', name: 'Condenser Coil (reemplazo)', price: 750, labor: 350 },
+            { cat: 'Coil', name: 'Limpieza de Coil (evaporador)', price: 0, labor: 185 },
+            { cat: 'Coil', name: 'Limpieza de Coil (condensador)', price: 0, labor: 125 },
+            { cat: 'Válvula', name: 'TXV / Válvula de Expansión', price: 185, labor: 285 },
+            { cat: 'Válvula', name: 'Válvula Reversible (Check Valve)', price: 65, labor: 150 },
+            { cat: 'Eléctrico', name: 'Transformer 24V', price: 35, labor: 85 },
+            { cat: 'Eléctrico', name: 'Relay / Secuenciador', price: 45, labor: 95 },
+            { cat: 'Eléctrico', name: 'Disconnect Box (reemplazo)', price: 55, labor: 95 },
+            { cat: 'Eléctrico', name: 'Whip eléctrico (reemplazo)', price: 45, labor: 75 },
+            { cat: 'Termostato', name: 'Termostato Básico (Honeywell)', price: 85, labor: 95 },
+            { cat: 'Termostato', name: 'Termostato Smart (Ecobee/Nest)', price: 250, labor: 125 },
+            { cat: 'Ductos', name: 'Reparación de ducto flexible', price: 45, labor: 150 },
+            { cat: 'Ductos', name: 'Sello de ductos (Duct Seal)', price: 25, labor: 185 },
+            { cat: 'Filtro', name: 'Filtro estándar (1")', price: 15, labor: 0 },
+            { cat: 'Filtro', name: 'Filtro HEPA / Media Filter (4")', price: 65, labor: 45 },
+            { cat: 'Drenaje', name: 'Limpieza de línea de drenaje', price: 0, labor: 125 },
+            { cat: 'Drenaje', name: 'Float Switch (reemplazo)', price: 25, labor: 75 },
+            { cat: 'Servicio', name: 'Tune-Up / Mantenimiento Completo', price: 0, labor: 185 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 },
+            { cat: 'Servicio', name: 'Emergency / After Hours', price: 0, labor: 175 }
+        ]
+    },
+    heat_pump: {
+        label: '🔄 Heat Pump Single Stage',
+        components: [
+            { cat: 'Compresor', name: 'Compresor Heat Pump (reemplazo)', price: 2100, labor: 750 },
+            { cat: 'Compresor', name: 'Compresor - Diagnóstico y recarga', price: 85, labor: 150 },
+            { cat: 'Condensador', name: 'Condensador de arranque', price: 35, labor: 95 },
+            { cat: 'Condensador', name: 'Condensador de marcha', price: 25, labor: 95 },
+            { cat: 'Condensador', name: 'Condensador Dual Run', price: 45, labor: 95 },
+            { cat: 'Motor', name: 'Motor de Condensador', price: 285, labor: 185 },
+            { cat: 'Motor', name: 'Motor del Evaporador (Blower)', price: 350, labor: 225 },
+            { cat: 'Contactor', name: 'Contactor (reemplazo)', price: 45, labor: 95 },
+            { cat: 'Válvula', name: 'Reversing Valve (4-Way Valve)', price: 385, labor: 450 },
+            { cat: 'Válvula', name: 'TXV / Válvula de Expansión', price: 185, labor: 285 },
+            { cat: 'Válvula', name: 'Check Valve', price: 65, labor: 150 },
+            { cat: 'Defrost', name: 'Defrost Board / Timer', price: 125, labor: 150 },
+            { cat: 'Defrost', name: 'Defrost Sensor / Thermostat', price: 35, labor: 95 },
+            { cat: 'Refrigerante', name: 'R-410A (por libra)', price: 85, labor: 0 },
+            { cat: 'Coil', name: 'Evaporator Coil (reemplazo)', price: 850, labor: 450 },
+            { cat: 'Coil', name: 'Condenser Coil (reemplazo)', price: 750, labor: 350 },
+            { cat: 'Coil', name: 'Limpieza de Coils', price: 0, labor: 185 },
+            { cat: 'Eléctrico', name: 'Transformer 24V', price: 35, labor: 85 },
+            { cat: 'Eléctrico', name: 'Disconnect Box', price: 55, labor: 95 },
+            { cat: 'Eléctrico', name: 'Heat Strips / Aux Heat Element', price: 185, labor: 195 },
+            { cat: 'Termostato', name: 'Termostato Heat Pump Compatible', price: 125, labor: 95 },
+            { cat: 'Termostato', name: 'Termostato Smart (Ecobee/Nest)', price: 250, labor: 125 },
+            { cat: 'Servicio', name: 'Tune-Up / Mantenimiento Completo', price: 0, labor: 185 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 }
+        ]
+    },
+    furnace_80: {
+        label: '🔥 Furnace 80% AFUE - Cat I Induced Draft',
+        components: [
+            { cat: 'Motor', name: 'Inducer Motor (Draft Inducer)', price: 350, labor: 250 },
+            { cat: 'Motor', name: 'Blower Motor (reemplazo)', price: 350, labor: 225 },
+            { cat: 'Motor', name: 'Blower Motor Capacitor', price: 25, labor: 85 },
+            { cat: 'Ignición', name: 'Hot Surface Ignitor (HSI)', price: 45, labor: 95 },
+            { cat: 'Ignición', name: 'Spark Ignitor Module', price: 125, labor: 125 },
+            { cat: 'Ignición', name: 'Pilot Assembly (standing pilot)', price: 75, labor: 125 },
+            { cat: 'Sensor', name: 'Flame Sensor (limpieza/reemplazo)', price: 25, labor: 85 },
+            { cat: 'Sensor', name: 'Limit Switch (High Limit)', price: 35, labor: 95 },
+            { cat: 'Sensor', name: 'Rollout Switch', price: 25, labor: 85 },
+            { cat: 'Sensor', name: 'Pressure Switch', price: 45, labor: 95 },
+            { cat: 'Gas Valve', name: 'Gas Valve (reemplazo)', price: 285, labor: 195 },
+            { cat: 'Gas Valve', name: 'Gas Valve - ajuste/calibración', price: 0, labor: 125 },
+            { cat: 'Board', name: 'Control Board / Circuit Board', price: 385, labor: 195 },
+            { cat: 'Board', name: 'Sequencer / Fan Relay', price: 45, labor: 95 },
+            { cat: 'Intercambiador', name: 'Heat Exchanger (reemplazo)', price: 1250, labor: 850 },
+            { cat: 'Intercambiador', name: 'Heat Exchanger - Inspección/Crack Test', price: 0, labor: 150 },
+            { cat: 'Eléctrico', name: 'Transformer 24V', price: 35, labor: 85 },
+            { cat: 'Eléctrico', name: 'Thermocouple', price: 25, labor: 75 },
+            { cat: 'Filtro', name: 'Filtro estándar', price: 15, labor: 0 },
+            { cat: 'Filtro', name: 'Filtro Media 4"', price: 65, labor: 45 },
+            { cat: 'Ductos', name: 'Flue Pipe / Vent repair', price: 65, labor: 150 },
+            { cat: 'Termostato', name: 'Termostato Básico', price: 85, labor: 95 },
+            { cat: 'Termostato', name: 'Termostato Smart', price: 250, labor: 125 },
+            { cat: 'Seguridad', name: 'CO Detector (instalación)', price: 45, labor: 65 },
+            { cat: 'Servicio', name: 'Furnace Tune-Up Completo', price: 0, labor: 165 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 },
+            { cat: 'Servicio', name: 'Emergency / After Hours', price: 0, labor: 175 }
+        ]
+    },
+    furnace_90: {
+        label: '🔥 Furnace 90%+ AFUE - Cat IV Condensing',
+        components: [
+            { cat: 'Motor', name: 'Inducer Motor (Draft Inducer)', price: 425, labor: 275 },
+            { cat: 'Motor', name: 'Blower Motor ECM', price: 550, labor: 275 },
+            { cat: 'Motor', name: 'Blower Motor Capacitor', price: 25, labor: 85 },
+            { cat: 'Ignición', name: 'Hot Surface Ignitor', price: 45, labor: 95 },
+            { cat: 'Sensor', name: 'Flame Sensor', price: 25, labor: 85 },
+            { cat: 'Sensor', name: 'Limit Switch', price: 35, labor: 95 },
+            { cat: 'Sensor', name: 'Pressure Switch', price: 55, labor: 95 },
+            { cat: 'Sensor', name: 'Condensate Pressure Switch', price: 45, labor: 95 },
+            { cat: 'Gas Valve', name: 'Gas Valve (reemplazo)', price: 325, labor: 225 },
+            { cat: 'Board', name: 'Control Board (Integrated)', price: 485, labor: 225 },
+            { cat: 'Intercambiador', name: 'Primary Heat Exchanger', price: 1450, labor: 950 },
+            { cat: 'Intercambiador', name: 'Secondary Heat Exchanger', price: 1250, labor: 850 },
+            { cat: 'Drenaje', name: 'Condensate Trap (limpieza/reemplazo)', price: 25, labor: 85 },
+            { cat: 'Drenaje', name: 'Condensate Pump', price: 85, labor: 95 },
+            { cat: 'Drenaje', name: 'Condensate Line (PVC repair)', price: 15, labor: 95 },
+            { cat: 'Ductos', name: 'PVC Vent Pipe repair', price: 45, labor: 150 },
+            { cat: 'Ductos', name: 'PVC Intake Pipe repair', price: 45, labor: 125 },
+            { cat: 'Eléctrico', name: 'Transformer 24V', price: 35, labor: 85 },
+            { cat: 'Termostato', name: 'Termostato Smart', price: 250, labor: 125 },
+            { cat: 'Servicio', name: 'Furnace Tune-Up Completo', price: 0, labor: 185 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 }
+        ]
+    },
+    mini_split: {
+        label: '🌬️ Mini Split',
+        components: [
+            { cat: 'Compresor', name: 'Compresor Mini Split', price: 1650, labor: 550 },
+            { cat: 'Board', name: 'PCB Indoor Unit', price: 285, labor: 175 },
+            { cat: 'Board', name: 'PCB Outdoor Unit', price: 325, labor: 195 },
+            { cat: 'Motor', name: 'Fan Motor Indoor', price: 185, labor: 150 },
+            { cat: 'Motor', name: 'Fan Motor Outdoor', price: 225, labor: 165 },
+            { cat: 'Sensor', name: 'Thermistor Sensor', price: 25, labor: 75 },
+            { cat: 'Refrigerante', name: 'R-410A (por libra)', price: 85, labor: 0 },
+            { cat: 'Drenaje', name: 'Drain Pump (reemplazo)', price: 65, labor: 95 },
+            { cat: 'Línea', name: 'Line Set (por pie)', price: 12, labor: 15 },
+            { cat: 'Servicio', name: 'Limpieza profunda Indoor/Outdoor', price: 0, labor: 225 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 }
+        ]
+    },
+    package_unit: {
+        label: '📦 Package Unit',
+        components: [
+            { cat: 'Compresor', name: 'Compresor Package Unit', price: 2200, labor: 750 },
+            { cat: 'Motor', name: 'Condenser Fan Motor', price: 285, labor: 195 },
+            { cat: 'Motor', name: 'Blower Motor', price: 375, labor: 250 },
+            { cat: 'Condensador', name: 'Dual Run Capacitor', price: 45, labor: 95 },
+            { cat: 'Contactor', name: 'Contactor', price: 45, labor: 95 },
+            { cat: 'Gas Valve', name: 'Gas Valve', price: 285, labor: 195 },
+            { cat: 'Ignición', name: 'Hot Surface Ignitor', price: 45, labor: 95 },
+            { cat: 'Board', name: 'Control Board', price: 385, labor: 195 },
+            { cat: 'Coil', name: 'Evaporator Coil', price: 950, labor: 550 },
+            { cat: 'Refrigerante', name: 'R-410A (por libra)', price: 85, labor: 0 },
+            { cat: 'Servicio', name: 'Tune-Up Completo', price: 0, labor: 195 },
+            { cat: 'Servicio', name: 'Service Call / Diagnóstico', price: 0, labor: 89 }
+        ]
+    }
+};
+
+function selectEquipType(type) {
+    currentEquipType = type;
+    selectedEstItems = [];
+    document.querySelectorAll('.equip-btn').forEach(function(b) { b.classList.remove('selected'); });
+    event.target.closest('.equip-btn').classList.add('selected');
+    renderComponentList();
+}
+
+function renderComponentList() {
+    var c = document.getElementById('componentsList');
+    if (!currentEquipType) { c.innerHTML = '<p class="empty-msg">Selecciona un tipo de equipo primero</p>'; return; }
+    var equip = componentCatalog[currentEquipType];
+    var cats = {};
+    equip.components.forEach(function(comp) {
+        if (!cats[comp.cat]) cats[comp.cat] = [];
+        cats[comp.cat].push(comp);
+    });
+
+    var h = '<div class="comp-catalog">';
+    Object.keys(cats).forEach(function(cat) {
+        h += '<div class="comp-category"><h5>' + cat + '</h5>';
+        cats[cat].forEach(function(comp, idx) {
+            var total = comp.price + comp.labor;
+            var compId = currentEquipType + '_' + cat + '_' + idx;
+            var isSelected = selectedEstItems.find(function(s) { return s.id === compId; });
+            h += '<div class="comp-item ' + (isSelected ? 'selected' : '') + '" onclick="toggleComponent(\'' + compId + '\')">';
+            h += '<div class="comp-info"><span class="comp-name">' + comp.name + '</span>';
+            h += '<span class="comp-detail">Parte: $' + comp.price.toFixed(0) + ' | Labor: $' + comp.labor.toFixed(0) + '</span></div>';
+            h += '<div class="comp-price">$' + total.toFixed(0) + '</div>';
+            if (isSelected) h += '<span class="comp-qty">x<input type="number" value="' + isSelected.qty + '" min="1" max="99" onclick="event.stopPropagation()" onchange="updateCompQty(\'' + compId + '\', this.value)"></span>';
+            h += '</div>';
+        });
+        h += '</div>';
+    });
+    c.innerHTML = h + '</div>';
+    updateEstimateSummary();
+}
+
+function toggleComponent(compId) {
+    var idx = selectedEstItems.findIndex(function(s) { return s.id === compId; });
+    if (idx >= 0) { selectedEstItems.splice(idx, 1); }
+    else {
+        var parts = compId.split('_');
+        var type = parts[0] + '_' + parts[1];
+        var cat = parts.slice(2, parts.length - 1).join('_');
+        var compIdx = parseInt(parts[parts.length - 1]);
+        // Find the component
+        var equip = componentCatalog[currentEquipType];
+        var catComps = {};
+        equip.components.forEach(function(c) { if (!catComps[c.cat]) catComps[c.cat] = []; catComps[c.cat].push(c); });
+        var allByOrder = equip.components;
+        var counter = {};
+        var found = null;
+        equip.components.forEach(function(c) {
+            if (!counter[c.cat]) counter[c.cat] = 0;
+            var thisId = currentEquipType + '_' + c.cat + '_' + counter[c.cat];
+            if (thisId === compId) found = c;
+            counter[c.cat]++;
+        });
+        if (found) selectedEstItems.push({ id: compId, name: found.name, price: found.price, labor: found.labor, qty: 1 });
+    }
+    renderComponentList();
+}
+
+function updateCompQty(compId, qty) {
+    var item = selectedEstItems.find(function(s) { return s.id === compId; });
+    if (item) { item.qty = parseInt(qty) || 1; updateEstimateSummary(); }
+}
+
+function updateEstimateSummary() {
+    var c = document.getElementById('estimateSummary');
+    if (selectedEstItems.length === 0) { c.innerHTML = '<p class="empty-msg">Selecciona componentes arriba</p>'; document.getElementById('estimateTotals').innerHTML = ''; return; }
+    var h = '<table class="est-table"><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th><th></th></tr></thead><tbody>';
+    selectedEstItems.forEach(function(item) {
+        var lineTotal = (item.price + item.labor) * item.qty;
+        h += '<tr><td>' + item.name + '</td><td>' + item.qty + '</td>';
+        h += '<td>$' + (item.price * item.qty).toFixed(2) + '</td>';
+        h += '<td>$' + (item.labor * item.qty).toFixed(2) + '</td>';
+        h += '<td><strong>$' + lineTotal.toFixed(2) + '</strong></td>';
+        h += '<td><button class="btn-danger-sm" onclick="removeEstItem(\'' + item.id + '\')">X</button></td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+    updateEstimateTotals();
+}
+
+function removeEstItem(compId) {
+    selectedEstItems = selectedEstItems.filter(function(s) { return s.id !== compId; });
+    renderComponentList();
+}
+
+function updateEstimateTotals() {
+    var subtotal = 0, partsTotal = 0, laborTotal = 0;
+    selectedEstItems.forEach(function(item) {
+        partsTotal += item.price * item.qty;
+        laborTotal += item.labor * item.qty;
+    });
+    subtotal = partsTotal + laborTotal;
+    var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
+    var discountAmt = subtotal * (discount / 100);
+    var afterDiscount = subtotal - discountAmt;
+    var taxRate = parseFloat(document.getElementById('estTax').value) || 0;
+    var taxAmt = afterDiscount * (taxRate / 100);
+    var total = afterDiscount + taxAmt;
+
+    var h = '<div class="totals-grid">';
+    h += '<div class="total-row"><span>Partes:</span><span>$' + partsTotal.toFixed(2) + '</span></div>';
+    h += '<div class="total-row"><span>Labor:</span><span>$' + laborTotal.toFixed(2) + '</span></div>';
+    h += '<div class="total-row"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
+    if (discount > 0) h += '<div class="total-row discount"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
+    h += '<div class="total-row"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
+    h += '<div class="total-row grand"><span>TOTAL:</span><span>$' + total.toFixed(2) + '</span></div>';
+    h += '</div>';
+    document.getElementById('estimateTotals').innerHTML = h;
+}
+
+function loadEstimateJob() {
+    var sel = document.getElementById('estJobSelect');
+    var info = document.getElementById('estJobInfo');
+    var job = jobsData.find(function(j) { return j.id === sel.value; });
+    if (!job) { info.style.display = 'none'; return; }
+    var techName = job.technicians ? job.technicians.name : 'Sin asignar';
+    info.innerHTML = '<strong>' + job.title + '</strong> | 📍 ' + (job.address || '') + ' | 👷 ' + techName;
+    info.style.display = 'block';
+}
+
+function populateEstimateJobs() {
+    var sel = document.getElementById('estJobSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Seleccionar trabajo...</option>';
+    jobsData.forEach(function(j) { sel.innerHTML += '<option value="' + j.id + '">' + j.title + ' - ' + (j.address || '') + '</option>'; });
+}
+
+function presentEstimateToClient() {
+    if (selectedEstItems.length === 0) { alert('Agrega componentes primero'); return; }
+    var equip = componentCatalog[currentEquipType];
+    var discount = parseFloat(document.getElementById('estDiscount').value) || 0;
+    var taxRate = parseFloat(document.getElementById('estTax').value) || 0;
+    var subtotal = 0;
+    selectedEstItems.forEach(function(i) { subtotal += (i.price + i.labor) * i.qty; });
+    var discountAmt = subtotal * (discount / 100);
+    var afterDiscount = subtotal - discountAmt;
+    var taxAmt = afterDiscount * (taxRate / 100);
+    var total = afterDiscount + taxAmt;
+
+    var w = window.open('', '_blank');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Estimado - Trade Master</title>';
+    html += '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#f9fafb}';
+    html += '.header{text-align:center;padding:20px;border-bottom:3px solid #10b981;margin-bottom:20px}';
+    html += '.header h1{color:#10b981;font-size:24px}.header p{color:#666;font-size:14px}';
+    html += 'table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#10b981;color:white;padding:10px;text-align:left;font-size:13px}';
+    html += 'td{padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px}.total-section{margin-top:20px;text-align:right}';
+    html += '.total-line{display:flex;justify-content:flex-end;gap:40px;padding:4px 0;font-size:14px}.grand{font-size:20px;font-weight:bold;color:#10b981;border-top:2px solid #10b981;padding-top:8px;margin-top:8px}';
+    html += '.notes{margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;font-size:13px}.sig{margin-top:40px;display:flex;gap:40px}.sig-line{flex:1;border-top:1px solid #333;padding-top:8px;font-size:12px;color:#666}';
+    html += '@media print{body{padding:0}}</style></head><body>';
+    html += '<div class="header"><h1>🔧 Trade Master</h1><p>Estimado de Servicio</p><p style="margin-top:8px;">' + equip.label + '</p></div>';
+    html += '<table><thead><tr><th>Componente</th><th>Cant</th><th>Parte</th><th>Labor</th><th>Total</th></tr></thead><tbody>';
+    selectedEstItems.forEach(function(i) {
+        html += '<tr><td>' + i.name + '</td><td>' + i.qty + '</td><td>$' + (i.price*i.qty).toFixed(2) + '</td><td>$' + (i.labor*i.qty).toFixed(2) + '</td><td><strong>$' + ((i.price+i.labor)*i.qty).toFixed(2) + '</strong></td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="total-section"><div class="total-line"><span>Subtotal:</span><span>$' + subtotal.toFixed(2) + '</span></div>';
+    if (discount > 0) html += '<div class="total-line"><span>Descuento (' + discount + '%):</span><span>-$' + discountAmt.toFixed(2) + '</span></div>';
+    html += '<div class="total-line"><span>Tax (' + taxRate + '%):</span><span>$' + taxAmt.toFixed(2) + '</span></div>';
+    html += '<div class="total-line grand"><span>TOTAL:</span><span>$' + total.toFixed(2) + '</span></div></div>';
+    var notes = document.getElementById('estNotes').value;
+    if (notes) html += '<div class="notes"><strong>Notas:</strong><br>' + notes + '</div>';
+    html += '<div class="sig"><div class="sig-line">Firma del Cliente</div><div class="sig-line">Firma del Técnico</div><div class="sig-line">Fecha</div></div>';
+    html += '<p style="text-align:center;margin-top:30px;color:#999;font-size:11px;">Generado por Trade Master CRM | trademastersusa.org</p>';
+    html += '</body></html>';
+    w.document.write(html);
+    w.document.close();
+}
+
+function generateEstimatePDF() { presentEstimateToClient(); }
