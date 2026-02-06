@@ -167,7 +167,10 @@ function renderLeadsTable() {
         statusSelect += '</select>';
 
         h += '<tr><td><strong>' + l.name + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + (l.email || '') + '</span></td>';
-        h += '<td>' + l.phone + '</td><td>' + l.service + '</td>';
+        h += '<td>' + l.phone + '<div class="contact-btns">';
+        h += '<a href="tel:' + l.phone + '" class="btn-call">📞 Llamar</a>';
+        h += '<a href="sms:' + l.phone + '" class="btn-text">💬 Texto</a>';
+        h += '</div></td><td>' + l.service + '</td>';
         h += '<td>' + statusSelect + '</td>';
         h += '<td>';
         if (assignedTech) { h += '<span style="color:var(--primary);font-weight:600;">' + assignedTech + '</span>'; }
@@ -244,7 +247,8 @@ function renderTechList() {
         h += '<td><span class="tech-status ' + t.status + '">' + t.status + '</span></td>';
         h += '<td style="font-size:11px;">' + locTime + '</td>';
         h += '<td><div class="tech-actions">';
-        if (t.current_lat && t.current_lng) h += '<button class="btn-nav" onclick="navigateTo(' + t.current_lat + ',' + t.current_lng + ')">📍 Ver</button>';
+        if (t.phone) h += '<a href="tel:' + t.phone + '" class="btn-call">📞</a><a href="sms:' + t.phone + '" class="btn-text">💬</a>';
+        if (t.current_lat && t.current_lng) h += '<button class="btn-nav" onclick="navigateTo(' + t.current_lat + ',' + t.current_lng + ')">📍</button>';
         h += '<button class="btn-danger-sm" onclick="deleteTech(\'' + t.id + '\')">X</button>';
         h += '</div></td></tr>';
     });
