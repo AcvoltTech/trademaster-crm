@@ -448,22 +448,37 @@ function closeEditJob() { document.getElementById('editJobModal').style.display 
 
 async function saveJobEdit() {
     var id = document.getElementById('editJobId').value;
-    var lat = document.getElementById('editJobLat').value;
-    var lng = document.getElementById('editJobLng').value;
+    var address = document.getElementById('editJobAddress').value;
     var update = {
         title: document.getElementById('editJobTitle').value,
         service_type: document.getElementById('editJobService').value,
-        address: document.getElementById('editJobAddress').value,
+        address: address,
         phone: document.getElementById('editJobPhone').value,
         notes: document.getElementById('editJobNotes').value
     };
-    if (lat) update.lat = parseFloat(lat);
-    if (lng) update.lng = parseFloat(lng);
+    // Re-geocode address before saving
+    if (address) {
+        try {
+            var coords = await geocodeAddressAsync(address);
+            if (coords) { update.lat = coords.lat; update.lng = coords.lng; }
+        } catch(e) { console.log('Geocode failed, keeping old coords'); }
+    }
     var res = await sbClient.from('work_orders').update(update).eq('id', id);
     if (res.error) { alert('Error: ' + res.error.message); return; }
     closeEditJob();
     await loadJobs(); if (dispatchMap) updateDispatchMap();
     alert('✅ Trabajo actualizado');
+}
+
+function geocodeAddressAsync(address) {
+    return new Promise(function(resolve, reject) {
+        new google.maps.Geocoder().geocode({ address: address }, function(results, status) {
+            if (status === 'OK' && results.length > 0) {
+                var loc = results[0].geometry.location;
+                resolve({ lat: loc.lat(), lng: loc.lng() });
+            } else { reject('No encontrada'); }
+        });
+    });
 }
 
 async function changeJobTech(jobId, techId) {
