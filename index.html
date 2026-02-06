@@ -2318,22 +2318,89 @@
 
           <!-- ===== PRICE BOOK / LISTA DE PRECIOS ===== -->
           <div id="pricebook-section" class="section">
+
+            <!-- Supplier Quick Links -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>🏪 <span data-i18n="pb_suppliers">Proveedores / Suppliers</span></h3>
+                <button class="btn-primary btn-sm" onclick="loadDefaultPriceBook()">📦 <span data-i18n="pb_load_catalog">Cargar Catálogo HVAC Completo</span></button>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;" data-i18n="pb_supplier_desc">Busca precios directamente en los distribuidores más usados en HVAC/R. Haz clic para abrir su sitio.</p>
+              <div class="supplier-grid">
+                <a class="supplier-card" href="https://www.ferguson.com/category/hvac" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#003da5;">F</div>
+                  <div class="supplier-info"><strong>Ferguson?"HVAC</strong><small>Tubería, fittings, equipos</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.johnstonewaregroup.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#e31837;">JS</div>
+                  <div class="supplier-info"><strong>Johnstone Supply</strong><small>Partes AC/Heating, refrigerantes</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.carrierenterprise.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#0057a0;">CE</div>
+                  <div class="supplier-info"><strong>Carrier Enterprise</strong><small>Equipos Carrier, Bryant, Payne</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.usaircon.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ff6b00;">US</div>
+                  <div class="supplier-info"><strong>US Air Conditioning</strong><small>Goodman, Daikin, Amana</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.gemaire.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#1a8c3e;">GE</div>
+                  <div class="supplier-info"><strong>Gemaire Distributors</strong><small>Rheem, Ruud, equipos completos</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.grainger.com/category/hvac" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#c8102e;">GR</div>
+                  <div class="supplier-info"><strong>Grainger</strong><small>Motores, controles, herramientas</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.supplyhouse.com/hvac" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#0077c8;">SH</div>
+                  <div class="supplier-info"><strong>SupplyHouse</strong><small>Mini-splits, boilers, partes</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.amazon.com/s?k=hvac+parts" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#ff9900;">AZ</div>
+                  <div class="supplier-info"><strong>Amazon HVAC</strong><small>Partes, herramientas, accesorios</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.homedepot.com/b/Heating-Venting-Cooling/N-5yc1vZc4k8" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#f96302;">HD</div>
+                  <div class="supplier-info"><strong>Home Depot Pro</strong><small>Equipos, filtros, ductos</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.ebay.com/b/HVAC-Parts/41986/bn_1865194" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#e53238;">eB</div>
+                  <div class="supplier-info"><strong>eBay HVAC Parts</strong><small>Partes usadas y nuevas, boards</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.trane.com/commercial/north-america/us/en.html" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#002f6c;">TR</div>
+                  <div class="supplier-info"><strong>Trane Supply</strong><small>Equipos y partes Trane/American Standard</small></div>
+                </a>
+                <a class="supplier-card" href="https://www.lennoxpros.com" target="_blank" rel="noopener">
+                  <div class="supplier-logo" style="background:#003087;">LX</div>
+                  <div class="supplier-info"><strong>LennoxPros</strong><small>Equipos y partes Lennox</small></div>
+                </a>
+              </div>
+            </div>
+
             <div class="card">
               <div class="card-top">
                 <h3>📒 <span data-i18n="pb_title">Lista de Precios / Price Book</span></h3>
-                <div style="display:flex;gap:8px;align-items:center;">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                   <input type="text" id="pbSearch" placeholder="🔍 Buscar parte, servicio..." oninput="filterPriceBook()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px;">
                   <select id="pbCategoryFilter" class="inline-select" onchange="filterPriceBook()" style="padding:8px 12px;font-size:12px;">
                     <option value="all" data-i18n="pb_all">Todas las categorías</option>
-                    <option value="ac_parts">AC Parts</option>
-                    <option value="heating_parts">Heating Parts</option>
+                    <option value="ac_parts">AC Parts / Partes AC</option>
+                    <option value="heating_parts">Heating Parts / Calefacción</option>
                     <option value="refrigeration">Refrigeración</option>
                     <option value="electrical">Eléctrico</option>
+                    <option value="motors_fans">Motores y Ventiladores</option>
+                    <option value="controls">Controles y Termostatos</option>
+                    <option value="refrigerants">Refrigerantes</option>
+                    <option value="ductwork">Ductos y Accesorios</option>
+                    <option value="filters">Filtros</option>
+                    <option value="tools">Herramientas</option>
                     <option value="labor">Mano de Obra / Labor</option>
                     <option value="equipment">Equipo Nuevo / Equipment</option>
                     <option value="misc">Misceláneos</option>
                   </select>
                   <button class="btn-primary btn-sm" onclick="showPriceBookForm()">+ <span data-i18n="pb_add_item">Agregar Artículo</span></button>
+                  <button class="btn-secondary btn-sm" onclick="clearPriceBook()" style="color:#ef4444;">🗑️</button>
                 </div>
               </div>
 
@@ -2351,6 +2418,12 @@
                         <option value="heating_parts">Heating Parts</option>
                         <option value="refrigeration">Refrigeración</option>
                         <option value="electrical">Eléctrico</option>
+                        <option value="motors_fans">Motores y Ventiladores</option>
+                        <option value="controls">Controles y Termostatos</option>
+                        <option value="refrigerants">Refrigerantes</option>
+                        <option value="ductwork">Ductos y Accesorios</option>
+                        <option value="filters">Filtros</option>
+                        <option value="tools">Herramientas</option>
                         <option value="labor">Mano de Obra</option>
                         <option value="equipment">Equipo Nuevo</option>
                         <option value="misc">Misceláneos</option>
