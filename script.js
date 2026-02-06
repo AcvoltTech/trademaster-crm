@@ -149,7 +149,7 @@ function showSection(name) {
     if (name === 'inbox') { loadInbox(); }
     if (name === 'clients') { loadClients(); }
     if (name === 'leads') setTimeout(function() { if (!leadsMap) initLeadsMap(); else google.maps.event.trigger(leadsMap, 'resize'); }, 150);
-    if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); }, 150);
+    if (name === 'dispatch') setTimeout(function() { if (!dispatchMap) initDispatchMap(); else google.maps.event.trigger(dispatchMap, 'resize'); updateDispatchMap(); renderDispatchCoord(); }, 150);
     if (name === 'technicians') { renderTechFullList(); generateTrackingLinks(); }
     if (name === 'jobs') { populateEstimateJobs(); loadAdvisors(); }
     if (name === 'advisors') { loadAdvisors(); loadReferrals(); }
@@ -4702,6 +4702,71 @@ async function deleteServicePlan(id) {
         localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
     }
     loadServicePlans();
+}
+
+// ===== DISPATCH COORDINATOR =====
+function toggleDispatchCoord() {
+    var form = document.getElementById('dispCoordForm');
+    var isHidden = form.style.display === 'none';
+    form.style.display = isHidden ? 'block' : 'none';
+    document.getElementById('dispCoordToggle').textContent = isHidden ? '✕ Cerrar' : '✏️ Editar';
+    if (isHidden) {
+        var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+        document.getElementById('dcName').value = dc.name || '';
+        document.getElementById('dcRole').value = dc.role || '';
+        document.getElementById('dcPhone').value = dc.phone || '';
+        document.getElementById('dcEmail').value = dc.email || '';
+        document.getElementById('dcLicense').value = dc.license || '';
+        document.getElementById('dcShift').value = dc.shift || 'Full Time 7am-5pm';
+        document.getElementById('dcNotes').value = dc.notes || '';
+    }
+}
+
+function saveDispatchCoord() {
+    var dc = {
+        name: document.getElementById('dcName').value,
+        role: document.getElementById('dcRole').value,
+        phone: document.getElementById('dcPhone').value,
+        email: document.getElementById('dcEmail').value,
+        license: document.getElementById('dcLicense').value,
+        shift: document.getElementById('dcShift').value,
+        notes: document.getElementById('dcNotes').value,
+        updated: new Date().toLocaleString('es')
+    };
+    localStorage.setItem('dispatchCoord_' + companyId, JSON.stringify(dc));
+    renderDispatchCoord();
+    toggleDispatchCoord();
+    alert('✅ Coordinador de Dispatch guardado');
+}
+
+function renderDispatchCoord() {
+    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    var nameEl = document.getElementById('dispCoordName');
+    var roleEl = document.getElementById('dispCoordRole');
+    var avatarEl = document.getElementById('dispCoordAvatar');
+    var infoEl = document.getElementById('dispCoordInfo');
+    if (!nameEl) return;
+    
+    if (dc.name) {
+        nameEl.textContent = dc.name;
+        roleEl.textContent = dc.role || 'Dispatch Coordinator';
+        var initials = dc.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
+        avatarEl.textContent = initials;
+        avatarEl.style.background = 'linear-gradient(135deg, var(--primary), var(--accent))';
+        
+        var info = '';
+        if (dc.phone) info += '<span>📱 <a href="tel:' + dc.phone + '">' + dc.phone + '</a></span>';
+        if (dc.email) info += '<span>📧 ' + dc.email + '</span>';
+        if (dc.license) info += '<span>📜 ' + dc.license + '</span>';
+        if (dc.shift) info += '<span>🕐 ' + dc.shift + '</span>';
+        infoEl.innerHTML = info;
+    } else {
+        nameEl.textContent = 'Sin asignar';
+        roleEl.textContent = 'Haz click en Editar para asignar un responsable';
+        avatarEl.textContent = '?';
+        avatarEl.style.background = 'var(--primary)';
+        infoEl.innerHTML = '';
+    }
 }
 
 // ===== CALENDAR VIEW TOGGLE =====
