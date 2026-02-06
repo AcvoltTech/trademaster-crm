@@ -120,19 +120,19 @@
         <nav class="sidebar-nav">
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_principal">Principal</span>
-            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
+            <a href="#" onclick="showSection('dashboard')" class="nav-link active"><span>📊</span> <span data-i18n="nav_dashboard">Tablero</span></a>
             <a href="#" onclick="showSection('inbox')" class="nav-link"><span>📬</span> <span data-i18n="nav_inbox">Bandeja</span></a>
             <a href="#" onclick="showSection('calendar')" class="nav-link"><span>📅</span> <span data-i18n="nav_schedule">Agenda</span></a>
             <a href="#" onclick="showSection('clients')" class="nav-link"><span>👥</span> <span data-i18n="nav_customers">Clientes</span></a>
-            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> <span data-i18n="nav_leads">Leads</span></a>
-            <a href="#" onclick="showSection('pipeline')" class="nav-link"><span>📈</span> <span data-i18n="nav_pipeline">Pipeline</span></a>
+            <a href="#" onclick="showSection('leads')" class="nav-link"><span>🎯</span> <span data-i18n="nav_leads">Prospectos</span></a>
+            <a href="#" onclick="showSection('pipeline')" class="nav-link"><span>📈</span> <span data-i18n="nav_pipeline">Flujo de Ventas</span></a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_operations">Operaciones</span>
             <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> <span data-i18n="nav_dispatch">Despacho</span></a>
             <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> <span data-i18n="nav_jobs">Trabajos</span></a>
             <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> <span data-i18n="nav_technicians">Técnicos</span></a>
-            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> <span data-i18n="nav_advisors">Home Advisors</span></a>
+            <a href="#" onclick="showSection('advisors')" class="nav-link"><span>🏠</span> <span data-i18n="nav_advisors">Asesores del Hogar</span></a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_finance">Finanzas</span>
@@ -143,7 +143,7 @@
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_growth">Crecimiento</span>
-            <a href="#" onclick="showSection('marketing')" class="nav-link"><span>📣</span> <span data-i18n="nav_marketing">Marketing</span></a>
+            <a href="#" onclick="showSection('marketing')" class="nav-link"><span>📣</span> <span data-i18n="nav_marketing">Mercadotecnia</span></a>
             <a href="#" onclick="showSection('pricebook')" class="nav-link"><span>📒</span> <span data-i18n="nav_pricebook">Lista de Precios</span></a>
             <a href="#" onclick="showSection('reports')" class="nav-link"><span>📊</span> <span data-i18n="nav_reports">Reportes</span></a>
           </div>
@@ -163,7 +163,7 @@
 
       <main class="main-content">
         <header class="top-bar">
-          <h1 id="pageTitle">Dashboard</h1>
+          <h1 id="pageTitle">Tablero</h1>
           <div class="top-bar-right">
             <!-- Global Search -->
             <div class="global-search-wrap">
@@ -220,7 +220,7 @@
               </div>
             </div>
 
-            <!-- HCP-Style Summary Cards (Estimates / Jobs / Invoices / Service Plans) -->
+            <!-- HCP-Style Summary Cards (Estimates / Jobs / Invoices / Plan de Servicios) -->
             <div class="hcp-summary-grid">
               <div class="hcp-summary-card" onclick="showSection('jobs')">
                 <div class="hcp-summary-header">
@@ -363,7 +363,7 @@
                   </div>
                   <button class="clock-btn clock-btn-in" id="clockInOutBtn" onclick="toggleDashClockInOut()">
                     <span class="clock-btn-icon" id="clockBtnIcon">🟢</span>
-                    <span id="clockBtnText" data-i18n="clock_in">Clock In</span>
+                    <span id="clockBtnText" data-i18n="clock_in">Marcar Entrada</span>
                   </button>
                 </div>
               </div>
@@ -391,7 +391,7 @@
             <!-- Estimates Pipeline -->
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
-                <h3>📋 <span data-i18n="dash_est_pipeline">Pipeline de Estimados</span></h3>
+                <h3>📋 <span data-i18n="dash_est_pipeline">Flujo de Estimados</span></h3>
                 <button class="btn-primary btn-sm" onclick="showSection('jobs')">+ <span data-i18n="dash_new_estimate">Nuevo Estimado</span></button>
               </div>
               <div id="estimatePipeline" class="pipeline-row">
@@ -425,7 +425,7 @@
             <!-- Revenue Pipeline -->
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
-                <h3>💰 Pipeline / Cashflow</h3>
+                <h3>💰 Flujo de Efectivo</h3>
                 <select id="pipelineYear" class="inline-select" onchange="renderPipeline()" style="padding:8px 12px;">
                 </select>
               </div>
@@ -452,10 +452,10 @@
               <div id="dashOverdueList"></div>
             </div>
 
-            <!-- Service Plans -->
+            <!-- Plan de Servicios -->
             <div class="card">
               <div class="card-top">
-                <h3>🛡️ Planes de Servicio / Service Plans</h3>
+                <h3>🛡️ Planes de Servicio / Plan de Servicios</h3>
                 <button class="btn-primary btn-sm" onclick="showServicePlanForm()">+ Nuevo Plan</button>
               </div>
               <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Membresías de mantenimiento recurrente. Genera ingresos estables y fideliza clientes.</p>
@@ -575,7 +575,7 @@
           <div id="inbox-section" class="section">
             <div class="card">
               <div class="card-top">
-                <h3>📬 Inbox - Centro de Comunicación</h3>
+                <h3>📬 Bandeja - Centro de Comunicación</h3>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <select id="inboxFilter" onchange="renderInbox()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
                     <option value="all">📋 Todas</option>
@@ -678,23 +678,42 @@
             <!-- Dispatch Coordinator -->
             <div class="card" style="margin-bottom:16px;border:2px solid var(--primary);">
               <div class="card-top">
-                <h3>🎯 Dispatch Coordinator / Responsable de Dispatch</h3>
+                <h3>🎯 Coordinador de Despacho</h3>
                 <button class="btn-secondary btn-sm" onclick="toggleDispatchCoord()" id="dispCoordToggle">✏️ Editar</button>
               </div>
               <div id="dispCoordDisplay" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:8px 0;">
                 <div style="display:flex;align-items:center;gap:12px;">
-                  <div id="dispCoordAvatar" style="width:50px;height:50px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">?</div>
+                  <div id="dispCoordAvatar" class="dispatch-avatar-container" style="width:70px;height:70px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;overflow:hidden;position:relative;">?</div>
                   <div>
                     <div id="dispCoordName" style="font-weight:700;font-size:15px;color:var(--text-primary);">Sin asignar</div>
-                    <div id="dispCoordRole" style="font-size:11px;color:var(--text-muted);">Asigna un responsable de dispatch</div>
+                    <div id="dispCoordRole" style="font-size:11px;color:var(--text-muted);">Asigna un responsable de despacho</div>
                   </div>
                 </div>
                 <div id="dispCoordInfo" style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;"></div>
               </div>
               <div id="dispCoordForm" style="display:none;margin-top:12px;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                <!-- Profile Photo Upload -->
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+                  <div id="dcPhotoPreview" class="dc-photo-preview">
+                    <span id="dcPhotoPlaceholder">📷</span>
+                    <img id="dcPhotoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                  </div>
+                  <div style="flex:1;">
+                    <h5 style="margin-bottom:6px;color:var(--text-primary);">Foto de Perfil</h5>
+                    <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Sube una foto del coordinador de despacho. Se mostrará en el panel principal.</p>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                      <label class="btn-primary btn-sm" style="cursor:pointer;">
+                        📷 Subir Foto
+                        <input type="file" accept="image/*" onchange="handleDCPhotoUpload(this)" style="display:none;" id="dcPhotoInput">
+                      </label>
+                      <button type="button" class="btn-secondary btn-sm" onclick="takeDCPhoto()">📸 Tomar Foto</button>
+                      <button type="button" class="btn-secondary btn-sm" style="color:#ef4444;" onclick="removeDCPhoto()">🗑️ Quitar</button>
+                    </div>
+                  </div>
+                </div>
                 <div class="form-row">
                   <div class="form-group"><label>Nombre Completo</label><input type="text" id="dcName" placeholder="Nombre del coordinador"></div>
-                  <div class="form-group"><label>Puesto / Cargo</label><input type="text" id="dcRole" placeholder="Ej: Dispatch Manager, Office Manager"></div>
+                  <div class="form-group"><label>Puesto / Cargo</label><input type="text" id="dcRole" placeholder="Ej: Coordinador de Despacho, Gerente de Oficina"></div>
                 </div>
                 <div class="form-row">
                   <div class="form-group"><label>Teléfono</label><input type="tel" id="dcPhone" placeholder="(555) 123-4567"></div>
@@ -704,11 +723,11 @@
                   <div class="form-group"><label>Licencia / Certificación</label><input type="text" id="dcLicense" placeholder="Ej: C-10 #1234567"></div>
                   <div class="form-group"><label>Turno / Horario</label>
                     <select id="dcShift">
-                      <option value="Full Time 7am-5pm">Full Time 7am-5pm</option>
-                      <option value="Morning 6am-2pm">Morning 6am-2pm</option>
-                      <option value="Afternoon 2pm-10pm">Afternoon 2pm-10pm</option>
-                      <option value="Night 10pm-6am">Night 10pm-6am</option>
-                      <option value="On Call 24/7">On Call 24/7</option>
+                      <option value="Tiempo Completo 7am-5pm">Tiempo Completo 7am-5pm</option>
+                      <option value="Mañana 6am-2pm">Mañana 6am-2pm</option>
+                      <option value="Tarde 2pm-10pm">Tarde 2pm-10pm</option>
+                      <option value="Noche 10pm-6am">Noche 10pm-6am</option>
+                      <option value="Guardia 24/7">Guardia 24/7</option>
                     </select>
                   </div>
                 </div>
@@ -818,7 +837,7 @@
             </div>
             <div class="card">
               <div class="card-top">
-                <h3>🗺️ Mapa de Dispatch en Tiempo Real</h3>
+                <h3>🗺️ Mapa de Despacho en Tiempo Real</h3>
                 <div class="dispatch-legend">
                   <span class="legend-item"><span style="color:#3b82f6;">🚐</span> Disponible</span>
                   <span class="legend-item"><span style="color:#f59e0b;">🚐</span> Ocupado</span>
@@ -834,7 +853,7 @@
           <!-- ===== TÉCNICOS ===== -->
           <div id="technicians-section" class="section">
             <div class="card">
-              <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Dispatch</button></div>
+              <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Despacho</button></div>
               <div id="techniciansFullList"></div>
             </div>
 
@@ -1046,13 +1065,114 @@
                     <option value="Comercial">🏢 Comercial</option>
                     <option value="Industrial">🏭 Industrial</option>
                     <option value="VIP">⭐ VIP</option>
-                    <option value="Service Plan">🛡️ Service Plan</option>
+                    <option value="Plan de Servicio">🛡️ Plan de Servicio</option>
                   </select>
                   <button class="btn-secondary btn-sm" onclick="exportClientsCSV()" title="Exportar">📥 Exportar</button>
-                  <label class="btn-secondary btn-sm" style="cursor:pointer;" title="Importar CSV">📤 Importar CSV
+                  <button class="btn-primary btn-sm" onclick="showImportCenter()" style="background:#f59e0b;border-color:#f59e0b;">📤 Importar de HCP</button>
+                  <label class="btn-secondary btn-sm" style="cursor:pointer;" title="Importar CSV genérico">📄 CSV
                     <input type="file" accept=".csv" onchange="importClientsCSV(this)" style="display:none;">
                   </label>
                   <button class="btn-primary btn-sm" onclick="showClientForm()">+ Nuevo Cliente</button>
+                </div>
+              </div>
+
+              <!-- ===== HCP IMPORT CENTER ===== -->
+              <div id="importCenterContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:2px solid #f59e0b;border-radius:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                  <h4 style="color:#f59e0b;margin:0;">📤 Centro de Importación — Housecall Pro</h4>
+                  <button onclick="hideImportCenter()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+                </div>
+
+                <!-- Step 1: Instructions -->
+                <div class="import-instructions" style="margin-bottom:16px;padding:14px;background:var(--bg-card);border-radius:8px;border-left:4px solid #3b82f6;">
+                  <h5 style="margin-bottom:8px;color:var(--primary);">📋 Cómo exportar de Housecall Pro:</h5>
+                  <ol style="font-size:12px;color:var(--text-muted);padding-left:20px;margin:0;line-height:1.8;">
+                    <li>Abre <strong>Housecall Pro</strong> → ve a <strong>Customers</strong></li>
+                    <li>Click en <strong>Export</strong> (esquina superior derecha)</li>
+                    <li>Selecciona <strong>All Customers</strong> o filtra por tipo</li>
+                    <li>Descarga el archivo <strong>.CSV</strong></li>
+                    <li>Sube el archivo aquí abajo 👇</li>
+                  </ol>
+                </div>
+
+                <!-- Step 2: Category Tabs -->
+                <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                  <button class="import-tab active" id="importTabAll" onclick="setImportTab('all')">📋 Todos</button>
+                  <button class="import-tab" id="importTabWon" onclick="setImportTab('won')">🏆 Clientes Ganados</button>
+                  <button class="import-tab" id="importTabEstimate" onclick="setImportTab('estimate')">📝 En Estimado</button>
+                  <button class="import-tab" id="importTabExisting" onclick="setImportTab('existing')">👥 Existentes</button>
+                </div>
+
+                <!-- File Upload -->
+                <div class="import-upload-zone" id="importDropZone" style="margin-bottom:16px;">
+                  <div style="text-align:center;padding:30px;">
+                    <span style="font-size:40px;">📁</span>
+                    <p style="font-size:14px;font-weight:600;color:var(--text-primary);margin:8px 0 4px;">Arrastra tu archivo CSV aquí</p>
+                    <p style="font-size:12px;color:var(--text-muted);">o haz clic para seleccionar</p>
+                    <label class="btn-primary btn-sm" style="cursor:pointer;margin-top:8px;display:inline-block;">
+                      Seleccionar Archivo
+                      <input type="file" accept=".csv,.txt" onchange="handleImportFile(this)" style="display:none;" id="importFileInput">
+                    </label>
+                  </div>
+                </div>
+
+                <!-- OR Manual Paste -->
+                <div style="margin-bottom:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span style="flex:1;height:1px;background:var(--border);"></span>
+                    <span style="font-size:11px;color:var(--text-muted);font-weight:600;">O PEGA LOS DATOS MANUALMENTE</span>
+                    <span style="flex:1;height:1px;background:var(--border);"></span>
+                  </div>
+                  <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Pega datos de Excel, Google Sheets, o texto separado por comas. Formato: <strong>Nombre, Teléfono, Email, Dirección</strong> (uno por línea)</p>
+                  <textarea id="importManualData" rows="6" placeholder="John Smith, (555) 123-4567, john@email.com, 123 Main St&#10;María García, (555) 987-6543, maria@email.com, 456 Oak Ave&#10;Bob Johnson, (555) 456-7890, , 789 Pine Rd" style="width:100%;padding:10px;font-size:12px;font-family:monospace;border:1px solid var(--border);border-radius:6px;resize:vertical;"></textarea>
+                </div>
+
+                <!-- Import Options -->
+                <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                  <div class="form-group" style="margin:0;min-width:150px;">
+                    <label style="font-size:11px;margin-bottom:4px;">Categoría de Importación</label>
+                    <select id="importCategory" style="padding:8px;font-size:12px;">
+                      <option value="won">🏆 Cliente Ganado (Won)</option>
+                      <option value="estimate">📝 En Estimado</option>
+                      <option value="existing">👥 Cliente Existente</option>
+                      <option value="lead">🎯 Lead / Prospecto</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;min-width:150px;">
+                    <label style="font-size:11px;margin-bottom:4px;">Tipo de Propiedad</label>
+                    <select id="importPropertyType" style="padding:8px;font-size:12px;">
+                      <option value="Residencial">🏠 Residencial</option>
+                      <option value="Comercial">🏢 Comercial</option>
+                      <option value="Industrial">🏭 Industrial</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;min-width:150px;">
+                    <label style="font-size:11px;margin-bottom:4px;">Fuente / Source</label>
+                    <select id="importSource" style="padding:8px;font-size:12px;">
+                      <option value="housecall_pro">Housecall Pro</option>
+                      <option value="service_titan">ServiceTitan</option>
+                      <option value="jobber">Jobber</option>
+                      <option value="excel">Excel / Spreadsheet</option>
+                      <option value="other">Otro</option>
+                    </select>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:16px;">
+                    <input type="checkbox" id="importSkipDuplicates" checked>
+                    <label style="font-size:11px;">Omitir duplicados</label>
+                  </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div id="importPreviewArea" style="display:none;margin-bottom:12px;max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+
+                <!-- Import Status -->
+                <div id="importStatusArea" style="display:none;margin-bottom:12px;padding:12px;border-radius:8px;font-size:13px;"></div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                  <button class="btn-primary btn-sm" onclick="executeImport()" id="importExecuteBtn" disabled>📥 Importar Clientes</button>
+                  <button class="btn-secondary btn-sm" onclick="previewImport()">👁️ Vista Previa</button>
+                  <button class="btn-secondary btn-sm" onclick="hideImportCenter()">Cancelar</button>
                 </div>
               </div>
 
@@ -1062,7 +1182,7 @@
                 <form id="clientForm" onsubmit="handleClientCreate(event)">
                   <div class="form-row">
                     <div class="form-group"><label>Nombre</label><input type="text" id="clientName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Empresa / Company</label><input type="text" id="clientCompany" placeholder="Nombre de empresa (opcional)"></div>
+                    <div class="form-group"><label>Empresa</label><input type="text" id="clientCompany" placeholder="Nombre de empresa (opcional)"></div>
                   </div>
                   <div class="form-row">
                     <div class="form-group"><label>Teléfono</label><input type="tel" id="clientPhone" placeholder="(555) 123-4567"></div>
@@ -1079,10 +1199,10 @@
                     <div class="form-group"><label>Tags / Etiquetas</label>
                       <select id="clientTags" multiple style="height:60px;">
                         <option value="VIP">⭐ VIP</option>
-                        <option value="Service Plan">🛡️ Service Plan</option>
-                        <option value="New Construction">🏗️ New Construction</option>
-                        <option value="Referral">🤝 Referral</option>
-                        <option value="Warranty">🔧 Warranty</option>
+                        <option value="Plan de Servicio">🛡️ Plan de Servicio</option>
+                        <option value="Construcción Nueva">🏗️ Construcción Nueva</option>
+                        <option value="Referido">🤝 Referido</option>
+                        <option value="Garantía">🔧 Garantía</option>
                       </select>
                     </div>
                   </div>
@@ -1288,7 +1408,7 @@
                       <input type="number" id="estLaborHours" value="1" min="0.5" step="0.5" onchange="updateEstimateTotals()">
                     </div>
                   </div>
-                  <div id="advisorReferralBox" style="display:none;margin-top:12px;">
+                  <div id="advisorReferidoBox" style="display:none;margin-top:12px;">
                     <div class="referral-box">
                       <h5>🏠 Referir a Home Advisor</h5>
                       <div class="form-row">
@@ -1306,7 +1426,7 @@
                         </div>
                       </div>
                       <div class="form-group"><label>Notas para el Advisor</label><textarea id="referralNotes" rows="2" placeholder="Estado del equipo, lo que necesita el cliente..."></textarea></div>
-                      <button class="btn-primary btn-sm" onclick="sendReferralToAdvisor()">📩 Enviar Referencia al Advisor</button>
+                      <button class="btn-primary btn-sm" onclick="sendReferidoToAdvisor()">📩 Enviar Referencia al Advisor</button>
                     </div>
                   </div>
                 </div>
@@ -1603,7 +1723,7 @@
                 <hr style="margin:20px 0;border-color:var(--border);">
                 
                 <!-- ===== COMPANY DOCUMENTS ===== -->
-                <h4 style="color:var(--primary);margin-bottom:4px;">📁 Documentos de la Empresa / Company Documents</h4>
+                <h4 style="color:var(--primary);margin-bottom:4px;">📁 Documentos de la Empresa Documents</h4>
                 <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Sube tus documentos legales y de seguros. Estos se incluirán automáticamente en estimados y facturas cuando el cliente o empresa lo solicite.</p>
 
                 <div id="companyDocsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px;">
@@ -1890,8 +2010,8 @@
                   <textarea id="clauseLien" rows="3" style="font-size:12px;"></textarea>
                 </div>
                 <div class="form-group">
-                  <label>🛡️ Garantía / Warranty</label>
-                  <textarea id="clauseWarranty" rows="3" style="font-size:12px;"></textarea>
+                  <label>🛡️ Garantía / Garantía</label>
+                  <textarea id="clauseGarantía" rows="3" style="font-size:12px;"></textarea>
                 </div>
                 <div class="form-group">
                   <label>🌿 EPA / Refrigerants & Environmental</label>
@@ -1935,7 +2055,7 @@
           <div id="pipeline-section" class="section">
             <div class="card">
               <div class="card-top">
-                <h3>📈 <span data-i18n="pipe_title">Pipeline de Ventas</span></h3>
+                <h3>📈 <span data-i18n="pipe_title">Flujo de Ventas</span></h3>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <select id="pipeFilterPeriod" class="inline-select" onchange="renderPipelineSection()" style="padding:8px 12px;font-size:12px;">
                     <option value="all" data-i18n="pipe_all">Todos</option>
@@ -2027,12 +2147,12 @@
                     <div class="form-group"><label data-i18n="money_category">Categoría</label>
                       <select id="expCategory">
                         <option value="materials">Materiales / Parts</option>
-                        <option value="tools">Herramientas / Tools</option>
+                        <option value="tools">Herramientas</option>
                         <option value="fuel">Gasolina / Fuel</option>
                         <option value="vehicle">Vehículo / Vehicle</option>
                         <option value="insurance">Seguros / Insurance</option>
                         <option value="licenses">Licencias / Licenses</option>
-                        <option value="marketing">Marketing / Advertising</option>
+                        <option value="marketing">Mercadotecnia / Publicidad</option>
                         <option value="payroll">Nómina / Payroll</option>
                         <option value="rent">Renta / Rent</option>
                         <option value="utilities">Servicios / Utilities</option>
@@ -2080,7 +2200,7 @@
 
             <div class="card">
               <div class="card-top">
-                <h3>🧾 <span data-i18n="pay_title">Nómina / Payroll</span></h3>
+                <h3>🧾 <span data-i18n="pay_title">Nómina</span></h3>
                 <div style="display:flex;gap:8px;">
                   <button class="btn-primary btn-sm" onclick="showPayrollEntry()">+ <span data-i18n="pay_add_entry">Agregar Entrada</span></button>
                   <select id="payPeriodFilter" class="inline-select" onchange="renderPayroll()" style="padding:6px 10px;font-size:12px;">
@@ -2098,10 +2218,10 @@
                     <div class="form-group"><label data-i18n="pay_tech">Técnico</label><select id="payTechSelect"></select></div>
                     <div class="form-group"><label data-i18n="pay_type">Tipo</label>
                       <select id="payType">
-                        <option value="hourly">Por Hora / Hourly</option>
-                        <option value="salary">Salario / Salary</option>
-                        <option value="commission">Comisión / Commission</option>
-                        <option value="bonus">Bono / Bonus</option>
+                        <option value="hourly">Por Hora</option>
+                        <option value="salary">Salario</option>
+                        <option value="commission">Comisión</option>
+                        <option value="bonus">Bono</option>
                       </select>
                     </div>
                   </div>
@@ -2114,7 +2234,7 @@
                     <div class="form-group"><label data-i18n="pay_period_start">Inicio del Período</label><input type="date" id="payStart"></div>
                     <div class="form-group"><label data-i18n="pay_period_end">Fin del Período</label><input type="date" id="payEnd"></div>
                   </div>
-                  <div class="form-group"><label data-i18n="pay_notes">Notas</label><textarea id="payNotes" rows="2" placeholder="Overtime, deductions, notas..."></textarea></div>
+                  <div class="form-group"><label data-i18n="pay_notes">Notas</label><textarea id="payNotes" rows="2" placeholder="Tiempo extra, deducciones, notas..."></textarea></div>
                   <div class="form-actions">
                     <button type="submit" class="btn-primary btn-sm">💾 <span data-i18n="pay_save">Guardar</span></button>
                     <button type="button" class="btn-secondary btn-sm" onclick="hidePayrollEntry()" data-i18n="btn_cancel">Cancelar</button>
@@ -2129,7 +2249,7 @@
             <!-- ===== PAYROLL PROVIDER MANAGER ===== -->
             <div class="card" style="margin-top:16px;">
               <div class="card-top">
-                <h3>🔗 <span data-i18n="pay_provider_title">Proveedor de Nómina / Payroll Provider</span></h3>
+                <h3>🔗 <span data-i18n="pay_provider_title">Proveedor de Nómina</span></h3>
                 <span class="badge" id="payProviderStatus" style="background:#f59e0b22;color:#f59e0b;">No conectado</span>
               </div>
               <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" data-i18n="pay_provider_desc">Conecta tu proveedor de nómina para sincronizar horas, pagos y reportes automáticamente.</p>
@@ -2155,7 +2275,7 @@
                 <div class="payroll-provider-card" id="providerCard_qb" onclick="selectPayrollProvider('qb')">
                   <div class="provider-logo" style="background:#2ca01c;">QB</div>
                   <div class="provider-info">
-                    <strong>QuickBooks Payroll</strong>
+                    <strong>QuickBooks Nómina</strong>
                     <small>Integrado con contabilidad QB</small>
                   </div>
                   <span class="provider-check" id="providerCheck_qb">○</span>
@@ -2171,8 +2291,8 @@
                 <div class="payroll-provider-card" id="providerCard_square" onclick="selectPayrollProvider('square')">
                   <div class="provider-logo" style="background:#006aff;">■</div>
                   <div class="provider-info">
-                    <strong>Square Payroll</strong>
-                    <small>Nómina + pagos con Square POS</small>
+                    <strong>Square Nómina</strong>
+                    <small>Nómina + pagos con Square</small>
                   </div>
                   <span class="provider-check" id="providerCheck_square">○</span>
                 </div>
@@ -2206,7 +2326,7 @@
                 </div>
                 <div class="form-row" style="margin-top:8px;">
                   <div class="form-group" style="display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="providerSyncHours" checked> <label style="margin:0;font-size:12px;" data-i18n="pay_sync_hours">Sincronizar horas de Clock In/Out</label>
+                    <input type="checkbox" id="providerSyncHours" checked> <label style="margin:0;font-size:12px;" data-i18n="pay_sync_hours">Sincronizar horas de Entrada/Salida</label>
                   </div>
                   <div class="form-group" style="display:flex;align-items:center;gap:8px;">
                     <input type="checkbox" id="providerSyncRates" checked> <label style="margin:0;font-size:12px;" data-i18n="pay_sync_rates">Sincronizar tarifas de técnicos</label>
@@ -2215,7 +2335,7 @@
                 <div class="form-actions" style="margin-top:12px;">
                   <button class="btn-primary btn-sm" onclick="savePayrollProvider()">🔗 <span data-i18n="pay_connect">Conectar</span></button>
                   <button class="btn-secondary btn-sm" onclick="testPayrollConnection()" data-i18n="pay_test">🧪 Probar Conexión</button>
-                  <button class="btn-secondary btn-sm" onclick="syncPayrollNow()" data-i18n="pay_sync_now">🔄 Sync Ahora</button>
+                  <button class="btn-secondary btn-sm" onclick="syncPayrollNow()" data-i18n="pay_sync_now">🔄 Sincronizar Ahora</button>
                   <button class="btn-secondary btn-sm" style="color:#ef4444;" onclick="disconnectProvider()" data-i18n="pay_disconnect">✕ Desconectar</button>
                 </div>
                 <div id="providerSyncStatus" style="margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
@@ -2245,14 +2365,14 @@
                 <div class="hcp-summary-body"><span class="hcp-big-num" id="mktLeadSources">0</span><span class="hcp-sub-amount" data-i18n="mkt_channels">Canales</span></div>
               </div>
               <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
-                <div class="hcp-summary-header"><span class="hcp-summary-icon">💸</span> <span data-i18n="mkt_roi">ROI Marketing</span></div>
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💸</span> <span data-i18n="mkt_roi">Retorno de Inversión</span></div>
                 <div class="hcp-summary-body"><span class="hcp-big-num" id="mktROI">0%</span><span class="hcp-sub-amount" data-i18n="mkt_return">Retorno</span></div>
               </div>
             </div>
 
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
-                <h3>📣 <span data-i18n="mkt_title">Marketing</span></h3>
+                <h3>📣 <span data-i18n="mkt_title">Mercadotecnia</span></h3>
                 <button class="btn-primary btn-sm" onclick="showCampaignForm()">+ <span data-i18n="mkt_new_campaign">Nueva Campaña</span></button>
               </div>
 
@@ -2263,11 +2383,11 @@
                     <div class="form-group"><label data-i18n="mkt_camp_name">Nombre</label><input type="text" id="campName" required placeholder="Ej: Promo Verano AC"></div>
                     <div class="form-group"><label data-i18n="mkt_camp_type">Tipo</label>
                       <select id="campType">
-                        <option value="email">Email Marketing</option>
+                        <option value="email">Correo Electrónico</option>
                         <option value="sms">SMS / Texto</option>
                         <option value="social">Redes Sociales</option>
                         <option value="postcard">Postal / Postcard</option>
-                        <option value="referral">Referidos / Referral</option>
+                        <option value="referral">Referidos / Referido</option>
                         <option value="google_ads">Google Ads</option>
                         <option value="facebook_ads">Facebook Ads</option>
                       </select>
@@ -2322,18 +2442,18 @@
             <!-- Supplier Quick Links -->
             <div class="card" style="margin-bottom:16px;">
               <div class="card-top">
-                <h3>🏪 <span data-i18n="pb_suppliers">Proveedores / Suppliers</span></h3>
+                <h3>🏪 <span data-i18n="pb_suppliers">Proveedores</span></h3>
                 <button class="btn-primary btn-sm" onclick="loadDefaultPriceBook()">📦 <span data-i18n="pb_load_catalog">Cargar Catálogo HVAC Completo</span></button>
               </div>
               <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;" data-i18n="pb_supplier_desc">Busca precios directamente en los distribuidores más usados en HVAC/R. Haz clic para abrir su sitio.</p>
               <div class="supplier-grid">
                 <a class="supplier-card" href="https://www.ferguson.com/category/hvac" target="_blank" rel="noopener">
                   <div class="supplier-logo" style="background:#003da5;">F</div>
-                  <div class="supplier-info"><strong>Ferguson?"HVAC</strong><small>Tubería, fittings, equipos</small></div>
+                  <div class="supplier-info"><strong>Ferguson?"HVAC</strong><small>Tubería, conexiones, equipos</small></div>
                 </a>
                 <a class="supplier-card" href="https://www.johnstonewaregroup.com" target="_blank" rel="noopener">
                   <div class="supplier-logo" style="background:#e31837;">JS</div>
-                  <div class="supplier-info"><strong>Johnstone Supply</strong><small>Partes AC/Heating, refrigerantes</small></div>
+                  <div class="supplier-info"><strong>Johnstone Supply</strong><small>Partes AC/Calefacción, refrigerantes</small></div>
                 </a>
                 <a class="supplier-card" href="https://www.carrierenterprise.com" target="_blank" rel="noopener">
                   <div class="supplier-logo" style="background:#0057a0;">CE</div>
@@ -2380,13 +2500,13 @@
 
             <div class="card">
               <div class="card-top">
-                <h3>📒 <span data-i18n="pb_title">Lista de Precios / Price Book</span></h3>
+                <h3>📒 <span data-i18n="pb_title">Lista de Precios</span></h3>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                   <input type="text" id="pbSearch" placeholder="🔍 Buscar parte, servicio..." oninput="filterPriceBook()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px;">
                   <select id="pbCategoryFilter" class="inline-select" onchange="filterPriceBook()" style="padding:8px 12px;font-size:12px;">
                     <option value="all" data-i18n="pb_all">Todas las categorías</option>
-                    <option value="ac_parts">AC Parts / Partes AC</option>
-                    <option value="heating_parts">Heating Parts / Calefacción</option>
+                    <option value="ac_parts">Partes de AC</option>
+                    <option value="heating_parts">Partes de Calefacción</option>
                     <option value="refrigeration">Refrigeración</option>
                     <option value="electrical">Eléctrico</option>
                     <option value="motors_fans">Motores y Ventiladores</option>
@@ -2395,8 +2515,8 @@
                     <option value="ductwork">Ductos y Accesorios</option>
                     <option value="filters">Filtros</option>
                     <option value="tools">Herramientas</option>
-                    <option value="labor">Mano de Obra / Labor</option>
-                    <option value="equipment">Equipo Nuevo / Equipment</option>
+                    <option value="labor">Mano de Obra</option>
+                    <option value="equipment">Equipo Nuevo</option>
                     <option value="misc">Misceláneos</option>
                   </select>
                   <button class="btn-primary btn-sm" onclick="showPriceBookForm()">+ <span data-i18n="pb_add_item">Agregar Artículo</span></button>
@@ -2414,8 +2534,8 @@
                   <div class="form-row">
                     <div class="form-group"><label data-i18n="pb_category">Categoría</label>
                       <select id="pbCategory">
-                        <option value="ac_parts">AC Parts</option>
-                        <option value="heating_parts">Heating Parts</option>
+                        <option value="ac_parts">Partes de AC</option>
+                        <option value="heating_parts">Partes de Calefacción</option>
                         <option value="refrigeration">Refrigeración</option>
                         <option value="electrical">Eléctrico</option>
                         <option value="motors_fans">Motores y Ventiladores</option>
@@ -2431,11 +2551,11 @@
                     </div>
                     <div class="form-group"><label data-i18n="pb_unit">Unidad</label>
                       <select id="pbUnit">
-                        <option value="each">Pieza / Each</option>
-                        <option value="hour">Hora / Hour</option>
-                        <option value="foot">Pie / Foot</option>
-                        <option value="lb">Libra / Pound</option>
-                        <option value="flat">Precio Fijo / Flat Rate</option>
+                        <option value="each">Pieza</option>
+                        <option value="hour">Hora</option>
+                        <option value="foot">Pie</option>
+                        <option value="lb">Libra</option>
+                        <option value="flat">Precio Fijo</option>
                       </select>
                     </div>
                   </div>
@@ -2542,7 +2662,7 @@
         <p id="trackingInfo" style="color:#94a3b8;font-size:13px;text-align:center;margin-top:12px;"></p>
         <div class="tracking-hours-info">
           <p>📍 Tu ubicación se envía cada 30 segundos mientras estés en servicio</p>
-          <p>🔴 Al terminar tu jornada, haz Clock Out para dejar de compartir ubicación</p>
+          <p>🔴 Al terminar tu jornada, haz Marcar Salida para dejar de compartir ubicación</p>
         </div>
       </div>
     </div>
