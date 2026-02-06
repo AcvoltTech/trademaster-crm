@@ -5704,3 +5704,188 @@ window.renderPayroll = function() {
     }
     renderSyncHistory();
 };
+
+// ============================================================
+// ===== HVAC/R DEFAULT PRICE BOOK CATALOG =====
+// ============================================================
+function loadDefaultPriceBook() {
+    if (priceBookData.length > 0 && !confirm(currentLang === 'en' ? 'This will ADD 150+ HVAC items to your price book. Continue?' : 'Esto AGREGARÁ 150+ artículos HVAC a tu lista de precios. ¿Continuar?')) return;
+    var catalog = [
+        // ===== AC PARTS =====
+        {sku:'CAP-355',name:'Capacitor 35/5 MFD 370/440V',category:'ac_parts',unit:'each',cost:8,price:45,description:'Dual run capacitor para condensadora'},
+        {sku:'CAP-455',name:'Capacitor 45/5 MFD 370/440V',category:'ac_parts',unit:'each',cost:9,price:50,description:'Dual run capacitor para condensadora'},
+        {sku:'CAP-555',name:'Capacitor 55/5 MFD 370/440V',category:'ac_parts',unit:'each',cost:10,price:55,description:'Dual run capacitor para condensadora'},
+        {sku:'CAP-6010',name:'Capacitor 60/10 MFD 370/440V',category:'ac_parts',unit:'each',cost:12,price:60,description:'Dual run capacitor alta capacidad'},
+        {sku:'CAP-TURBO',name:'Turbo 200 Universal Capacitor',category:'ac_parts',unit:'each',cost:25,price:95,description:'Capacitor universal 2.5-67.5 MFD'},
+        {sku:'CONT-1P30',name:'Contactor 1 Polo 30 Amp',category:'ac_parts',unit:'each',cost:12,price:65,description:'Contactor para condensadora residencial'},
+        {sku:'CONT-2P30',name:'Contactor 2 Polos 30 Amp',category:'ac_parts',unit:'each',cost:15,price:75,description:'Contactor para condensadora 2+ tons'},
+        {sku:'CONT-2P40',name:'Contactor 2 Polos 40 Amp',category:'ac_parts',unit:'each',cost:18,price:85,description:'Contactor para condensadora 3-5 tons'},
+        {sku:'TXV-R410',name:'TXV Valve R-410A 2-5 Ton',category:'ac_parts',unit:'each',cost:45,price:225,description:'Válvula de expansión termostática'},
+        {sku:'COIL-EVAP3',name:'Evaporator Coil 3 Ton',category:'ac_parts',unit:'each',cost:280,price:750,description:'Coil evaporador cased 3 ton'},
+        {sku:'COIL-EVAP4',name:'Evaporator Coil 4 Ton',category:'ac_parts',unit:'each',cost:340,price:850,description:'Coil evaporador cased 4 ton'},
+        {sku:'COIL-COND3',name:'Condenser Coil 3 Ton',category:'ac_parts',unit:'each',cost:350,price:900,description:'Coil condensador 3 ton'},
+        {sku:'COMP-SC',name:'Compressor Scroll 3 Ton R-410A',category:'ac_parts',unit:'each',cost:650,price:1800,description:'Compresor scroll Copeland 3 ton'},
+        {sku:'COMP-SC5',name:'Compressor Scroll 5 Ton R-410A',category:'ac_parts',unit:'each',cost:850,price:2200,description:'Compresor scroll Copeland 5 ton'},
+        {sku:'HARD-KIT',name:'Hard Start Kit 5-2-1 CSR-U2',category:'ac_parts',unit:'each',cost:22,price:120,description:'Kit de arranque para compresor'},
+        {sku:'DRIER-BK',name:'Filter Drier Biflow 3/8"',category:'ac_parts',unit:'each',cost:12,price:65,description:'Filtro deshidratador biflow'},
+        {sku:'SVC-VLV',name:'Service Valve Set 3/8" x 3/4"',category:'ac_parts',unit:'each',cost:25,price:85,description:'Par de válvulas de servicio'},
+        {sku:'DISC-60A',name:'Disconnect Box 60 Amp Non-Fused',category:'ac_parts',unit:'each',cost:12,price:55,description:'Caja de desconexión exterior'},
+        {sku:'DISC-60F',name:'Disconnect Box 60 Amp Fused',category:'ac_parts',unit:'each',cost:18,price:75,description:'Caja de desconexión con fusibles'},
+        {sku:'WHIP-6',name:'AC Whip 3/4" x 6ft',category:'ac_parts',unit:'each',cost:15,price:45,description:'Flexible conduit para condensadora'},
+        {sku:'PAD-COND',name:'Condenser Pad 24x24x3',category:'ac_parts',unit:'each',cost:25,price:65,description:'Base plástica para condensadora'},
+        {sku:'LINESETC',name:'Lineset 3/8 x 3/4 x 25ft',category:'ac_parts',unit:'each',cost:75,price:195,description:'Copper lineset con aislamiento'},
+        {sku:'LINESETD',name:'Lineset 3/8 x 7/8 x 30ft',category:'ac_parts',unit:'each',cost:95,price:245,description:'Copper lineset para 3+ ton'},
+        {sku:'DRAIN-PMP',name:'Condensate Pump Mini',category:'ac_parts',unit:'each',cost:35,price:125,description:'Bomba de condensado Little Giant'},
+        {sku:'FLOAT-SW',name:'Float Switch Safety',category:'ac_parts',unit:'each',cost:8,price:45,description:'Switch de seguridad para charola'},
+
+        // ===== HEATING PARTS =====
+        {sku:'IGN-HSI',name:'Hot Surface Ignitor Universal',category:'heating_parts',unit:'each',cost:12,price:85,description:'Ignitor universal silicon nitride'},
+        {sku:'IGN-NORTON',name:'Norton Ignitor 271N',category:'heating_parts',unit:'each',cost:8,price:75,description:'Ignitor Norton/Saint Gobain'},
+        {sku:'FLAME-SNS',name:'Flame Sensor Universal',category:'heating_parts',unit:'each',cost:6,price:65,description:'Sensor de flama universal'},
+        {sku:'GAS-VLV36',name:'Gas Valve Honeywell VR8205',category:'heating_parts',unit:'each',cost:95,price:350,description:'Válvula de gas 2 etapas Honeywell'},
+        {sku:'GAS-VLV-WR',name:'Gas Valve White Rodgers 36J',category:'heating_parts',unit:'each',cost:85,price:320,description:'Válvula de gas White Rodgers'},
+        {sku:'CTRL-BRD',name:'Control Board Universal Furnace',category:'heating_parts',unit:'each',cost:65,price:285,description:'Tarjeta de control universal furnace'},
+        {sku:'CTRL-ICM',name:'ICM2805A Control Board',category:'heating_parts',unit:'each',cost:55,price:250,description:'Tarjeta ICM reemplazo Carrier/Bryant'},
+        {sku:'BLWR-MTR',name:'Blower Motor 1/2 HP',category:'heating_parts',unit:'each',cost:85,price:325,description:'Motor de blower 1/2 HP 115V'},
+        {sku:'BLWR-MTR34',name:'Blower Motor 3/4 HP',category:'heating_parts',unit:'each',cost:110,price:395,description:'Motor de blower 3/4 HP 115V'},
+        {sku:'IDM-MTR',name:'Inducer Motor Draft Assembly',category:'heating_parts',unit:'each',cost:75,price:295,description:'Motor inductor de tiro'},
+        {sku:'XFORMER',name:'Transformer 120V/24V 40VA',category:'heating_parts',unit:'each',cost:12,price:65,description:'Transformador 40VA'},
+        {sku:'PRESS-SW',name:'Pressure Switch -0.65" WC',category:'heating_parts',unit:'each',cost:12,price:75,description:'Switch de presión negativa'},
+        {sku:'PRESS-SWH',name:'Pressure Switch -1.0" WC',category:'heating_parts',unit:'each',cost:14,price:80,description:'Switch de presión alta negativa'},
+        {sku:'LIMIT-SW',name:'Limit Switch 160°F',category:'heating_parts',unit:'each',cost:10,price:65,description:'Switch de límite de temperatura'},
+        {sku:'ROLLOUT',name:'Rollout Switch Manual Reset',category:'heating_parts',unit:'each',cost:8,price:55,description:'Switch de rollout manual reset'},
+        {sku:'HX-PRIMARY',name:'Heat Exchanger Primary',category:'heating_parts',unit:'each',cost:450,price:1500,description:'Intercambiador de calor primario'},
+        {sku:'HX-SECOND',name:'Heat Exchanger Secondary 90%+',category:'heating_parts',unit:'each',cost:350,price:1200,description:'Intercambiador secundario condensing'},
+        {sku:'IGNITION-MD',name:'Ignition Module Honeywell S8610U',category:'heating_parts',unit:'each',cost:55,price:195,description:'Módulo de ignición intermitent pilot'},
+
+        // ===== MOTORS & FANS =====
+        {sku:'CONDMTR',name:'Condenser Fan Motor 1/4 HP',category:'motors_fans',unit:'each',cost:55,price:225,description:'Motor de ventilador de condensadora'},
+        {sku:'CONDMTR6',name:'Condenser Fan Motor 1/6 HP',category:'motors_fans',unit:'each',cost:45,price:195,description:'Motor ventilador 1/6 HP'},
+        {sku:'ECM-MTR',name:'ECM Blower Motor 1/2 HP',category:'motors_fans',unit:'each',cost:350,price:850,description:'Motor ECM variable speed'},
+        {sku:'FAN-BLADE18',name:'Fan Blade 18" 3-Blade CW',category:'motors_fans',unit:'each',cost:15,price:55,description:'Aspa de ventilador 18 pulgadas'},
+        {sku:'FAN-BLADE22',name:'Fan Blade 22" 3-Blade CW',category:'motors_fans',unit:'each',cost:18,price:65,description:'Aspa de ventilador 22 pulgadas'},
+        {sku:'BLWR-WHL10',name:'Blower Wheel 10x8',category:'motors_fans',unit:'each',cost:30,price:95,description:'Rueda de blower 10x8'},
+        {sku:'BLWR-WHL11',name:'Blower Wheel 11x10',category:'motors_fans',unit:'each',cost:35,price:110,description:'Rueda de blower 11x10'},
+
+        // ===== CONTROLS & THERMOSTATS =====
+        {sku:'TSTAT-1H1C',name:'Thermostat Basic 1H/1C Non-Prog',category:'controls',unit:'each',cost:18,price:85,description:'Termostato básico no programable'},
+        {sku:'TSTAT-PROG',name:'Thermostat Programmable 2H/2C',category:'controls',unit:'each',cost:35,price:145,description:'Termostato programable'},
+        {sku:'TSTAT-WIFI',name:'Thermostat WiFi Honeywell T6',category:'controls',unit:'each',cost:95,price:245,description:'Termostato WiFi Honeywell T6 Pro'},
+        {sku:'TSTAT-ECOB',name:'Thermostat Ecobee Smart',category:'controls',unit:'each',cost:170,price:350,description:'Termostato inteligente Ecobee'},
+        {sku:'TSTAT-NEST',name:'Thermostat Google Nest',category:'controls',unit:'each',cost:180,price:375,description:'Termostato inteligente Google Nest'},
+        {sku:'RELAY-24V',name:'Relay 24V SPDT Fan',category:'controls',unit:'each',cost:8,price:45,description:'Relevador de fan 24V'},
+        {sku:'TIME-DLY',name:'Time Delay Relay 30s',category:'controls',unit:'each',cost:15,price:65,description:'Relevador con retardo de tiempo'},
+        {sku:'HIGH-PRSW',name:'High Pressure Switch 400 PSI',category:'controls',unit:'each',cost:18,price:85,description:'Switch de alta presión'},
+        {sku:'LOW-PRSW',name:'Low Pressure Switch 30 PSI',category:'controls',unit:'each',cost:18,price:85,description:'Switch de baja presión'},
+        {sku:'SEQUENCER',name:'Electric Heat Sequencer 2-Stage',category:'controls',unit:'each',cost:15,price:75,description:'Secuenciador de calefacción eléctrica'},
+        {sku:'DEFROST-BD',name:'Defrost Control Board Timer',category:'controls',unit:'each',cost:35,price:145,description:'Tarjeta de control de defrost'},
+
+        // ===== REFRIGERANTS =====
+        {sku:'R410A-25',name:'R-410A Refrigerant 25 lb',category:'refrigerants',unit:'each',cost:125,price:350,description:'Cilindro R-410A 25 libras'},
+        {sku:'R22-RCL',name:'R-22 Refrigerant (Reclaimed) lb',category:'refrigerants',unit:'lb',cost:35,price:85,description:'R-22 reclamado por libra'},
+        {sku:'R407C-25',name:'R-407C Refrigerant 25 lb',category:'refrigerants',unit:'each',cost:110,price:295,description:'Cilindro R-407C 25 libras'},
+        {sku:'R134A-30',name:'R-134A Refrigerant 30 lb',category:'refrigerants',unit:'each',cost:95,price:250,description:'Cilindro R-134A 30 libras'},
+        {sku:'R404A-24',name:'R-404A Refrigerant 24 lb',category:'refrigerants',unit:'each',cost:115,price:295,description:'Cilindro R-404A refrigeración comercial'},
+        {sku:'R290-LB',name:'R-290 Propane Refrigerant per lb',category:'refrigerants',unit:'lb',cost:8,price:35,description:'R-290 propano por libra'},
+        {sku:'NITRO-TANK',name:'Nitrogen Tank Rental + Gas',category:'refrigerants',unit:'each',cost:25,price:85,description:'Tanque de nitrógeno para pruebas'},
+
+        // ===== REFRIGERATION =====
+        {sku:'REF-TXV',name:'TXV Valve Commercial 1/2 Ton',category:'refrigeration',unit:'each',cost:45,price:175,description:'Válvula de expansión comercial'},
+        {sku:'REF-SOLENOID',name:'Solenoid Valve 3/8" ODF',category:'refrigeration',unit:'each',cost:35,price:145,description:'Válvula solenoide para refrigeración'},
+        {sku:'REF-FILTER',name:'Liquid Line Filter Drier 3/8"',category:'refrigeration',unit:'each',cost:12,price:55,description:'Filtro deshidratador líquido'},
+        {sku:'REF-SIGHT',name:'Sight Glass with Moisture Indicator',category:'refrigeration',unit:'each',cost:18,price:75,description:'Visor con indicador de humedad'},
+        {sku:'REF-FAN-MTR',name:'Evaporator Fan Motor 9W ECM',category:'refrigeration',unit:'each',cost:25,price:95,description:'Motor de evaporador walk-in/reach-in'},
+        {sku:'REF-DEFROST',name:'Defrost Heater Element 20"',category:'refrigeration',unit:'each',cost:15,price:65,description:'Elemento de descongelación'},
+        {sku:'REF-TERM',name:'Defrost Termination Thermostat',category:'refrigeration',unit:'each',cost:8,price:45,description:'Termostato de terminación de defrost'},
+        {sku:'REF-TIMER',name:'Defrost Timer Paragon 8145-20',category:'refrigeration',unit:'each',cost:25,price:95,description:'Timer de defrost Paragon'},
+        {sku:'REF-DOOR-GSK',name:'Walk-In Door Gasket (per foot)',category:'refrigeration',unit:'foot',cost:5,price:18,description:'Empaque de puerta walk-in por pie'},
+        {sku:'REF-DOOR-CLSR',name:'Walk-In Door Closer Heavy Duty',category:'refrigeration',unit:'each',cost:45,price:165,description:'Cerrador de puerta walk-in'},
+
+        // ===== ELECTRICAL =====
+        {sku:'WIRE-14-2',name:'Romex 14/2 NM-B (per foot)',category:'electrical',unit:'foot',cost:0.50,price:2.50,description:'Cable Romex 14/2 para 15A circuits'},
+        {sku:'WIRE-12-2',name:'Romex 12/2 NM-B (per foot)',category:'electrical',unit:'foot',cost:0.75,price:3.50,description:'Cable Romex 12/2 para 20A circuits'},
+        {sku:'WIRE-10-2',name:'Romex 10/2 NM-B (per foot)',category:'electrical',unit:'foot',cost:1.25,price:5.00,description:'Cable 10/2 para circuits de 30A'},
+        {sku:'WIRE-TSTAT',name:'Thermostat Wire 18/5 (per foot)',category:'electrical',unit:'foot',cost:0.30,price:1.50,description:'Cable de termostato 18 gauge 5 hilos'},
+        {sku:'WIRE-TSTAT8',name:'Thermostat Wire 18/8 (per foot)',category:'electrical',unit:'foot',cost:0.45,price:2.00,description:'Cable de termostato 18 gauge 8 hilos'},
+        {sku:'BRKR-20SP',name:'Breaker 20A Single Pole',category:'electrical',unit:'each',cost:6,price:35,description:'Breaker 20 amp 1 polo'},
+        {sku:'BRKR-30DP',name:'Breaker 30A Double Pole',category:'electrical',unit:'each',cost:12,price:55,description:'Breaker 30 amp 2 polos para AC'},
+        {sku:'BRKR-50DP',name:'Breaker 50A Double Pole',category:'electrical',unit:'each',cost:18,price:75,description:'Breaker 50 amp para electric heat'},
+        {sku:'FUSE-30',name:'Fuse 30 Amp Time Delay',category:'electrical',unit:'each',cost:3,price:15,description:'Fusible 30A time delay'},
+
+        // ===== DUCTWORK =====
+        {sku:'FLEX-6',name:'Flex Duct 6" x 25ft R-8',category:'ductwork',unit:'each',cost:35,price:95,description:'Ducto flexible 6 pulgadas R-8'},
+        {sku:'FLEX-8',name:'Flex Duct 8" x 25ft R-8',category:'ductwork',unit:'each',cost:45,price:120,description:'Ducto flexible 8 pulgadas R-8'},
+        {sku:'FLEX-10',name:'Flex Duct 10" x 25ft R-8',category:'ductwork',unit:'each',cost:55,price:145,description:'Ducto flexible 10 pulgadas R-8'},
+        {sku:'FLEX-12',name:'Flex Duct 12" x 25ft R-8',category:'ductwork',unit:'each',cost:65,price:165,description:'Ducto flexible 12 pulgadas R-8'},
+        {sku:'DUCT-TAPE',name:'Mastic Duct Tape UL181',category:'ductwork',unit:'each',cost:8,price:25,description:'Cinta de ducto código UL181'},
+        {sku:'DUCT-SEAL',name:'Duct Sealant Mastic 1 Gal',category:'ductwork',unit:'each',cost:12,price:35,description:'Sellador mastic para ductos'},
+        {sku:'REGISTER-W',name:'Ceiling Register 12x6 White',category:'ductwork',unit:'each',cost:8,price:35,description:'Registro de techo blanco'},
+        {sku:'GRILLE-RET',name:'Return Air Grille 20x20',category:'ductwork',unit:'each',cost:15,price:55,description:'Rejilla de retorno 20x20'},
+        {sku:'PLENUM-BOX',name:'Supply Plenum Box',category:'ductwork',unit:'each',cost:45,price:125,description:'Caja de plenum de suministro'},
+
+        // ===== FILTERS =====
+        {sku:'FILT-16251',name:'Filter 16x25x1 MERV 8',category:'filters',unit:'each',cost:3,price:12,description:'Filtro estándar 16x25x1'},
+        {sku:'FILT-20251',name:'Filter 20x25x1 MERV 8',category:'filters',unit:'each',cost:3,price:12,description:'Filtro estándar 20x25x1'},
+        {sku:'FILT-16254',name:'Filter 16x25x4 MERV 11',category:'filters',unit:'each',cost:18,price:45,description:'Filtro grueso alta eficiencia'},
+        {sku:'FILT-20254',name:'Filter 20x25x4 MERV 11',category:'filters',unit:'each',cost:18,price:45,description:'Filtro grueso alta eficiencia'},
+        {sku:'FILT-MEDIA',name:'Media Filter Replacement 20x25x5',category:'filters',unit:'each',cost:25,price:65,description:'Filtro de media reemplazo'},
+
+        // ===== TOOLS =====
+        {sku:'GAUGE-SET',name:'Manifold Gauge Set R-410A/R-22',category:'tools',unit:'each',cost:75,price:175,description:'Set de manómetros digital o análogo'},
+        {sku:'VACUUM-PMP',name:'Vacuum Pump 5 CFM',category:'tools',unit:'each',cost:150,price:350,description:'Bomba de vacío 5 CFM'},
+        {sku:'LEAK-DET',name:'Refrigerant Leak Detector',category:'tools',unit:'each',cost:85,price:195,description:'Detector de fugas de refrigerante'},
+        {sku:'RECOV-MACH',name:'Refrigerant Recovery Machine',category:'tools',unit:'each',cost:450,price:950,description:'Máquina recuperadora de refrigerante'},
+        {sku:'MULTIMETER',name:'Multimeter HVAC Fieldpiece',category:'tools',unit:'each',cost:85,price:195,description:'Multímetro HVAC Fieldpiece o equiv.'},
+        {sku:'MEGA-OHM',name:'Megohmmeter Insulation Tester',category:'tools',unit:'each',cost:120,price:295,description:'Megóhmetro para probar aislamientos'},
+        {sku:'COMBUST',name:'Combustion Analyzer',category:'tools',unit:'each',cost:350,price:750,description:'Analizador de combustión'},
+        {sku:'MANOMETER',name:'Digital Manometer Dual Port',category:'tools',unit:'each',cost:55,price:145,description:'Manómetro digital para presión estática'},
+
+        // ===== LABOR =====
+        {sku:'LBR-DIAG',name:'Diagnostic Fee / Service Call',category:'labor',unit:'flat',cost:0,price:89,description:'Cargo por diagnóstico y visita'},
+        {sku:'LBR-HOUR',name:'Labor Rate per Hour',category:'labor',unit:'hour',cost:0,price:125,description:'Tarifa estándar por hora de trabajo'},
+        {sku:'LBR-OT',name:'Overtime Labor per Hour',category:'labor',unit:'hour',cost:0,price:185,description:'Tarifa overtime / después de horario'},
+        {sku:'LBR-EMERG',name:'Emergency/After-Hours Service Call',category:'labor',unit:'flat',cost:0,price:175,description:'Llamada de emergencia fuera de horario'},
+        {sku:'LBR-TUNEUP',name:'AC Tune-Up / Maintenance',category:'labor',unit:'flat',cost:0,price:89,description:'Servicio de mantenimiento completo'},
+        {sku:'LBR-HTUNE',name:'Heating Tune-Up / Safety Check',category:'labor',unit:'flat',cost:0,price:89,description:'Inspección de calefacción'},
+        {sku:'LBR-INSTALL',name:'Equipment Installation (per system)',category:'labor',unit:'flat',cost:0,price:2500,description:'Mano de obra instalación sistema completo'},
+        {sku:'LBR-DUCTWORK',name:'Ductwork Installation (per run)',category:'labor',unit:'flat',cost:0,price:350,description:'Instalación de ductos por corrida'},
+        {sku:'LBR-BRAZING',name:'Brazing/Soldering Repair',category:'labor',unit:'flat',cost:0,price:195,description:'Reparación con soldadura de plata'},
+        {sku:'LBR-LEAK-RPR',name:'Refrigerant Leak Repair',category:'labor',unit:'flat',cost:0,price:350,description:'Búsqueda y reparación de fuga'},
+
+        // ===== EQUIPMENT =====
+        {sku:'EQ-COND2',name:'Condensing Unit 2 Ton 14 SEER',category:'equipment',unit:'each',cost:1200,price:2800,description:'Condensadora 2 ton básica'},
+        {sku:'EQ-COND3',name:'Condensing Unit 3 Ton 14 SEER',category:'equipment',unit:'each',cost:1450,price:3200,description:'Condensadora 3 ton básica'},
+        {sku:'EQ-COND4',name:'Condensing Unit 4 Ton 14 SEER',category:'equipment',unit:'each',cost:1700,price:3800,description:'Condensadora 4 ton básica'},
+        {sku:'EQ-COND5',name:'Condensing Unit 5 Ton 14 SEER',category:'equipment',unit:'each',cost:2100,price:4500,description:'Condensadora 5 ton básica'},
+        {sku:'EQ-AH3',name:'Air Handler 3 Ton Multi-Position',category:'equipment',unit:'each',cost:650,price:1600,description:'Manejadora de aire 3 ton'},
+        {sku:'EQ-AH4',name:'Air Handler 4 Ton Multi-Position',category:'equipment',unit:'each',cost:750,price:1850,description:'Manejadora de aire 4 ton'},
+        {sku:'EQ-FURN80',name:'Furnace 80% AFUE 80K BTU',category:'equipment',unit:'each',cost:650,price:1800,description:'Furnace 80% eficiencia 80,000 BTU'},
+        {sku:'EQ-FURN96',name:'Furnace 96% AFUE 80K BTU',category:'equipment',unit:'each',cost:1100,price:2800,description:'Furnace 96% high efficiency'},
+        {sku:'EQ-HP3',name:'Heat Pump 3 Ton 15 SEER',category:'equipment',unit:'each',cost:1800,price:3800,description:'Heat pump 3 ton'},
+        {sku:'EQ-MINI12',name:'Mini Split 12K BTU w/ Install Kit',category:'equipment',unit:'each',cost:650,price:2200,description:'Mini split 1 ton con kit instalación'},
+        {sku:'EQ-MINI18',name:'Mini Split 18K BTU w/ Install Kit',category:'equipment',unit:'each',cost:850,price:2800,description:'Mini split 1.5 ton con kit'},
+        {sku:'EQ-MINI24',name:'Mini Split 24K BTU w/ Install Kit',category:'equipment',unit:'each',cost:1050,price:3400,description:'Mini split 2 ton con kit'},
+        {sku:'EQ-PKG3',name:'Package Unit 3 Ton AC',category:'equipment',unit:'each',cost:2200,price:4800,description:'Unidad paquete 3 ton'},
+        {sku:'EQ-PKG5',name:'Package Unit 5 Ton AC',category:'equipment',unit:'each',cost:3200,price:6500,description:'Unidad paquete 5 ton'}
+    ];
+
+    var added = 0;
+    catalog.forEach(function(item) {
+        var exists = priceBookData.some(function(p) { return p.sku === item.sku; });
+        if (!exists) {
+            item.id = 'hvac_' + item.sku + '_' + Date.now();
+            priceBookData.push(item);
+            added++;
+        }
+    });
+    localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
+    renderPriceBook();
+    alert((currentLang === 'en' ? 'Added ' : 'Se agregaron ') + added + (currentLang === 'en' ? ' HVAC items to your price book!' : ' artículos HVAC a tu lista de precios!'));
+}
+
+function clearPriceBook() {
+    if (!confirm(currentLang === 'en' ? 'Clear ALL items from price book?' : '¿Borrar TODOS los artículos de la lista de precios?')) return;
+    priceBookData = [];
+    localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
+    renderPriceBook();
+}
