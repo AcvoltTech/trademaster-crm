@@ -128,10 +128,13 @@ async function loadAllData() {
 }
 
 function updateKPIs() {
-    document.getElementById('leadCountKPI').textContent = leadsData.length;
-    document.getElementById('techCountKPI').textContent = techsData.length;
-    document.getElementById('jobCountKPI').textContent = jobsData.filter(function(j) { return j.status !== 'completed' && j.status !== 'cancelled'; }).length;
-    document.getElementById('clientCountKPI').textContent = clientsData.length;
+    var el = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+    el('leadCountKPI', leadsData.length);
+    el('techCountKPI', techsData.length);
+    el('jobCountKPI', jobsData.filter(function(j) { return j.status !== 'completed' && j.status !== 'cancelled'; }).length);
+    el('clientCountKPI', clientsData.length);
+    // Update HCP dashboard cards
+    if (document.getElementById('hcpOpenEstimates')) renderHCPDashboard();
 }
 
 // ===== NAVIGATION =====
@@ -139,12 +142,13 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Dashboard', calendar:'Calendario', inbox:'Inbox - Comunicaciones', leads:'Gestión de Leads', dispatch:'Dispatch - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración' };
-    document.getElementById('pageTitle').textContent = titles[name] || 'Dashboard';
+    var titles = { dashboard:'Dashboard', calendar:'Calendario', inbox:'Inbox - Comunicaciones', leads:'Gestión de Leads', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Home Advisors', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Pipeline de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Marketing', pricebook:'Lista de Precios', reports:'Reportes' };
+    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports' };
+    document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
     if (al) al.classList.add('active');
-    if (name === 'dashboard') { renderDashboardDynamic(); }
+    if (name === 'dashboard') { renderDashboardDynamic(); renderHCPDashboard(); }
     if (name === 'calendar') { initCalendar(); }
     if (name === 'inbox') { loadInbox(); }
     if (name === 'clients') { loadClients(); }
@@ -155,6 +159,12 @@ function showSection(name) {
     if (name === 'advisors') { loadAdvisors(); loadReferrals(); }
     if (name === 'invoices') { populateInvoiceSelects(); loadInvoices(); }
     if (name === 'collections') { loadCollections(); }
+    if (name === 'pipeline') { renderPipelineSection(); }
+    if (name === 'mymoney') { renderMyMoney(); }
+    if (name === 'payroll') { renderPayroll(); }
+    if (name === 'marketing') { renderMarketing(); }
+    if (name === 'pricebook') { renderPriceBook(); }
+    if (name === 'reports') { renderReports(); }
 }
 
 // ===== LEADS =====
@@ -5085,4 +5095,278 @@ async function seedDemoData() {
     // Reload everything
     await loadAllData();
     alert('✅ Datos de demostración creados: 2 técnicos, 3 clientes, 1 lead, 2 citas');
+}
+
+// ============================================================
+// ===== INTERNATIONALIZATION (i18n) SYSTEM =====
+// ============================================================
+var currentLang = localStorage.getItem('tm_lang') || 'es';
+var i18nData = {
+  es: {
+    nav_principal:'Principal',nav_dashboard:'Dashboard',nav_inbox:'Bandeja',nav_schedule:'Agenda',nav_customers:'Clientes',nav_leads:'Leads',nav_pipeline:'Pipeline',
+    nav_operations:'Operaciones',nav_dispatch:'Despacho',nav_jobs:'Trabajos',nav_technicians:'Técnicos',nav_advisors:'Home Advisors',
+    nav_finance:'Finanzas',nav_invoices:'Facturas',nav_collections:'Cobranza',nav_mymoney:'Mi Dinero',nav_payroll:'Nómina',
+    nav_growth:'Crecimiento',nav_marketing:'Marketing',nav_pricebook:'Lista de Precios',nav_reports:'Reportes',nav_system:'Sistema',nav_settings:'Configuración',
+    dash_welcome:'Hola, ¿en qué nos enfocamos hoy?',dash_add_material:'Agregar materiales',dash_import_data:'Importar datos',dash_connect_reviews:'Conectar reseñas',dash_ask_something:'Preguntar algo',
+    dash_estimates:'Estimados',dash_open_estimates:'Estimados abiertos',dash_view_all_estimates:'Ver todos los estimados',
+    dash_jobs:'Trabajos',dash_unsched_jobs:'Trabajos sin agendar',dash_view_all_jobs:'Ver todos los trabajos',
+    dash_invoices:'Facturas',dash_open_invoices:'Facturas abiertas',dash_view_all_invoices:'Ver todas las facturas',
+    dash_service_plans:'Planes de Servicio',dash_sp_desc:'Crea planes de servicio para crecer ingresos y fidelizar clientes.',dash_create_template:'+ Crear plantilla',
+    dash_ytd:'Año hasta la fecha',dash_mtd:'Mes hasta la fecha',dash_last30:'Últimos 30 días',dash_last90:'Últimos 90 días',dash_view_reports:'Ver todos los reportes',
+    kpi_revenue:'INGRESOS GANADOS',kpi_completed:'TRABAJOS COMPLETADOS',kpi_avg_job:'TICKET PROMEDIO',kpi_new_booked:'NUEVOS TRABAJOS',kpi_online_booked:'RESERVADOS EN LÍNEA',
+    dash_employee_status:'Estado de Empleados',dash_today:'Hoy',dash_tomorrow:'Mañana',dash_see_jobs:'Ve los trabajos y estimados del día',dash_add_job:'Agregar trabajo',dash_add_estimate:'Agregar estimado',
+    dash_est_pipeline:'Pipeline de Estimados',dash_new_estimate:'Nuevo Estimado',
+    pipe_title:'Pipeline de Ventas',pipe_all:'Todos',pipe_week:'Esta Semana',pipe_month:'Este Mes',pipe_quarter:'Este Trimestre',pipe_new_est:'Nuevo Estimado',
+    pipe_new:'Nuevos',pipe_quoted:'Cotizados',pipe_approved:'Aprobados',pipe_scheduled:'Agendados',pipe_won:'Ganados',
+    pipe_total_value:'VALOR TOTAL',pipe_conversion:'TASA DE CONVERSIÓN',pipe_avg_deal:'TRATO PROMEDIO',pipe_avg_close:'DÍAS PARA CERRAR',
+    money_income:'Ingresos',money_expenses:'Gastos',money_profit:'Ganancia Neta',money_outstanding:'Por Cobrar',money_this_month:'Este mes',money_overdue_invoices:'Facturas pendientes',
+    money_transactions:'Transacciones',money_add_expense:'+ Agregar Gasto',money_new_expense:'Nuevo Gasto',money_desc:'Descripción',money_amount:'Monto',money_category:'Categoría',money_date:'Fecha',money_notes:'Notas',money_save:'Guardar',
+    pay_employees:'Empleados',pay_active:'Activos',pay_this_period:'Este Período',pay_total_payroll:'Total nómina',pay_hours:'Horas',pay_this_week:'Esta semana',pay_pending:'Pendiente',pay_to_process:'Por procesar',
+    pay_title:'Nómina / Payroll',pay_add_entry:'Agregar Entrada',pay_new_entry:'Nueva Entrada',pay_tech:'Técnico',pay_type:'Tipo',pay_hours_worked:'Horas Trabajadas',pay_rate:'Tarifa ($)',pay_total:'Total ($)',pay_period_start:'Inicio',pay_period_end:'Fin',pay_notes:'Notas',pay_save:'Guardar',
+    mkt_reviews:'Reseñas',mkt_avg_rating:'Rating promedio',mkt_campaigns:'Campañas',mkt_active:'Activas',mkt_lead_source:'Fuentes de Leads',mkt_channels:'Canales',mkt_roi:'ROI Marketing',mkt_return:'Retorno',
+    mkt_title:'Marketing',mkt_new_campaign:'Nueva Campaña',mkt_create_campaign:'Crear Campaña',mkt_camp_name:'Nombre',mkt_camp_type:'Tipo',mkt_budget:'Presupuesto ($)',mkt_start:'Inicio',mkt_end:'Fin',mkt_message:'Mensaje',mkt_save:'Guardar',
+    mkt_lead_breakdown:'Desglose de Fuentes de Leads',mkt_review_requests:'Solicitar Reseñas',mkt_review_desc:'Envía solicitudes de reseñas a clientes satisfechos.',mkt_select_client:'Cliente',mkt_platform:'Plataforma',mkt_send_request:'📧 Enviar Solicitud',
+    pb_title:'Lista de Precios',pb_all:'Todas las categorías',pb_add_item:'Agregar Artículo',pb_new_item:'Nuevo Artículo',pb_name:'Nombre',pb_sku:'SKU / Part #',pb_category:'Categoría',pb_unit:'Unidad',
+    pb_cost:'Costo ($)',pb_price:'Precio ($)',pb_markup:'Markup %',pb_description:'Descripción',pb_save:'Guardar',pb_total_items:'TOTAL ARTÍCULOS',pb_avg_markup:'MARKUP PROMEDIO',pb_categories:'CATEGORÍAS',
+    rpt_title:'Reportes',rpt_revenue:'Ingresos',rpt_jobs_done:'Trabajos',rpt_new_customers:'Nuevos Clientes',rpt_close_rate:'Tasa de Cierre',
+    rpt_revenue_chart:'Ingresos por Período',rpt_by_tech:'Por Técnico',rpt_by_source:'Por Fuente',rpt_top_services:'Top Servicios',rpt_by_day:'Por Día',btn_cancel:'Cancelar'
+  },
+  en: {
+    nav_principal:'Main',nav_dashboard:'Dashboard',nav_inbox:'Inbox',nav_schedule:'Schedule',nav_customers:'Customers',nav_leads:'Leads',nav_pipeline:'Pipeline',
+    nav_operations:'Operations',nav_dispatch:'Dispatch',nav_jobs:'Jobs',nav_technicians:'Technicians',nav_advisors:'Home Advisors',
+    nav_finance:'Finance',nav_invoices:'Invoices',nav_collections:'Collections',nav_mymoney:'My Money',nav_payroll:'Payroll',
+    nav_growth:'Growth',nav_marketing:'Marketing',nav_pricebook:'Price Book',nav_reports:'Reports',nav_system:'System',nav_settings:'Settings',
+    dash_welcome:'Hi, what should we dive into today?',dash_add_material:'Add material line items',dash_import_data:'Import my data',dash_connect_reviews:'Connect Google reviews',dash_ask_something:'Ask something',
+    dash_estimates:'Estimates',dash_open_estimates:'Open estimates',dash_view_all_estimates:'View all estimates',
+    dash_jobs:'Jobs',dash_unsched_jobs:'Unscheduled jobs',dash_view_all_jobs:'View all jobs',
+    dash_invoices:'Invoices',dash_open_invoices:'Open invoices',dash_view_all_invoices:'View all invoices',
+    dash_service_plans:'Service Plans',dash_sp_desc:'Start a service plan to grow revenue and customer loyalty.',dash_create_template:'+ Create template',
+    dash_ytd:'Year to date',dash_mtd:'Month to date',dash_last30:'Last 30 days',dash_last90:'Last 90 days',dash_view_reports:'View all reports',
+    kpi_revenue:'JOB REVENUE EARNED',kpi_completed:'JOBS COMPLETED',kpi_avg_job:'AVERAGE JOB SIZE',kpi_new_booked:'TOTAL NEW JOBS BOOKED',kpi_online_booked:'NEW JOBS BOOKED ONLINE',
+    dash_employee_status:'Employee Status',dash_today:'Today',dash_tomorrow:'Tomorrow',dash_see_jobs:'See all job and estimate locations for the day',dash_add_job:'Add job',dash_add_estimate:'Add estimate',
+    dash_est_pipeline:'Estimates Pipeline',dash_new_estimate:'New Estimate',
+    pipe_title:'Sales Pipeline',pipe_all:'All',pipe_week:'This Week',pipe_month:'This Month',pipe_quarter:'This Quarter',pipe_new_est:'New Estimate',
+    pipe_new:'New',pipe_quoted:'Quoted',pipe_approved:'Approved',pipe_scheduled:'Scheduled',pipe_won:'Won',
+    pipe_total_value:'TOTAL VALUE',pipe_conversion:'CONVERSION RATE',pipe_avg_deal:'AVG DEAL SIZE',pipe_avg_close:'AVG DAYS TO CLOSE',
+    money_income:'Income',money_expenses:'Expenses',money_profit:'Net Profit',money_outstanding:'Outstanding',money_this_month:'This month',money_overdue_invoices:'Pending invoices',
+    money_transactions:'Transactions',money_add_expense:'+ Add Expense',money_new_expense:'New Expense',money_desc:'Description',money_amount:'Amount',money_category:'Category',money_date:'Date',money_notes:'Notes',money_save:'Save',
+    pay_employees:'Employees',pay_active:'Active',pay_this_period:'This Period',pay_total_payroll:'Total payroll',pay_hours:'Hours',pay_this_week:'This week',pay_pending:'Pending',pay_to_process:'To process',
+    pay_title:'Payroll',pay_add_entry:'Add Entry',pay_new_entry:'New Entry',pay_tech:'Technician',pay_type:'Type',pay_hours_worked:'Hours Worked',pay_rate:'Rate ($)',pay_total:'Total ($)',pay_period_start:'Start',pay_period_end:'End',pay_notes:'Notes',pay_save:'Save',
+    mkt_reviews:'Reviews',mkt_avg_rating:'Avg rating',mkt_campaigns:'Campaigns',mkt_active:'Active',mkt_lead_source:'Lead Sources',mkt_channels:'Channels',mkt_roi:'Marketing ROI',mkt_return:'Return',
+    mkt_title:'Marketing',mkt_new_campaign:'New Campaign',mkt_create_campaign:'Create Campaign',mkt_camp_name:'Name',mkt_camp_type:'Type',mkt_budget:'Budget ($)',mkt_start:'Start',mkt_end:'End',mkt_message:'Message',mkt_save:'Save',
+    mkt_lead_breakdown:'Lead Source Breakdown',mkt_review_requests:'Request Reviews',mkt_review_desc:'Send review requests to satisfied customers.',mkt_select_client:'Customer',mkt_platform:'Platform',mkt_send_request:'📧 Send Request',
+    pb_title:'Price Book',pb_all:'All categories',pb_add_item:'Add Item',pb_new_item:'New Item',pb_name:'Name',pb_sku:'SKU / Part #',pb_category:'Category',pb_unit:'Unit',
+    pb_cost:'Cost ($)',pb_price:'Price ($)',pb_markup:'Markup %',pb_description:'Description',pb_save:'Save',pb_total_items:'TOTAL ITEMS',pb_avg_markup:'AVG MARKUP',pb_categories:'CATEGORIES',
+    rpt_title:'Reports',rpt_revenue:'Revenue',rpt_jobs_done:'Jobs',rpt_new_customers:'New Customers',rpt_close_rate:'Close Rate',
+    rpt_revenue_chart:'Revenue by Period',rpt_by_tech:'By Technician',rpt_by_source:'By Source',rpt_top_services:'Top Services',rpt_by_day:'By Day of Week',btn_cancel:'Cancel'
+  }
+};
+
+function toggleLanguage() { currentLang = currentLang === 'es' ? 'en' : 'es'; localStorage.setItem('tm_lang', currentLang); applyLanguage(); }
+
+function applyLanguage() {
+    var d = i18nData[currentLang] || i18nData.es;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) { var k = el.getAttribute('data-i18n'); if (d[k]) el.textContent = d[k]; });
+    var f = document.getElementById('langFlag'), l = document.getElementById('langLabel');
+    if (f) f.textContent = currentLang === 'es' ? '🇲🇽' : '🇺🇸';
+    if (l) l.textContent = currentLang === 'es' ? 'ES' : 'EN';
+}
+document.addEventListener('DOMContentLoaded', function() { setTimeout(applyLanguage, 100); });
+
+// ===== HCP DASHBOARD =====
+var employeeStatusMap = null;
+function renderHCPDashboard() {
+    var openEst = jobsData.filter(function(j){ return j.status==='open'||j.status==='pending'; });
+    var estTotal = openEst.reduce(function(s,j){ return s+(parseFloat(j.total_cost)||0);},0);
+    document.getElementById('hcpOpenEstimates').textContent = openEst.length;
+    document.getElementById('hcpEstimatesAmount').textContent = '$'+estTotal.toLocaleString('en-US',{minimumFractionDigits:2});
+    var unschedJobs = jobsData.filter(function(j){ return !j.scheduled_date&&j.status!=='completed'&&j.status!=='cancelled'; });
+    var unschedTotal = unschedJobs.reduce(function(s,j){ return s+(parseFloat(j.total_cost)||0);},0);
+    document.getElementById('hcpUnschedJobs').textContent = unschedJobs.length;
+    document.getElementById('hcpJobsAmount').textContent = '$'+unschedTotal.toLocaleString('en-US',{minimumFractionDigits:2});
+    var openInv = (window.invoicesData||[]).filter(function(i){ return i.status==='sent'||i.status==='partial'||i.status==='overdue'; });
+    var invTotal = openInv.reduce(function(s,i){ return s+((parseFloat(i.total)||0)-(parseFloat(i.amount_paid)||0));},0);
+    document.getElementById('hcpOpenInvoices').textContent = openInv.length;
+    document.getElementById('hcpInvoicesAmount').textContent = '$'+invTotal.toLocaleString('en-US',{minimumFractionDigits:2});
+    renderYTDKpis(); renderEmployeeStatus();
+}
+function renderYTDKpis() {
+    var period = document.getElementById('ytdPeriod').value, now = new Date(), startDate;
+    if (period==='ytd') startDate=new Date(now.getFullYear(),0,1);
+    else if (period==='mtd') startDate=new Date(now.getFullYear(),now.getMonth(),1);
+    else if (period==='last30'){startDate=new Date(now);startDate.setDate(startDate.getDate()-30);}
+    else{startDate=new Date(now);startDate.setDate(startDate.getDate()-90);}
+    var pJobs = jobsData.filter(function(j){return new Date(j.created_at)>=startDate;});
+    var cJobs = pJobs.filter(function(j){return j.status==='completed';});
+    var pInv = (window.invoicesData||[]).filter(function(i){return new Date(i.created_at)>=startDate&&i.status==='paid';});
+    var rev = pInv.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
+    var avg = cJobs.length>0?rev/cJobs.length:0;
+    document.getElementById('ytdRevenue').textContent = rev>0?'$'+rev.toLocaleString('en-US',{minimumFractionDigits:2}):'--';
+    document.getElementById('ytdCompleted').textContent = cJobs.length||'--';
+    document.getElementById('ytdAvgJob').textContent = avg>0?'$'+avg.toLocaleString('en-US',{minimumFractionDigits:2}):'--';
+    document.getElementById('ytdNewBooked').textContent = pJobs.length||'--';
+    document.getElementById('ytdOnlineBooked').textContent = '--';
+}
+function renderEmployeeStatus() {
+    var list = document.getElementById('employeeStatusList'); if(!list)return;
+    var todayStr = new Date().toISOString().split('T')[0];
+    var todaysJobs = jobsData.filter(function(j){return j.scheduled_date===todayStr;});
+    if(todaysJobs.length===0){list.innerHTML='<p class="empty-msg">'+(currentLang==='en'?'No jobs scheduled today':'Sin trabajos agendados hoy')+'</p>';}
+    else{var h='';todaysJobs.forEach(function(j){var t=techsData.find(function(t){return t.id===j.tech_id;});h+='<div class="hcp-emp-item"><span class="hcp-emp-dot" style="background:'+(j.status==='completed'?'#10b981':'#3b82f6')+';"></span><strong>'+(t?t.name:'Sin asignar')+'</strong> - '+(j.title||j.description||'Trabajo')+'</div>';});list.innerHTML=h;}
+    setTimeout(function(){var m=document.getElementById('employeeStatusMap');if(m&&!employeeStatusMap&&typeof google!=='undefined'){employeeStatusMap=new google.maps.Map(m,{center:{lat:34.1083,lng:-117.2898},zoom:12});}},300);
+}
+function setEmployeeView(v){document.querySelectorAll('.hcp-toggle-btn').forEach(function(b){b.classList.remove('active');});event.target.classList.add('active');renderEmployeeStatus();}
+
+// ===== PIPELINE SECTION =====
+function renderPipelineSection() {
+    var st={new:[],quoted:[],approved:[],scheduled:[],won:[]};
+    jobsData.forEach(function(j){if(j.status==='open'||j.status==='pending')st.new.push(j);else if(j.status==='quoted')st.quoted.push(j);else if(j.status==='approved')st.approved.push(j);else if(j.status==='in_progress')st.scheduled.push(j);else if(j.status==='completed')st.won.push(j);});
+    ['new','quoted','approved','scheduled','won'].forEach(function(s){
+        var cId='kanban'+s.charAt(0).toUpperCase()+s.slice(1)+'Count', lId='kanban'+s.charAt(0).toUpperCase()+s.slice(1);
+        var cEl=document.getElementById(cId),lEl=document.getElementById(lId);
+        if(cEl)cEl.textContent=st[s].length;
+        if(lEl)lEl.innerHTML=st[s].map(function(j){return'<div class="kanban-item"><strong>'+(j.title||j.description||'Job')+'</strong><span class="kanban-amount">$'+(parseFloat(j.total_cost)||0).toLocaleString()+'</span><small>'+(j.client_name||'')+'</small></div>';}).join('')||'<p class="empty-msg" style="font-size:11px;">—</p>';
+    });
+    var total=jobsData.reduce(function(s,j){return s+(parseFloat(j.total_cost)||0);},0);
+    var comp=jobsData.filter(function(j){return j.status==='completed';}).length;
+    var rate=jobsData.length>0?Math.round(comp/jobsData.length*100):0;
+    var avg=jobsData.length>0?total/jobsData.length:0;
+    document.getElementById('pipeTotalValue').textContent='$'+total.toLocaleString();
+    document.getElementById('pipeConvRate').textContent=rate+'%';
+    document.getElementById('pipeAvgDeal').textContent='$'+Math.round(avg).toLocaleString();
+    document.getElementById('pipeAvgClose').textContent='7';
+}
+
+// ===== MY MONEY =====
+var expensesData = JSON.parse(localStorage.getItem('tm_expenses')||'[]');
+function showExpenseForm(){document.getElementById('expenseFormContainer').style.display='block';document.getElementById('expDate').value=new Date().toISOString().split('T')[0];}
+function hideExpenseForm(){document.getElementById('expenseFormContainer').style.display='none';}
+function handleExpenseCreate(e){e.preventDefault();expensesData.push({id:Date.now().toString(),description:document.getElementById('expDesc').value,amount:parseFloat(document.getElementById('expAmount').value)||0,category:document.getElementById('expCategory').value,date:document.getElementById('expDate').value,notes:document.getElementById('expNotes').value});localStorage.setItem('tm_expenses',JSON.stringify(expensesData));hideExpenseForm();renderMyMoney();}
+function renderMyMoney(){
+    var paidInv=(window.invoicesData||[]).filter(function(i){return i.status==='paid';});
+    var income=paidInv.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
+    var expenses=expensesData.reduce(function(s,e){return s+(e.amount||0);},0);
+    var outstanding=(window.invoicesData||[]).filter(function(i){return i.status!=='paid'&&i.status!=='cancelled';}).reduce(function(s,i){return s+((parseFloat(i.total)||0)-(parseFloat(i.amount_paid)||0));},0);
+    document.getElementById('moneyIncome').textContent='$'+income.toLocaleString('en-US',{minimumFractionDigits:2});
+    document.getElementById('moneyExpenses').textContent='$'+expenses.toLocaleString('en-US',{minimumFractionDigits:2});
+    document.getElementById('moneyProfit').textContent='$'+(income-expenses).toLocaleString('en-US',{minimumFractionDigits:2});
+    document.getElementById('moneyOutstanding').textContent='$'+outstanding.toLocaleString('en-US',{minimumFractionDigits:2});
+    var months=currentLang==='en'?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var ch='<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:10px 0;">';
+    for(var m=0;m<12;m++){var mI=paidInv.filter(function(i){return new Date(i.created_at).getMonth()===m;}).reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);var mE=expensesData.filter(function(e){return new Date(e.date).getMonth()===m;}).reduce(function(s,e){return s+(e.amount||0);},0);var mx=Math.max(income,1);ch+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="display:flex;gap:1px;align-items:flex-end;height:100px;width:100%;"><div style="flex:1;height:'+Math.max(mI/mx*100,2)+'%;background:#10b981;border-radius:2px 2px 0 0;"></div><div style="flex:1;height:'+Math.max(mE/mx*100,2)+'%;background:#ef4444;border-radius:2px 2px 0 0;"></div></div><span style="font-size:9px;color:var(--text-muted);">'+months[m]+'</span></div>';}
+    ch+='</div><div style="display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--text-muted);"><span>🟢 '+(currentLang==='en'?'Income':'Ingresos')+'</span><span>🔴 '+(currentLang==='en'?'Expenses':'Gastos')+'</span></div>';
+    document.getElementById('moneyChart').innerHTML=ch;
+    var allTx=[];paidInv.forEach(function(i){allTx.push({type:'income',desc:(currentLang==='en'?'Invoice':'Factura')+' #'+(i.invoice_number||i.id.slice(0,6)),amount:parseFloat(i.total)||0,date:i.created_at,cat:'invoice'});});
+    expensesData.forEach(function(e){allTx.push({type:'expense',desc:e.description,amount:e.amount,date:e.date,cat:e.category});});
+    allTx.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    var txH='<table class="data-table"><thead><tr><th>'+(currentLang==='en'?'Date':'Fecha')+'</th><th>'+(currentLang==='en'?'Description':'Descripción')+'</th><th>'+(currentLang==='en'?'Category':'Categoría')+'</th><th>'+(currentLang==='en'?'Amount':'Monto')+'</th></tr></thead><tbody>';
+    allTx.slice(0,50).forEach(function(tx){var c=tx.type==='income'?'#10b981':'#ef4444';var sg=tx.type==='income'?'+':'-';txH+='<tr><td>'+new Date(tx.date).toLocaleDateString()+'</td><td>'+tx.desc+'</td><td><span class="badge" style="background:'+c+'22;color:'+c+';">'+tx.cat+'</span></td><td style="color:'+c+';font-weight:600;">'+sg+'$'+tx.amount.toLocaleString('en-US',{minimumFractionDigits:2})+'</td></tr>';});
+    txH+='</tbody></table>';if(allTx.length===0)txH='<p class="empty-msg">'+(currentLang==='en'?'No transactions':'Sin transacciones')+'</p>';
+    document.getElementById('moneyTransactions').innerHTML=txH;
+}
+
+// ===== PAYROLL =====
+var payrollData=JSON.parse(localStorage.getItem('tm_payroll')||'[]');
+function showPayrollEntry(){document.getElementById('payrollFormContainer').style.display='block';var s=document.getElementById('payTechSelect');s.innerHTML='<option value="">Seleccionar...</option>';techsData.forEach(function(t){s.innerHTML+='<option value="'+t.id+'">'+t.name+'</option>';});document.getElementById('payStart').value=new Date().toISOString().split('T')[0];}
+function hidePayrollEntry(){document.getElementById('payrollFormContainer').style.display='none';}
+function handlePayrollCreate(e){e.preventDefault();var en={id:Date.now().toString(),tech_id:document.getElementById('payTechSelect').value,tech_name:document.getElementById('payTechSelect').selectedOptions[0].text,type:document.getElementById('payType').value,hours:parseFloat(document.getElementById('payHours').value)||0,rate:parseFloat(document.getElementById('payRate').value)||0,total:parseFloat(document.getElementById('payTotal').value)||0,period_start:document.getElementById('payStart').value,period_end:document.getElementById('payEnd').value,notes:document.getElementById('payNotes').value,status:'pending'};if(!en.total&&en.hours&&en.rate)en.total=en.hours*en.rate;payrollData.push(en);localStorage.setItem('tm_payroll',JSON.stringify(payrollData));hidePayrollEntry();renderPayroll();}
+function renderPayroll(){
+    document.getElementById('payEmployeeCount').textContent=techsData.length;
+    document.getElementById('payPeriodTotal').textContent='$'+payrollData.reduce(function(s,p){return s+(p.total||0);},0).toLocaleString('en-US',{minimumFractionDigits:2});
+    document.getElementById('payTotalHours').textContent=payrollData.reduce(function(s,p){return s+(p.hours||0);},0);
+    document.getElementById('payPending').textContent=payrollData.filter(function(p){return p.status==='pending';}).length;
+    var h='<table class="data-table"><thead><tr><th>'+(currentLang==='en'?'Technician':'Técnico')+'</th><th>'+(currentLang==='en'?'Type':'Tipo')+'</th><th>'+(currentLang==='en'?'Hours':'Horas')+'</th><th>'+(currentLang==='en'?'Rate':'Tarifa')+'</th><th>Total</th><th>'+(currentLang==='en'?'Period':'Período')+'</th><th>Status</th></tr></thead><tbody>';
+    payrollData.slice().reverse().forEach(function(p){h+='<tr><td><strong>'+p.tech_name+'</strong></td><td>'+p.type+'</td><td>'+p.hours+'</td><td>$'+p.rate.toFixed(2)+'</td><td style="font-weight:600;">$'+p.total.toLocaleString('en-US',{minimumFractionDigits:2})+'</td><td>'+p.period_start+'</td><td><span class="badge" style="background:'+(p.status==='paid'?'#10b981':'#f59e0b')+'22;color:'+(p.status==='paid'?'#10b981':'#f59e0b')+';">'+p.status+'</span></td></tr>';});
+    h+='</tbody></table>';if(payrollData.length===0)h='<p class="empty-msg">'+(currentLang==='en'?'No payroll entries':'Sin entradas de nómina')+'</p>';
+    document.getElementById('payrollTable').innerHTML=h;
+}
+
+// ===== MARKETING =====
+var campaignsData=JSON.parse(localStorage.getItem('tm_campaigns')||'[]');
+function showCampaignForm(){document.getElementById('campaignFormContainer').style.display='block';}
+function hideCampaignForm(){document.getElementById('campaignFormContainer').style.display='none';}
+function handleCampaignCreate(e){e.preventDefault();campaignsData.push({id:Date.now().toString(),name:document.getElementById('campName').value,type:document.getElementById('campType').value,budget:parseFloat(document.getElementById('campBudget').value)||0,start:document.getElementById('campStart').value,end:document.getElementById('campEnd').value,message:document.getElementById('campMessage').value,status:'active',leads_generated:0});localStorage.setItem('tm_campaigns',JSON.stringify(campaignsData));hideCampaignForm();renderMarketing();}
+function renderMarketing(){
+    document.getElementById('mktCampaignCount').textContent=campaignsData.filter(function(c){return c.status==='active';}).length;
+    var sources={};leadsData.forEach(function(l){var s=l.source||'directo';sources[s]=(sources[s]||0)+1;});
+    document.getElementById('mktLeadSources').textContent=Object.keys(sources).length;
+    document.getElementById('mktReviewCount').textContent='0';document.getElementById('mktROI').textContent='0%';
+    var srcH='<div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;">';
+    Object.keys(sources).forEach(function(s){srcH+='<div style="flex:1;min-width:120px;padding:10px;background:var(--bg-input);border-radius:8px;text-align:center;"><strong style="font-size:18px;color:var(--primary);">'+sources[s]+'</strong><br><span style="font-size:11px;color:var(--text-muted);">'+s+'</span></div>';});
+    if(!Object.keys(sources).length)srcH+='<p class="empty-msg">Sin datos</p>';srcH+='</div>';
+    document.getElementById('leadSourceChart').innerHTML=srcH;
+    var campH='';campaignsData.slice().reverse().forEach(function(c){campH+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);"><div><strong>'+c.name+'</strong><br><span style="font-size:11px;color:var(--text-muted);">'+c.type+'</span></div><div style="text-align:right;"><span style="font-weight:600;color:var(--primary);">$'+(c.budget||0).toLocaleString()+'</span><br><span class="badge" style="background:#10b98122;color:#10b981;">'+c.status+'</span></div></div>';});
+    if(!campaignsData.length)campH='<p class="empty-msg">Sin campañas</p>';
+    document.getElementById('campaignsList').innerHTML=campH;
+    var sel=document.getElementById('reviewClientSelect');if(sel){sel.innerHTML='<option value="">Seleccionar...</option>';(window.clientsData||[]).forEach(function(c){sel.innerHTML+='<option value="'+c.id+'">'+c.name+'</option>';});}
+}
+function sendReviewRequest(){var c=document.getElementById('reviewClientSelect');if(!c.value){alert('Selecciona un cliente');return;}alert('Solicitud enviada a '+c.selectedOptions[0].text);}
+
+// ===== PRICE BOOK =====
+var priceBookData=JSON.parse(localStorage.getItem('tm_pricebook')||'[]');
+function showPriceBookForm(){document.getElementById('priceBookFormContainer').style.display='block';}
+function hidePriceBookForm(){document.getElementById('priceBookFormContainer').style.display='none';}
+document.addEventListener('input',function(e){if(e.target.id==='pbCost'||e.target.id==='pbPrice'){var c=parseFloat(document.getElementById('pbCost').value)||0;var p=parseFloat(document.getElementById('pbPrice').value)||0;document.getElementById('pbMarkup').value=c>0?Math.round((p-c)/c*100):0;}});
+function handlePriceBookCreate(e){e.preventDefault();priceBookData.push({id:Date.now().toString(),name:document.getElementById('pbName').value,sku:document.getElementById('pbSku').value,category:document.getElementById('pbCategory').value,unit:document.getElementById('pbUnit').value,cost:parseFloat(document.getElementById('pbCost').value)||0,price:parseFloat(document.getElementById('pbPrice').value)||0,description:document.getElementById('pbDesc').value});localStorage.setItem('tm_pricebook',JSON.stringify(priceBookData));hidePriceBookForm();e.target.reset();renderPriceBook();}
+function filterPriceBook(){renderPriceBook();}
+function renderPriceBook(){
+    var search=(document.getElementById('pbSearch').value||'').toLowerCase(),catF=document.getElementById('pbCategoryFilter').value;
+    var filtered=priceBookData.filter(function(p){return(!search||p.name.toLowerCase().indexOf(search)>=0||(p.sku||'').toLowerCase().indexOf(search)>=0)&&(catF==='all'||p.category===catF);});
+    document.getElementById('pbTotalItems').textContent=priceBookData.length;
+    var cats={},totalMk=0,mkCt=0;priceBookData.forEach(function(p){cats[p.category]=true;if(p.cost>0){totalMk+=(p.price-p.cost)/p.cost*100;mkCt++;}});
+    document.getElementById('pbAvgMarkup').textContent=mkCt>0?Math.round(totalMk/mkCt)+'%':'0%';
+    document.getElementById('pbCategories').textContent=Object.keys(cats).length;
+    var h='<table class="data-table"><thead><tr><th>SKU</th><th>'+(currentLang==='en'?'Name':'Nombre')+'</th><th>'+(currentLang==='en'?'Category':'Categoría')+'</th><th>'+(currentLang==='en'?'Cost':'Costo')+'</th><th>'+(currentLang==='en'?'Price':'Precio')+'</th><th>Markup</th><th></th></tr></thead><tbody>';
+    filtered.forEach(function(p){var mk=p.cost>0?Math.round((p.price-p.cost)/p.cost*100):0;h+='<tr><td>'+(p.sku||'-')+'</td><td><strong>'+p.name+'</strong></td><td>'+p.category+'</td><td>$'+p.cost.toFixed(2)+'</td><td style="font-weight:600;color:var(--primary);">$'+p.price.toFixed(2)+'</td><td>'+mk+'%</td><td><button class="btn-sm" style="background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" onclick="deletePBItem(\''+p.id+'\')">✕</button></td></tr>';});
+    h+='</tbody></table>';if(!filtered.length)h='<p class="empty-msg">Sin artículos</p>';
+    document.getElementById('priceBookTable').innerHTML=h;
+}
+function deletePBItem(id){if(!confirm('¿Eliminar?'))return;priceBookData=priceBookData.filter(function(p){return p.id!==id;});localStorage.setItem('tm_pricebook',JSON.stringify(priceBookData));renderPriceBook();}
+
+// ===== REPORTS =====
+function renderReports(){
+    var period=document.getElementById('rptPeriod').value,now=new Date(),startDate;
+    document.getElementById('rptCustomRange').style.display=period==='custom'?'flex':'none';
+    if(period==='week'){startDate=new Date(now);startDate.setDate(startDate.getDate()-7);}
+    else if(period==='month'){startDate=new Date(now.getFullYear(),now.getMonth(),1);}
+    else if(period==='quarter'){startDate=new Date(now);startDate.setMonth(startDate.getMonth()-3);}
+    else if(period==='year'){startDate=new Date(now.getFullYear(),0,1);}
+    else{startDate=new Date(document.getElementById('rptStart').value||now);}
+    var pJobs=jobsData.filter(function(j){return new Date(j.created_at)>=startDate;});
+    var cJobs=pJobs.filter(function(j){return j.status==='completed';});
+    var pInv=(window.invoicesData||[]).filter(function(i){return new Date(i.created_at)>=startDate&&i.status==='paid';});
+    var rev=pInv.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
+    var newCl=(window.clientsData||[]).filter(function(c){return new Date(c.created_at)>=startDate;}).length;
+    var rate=pJobs.length>0?Math.round(cJobs.length/pJobs.length*100):0;
+    document.getElementById('rptRevenue').textContent='$'+rev.toLocaleString();
+    document.getElementById('rptJobsDone').textContent=cJobs.length;
+    document.getElementById('rptNewCustomers').textContent=newCl;
+    document.getElementById('rptCloseRate').textContent=rate+'%';
+    // Revenue chart
+    var ms=currentLang==='en'?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var maxR=1,mRevs=ms.map(function(m,i){var r=pInv.filter(function(inv){return new Date(inv.created_at).getMonth()===i;}).reduce(function(s,inv){return s+(parseFloat(inv.total)||0);},0);if(r>maxR)maxR=r;return r;});
+    var ch='<div style="display:flex;align-items:flex-end;gap:6px;height:140px;padding:10px 0;">';
+    mRevs.forEach(function(r,i){ch+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;height:'+Math.max(r/maxR*120,4)+'px;background:linear-gradient(180deg,var(--primary),#60a5fa);border-radius:4px 4px 0 0;" title="$'+r.toLocaleString()+'"></div><span style="font-size:9px;color:var(--text-muted);margin-top:4px;">'+ms[i]+'</span></div>';});
+    ch+='</div>';document.getElementById('rptRevenueChart').innerHTML=ch;
+    // By tech
+    var byTech={};cJobs.forEach(function(j){var tn=techsData.find(function(t){return t.id===j.tech_id;});var nm=tn?tn.name:'Sin asignar';if(!byTech[nm])byTech[nm]={jobs:0,rev:0};byTech[nm].jobs++;byTech[nm].rev+=(parseFloat(j.total_cost)||0);});
+    var techH='';Object.keys(byTech).forEach(function(n){techH+='<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border);"><span><strong>'+n+'</strong></span><span>'+byTech[n].jobs+' jobs | $'+byTech[n].rev.toLocaleString()+'</span></div>';});
+    if(!Object.keys(byTech).length)techH='<p class="empty-msg">Sin datos</p>';
+    document.getElementById('rptByTech').innerHTML=techH;
+    // By source
+    var bySrc={};leadsData.forEach(function(l){var s=l.source||'directo';bySrc[s]=(bySrc[s]||0)+1;});
+    var srcH='';Object.keys(bySrc).forEach(function(s){srcH+='<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border);"><span>'+s+'</span><span style="font-weight:600;">'+bySrc[s]+' leads</span></div>';});
+    if(!Object.keys(bySrc).length)srcH='<p class="empty-msg">Sin datos</p>';
+    document.getElementById('rptBySource').innerHTML=srcH;
+    // Top services
+    var byServ={};jobsData.forEach(function(j){var s=j.service_type||j.title||'General';if(!byServ[s])byServ[s]=0;byServ[s]++;});
+    var servArr=Object.keys(byServ).map(function(k){return{name:k,count:byServ[k]};}).sort(function(a,b){return b.count-a.count;}).slice(0,5);
+    var servH='';servArr.forEach(function(s){servH+='<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border);"><span>'+s.name+'</span><span style="font-weight:600;">'+s.count+'</span></div>';});
+    if(!servArr.length)servH='<p class="empty-msg">Sin datos</p>';
+    document.getElementById('rptTopServices').innerHTML=servH;
+    // By day
+    var days=currentLang==='en'?['Sun','Mon','Tue','Wed','Thu','Fri','Sat']:['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    var byDay=[0,0,0,0,0,0,0];jobsData.forEach(function(j){var d=new Date(j.created_at).getDay();byDay[d]++;});
+    var dayH='';days.forEach(function(d,i){dayH+='<div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border);"><span>'+d+'</span><span style="font-weight:600;">'+byDay[i]+'</span></div>';});
+    document.getElementById('rptByDay').innerHTML=dayH;
 }
