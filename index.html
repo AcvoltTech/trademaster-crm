@@ -324,24 +324,46 @@
                 <div class="card-top"><h3>👷 Técnicos</h3><button class="btn-primary btn-sm" onclick="showTechForm()">+ Agregar Técnico</button></div>
                 <div id="techFormContainer" style="display:none; margin-bottom:16px;">
                   <form id="techForm" onsubmit="handleTechCreate(event)">
-                    <div class="form-row">
-                      <div class="form-group"><label>Nombre</label><input type="text" id="techName" required placeholder="Nombre completo"></div>
-                      <div class="form-group"><label>Teléfono</label><input type="tel" id="techPhone" placeholder="Teléfono"></div>
-                    </div>
-                    <div class="form-row">
-                      <div class="form-group"><label>Email</label><input type="email" id="techEmail" placeholder="Email"></div>
-                      <div class="form-group">
-                        <label>Especialidad</label>
-                        <select id="techSpecialty">
-                          <option value="HVAC">HVAC</option>
-                          <option value="Refrigeración">Refrigeración</option>
-                          <option value="Eléctrico">Eléctrico</option>
-                          <option value="Plomería">Plomería</option>
-                          <option value="General">General</option>
-                        </select>
+                    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                      <!-- Photo Upload -->
+                      <div style="text-align:center;min-width:120px;">
+                        <div id="techPhotoPreview" style="width:110px;height:130px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;background:var(--bg-input);cursor:pointer;" onclick="document.getElementById('techPhotoInput').click()">
+                          <span style="font-size:11px;color:var(--text-muted);text-align:center;">📷 Foto del<br>Técnico</span>
+                        </div>
+                        <input type="file" id="techPhotoInput" accept="image/*" style="display:none" onchange="previewTechPhoto(this)">
+                        <button type="button" class="btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick="document.getElementById('techPhotoInput').click()">📤 Subir Foto</button>
+                      </div>
+                      <!-- Info Fields -->
+                      <div style="flex:1;min-width:280px;">
+                        <div class="form-row">
+                          <div class="form-group"><label>Nombre</label><input type="text" id="techName" required placeholder="Nombre completo"></div>
+                          <div class="form-group"><label>Teléfono</label><input type="tel" id="techPhone" placeholder="Teléfono"></div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group"><label>Email</label><input type="email" id="techEmail" placeholder="Email"></div>
+                          <div class="form-group">
+                            <label>Especialidad</label>
+                            <select id="techSpecialty">
+                              <option value="HVAC">HVAC</option>
+                              <option value="Refrigeración">Refrigeración</option>
+                              <option value="Eléctrico">Eléctrico</option>
+                              <option value="Plomería">Plomería</option>
+                              <option value="General">General</option>
+                            </select>
+                          </div>
+                        </div>
+                        <h5 style="color:var(--primary);margin:8px 0 4px;font-size:12px;">🚐 Vehículo Asignado / Assigned Vehicle</h5>
+                        <div class="form-row">
+                          <div class="form-group"><label>Vehículo</label><input type="text" id="techVehicle" placeholder="Ej: 2022 Ford Transit"></div>
+                          <div class="form-group"><label>Placas / License Plate</label><input type="text" id="techPlate" placeholder="Ej: ABC1234"></div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group"><label>VIN #</label><input type="text" id="techVin" placeholder="Vehicle ID Number"></div>
+                          <div class="form-group"><label>Color</label><input type="text" id="techVehicleColor" placeholder="Ej: Blanco"></div>
+                        </div>
                       </div>
                     </div>
-                    <div class="form-actions">
+                    <div class="form-actions" style="margin-top:10px;">
                       <button type="submit" class="btn-primary btn-sm">Guardar</button>
                       <button type="button" class="btn-secondary btn-sm" onclick="hideTechForm()">Cancelar</button>
                     </div>
@@ -412,6 +434,193 @@
               <div class="card-top"><h3>Gestión de Técnicos</h3><button class="btn-primary btn-sm" onclick="showSection('dispatch')">Ir a Dispatch</button></div>
               <div id="techniciansFullList"></div>
             </div>
+
+            <!-- Technician Credentials -->
+            <div class="card">
+              <div class="card-top">
+                <h3>📜 Credenciales de Técnicos / Technician Credentials</h3>
+              </div>
+              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Sube las credenciales y certificaciones de cada técnico. Estos documentos se pueden incluir en estimados y facturas para cumplir con requisitos de empresas y clientes comerciales.</p>
+              
+              <div class="form-group" style="max-width:300px;margin-bottom:16px;">
+                <label>Seleccionar Técnico</label>
+                <select id="techCredSelect" onchange="loadTechCredentials()">
+                  <option value="">-- Seleccionar Técnico --</option>
+                </select>
+              </div>
+
+              <div id="techCredArea" style="display:none;">
+
+                <!-- Tech Profile Card with Photo -->
+                <div id="techProfileCard" style="display:flex;gap:16px;align-items:flex-start;padding:16px;background:var(--bg-input);border:2px solid var(--primary);border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
+                  <div style="text-align:center;">
+                    <div id="techCredPhoto" style="width:120px;height:150px;border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:white;">
+                      <span style="font-size:40px;">👤</span>
+                    </div>
+                    <label class="btn-secondary btn-sm doc-upload-btn" style="margin-top:6px;font-size:10px;">
+                      📷 Actualizar Foto
+                      <input type="file" accept="image/*" style="display:none" onchange="uploadTechPhoto(this)">
+                    </label>
+                  </div>
+                  <div style="flex:1;min-width:200px;">
+                    <h4 id="techCredName" style="color:var(--primary);margin-bottom:4px;">—</h4>
+                    <p id="techCredSpecialty" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">—</p>
+                    <div id="techCredVehicleInfo" style="font-size:12px;line-height:1.8;"></div>
+                    <div style="margin-top:8px;">
+                      <h5 style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Editar Vehículo:</h5>
+                      <div class="form-row" style="gap:6px;">
+                        <div class="form-group" style="margin-bottom:4px;"><input type="text" id="tcVehicle" placeholder="2022 Ford Transit" style="font-size:11px;padding:4px 8px;"></div>
+                        <div class="form-group" style="margin-bottom:4px;"><input type="text" id="tcPlate" placeholder="Placas: ABC1234" style="font-size:11px;padding:4px 8px;"></div>
+                      </div>
+                      <div class="form-row" style="gap:6px;">
+                        <div class="form-group" style="margin-bottom:4px;"><input type="text" id="tcVin" placeholder="VIN #" style="font-size:11px;padding:4px 8px;"></div>
+                        <div class="form-group" style="margin-bottom:4px;"><input type="text" id="tcVehicleColor" placeholder="Color" style="font-size:11px;padding:4px 8px;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align:center;">
+                    <button class="btn-primary btn-sm" onclick="generateTechIDCard()" style="font-size:11px;">🪪 Generar ID Card</button>
+                    <p style="font-size:9px;color:var(--text-muted);margin-top:4px;">Identificación para<br>portar en todo momento</p>
+                  </div>
+                </div>
+
+                <h5 style="color:var(--primary);margin-bottom:8px;font-size:13px;">📜 Certificaciones y Licencias</h5>
+                <div id="techCredGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px;">
+                  
+                  <!-- Driver's License -->
+                  <div class="doc-upload-card" id="tcCard_drivers_license">
+                    <div class="doc-icon">🪪</div>
+                    <div class="doc-info"><strong>Licencia de Manejar</strong><small>Driver's License</small></div>
+                    <div class="doc-status" id="tcStatus_drivers_license"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('drivers_license',this)"></label>
+                      <button onclick="viewTechCred('drivers_license')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_drivers_license">👁️</button>
+                      <button onclick="removeTechCred('drivers_license')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_drivers_license">✕</button>
+                    </div>
+                    <div class="doc-expiry"><label style="font-size:10px;color:var(--text-muted);">Vence:</label><input type="date" id="tcExpiry_drivers_license" onchange="saveTechCredentials()" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;"></div>
+                  </div>
+
+                  <!-- EPA 608 -->
+                  <div class="doc-upload-card" id="tcCard_epa_608">
+                    <div class="doc-icon">🌿</div>
+                    <div class="doc-info"><strong>EPA Section 608</strong><small>Refrigerant Certification</small></div>
+                    <div class="doc-status" id="tcStatus_epa_608"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('epa_608',this)"></label>
+                      <button onclick="viewTechCred('epa_608')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_epa_608">👁️</button>
+                      <button onclick="removeTechCred('epa_608')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_epa_608">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- NATE -->
+                  <div class="doc-upload-card" id="tcCard_nate">
+                    <div class="doc-icon">🏆</div>
+                    <div class="doc-info"><strong>NATE Certification</strong><small>North American Technician Excellence</small></div>
+                    <div class="doc-status" id="tcStatus_nate"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('nate',this)"></label>
+                      <button onclick="viewTechCred('nate')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_nate">👁️</button>
+                      <button onclick="removeTechCred('nate')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_nate">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- OSHA -->
+                  <div class="doc-upload-card" id="tcCard_osha">
+                    <div class="doc-icon">⛑️</div>
+                    <div class="doc-info"><strong>OSHA 10/30</strong><small>Safety Certification</small></div>
+                    <div class="doc-status" id="tcStatus_osha"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('osha',this)"></label>
+                      <button onclick="viewTechCred('osha')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_osha">👁️</button>
+                      <button onclick="removeTechCred('osha')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_osha">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- HVAC Excellence -->
+                  <div class="doc-upload-card" id="tcCard_hvac_excellence">
+                    <div class="doc-icon">❄️</div>
+                    <div class="doc-info"><strong>HVAC Excellence</strong><small>Professional Certification</small></div>
+                    <div class="doc-status" id="tcStatus_hvac_excellence"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('hvac_excellence',this)"></label>
+                      <button onclick="viewTechCred('hvac_excellence')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_hvac_excellence">👁️</button>
+                      <button onclick="removeTechCred('hvac_excellence')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_hvac_excellence">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- School / Trade School Certificate -->
+                  <div class="doc-upload-card" id="tcCard_school_cert">
+                    <div class="doc-icon">🎓</div>
+                    <div class="doc-info"><strong>Certificado Escolar</strong><small>Trade School / College Certificate</small></div>
+                    <div class="doc-status" id="tcStatus_school_cert"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('school_cert',this)"></label>
+                      <button onclick="viewTechCred('school_cert')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_school_cert">👁️</button>
+                      <button onclick="removeTechCred('school_cert')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_school_cert">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- NCCER -->
+                  <div class="doc-upload-card" id="tcCard_nccer">
+                    <div class="doc-icon">🔧</div>
+                    <div class="doc-info"><strong>NCCER</strong><small>National Center for Construction Ed</small></div>
+                    <div class="doc-status" id="tcStatus_nccer"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('nccer',this)"></label>
+                      <button onclick="viewTechCred('nccer')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_nccer">👁️</button>
+                      <button onclick="removeTechCred('nccer')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_nccer">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- Other Cert -->
+                  <div class="doc-upload-card" id="tcCard_other_cert">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-info"><strong>Otro Certificado</strong><small>Other Certification</small></div>
+                    <div class="doc-status" id="tcStatus_other_cert"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('other_cert',this)"></label>
+                      <button onclick="viewTechCred('other_cert')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_other_cert">👁️</button>
+                      <button onclick="removeTechCred('other_cert')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_other_cert">✕</button>
+                    </div>
+                  </div>
+
+                </div>
+
+                <h5 style="color:var(--accent);margin:16px 0 8px;font-size:13px;">🚐 Documentos del Vehículo / Vehicle Documents</h5>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px;">
+
+                  <!-- Vehicle Registration -->
+                  <div class="doc-upload-card" id="tcCard_vehicle_reg">
+                    <div class="doc-icon">📋</div>
+                    <div class="doc-info"><strong>Registración del Vehículo</strong><small>Vehicle Registration</small></div>
+                    <div class="doc-status" id="tcStatus_vehicle_reg"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('vehicle_reg',this)"></label>
+                      <button onclick="viewTechCred('vehicle_reg')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_vehicle_reg">👁️</button>
+                      <button onclick="removeTechCred('vehicle_reg')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_vehicle_reg">✕</button>
+                    </div>
+                    <div class="doc-expiry"><label style="font-size:10px;color:var(--text-muted);">Vence:</label><input type="date" id="tcExpiry_vehicle_reg" onchange="saveTechCredentials()" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;"></div>
+                  </div>
+
+                  <!-- Commercial Vehicle Insurance -->
+                  <div class="doc-upload-card" id="tcCard_vehicle_insurance">
+                    <div class="doc-icon">🛡️</div>
+                    <div class="doc-info"><strong>Seguro Comercial del Vehículo</strong><small>Commercial Auto Insurance</small></div>
+                    <div class="doc-status" id="tcStatus_vehicle_insurance"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadTechCred('vehicle_insurance',this)"></label>
+                      <button onclick="viewTechCred('vehicle_insurance')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="tcView_vehicle_insurance">👁️</button>
+                      <button onclick="removeTechCred('vehicle_insurance')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="tcRemove_vehicle_insurance">✕</button>
+                    </div>
+                    <div class="doc-expiry"><label style="font-size:10px;color:var(--text-muted);">Vence:</label><input type="date" id="tcExpiry_vehicle_insurance" onchange="saveTechCredentials()" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;"></div>
+                  </div>
+
+                </div>
+
+                <button class="btn-primary btn-sm" onclick="saveTechCredentials()" style="margin-top:8px;">💾 Guardar Credenciales</button>
+              </div>
+            </div>
+
             <div class="card">
               <h3>📱 Link de Tracking para Técnicos</h3>
               <p style="color:var(--text-light);font-size:14px;margin-bottom:12px;">Comparte este link con tus técnicos para que reporten su ubicación en tiempo real desde su celular:</p>
@@ -598,6 +807,94 @@
               <h3>📋 Estimados Guardados</h3>
               <div id="savedEstimates"><p class="empty-msg">No hay estimados guardados</p></div>
             </div>
+
+            <!-- Job Permits & Documents -->
+            <div class="card">
+              <div class="card-top">
+                <h3>📑 Permisos y Documentos del Trabajo / Job Permits</h3>
+              </div>
+              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Sube los permisos, inspecciones, fotos y documentos de cada trabajo. Todo queda archivado con el expediente del trabajo.</p>
+              
+              <div class="form-group" style="max-width:400px;margin-bottom:16px;">
+                <label>Seleccionar Trabajo</label>
+                <select id="jobPermitSelect" onchange="loadJobPermits()">
+                  <option value="">-- Seleccionar Trabajo --</option>
+                </select>
+              </div>
+
+              <div id="jobPermitArea" style="display:none;">
+                <div id="jobPermitGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px;">
+
+                  <div class="doc-upload-card" id="jpCard_building_permit">
+                    <div class="doc-icon">🏗️</div>
+                    <div class="doc-info"><strong>Building Permit</strong><small>Permiso de Construcción</small></div>
+                    <div class="doc-status" id="jpStatus_building_permit"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('building_permit',this)"></label>
+                      <button onclick="viewJobPermit('building_permit')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_building_permit">👁️</button>
+                      <button onclick="removeJobPermit('building_permit')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_building_permit">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_mechanical_permit">
+                    <div class="doc-icon">⚙️</div>
+                    <div class="doc-info"><strong>Mechanical Permit</strong><small>Permiso Mecánico</small></div>
+                    <div class="doc-status" id="jpStatus_mechanical_permit"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('mechanical_permit',this)"></label>
+                      <button onclick="viewJobPermit('mechanical_permit')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_mechanical_permit">👁️</button>
+                      <button onclick="removeJobPermit('mechanical_permit')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_mechanical_permit">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_inspection_pass">
+                    <div class="doc-icon">✅</div>
+                    <div class="doc-info"><strong>Inspection Passed</strong><small>Inspección Aprobada</small></div>
+                    <div class="doc-status" id="jpStatus_inspection_pass"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('inspection_pass',this)"></label>
+                      <button onclick="viewJobPermit('inspection_pass')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_inspection_pass">👁️</button>
+                      <button onclick="removeJobPermit('inspection_pass')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_inspection_pass">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_before_photos">
+                    <div class="doc-icon">📸</div>
+                    <div class="doc-info"><strong>Fotos Antes</strong><small>Before Photos</small></div>
+                    <div class="doc-status" id="jpStatus_before_photos"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="uploadJobPermit('before_photos',this)"></label>
+                      <button onclick="viewJobPermit('before_photos')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_before_photos">👁️</button>
+                      <button onclick="removeJobPermit('before_photos')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_before_photos">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_after_photos">
+                    <div class="doc-icon">📸</div>
+                    <div class="doc-info"><strong>Fotos Después</strong><small>After Photos</small></div>
+                    <div class="doc-status" id="jpStatus_after_photos"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="uploadJobPermit('after_photos',this)"></label>
+                      <button onclick="viewJobPermit('after_photos')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_after_photos">👁️</button>
+                      <button onclick="removeJobPermit('after_photos')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_after_photos">✕</button>
+                    </div>
+                  </div>
+
+                  <div class="doc-upload-card" id="jpCard_other_permit">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-info"><strong>Otro Documento</strong><small>Other Document</small></div>
+                    <div class="doc-status" id="jpStatus_other_permit"><span class="doc-badge doc-missing">No subido</span></div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">📤 Subir<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadJobPermit('other_permit',this)"></label>
+                      <button onclick="viewJobPermit('other_permit')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;" id="jpView_other_permit">👁️</button>
+                      <button onclick="removeJobPermit('other_permit')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;" id="jpRemove_other_permit">✕</button>
+                    </div>
+                  </div>
+
+                </div>
+                <button class="btn-primary btn-sm" onclick="saveJobPermits()">💾 Guardar Permisos</button>
+              </div>
+            </div>
           </div>
           <!-- ===== HOME ADVISORS (Vendedores) ===== -->
           <div id="advisors-section" class="section">
@@ -772,6 +1069,204 @@
                 <div class="form-group"><label>Email</label><input type="email" id="settingsEmail" placeholder="Email"></div>
                 <button class="btn-primary btn-sm" onclick="saveSettings()">Guardar Configuración</button>
                 
+                <hr style="margin:20px 0;border-color:var(--border);">
+                
+                <!-- ===== COMPANY DOCUMENTS ===== -->
+                <h4 style="color:var(--primary);margin-bottom:4px;">📁 Documentos de la Empresa / Company Documents</h4>
+                <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Sube tus documentos legales y de seguros. Estos se incluirán automáticamente en estimados y facturas cuando el cliente o empresa lo solicite.</p>
+
+                <div id="companyDocsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px;">
+                  
+                  <!-- Workers' Compensation -->
+                  <div class="doc-upload-card" id="docCard_workers_comp">
+                    <div class="doc-icon">🛡️</div>
+                    <div class="doc-info">
+                      <strong>Workers' Compensation</strong>
+                      <small>Certificate of Insurance</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_workers_comp">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('workers_comp', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('workers_comp')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_workers_comp">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('workers_comp')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_workers_comp">✕</button>
+                    </div>
+                    <div class="doc-expiry">
+                      <label style="font-size:10px;color:var(--text-muted);">Vence / Expires:</label>
+                      <input type="date" id="docExpiry_workers_comp" onchange="saveDocExpiry('workers_comp')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                    </div>
+                  </div>
+
+                  <!-- General Liability -->
+                  <div class="doc-upload-card" id="docCard_general_liability">
+                    <div class="doc-icon">🏢</div>
+                    <div class="doc-info">
+                      <strong>General Liability Insurance</strong>
+                      <small>Certificate of Liability Insurance</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_general_liability">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('general_liability', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('general_liability')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_general_liability">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('general_liability')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_general_liability">✕</button>
+                    </div>
+                    <div class="doc-expiry">
+                      <label style="font-size:10px;color:var(--text-muted);">Vence / Expires:</label>
+                      <input type="date" id="docExpiry_general_liability" onchange="saveDocExpiry('general_liability')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                    </div>
+                  </div>
+
+                  <!-- W-9 Form -->
+                  <div class="doc-upload-card" id="docCard_w9">
+                    <div class="doc-icon">📋</div>
+                    <div class="doc-info">
+                      <strong>W-9 Form</strong>
+                      <small>Request for Taxpayer ID</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_w9">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('w9', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('w9')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_w9">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('w9')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_w9">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- Contractor License Bond -->
+                  <div class="doc-upload-card" id="docCard_bond">
+                    <div class="doc-icon">💰</div>
+                    <div class="doc-info">
+                      <strong>Contractor License Bond</strong>
+                      <small>Surety Bond Certificate</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_bond">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('bond', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('bond')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_bond">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('bond')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_bond">✕</button>
+                    </div>
+                    <div class="doc-expiry">
+                      <label style="font-size:10px;color:var(--text-muted);">Vence / Expires:</label>
+                      <input type="date" id="docExpiry_bond" onchange="saveDocExpiry('bond')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                    </div>
+                  </div>
+
+                  <!-- Contractor License -->
+                  <div class="doc-upload-card" id="docCard_contractor_license">
+                    <div class="doc-icon">🏛️</div>
+                    <div class="doc-info">
+                      <strong>Contractor License</strong>
+                      <small>State License (CSLB, TDLR, etc.)</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_contractor_license">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('contractor_license', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('contractor_license')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_contractor_license">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('contractor_license')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_contractor_license">✕</button>
+                    </div>
+                    <div class="doc-expiry">
+                      <label style="font-size:10px;color:var(--text-muted);">Vence / Expires:</label>
+                      <input type="date" id="docExpiry_contractor_license" onchange="saveDocExpiry('contractor_license')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                    </div>
+                  </div>
+
+                  <!-- EPA Section 608 -->
+                  <div class="doc-upload-card" id="docCard_epa_608">
+                    <div class="doc-icon">🌿</div>
+                    <div class="doc-info">
+                      <strong>EPA Section 608</strong>
+                      <small>Refrigerant Certification</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_epa_608">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('epa_608', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('epa_608')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_epa_608">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('epa_608')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_epa_608">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- Vehicle Insurance -->
+                  <div class="doc-upload-card" id="docCard_vehicle_insurance">
+                    <div class="doc-icon">🚐</div>
+                    <div class="doc-info">
+                      <strong>Vehicle Insurance</strong>
+                      <small>Auto Liability Certificate</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_vehicle_insurance">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('vehicle_insurance', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('vehicle_insurance')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_vehicle_insurance">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('vehicle_insurance')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_vehicle_insurance">✕</button>
+                    </div>
+                    <div class="doc-expiry">
+                      <label style="font-size:10px;color:var(--text-muted);">Vence / Expires:</label>
+                      <input type="date" id="docExpiry_vehicle_insurance" onchange="saveDocExpiry('vehicle_insurance')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                    </div>
+                  </div>
+
+                  <!-- Other Document -->
+                  <div class="doc-upload-card" id="docCard_other">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-info">
+                      <strong>Otro Documento / Other</strong>
+                      <small>Cualquier documento adicional</small>
+                    </div>
+                    <div class="doc-status" id="docStatus_other">
+                      <span class="doc-badge doc-missing">No subido</span>
+                    </div>
+                    <div class="doc-actions">
+                      <label class="btn-secondary btn-sm doc-upload-btn">
+                        📤 Subir
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadCompanyDoc('other', this)">
+                      </label>
+                      <button class="btn-sm" onclick="viewCompanyDoc('other')" style="display:none;background:var(--primary);color:white;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;" id="docView_other">👁️ Ver</button>
+                      <button class="btn-sm" onclick="removeCompanyDoc('other')" style="display:none;background:#ef4444;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;" id="docRemove_other">✕</button>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Include in Estimates toggle -->
+                <div style="padding:10px;background:#f0fdf4;border:1px solid #10b981;border-radius:8px;margin-bottom:16px;">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+                    <input type="checkbox" id="includeDocsInEstimates" checked onchange="saveDocSettings()" style="width:18px;height:18px;accent-color:#10b981;">
+                    <span><strong>Incluir documentos en estimados y facturas</strong> — El cliente podrá ver/descargar Workers' Comp, GL, Bond, License, etc. directamente desde el estimado.</span>
+                  </label>
+                </div>
+
                 <hr style="margin:20px 0;border-color:var(--border);">
                 <h4 style="color:var(--primary);margin-bottom:4px;">📋 Cláusulas del Contrato / Invoice</h4>
                 <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Personaliza los términos legales que aparecen en tus facturas e invoices. Edita según las leyes de tu estado.</p>
