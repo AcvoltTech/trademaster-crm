@@ -9,6 +9,204 @@ var leadsData = [], techsData = [], jobsData = [];
 var currentUser = null, companyId = null;
 var trackingInterval = null;
 
+// ===== SUPABASE CACHE (migrated from localStorage) =====
+var _sbCache = {
+    companySettings: null,
+    dispatchCoord: null,
+    expenses: [],
+    payroll: [],
+    campaigns: [],
+    priceBook: [],
+    timeClock: { activeSession: null, history: [] },
+    techRates: {},
+    payrollProvider: {}
+};
+
+// Generic Supabase load with localStorage fallback
+async function sbLoad(table, lsKey, defaultVal) {
+    if (!companyId) return defaultVal || [];
+    try {
+        var res = await sbClient.from(table).select('*').eq('company_id', companyId);
+        if (res.error) throw res.error;
+        return res.data || defaultVal || [];
+    } catch(e) {
+        console.warn('sbLoad fallback to localStorage for ' + table, e.message);
+        try { return JSON.parse(localStorage.getItem(lsKey) || JSON.stringify(defaultVal || [])); } catch(e2) { return defaultVal || []; }
+    }
+}
+
+// Load company_settings from Supabase
+async function loadCompanySettings() {
+    if (!companyId) return {};
+    try {
+        var res = await sbClient.from('company_settings').select('*').eq('company_id', companyId).single();
+        if (res.error && res.error.code === 'PGRST116') {
+            // No row yet — load from localStorage and migrate
+            var oldSettings = {};
+            try { oldSettings = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}'); } catch(e){}
+            var oldLogo = localStorage.getItem('tm_company_logo') || null;
+            var oldProvider = {};
+            try { oldProvider = JSON.parse(localStorage.getItem('tm_payroll_provider') || '{}'); } catch(e){}
+            var oldRates = {};
+            try { oldRates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}'); } catch(e){}
+            var newRow = {
+                company_id: companyId,
+                owner_name: oldSettings.ownerName || '',
+                contractor_license: oldSettings.contractorLicense || '',
+                contractor_bond: oldSettings.contractorBond || '',
+                address: oldSettings.address || '',
+                company_logo: oldLogo,
+                payroll_provider: oldProvider.selected || '',
+                payroll_config: oldProvider,
+                tech_rates: oldRates
+            };
+            await sbClient.from('company_settings').insert(newRow);
+            _sbCache.companySettings = newRow;
+            return newRow;
+        }
+        if (res.error) throw res.error;
+        _sbCache.companySettings = res.data;
+        return res.data;
+    } catch(e) {
+        console.warn('loadCompanySettings fallback', e.message);
+        var ls = {};
+        try { ls = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}'); } catch(e2){}
+        _sbCache.companySettings = ls;
+        return ls;
+    }
+}
+
+// Save company_settings to Supabase
+async function saveCompanySettings(updates) {
+    Object.assign(_sbCache.companySettings || {}, updates);
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('company_settings').upsert(Object.assign({ company_id: companyId }, _sbCache.companySettings));
+        if (res.error) throw res.error;
+    } catch(e) {
+        console.warn('saveCompanySettings fallback', e.message);
+        var ls = {};
+        try { ls = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}'); } catch(e2){}
+        Object.assign(ls, updates);
+        localStorage.setItem('tm_settings_' + companyId, JSON.stringify(ls));
+    }
+}
+
+// Load dispatch coordinator from Supabase
+async function loadDispatchCoord() {
+    if (!companyId) return {};
+    try {
+        var res = await sbClient.from('dispatch_coordinator').select('*').eq('company_id', companyId).single();
+        if (res.error && res.error.code === 'PGRST116') {
+            // No row yet — migrate from localStorage
+            var old = {};
+            try { old = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}'); } catch(e){}
+            if (old.name) {
+                var newRow = Object.assign({ company_id: companyId }, old);
+                await sbClient.from('dispatch_coordinator').insert(newRow);
+                _sbCache.dispatchCoord = newRow;
+                return newRow;
+            }
+            _sbCache.dispatchCoord = {};
+            return {};
+        }
+        if (res.error) throw res.error;
+        _sbCache.dispatchCoord = res.data;
+        return res.data;
+    } catch(e) {
+        console.warn('loadDispatchCoord fallback', e.message);
+        var ls = {};
+        try { ls = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}'); } catch(e2){}
+        _sbCache.dispatchCoord = ls;
+        return ls;
+    }
+}
+
+// Load all expenses from Supabase  
+async function loadExpenses() {
+    try {
+        var data = await sbLoad('expenses', 'tm_expenses_' + companyId, []);
+        _sbCache.expenses = data;
+        expensesData = data;
+        return data;
+    } catch(e) { return []; }
+}
+
+// Load payroll entries from Supabase
+async function loadPayrollEntries() {
+    try {
+        var data = await sbLoad('payroll_entries', 'tm_payroll', []);
+        _sbCache.payroll = data;
+        payrollData = data;
+        return data;
+    } catch(e) { return []; }
+}
+
+// Load campaigns from Supabase
+async function loadCampaigns() {
+    try {
+        var data = await sbLoad('campaigns', 'tm_campaigns', []);
+        _sbCache.campaigns = data;
+        campaignsData = data;
+        return data;
+    } catch(e) { return []; }
+}
+
+// Load price book from Supabase
+async function loadPriceBook() {
+    try {
+        var data = await sbLoad('price_book', 'tm_pricebook', []);
+        _sbCache.priceBook = data;
+        priceBookData = data;
+        return data;
+    } catch(e) { return []; }
+}
+
+// Cached estimates data (loaded from Supabase)
+var estimatesData = [];
+async function loadEstimates() {
+    try {
+        var data = await sbLoad('estimates', 'savedEstimates_' + companyId, []);
+        // Merge with localStorage data if any
+        var lsData = [];
+        try { lsData = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e){}
+        if (data.length === 0 && lsData.length > 0) data = lsData;
+        estimatesData = data;
+        return data;
+    } catch(e) { return []; }
+}
+
+// Load time clock from Supabase
+async function loadTimeClock() {
+    if (!companyId) return;
+    try {
+        // Load active session
+        var activeRes = await sbClient.from('time_clock').select('*').eq('company_id', companyId).eq('is_active', true).single();
+        if (activeRes.data) {
+            clockData.activeSession = {
+                id: activeRes.data.id,
+                tech_id: activeRes.data.tech_id,
+                tech_name: activeRes.data.tech_name,
+                rate: parseFloat(activeRes.data.rate) || 0,
+                clockIn: activeRes.data.clock_in,
+                clockOut: activeRes.data.clock_out,
+                date: activeRes.data.date
+            };
+        } else {
+            clockData.activeSession = null;
+        }
+        // Load today history
+        var today = new Date().toISOString().split('T')[0];
+        var histRes = await sbClient.from('time_clock').select('*').eq('company_id', companyId).eq('date', today).eq('is_active', false).order('clock_in', { ascending: false });
+        clockData.history = (histRes.data || []).map(function(r) {
+            return { id: r.id, tech_id: r.tech_id, tech_name: r.tech_name, rate: parseFloat(r.rate)||0, clockIn: r.clock_in, clockOut: r.clock_out, totalMs: parseInt(r.total_ms)||0, date: r.date };
+        });
+    } catch(e) {
+        console.warn('loadTimeClock fallback', e.message);
+        try { clockData = JSON.parse(localStorage.getItem('tm_clock') || '{}'); } catch(e2) { clockData = {}; }
+    }
+}
+
 // ===== AUTH =====
 function switchTab(tab) {
     var lf = document.getElementById('loginForm');
@@ -102,12 +300,12 @@ function showDashboard() {
         if (addrEl) addrEl.value = window._companyInfo.address || '';
         var licEl = document.getElementById('settingsLicense');
         if (licEl) licEl.value = window._companyInfo.contractor_license || '';
-        // Load extra from localStorage
-        var stgLocal = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+        // Load extra from Supabase company_settings (cached)
+        var stgLocal = _sbCache.companySettings || {};
         var bondEl = document.getElementById('settingsBond');
-        if (bondEl) bondEl.value = stgLocal.contractorBond || '';
+        if (bondEl) bondEl.value = stgLocal.contractor_bond || stgLocal.contractorBond || '';
         var ownerEl = document.getElementById('settingsOwnerName');
-        if (ownerEl) ownerEl.value = stgLocal.ownerName || '';
+        if (ownerEl) ownerEl.value = stgLocal.owner_name || stgLocal.ownerName || '';
         if (window._companyInfo.contract_clauses && window._companyInfo.contract_clauses.payment) {
             loadClausesFromData(window._companyInfo.contract_clauses);
         } else {
@@ -132,6 +330,17 @@ async function loadAllData() {
     try { await loadAppointments(); } catch(e) { console.log('Appointments table not ready'); }
     try { await loadAdvisors(); } catch(e) {}
     try { await loadReferrals(); } catch(e) {}
+    // Load migrated tables from Supabase
+    try { await loadCompanySettings(); } catch(e) { console.log('company_settings not ready'); }
+    try { await loadDispatchCoord(); } catch(e) { console.log('dispatch_coordinator not ready'); }
+    try { await loadExpenses(); } catch(e) { console.log('expenses not ready'); }
+    try { await loadPayrollEntries(); } catch(e) { console.log('payroll_entries not ready'); }
+    try { await loadCampaigns(); } catch(e) { console.log('campaigns not ready'); }
+    try { await loadPriceBook(); } catch(e) { console.log('price_book not ready'); }
+    try { await loadTimeClock(); } catch(e) { console.log('time_clock not ready'); }
+    try { await loadEstimates(); } catch(e) { console.log('estimates not ready'); }
+    // Load payroll provider from company_settings
+    payrollProviderConfig = (_sbCache.companySettings || {}).payroll_config || {};
     updateKPIs();
     renderDashboardDynamic();
 }
@@ -812,14 +1021,13 @@ async function saveSettings() {
     var res = await sbClient.from('companies').update(updateData).eq('id', companyId);
     if (res.error) { alert('Error: ' + res.error.message); return; }
     
-    // Save extra fields to localStorage
-    var settingsLocal = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
-    settingsLocal.contractorLicense = license;
-    settingsLocal.contractorBond = bond;
-    settingsLocal.ownerName = ownerName;
-    settingsLocal.address = address;
-    settingsLocal.companyName = name;
-    localStorage.setItem('tm_settings_' + companyId, JSON.stringify(settingsLocal));
+    // Save extra fields to Supabase company_settings
+    saveCompanySettings({
+        contractor_license: license,
+        contractor_bond: bond,
+        owner_name: ownerName,
+        address: address
+    });
     
     // Update window._companyInfo
     if (window._companyInfo) {
@@ -892,7 +1100,7 @@ function handleLogoUpload(event) {
     var reader = new FileReader();
     reader.onload = function(e) {
         var dataUrl = e.target.result;
-        localStorage.setItem('tm_company_logo', dataUrl);
+        saveCompanySettings({ company_logo: dataUrl });
         applyLogo(dataUrl);
     };
     reader.readAsDataURL(file);
@@ -906,12 +1114,13 @@ function applyLogo(dataUrl) {
 }
 
 function resetLogo() {
-    localStorage.removeItem('tm_company_logo');
+    saveCompanySettings({ company_logo: null });
     location.reload();
 }
 
 function loadSavedLogo() {
-    var saved = localStorage.getItem('tm_company_logo');
+    var settings = _sbCache.companySettings || {};
+    var saved = settings.company_logo || null;
     if (saved) applyLogo(saved);
 }
 
@@ -2498,14 +2707,14 @@ function printInvoice(invId) {
     html += '</style></head><body>';
 
     // Header
-    var settings = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
+    var settings = _sbCache.companySettings || {};
     var companyAddr = (window._companyInfo && window._companyInfo.address) ? window._companyInfo.address : (settings.address || '');
-    var companyLicense = settings.contractorLicense || (window._companyInfo && window._companyInfo.contractor_license) || '';
-    var companyBond = settings.contractorBond || '';
+    var companyLicense = settings.contractor_license || settings.contractorLicense || (window._companyInfo && window._companyInfo.contractor_license) || '';
+    var companyBond = settings.contractor_bond || settings.contractorBond || '';
     
-    // Get insurance info from expenses or settings
+    // Get insurance info from expenses (Supabase cached)
     var insuranceInfo = [];
-    var exps = JSON.parse(localStorage.getItem('tm_expenses_' + companyId) || '[]');
+    var exps = _sbCache.expenses || expensesData || [];
     exps.forEach(function(ex) {
         if (ex.category === 'general_liability' && ex.vendor) insuranceInfo.push({type:'General Liability', vendor:ex.vendor, policy:ex.policyNum||''});
         if (ex.category === 'workers_comp' && ex.vendor) insuranceInfo.push({type:'Workers Compensation', vendor:ex.vendor, policy:ex.policyNum||''});
@@ -3079,8 +3288,7 @@ function renderClientJobs() {
 
 function renderClientEstimates() {
     var el = document.getElementById('cpEstimatesList');
-    var estimates = [];
-    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    var estimates = estimatesData || [];
     var clientEstimates = estimates.filter(function(e) { return e.client_id === currentProfileClientId || e.clientName === (clientsData.find(function(c){return c.id===currentProfileClientId;})||{}).name; });
     if (clientEstimates.length === 0) { el.innerHTML = '<p class="empty-msg">Sin estimados</p>'; return; }
     el.innerHTML = clientEstimates.map(function(e) {
@@ -3100,12 +3308,51 @@ function renderClientInvoices() {
 }
 
 // ===== CLIENT NOTES =====
-function getClientMeta(clientId) {
-    var key = 'clientMeta_' + companyId + '_' + clientId;
-    try { return JSON.parse(localStorage.getItem(key) || '{"notes":[],"attachments":[],"comms":[]}'); }
-    catch(e) { return { notes: [], attachments: [], comms: [] }; }
+async function getClientMeta(clientId) {
+    if (!companyId || !clientId) return { notes: [], attachments: [], comms: [] };
+    try {
+        var res = await sbClient.from('client_notes').select('*').eq('company_id', companyId).eq('client_id', clientId).order('created_at', { ascending: false });
+        if (res.error) throw res.error;
+        var meta = { notes: [], attachments: [], comms: [] };
+        (res.data || []).forEach(function(r) {
+            var item = { id: r.id, text: r.content, data: r.data, date: r.created_at, by: r.created_by };
+            if (r.type === 'note') meta.notes.push(item);
+            else if (r.type === 'attachment') meta.attachments.push(item);
+            else if (r.type === 'communication') meta.comms.push(item);
+        });
+        return meta;
+    } catch(e) {
+        console.warn('getClientMeta fallback', e.message);
+        var key = 'clientMeta_' + companyId + '_' + clientId;
+        try { return JSON.parse(localStorage.getItem(key) || '{"notes":[],"attachments":[],"comms":[]}'); }
+        catch(e2) { return { notes: [], attachments: [], comms: [] }; }
+    }
+}
+async function saveClientNote(clientId, type, content, data) {
+    if (!companyId || !clientId) return;
+    try {
+        await sbClient.from('client_notes').insert({
+            company_id: companyId,
+            client_id: clientId,
+            type: type,
+            content: content,
+            data: data || null,
+            created_by: 'Admin'
+        });
+    } catch(e) {
+        console.warn('saveClientNote fallback', e.message);
+        var key = 'clientMeta_' + companyId + '_' + clientId;
+        var meta = { notes: [], attachments: [], comms: [] };
+        try { meta = JSON.parse(localStorage.getItem(key) || '{"notes":[],"attachments":[],"comms":[]}'); } catch(e2){}
+        var item = { id: 'n_' + Date.now(), text: content, data: data, date: new Date().toISOString(), by: 'Admin' };
+        if (type === 'note') meta.notes.unshift(item);
+        else if (type === 'attachment') meta.attachments.unshift(item);
+        else meta.comms.unshift(item);
+        localStorage.setItem(key, JSON.stringify(meta));
+    }
 }
 function saveClientMeta(clientId, meta) {
+    // Legacy compatibility — used by existing code
     localStorage.setItem('clientMeta_' + companyId + '_' + clientId, JSON.stringify(meta));
 }
 
@@ -3528,8 +3775,7 @@ function renderAdvancedKPIs() {
     el('avgJobKPI', '$' + Math.round(avg).toLocaleString('en'));
     
     // Open estimates
-    var estimates = [];
-    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    var estimates = estimatesData || [];
     var open = estimates.filter(function(e) { return e.status !== 'approved'; });
     el('openEstKPI', open.length);
 }
@@ -4723,9 +4969,8 @@ function renderNotifications() {
 
 // ===== ESTIMATE PIPELINE =====
 function renderEstimatePipeline() {
-    var estimates = [];
-    // Pull from saved estimates in localStorage
-    try { estimates = JSON.parse(localStorage.getItem('savedEstimates_' + companyId) || '[]'); } catch(e) {}
+    var estimates = estimatesData || [];
+    // Pull from Supabase cache
     
     var openCount = 0, openAmt = 0, approvedCount = 0, approvedAmt = 0;
     estimates.forEach(function(est) {
@@ -4787,12 +5032,10 @@ async function createServicePlan(event) {
     };
     var res = await sbClient.from('service_plans').insert(plan);
     if (res.error) {
-        // Table may not exist yet — save to localStorage
-        var plans = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
+        // Table error — log and continue
+        console.warn('service_plans insert error:', res.error.message);
         plan.id = 'sp_' + Date.now();
         plan.created_at = new Date().toISOString();
-        plans.push(plan);
-        localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
     }
     hideServicePlanForm();
     document.querySelector('#servicePlanFormArea form').reset();
@@ -4804,8 +5047,8 @@ async function loadServicePlans() {
     if (!companyId) return;
     var res = await sbClient.from('service_plans').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
     if (res.error || !res.data) {
-        // Fallback to localStorage
-        servicePlansData = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
+        // Fallback — empty
+        servicePlansData = [];
     } else {
         servicePlansData = res.data;
     }
@@ -4842,9 +5085,7 @@ async function deleteServicePlan(id) {
     if (!confirm('¿Eliminar este plan?')) return;
     var res = await sbClient.from('service_plans').delete().eq('id', id);
     if (res.error) {
-        var plans = JSON.parse(localStorage.getItem('servicePlans_' + companyId) || '[]');
-        plans = plans.filter(function(p) { return p.id !== id; });
-        localStorage.setItem('servicePlans_' + companyId, JSON.stringify(plans));
+        console.warn('deleteServicePlan error:', res.error.message);
     }
     loadServicePlans();
 }
@@ -4856,7 +5097,7 @@ function toggleDispatchCoord() {
     form.style.display = isHidden ? 'block' : 'none';
     document.getElementById('dispCoordToggle').textContent = isHidden ? '✕ Cerrar' : '✏️ Editar';
     if (isHidden) {
-        var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+        var dc = _sbCache.dispatchCoord || {};
         document.getElementById('dcName').value = dc.name || '';
         document.getElementById('dcRole').value = dc.role || '';
         document.getElementById('dcPhone').value = dc.phone || '';
@@ -4887,14 +5128,18 @@ function saveDispatchCoord() {
         shift: document.getElementById('dcShift').value,
         notes: document.getElementById('dcNotes').value,
         photo: window._dcTempPhoto || null,
-        updated: new Date().toLocaleString('es')
+        updated_at: new Date().toISOString()
     };
     // Preserve existing photo if not changed
     if (!dc.photo) {
-        var existing = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+        var existing = _sbCache.dispatchCoord || {};
         if (existing.photo) dc.photo = existing.photo;
     }
-    localStorage.setItem('dispatchCoord_' + companyId, JSON.stringify(dc));
+    // Save to Supabase
+    _sbCache.dispatchCoord = dc;
+    sbClient.from('dispatch_coordinator').upsert(Object.assign({ company_id: companyId }, dc)).then(function(res) {
+        if (res.error) console.warn('saveDispatchCoord error', res.error.message);
+    });
     window._dcTempPhoto = null;
     renderDispatchCoord();
     toggleDispatchCoord();
@@ -4902,7 +5147,7 @@ function saveDispatchCoord() {
 }
 
 function renderDispatchCoord() {
-    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    var dc = _sbCache.dispatchCoord || {};
     var nameEl = document.getElementById('dispCoordName');
     var roleEl = document.getElementById('dispCoordRole');
     var avatarEl = document.getElementById('dispCoordAvatar');
@@ -4950,7 +5195,7 @@ function handleDCPhotoUpload(input) {
     }
     var reader = new FileReader();
     reader.onload = function(e) {
-        // Resize to max 300px for localStorage efficiency
+        // Resize to max 300px for efficiency
         resizeDCPhoto(e.target.result, 300, function(resized) {
             window._dcTempPhoto = resized;
             showDCPhotoPreview(resized);
@@ -4993,10 +5238,11 @@ function removeDCPhoto() {
     if (placeholder) placeholder.style.display = 'block';
     if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
     // Also remove from saved data
-    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    var dc = _sbCache.dispatchCoord || {};
     if (dc.photo) {
         dc.photo = null;
-        localStorage.setItem('dispatchCoord_' + companyId, JSON.stringify(dc));
+        _sbCache.dispatchCoord = dc;
+        sbClient.from('dispatch_coordinator').upsert(Object.assign({ company_id: companyId }, dc)).then(function(){});
         renderDispatchCoord();
     }
 }
@@ -5470,10 +5716,10 @@ function renderPipelineSection() {
 }
 
 // ===== MY MONEY =====
-var expensesData = JSON.parse(localStorage.getItem('tm_expenses')||'[]');
+var expensesData = [];
 function showMoneyExpenseForm(){document.getElementById('moneyExpFormContainer').style.display='block';document.getElementById('moneyExpDate').value=new Date().toISOString().split('T')[0];}
 function hideMoneyExpenseForm(){document.getElementById('moneyExpFormContainer').style.display='none';}
-function handleMoneyExpCreate(e){e.preventDefault();expensesData.push({id:Date.now().toString(),description:document.getElementById('moneyExpDesc').value,amount:parseFloat(document.getElementById('moneyExpAmount').value)||0,category:document.getElementById('moneyExpCat').value,date:document.getElementById('moneyExpDate').value,notes:document.getElementById('moneyExpNotes2').value});localStorage.setItem('tm_expenses',JSON.stringify(expensesData));hideMoneyExpenseForm();renderMyMoney();}
+async function handleMoneyExpCreate(e){e.preventDefault();var exp={company_id:companyId,description:document.getElementById('moneyExpDesc').value,amount:parseFloat(document.getElementById('moneyExpAmount').value)||0,category:document.getElementById('moneyExpCat').value,date:document.getElementById('moneyExpDate').value,notes:document.getElementById('moneyExpNotes2').value};try{var res=await sbClient.from('expenses').insert(exp).select().single();if(res.error)throw res.error;expensesData.push(res.data);}catch(err){exp.id='exp_'+Date.now();expensesData.push(exp);}hideMoneyExpenseForm();renderMyMoney();}
 function renderMyMoney(){
     var paidInv=(window.invoicesData||[]).filter(function(i){return i.status==='paid';});
     var income=paidInv.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
@@ -5498,10 +5744,10 @@ function renderMyMoney(){
 }
 
 // ===== PAYROLL =====
-var payrollData=JSON.parse(localStorage.getItem('tm_payroll')||'[]');
+var payrollData=[];
 function showPayrollEntry(){document.getElementById('payrollFormContainer').style.display='block';var s=document.getElementById('payTechSelect');s.innerHTML='<option value="">Seleccionar...</option>';techsData.forEach(function(t){s.innerHTML+='<option value="'+t.id+'">'+t.name+'</option>';});document.getElementById('payStart').value=new Date().toISOString().split('T')[0];}
 function hidePayrollEntry(){document.getElementById('payrollFormContainer').style.display='none';}
-function handlePayrollCreate(e){e.preventDefault();var en={id:Date.now().toString(),tech_id:document.getElementById('payTechSelect').value,tech_name:document.getElementById('payTechSelect').selectedOptions[0].text,type:document.getElementById('payType').value,hours:parseFloat(document.getElementById('payHours').value)||0,rate:parseFloat(document.getElementById('payRate').value)||0,total:parseFloat(document.getElementById('payTotal').value)||0,period_start:document.getElementById('payStart').value,period_end:document.getElementById('payEnd').value,notes:document.getElementById('payNotes').value,status:'pending'};if(!en.total&&en.hours&&en.rate)en.total=en.hours*en.rate;payrollData.push(en);localStorage.setItem('tm_payroll',JSON.stringify(payrollData));hidePayrollEntry();renderPayroll();}
+async function handlePayrollCreate(e){e.preventDefault();var en={company_id:companyId,tech_id:document.getElementById('payTechSelect').value||null,tech_name:document.getElementById('payTechSelect').selectedOptions[0].text,type:document.getElementById('payType').value,hours:parseFloat(document.getElementById('payHours').value)||0,rate:parseFloat(document.getElementById('payRate').value)||0,total:parseFloat(document.getElementById('payTotal').value)||0,period_start:document.getElementById('payStart').value,period_end:document.getElementById('payEnd').value,notes:document.getElementById('payNotes').value,status:'pending'};if(!en.total&&en.hours&&en.rate)en.total=en.hours*en.rate;try{var res=await sbClient.from('payroll_entries').insert(en).select().single();if(res.error)throw res.error;payrollData.push(res.data);}catch(err){en.id='pay_'+Date.now();payrollData.push(en);}hidePayrollEntry();renderPayroll();}
 function renderPayroll(){
     document.getElementById('payEmployeeCount').textContent=techsData.length;
     document.getElementById('payPeriodTotal').textContent='$'+payrollData.reduce(function(s,p){return s+(p.total||0);},0).toLocaleString('en-US',{minimumFractionDigits:2});
@@ -5514,10 +5760,10 @@ function renderPayroll(){
 }
 
 // ===== MARKETING =====
-var campaignsData=JSON.parse(localStorage.getItem('tm_campaigns')||'[]');
+var campaignsData=[];
 function showCampaignForm(){document.getElementById('campaignFormContainer').style.display='block';}
 function hideCampaignForm(){document.getElementById('campaignFormContainer').style.display='none';}
-function handleCampaignCreate(e){e.preventDefault();campaignsData.push({id:Date.now().toString(),name:document.getElementById('campName').value,type:document.getElementById('campType').value,budget:parseFloat(document.getElementById('campBudget').value)||0,start:document.getElementById('campStart').value,end:document.getElementById('campEnd').value,message:document.getElementById('campMessage').value,status:'active',leads_generated:0});localStorage.setItem('tm_campaigns',JSON.stringify(campaignsData));hideCampaignForm();renderMarketing();}
+async function handleCampaignCreate(e){e.preventDefault();var camp={company_id:companyId,name:document.getElementById('campName').value,type:document.getElementById('campType').value,budget:parseFloat(document.getElementById('campBudget').value)||0,start_date:document.getElementById('campStart').value,end_date:document.getElementById('campEnd').value,message:document.getElementById('campMessage').value,status:'active',leads_generated:0};try{var res=await sbClient.from('campaigns').insert(camp).select().single();if(res.error)throw res.error;campaignsData.push(res.data);}catch(err){camp.id='camp_'+Date.now();camp.start=camp.start_date;camp.end=camp.end_date;campaignsData.push(camp);}hideCampaignForm();renderMarketing();}
 function renderMarketing(){
     document.getElementById('mktCampaignCount').textContent=campaignsData.filter(function(c){return c.status==='active';}).length;
     var sources={};leadsData.forEach(function(l){var s=l.source||'directo';sources[s]=(sources[s]||0)+1;});
@@ -5535,11 +5781,11 @@ function renderMarketing(){
 function sendReviewRequest(){var c=document.getElementById('reviewClientSelect');if(!c.value){alert('Selecciona un cliente');return;}alert('Solicitud enviada a '+c.selectedOptions[0].text);}
 
 // ===== PRICE BOOK =====
-var priceBookData=JSON.parse(localStorage.getItem('tm_pricebook')||'[]');
+var priceBookData=[];
 function showPriceBookForm(){document.getElementById('priceBookFormContainer').style.display='block';}
 function hidePriceBookForm(){document.getElementById('priceBookFormContainer').style.display='none';}
 document.addEventListener('input',function(e){if(e.target.id==='pbCost'||e.target.id==='pbPrice'){var c=parseFloat(document.getElementById('pbCost').value)||0;var p=parseFloat(document.getElementById('pbPrice').value)||0;document.getElementById('pbMarkup').value=c>0?Math.round((p-c)/c*100):0;}});
-function handlePriceBookCreate(e){e.preventDefault();priceBookData.push({id:Date.now().toString(),name:document.getElementById('pbName').value,sku:document.getElementById('pbSku').value,category:document.getElementById('pbCategory').value,unit:document.getElementById('pbUnit').value,cost:parseFloat(document.getElementById('pbCost').value)||0,price:parseFloat(document.getElementById('pbPrice').value)||0,description:document.getElementById('pbDesc').value});localStorage.setItem('tm_pricebook',JSON.stringify(priceBookData));hidePriceBookForm();e.target.reset();renderPriceBook();}
+async function handlePriceBookCreate(e){e.preventDefault();var item={company_id:companyId,name:document.getElementById('pbName').value,sku:document.getElementById('pbSku').value,category:document.getElementById('pbCategory').value,unit:document.getElementById('pbUnit').value,cost:parseFloat(document.getElementById('pbCost').value)||0,price:parseFloat(document.getElementById('pbPrice').value)||0,description:document.getElementById('pbDesc').value};try{var res=await sbClient.from('price_book').insert(item).select().single();if(res.error)throw res.error;priceBookData.push(res.data);}catch(err){item.id='pb_'+Date.now();priceBookData.push(item);}hidePriceBookForm();e.target.reset();renderPriceBook();}
 function filterPriceBook(){renderPriceBook();}
 function renderPriceBook(){
     var search=(document.getElementById('pbSearch').value||'').toLowerCase(),catF=document.getElementById('pbCategoryFilter').value;
@@ -5553,7 +5799,7 @@ function renderPriceBook(){
     h+='</tbody></table>';if(!filtered.length)h='<p class="empty-msg">Sin artículos</p>';
     document.getElementById('priceBookTable').innerHTML=h;
 }
-function deletePBItem(id){if(!confirm('¿Eliminar?'))return;priceBookData=priceBookData.filter(function(p){return p.id!==id;});localStorage.setItem('tm_pricebook',JSON.stringify(priceBookData));renderPriceBook();}
+async function deletePBItem(id){if(!confirm('¿Eliminar?'))return;try{await sbClient.from('price_book').delete().eq('id',id);}catch(e){}priceBookData=priceBookData.filter(function(p){return p.id!==id;});renderPriceBook();}
 
 // ===== REPORTS =====
 function renderReports(){
@@ -5606,7 +5852,7 @@ function renderReports(){
 // ============================================================
 // ===== DASHBOARD CLOCK IN / OUT WIDGET =====
 // ============================================================
-var clockData = JSON.parse(localStorage.getItem('tm_clock') || '{}');
+var clockData = {};
 var clockTimerInterval = null;
 var dashClockInterval = null;
 
@@ -5634,15 +5880,15 @@ function initClockWidget() {
     if (!sel) return;
     sel.innerHTML = '<option value="">' + (currentLang === 'en' ? '-- Select Person --' : '-- Seleccionar Persona --') + '</option>';
     
-    // Add owner/admin from dispatch coordinator
-    var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+    // Add owner/admin from dispatch coordinator (Supabase cached)
+    var dc = _sbCache.dispatchCoord || {};
     if (dc.name) {
         sel.innerHTML += '<option value="owner_dc">👔 ' + dc.name + ' (Coordinador)</option>';
     }
     
     // Add logged in user / company owner
-    var settings = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
-    var ownerName = settings.ownerName || settings.companyName || '';
+    var settings = _sbCache.companySettings || {};
+    var ownerName = settings.owner_name || settings.ownerName || settings.companyName || '';
     if (ownerName && ownerName !== dc.name) {
         sel.innerHTML += '<option value="owner_main">👔 ' + ownerName + ' (Dueño)</option>';
     }
@@ -5655,8 +5901,8 @@ function initClockWidget() {
         });
     }
     
-    // Add employees from payroll (localStorage)
-    var payrollEmployees = JSON.parse(localStorage.getItem('tm_payroll_employees_' + companyId) || '[]');
+    // Add employees from payroll (Supabase cached)
+    var payrollEmployees = payrollData || [];
     if (payrollEmployees.length > 0) {
         sel.innerHTML += '<option disabled>── Empleados ──</option>';
         payrollEmployees.forEach(function(emp) {
@@ -5710,7 +5956,7 @@ function onClockTechChange() {
     }
     
     // Load saved rate for this tech
-    var rates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}');
+    var rates = (_sbCache.companySettings || {}).tech_rates || {};
     var rate = rates[techId] || 0;
     document.getElementById('clockHourlyRate').value = rate;
 }
@@ -5719,9 +5965,9 @@ function saveClockRate() {
     var techId = document.getElementById('clockTechSelect').value;
     var rate = parseFloat(document.getElementById('clockHourlyRate').value) || 0;
     if (!techId) return;
-    var rates = JSON.parse(localStorage.getItem('tm_tech_rates') || '{}');
+    var rates = (_sbCache.companySettings || {}).tech_rates || {};
     rates[techId] = rate;
-    localStorage.setItem('tm_tech_rates', JSON.stringify(rates));
+    saveCompanySettings({ tech_rates: rates });
 }
 
 function toggleDashClockInOut() {
@@ -5735,8 +5981,12 @@ function toggleDashClockInOut() {
         clockData.activeSession.totalMs = diffMs;
         if (!clockData.history) clockData.history = [];
         clockData.history.push(Object.assign({}, clockData.activeSession));
+        // Save to Supabase
+        var sessionId = clockData.activeSession.id;
+        if (sessionId) {
+            sbClient.from('time_clock').update({ clock_out: clockData.activeSession.clockOut, total_ms: diffMs, is_active: false }).eq('id', sessionId).then(function(){});
+        }
         clockData.activeSession = null;
-        localStorage.setItem('tm_clock', JSON.stringify(clockData));
         updateClockBtnState(false);
         stopClockTimer();
         renderClockHistory();
@@ -5754,11 +6004,11 @@ function toggleDashClockInOut() {
         if (tech) {
             techName = tech.name;
         } else if (techId === 'owner_dc') {
-            var dc = JSON.parse(localStorage.getItem('dispatchCoord_' + companyId) || '{}');
+            var dc = _sbCache.dispatchCoord || {};
             techName = dc.name || 'Coordinador';
         } else if (techId === 'owner_main') {
-            var stg = JSON.parse(localStorage.getItem('tm_settings_' + companyId) || '{}');
-            techName = stg.ownerName || stg.companyName || 'Dueño';
+            var stg = _sbCache.companySettings || {};
+            techName = stg.owner_name || stg.ownerName || 'Dueño';
         } else if (techId.indexOf('__custom_') === 0) {
             var selOpt = document.getElementById('clockTechSelect').selectedOptions[0];
             techName = selOpt ? selOpt.getAttribute('data-custom-name') || selOpt.textContent.replace('👤 ','') : 'Personal';
@@ -5774,7 +6024,18 @@ function toggleDashClockInOut() {
             clockOut: null,
             date: today
         };
-        localStorage.setItem('tm_clock', JSON.stringify(clockData));
+        // Save to Supabase
+        sbClient.from('time_clock').insert({
+            company_id: companyId,
+            tech_id: techId,
+            tech_name: techName,
+            rate: rate,
+            clock_in: clockData.activeSession.clockIn,
+            date: today,
+            is_active: true
+        }).select().single().then(function(res) {
+            if (res.data) clockData.activeSession.id = res.data.id;
+        });
         saveClockRate();
         updateClockBtnState(true);
         startClockTimer();
@@ -5868,7 +6129,7 @@ var _origRDDPatched = false;
 // ============================================================
 // ===== PAYROLL PROVIDER MANAGER =====
 // ============================================================
-var payrollProviderConfig = JSON.parse(localStorage.getItem('tm_payroll_provider') || '{}');
+var payrollProviderConfig = {};
 
 function selectPayrollProvider(provider) {
     // Deselect all
@@ -5906,7 +6167,7 @@ function selectPayrollProvider(provider) {
             document.getElementById('providerSyncFreq').value = 'manual';
         }
     }
-    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    saveCompanySettings({ payroll_provider: payrollProviderConfig.selected || '', payroll_config: payrollProviderConfig });
 }
 
 function savePayrollProvider() {
@@ -5922,7 +6183,7 @@ function savePayrollProvider() {
         connected: true,
         connectedAt: new Date().toISOString()
     };
-    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    saveCompanySettings({ payroll_provider: payrollProviderConfig.selected || '', payroll_config: payrollProviderConfig });
     document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Conectado' : 'Conectado');
     document.getElementById('payProviderStatus').style.background = '#10b98122';
     document.getElementById('payProviderStatus').style.color = '#10b981';
@@ -5958,7 +6219,7 @@ function disconnectProvider() {
     if (payrollProviderConfig[provider]) {
         payrollProviderConfig[provider].connected = false;
     }
-    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    saveCompanySettings({ payroll_provider: payrollProviderConfig.selected || '', payroll_config: payrollProviderConfig });
     document.getElementById('payProviderStatus').textContent = (currentLang === 'en' ? 'Desconectado' : 'Desconectado');
     document.getElementById('payProviderStatus').style.background = '#f59e0b22';
     document.getElementById('payProviderStatus').style.color = '#f59e0b';
@@ -5975,7 +6236,7 @@ function addSyncHistoryEntry(provider, action, message) {
         timestamp: new Date().toISOString()
     });
     if (payrollProviderConfig.syncHistory.length > 20) payrollProviderConfig.syncHistory = payrollProviderConfig.syncHistory.slice(0, 20);
-    localStorage.setItem('tm_payroll_provider', JSON.stringify(payrollProviderConfig));
+    saveCompanySettings({ payroll_provider: payrollProviderConfig.selected || '', payroll_config: payrollProviderConfig });
     renderSyncHistory();
 }
 
@@ -6177,24 +6438,30 @@ function loadDefaultPriceBook() {
         {sku:'EQ-PKG5',name:'Package Unit 5 Ton AC',category:'equipment',unit:'each',cost:3200,price:6500,description:'Unidad paquete 5 ton'}
     ];
 
-    var added = 0;
+    // Bulk insert to Supabase
+    var newItems = [];
     catalog.forEach(function(item) {
         var exists = priceBookData.some(function(p) { return p.sku === item.sku; });
         if (!exists) {
-            item.id = 'hvac_' + item.sku + '_' + Date.now();
+            item.company_id = companyId;
+            newItems.push(item);
             priceBookData.push(item);
             added++;
         }
     });
-    localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
+    if (newItems.length > 0) {
+        sbClient.from('price_book').insert(newItems).then(function(res) {
+            if (res.error) console.warn('Bulk pricebook insert error', res.error.message);
+        });
+    }
     renderPriceBook();
     alert((currentLang === 'en' ? 'Se agregaron ' : 'Se agregaron ') + added + (currentLang === 'en' ? ' artículos HVAC a tu lista de precios!' : ' artículos HVAC a tu lista de precios!'));
 }
 
 function clearPriceBook() {
     if (!confirm(currentLang === 'en' ? '¿Borrar TODOS los artículos de la lista de precios?' : '¿Borrar TODOS los artículos de la lista de precios?')) return;
+    sbClient.from('price_book').delete().eq('company_id', companyId).then(function(){});
     priceBookData = [];
-    localStorage.setItem('tm_pricebook', JSON.stringify(priceBookData));
     renderPriceBook();
 }
 
@@ -6829,7 +7096,7 @@ function exportReceiptsCSV() {
 // ============================================================
 // ===== EXPENSES / GASTOS DEL NEGOCIO =====
 // ============================================================
-var expensesData = JSON.parse(localStorage.getItem('tm_expenses_' + companyId) || '[]');
+var expensesData = _sbCache.expenses || [];
 
 function showExpenseForm() { document.getElementById('expenseFormContainer').style.display = 'block'; document.getElementById('expDate').value = new Date().toISOString().split('T')[0]; }
 function hideExpenseForm() { document.getElementById('expenseFormContainer').style.display = 'none'; }
@@ -6846,25 +7113,28 @@ function previewExpensePhoto(input) {
 function handleExpenseCreate(e) {
     e.preventDefault();
     var exp = {
-        id: 'exp_' + Date.now(),
+        company_id: companyId,
         category: document.getElementById('expCategory').value,
         vendor: document.getElementById('expVendor').value,
         amount: parseFloat(document.getElementById('expAmount').value) || 0,
         frequency: document.getElementById('expFrequency').value,
         date: document.getElementById('expDate').value,
         type: document.getElementById('expType').value,
-        payMethod: document.getElementById('expPayMethod').value,
-        policyNum: document.getElementById('expPolicyNum').value,
+        pay_method: document.getElementById('expPayMethod').value,
+        policy_num: document.getElementById('expPolicyNum').value,
         notes: document.getElementById('expNotes').value,
-        photo: window._expPhoto || null,
-        created: new Date().toISOString()
+        photo: window._expPhoto || null
     };
-    expensesData.push(exp);
-    localStorage.setItem('tm_expenses_' + companyId, JSON.stringify(expensesData));
+    sbClient.from('expenses').insert(exp).select().single().then(function(res) {
+        if (res.error) { exp.id = 'exp_' + Date.now(); expensesData.push(exp); }
+        else { expensesData.push(res.data); }
+        renderExpenses();
+    });
     window._expPhoto = null;
     hideExpenseForm();
     e.target.reset();
     document.getElementById('expPhotoName').style.display = 'none';
+    expensesData.push(exp);
     renderExpenses();
     alert('✅ Gasto registrado: $' + exp.amount.toFixed(2) + ' - ' + (exp.vendor || exp.category));
 }
@@ -6910,8 +7180,8 @@ function renderExpenses() {
 
 function deleteExpense(id) {
     if (!confirm('¿Eliminar este gasto?')) return;
+    sbClient.from('expenses').delete().eq('id', id).then(function(){});
     expensesData = expensesData.filter(function(x) { return x.id !== id; });
-    localStorage.setItem('tm_expenses_' + companyId, JSON.stringify(expensesData));
     renderExpenses();
 }
 
@@ -6919,7 +7189,7 @@ function exportExpensesCSV() {
     if (expensesData.length === 0) { alert('No hay gastos para exportar.'); return; }
     var csv = 'Fecha,Categoría,Proveedor,Monto,Frecuencia,Tipo,Método,# Póliza,Notas\n';
     expensesData.forEach(function(ex) {
-        csv += '"' + ex.date + '","' + ex.category + '","' + (ex.vendor||'') + '",' + ex.amount + ',"' + ex.frequency + '","' + ex.type + '","' + (ex.payMethod||'') + '","' + (ex.policyNum||'') + '","' + (ex.notes||'').replace(/"/g,"'") + '"\n';
+        csv += '"' + ex.date + '","' + ex.category + '","' + (ex.vendor||'') + '",' + ex.amount + ',"' + ex.frequency + '","' + ex.type + '","' + (ex.pay_method||ex.payMethod||'') + '","' + (ex.policy_num||ex.policyNum||'') + '","' + (ex.notes||'').replace(/"/g,"'") + '"\n';
     });
     var blob = new Blob([csv], {type:'text/csv'});
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
