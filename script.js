@@ -7671,23 +7671,12 @@ function deleteInspReport(id) {
     inspReportsData = inspReportsData.filter(function(x) { return x.id !== id; });
     localStorage.setItem('tm_insp_reports_' + companyId, JSON.stringify(inspReportsData));
     renderInspReports();
-}
-// ============================================================================
-// STRIPE PAYMENTS MODULE — Agregar a script.js después de sbClient
-// ============================================================================
-// Copia y pega este bloque completo en script.js
-// Posición: después de la línea "var sbClient = window.supabase.createClient(...)"
-// ============================================================================
-
-// ════════════════════════════════════════════════════════════════════════════
-// STRIPE PAYMENTS — Catálogo completo Tech School AC Volt
-// ════════════════════════════════════════════════════════════════════════════
+}// STRIPE PAYMENTS MODULE
+// Agregar a script.js despues de sbClient
 
 var StripePayments = {
 
-    // ── CATÁLOGO: 14 Productos con Price IDs reales ──
     CATALOG: {
-        // === SUSCRIPCIONES MENSUALES (7) ===
         'maestro-ac': {
             name: 'Maestro AC App',
             priceId: 'price_1SyIR0EHIPukEiZCzWQQJ5wL',
@@ -7702,7 +7691,7 @@ var StripePayments = {
             amount: 119,
             mode: 'subscription',
             category: 'education',
-            features: ['Clases martes y miércoles', 'Q&A los lunes', 'MaestroAC App incluida', 'Videos pregrabados']
+            features: ['Clases martes y miercoles', 'Q&A los lunes', 'MaestroAC App incluida', 'Videos pregrabados']
         },
         'crm-profesional': {
             name: 'Trade Master CRM - Profesional',
@@ -7710,7 +7699,7 @@ var StripePayments = {
             amount: 149,
             mode: 'subscription',
             category: 'crm',
-            features: ['GPS Dispatch', 'Estimados 150+ partes', 'Facturación', 'Firmas digitales']
+            features: ['GPS Dispatch', 'Estimados 150+ partes', 'Facturacion', 'Firmas digitales']
         },
         'clases-intermedio': {
             name: 'Clases en Vivo - NIVEL INTERMEDIO',
@@ -7718,7 +7707,7 @@ var StripePayments = {
             amount: 299,
             mode: 'subscription',
             category: 'education',
-            features: ['Clases sábados y domingos', 'La Trinidad del Oficio completa', 'MaestroAC + Trade Master CRM + iFix', 'Videos + Q&A']
+            features: ['Clases sabados y domingos', 'La Trinidad del Oficio completa', 'MaestroAC + Trade Master CRM + iFix', 'Videos + Q&A']
         },
         'crm-enterprise': {
             name: 'Trade Master CRM - Enterprise',
@@ -7726,18 +7715,16 @@ var StripePayments = {
             amount: 299,
             mode: 'subscription',
             category: 'crm',
-            features: ['Todo en Profesional', 'Multi-técnicos ilimitados', 'Reportes avanzados', 'Soporte prioritario']
+            features: ['Todo en Profesional', 'Multi-tecnicos ilimitados', 'Reportes avanzados', 'Soporte prioritario']
         },
         'mentoria-trinidad': {
-            name: 'Mentoría HVACR - La Trinidad + Empresa',
+            name: 'Mentoria HVACR - La Trinidad + Empresa',
             priceId: 'price_1SyHazEHIPukEiZCMgwYJh3Y',
             amount: 699,
             mode: 'subscription',
             category: 'education',
-            features: ['Todo de Intermedio', 'Mentoría exclusiva con Maestro Mario', 'Estrategias de negocio', 'Clases todos los días']
+            features: ['Todo de Intermedio', 'Mentoria exclusiva con Maestro Mario', 'Estrategias de negocio', 'Clases todos los dias']
         },
-
-        // === PAGOS ÚNICOS (7) ===
         'student-id': {
             name: 'Student ID - ACVOLT Tech School',
             priceId: 'price_1SyRHUEHIPukEiZCasFMSqy1',
@@ -7747,12 +7734,12 @@ var StripePayments = {
             features: ['Credencial oficial ACVOLT']
         },
         'impresion-certificado': {
-            name: 'Impresión del Certificado ACVOLT',
+            name: 'Impresion del Certificado ACVOLT',
             priceId: 'price_1SyS3VEHIPukEiZCIuVoFSW2',
             amount: 250,
             mode: 'payment',
             category: 'school',
-            features: ['Certificado impreso oficial', 'Demostrar conocimiento de 700 preguntas por nivel']
+            features: ['Certificado impreso oficial']
         },
         'a2l-certification': {
             name: 'A2L Refrigerants - Safety Certification',
@@ -7760,7 +7747,7 @@ var StripePayments = {
             amount: 599,
             mode: 'payment',
             category: 'certification',
-            features: ['700 preguntas preparación', 'Examen oficial', 'Honorarios del proctor', 'R-32, R-454B, detección fugas']
+            features: ['700 preguntas preparacion', 'Examen oficial', 'Honorarios del proctor']
         },
         'epa-608': {
             name: 'EPA 608 Certification - Exam & Study',
@@ -7768,7 +7755,7 @@ var StripePayments = {
             amount: 599,
             mode: 'payment',
             category: 'certification',
-            features: ['700 preguntas preparación', 'Examen oficial', 'Proctor (4 hrs máximo)', 'Ciclo de refrigeración completo']
+            features: ['700 preguntas preparacion', 'Examen oficial', 'Proctor 4 hrs maximo']
         },
         'heating-certification': {
             name: 'Heating Technician - Certification',
@@ -7776,7 +7763,7 @@ var StripePayments = {
             amount: 599,
             mode: 'payment',
             category: 'certification',
-            features: ['700 preguntas', 'Examen + proctor', 'Gas natural/LP, furnaces 80%/90%+', 'Combustión, intercambiadores']
+            features: ['700 preguntas', 'Examen + proctor', 'Gas natural/LP, furnaces']
         },
         'hvac-certification': {
             name: 'HVAC Certification - Exam & Study',
@@ -7784,7 +7771,7 @@ var StripePayments = {
             amount: 599,
             mode: 'payment',
             category: 'certification',
-            features: ['700 preguntas', 'Examen + proctor', 'Compresores, TXV, heat pumps', 'Superheat/subcooling, diagnóstico']
+            features: ['700 preguntas', 'Examen + proctor', 'Compresores, TXV, heat pumps']
         },
         'hvac-excellence': {
             name: 'HVAC EXCELENCE - Installation & Service',
@@ -7800,33 +7787,24 @@ var StripePayments = {
             amount: 599,
             mode: 'payment',
             category: 'certification',
-            features: ['700 preguntas preparación', 'Acceso al curso oficial', 'Seguridad eléctrica, caídas, EPP', 'LOTO, espacios confinados']
-        },
+            features: ['700 preguntas preparacion', 'Acceso al curso oficial', 'Seguridad electrica, caidas, EPP']
+        }
     },
 
-    // ── Cache de suscripción actual ──
     _currentSubscription: null,
     _purchasedProducts: [],
 
-    // ════════════════════════════════════════════════════════════════
-    // INICIALIZAR — Llamar después de login
-    // ════════════════════════════════════════════════════════════════
-    async init() {
+    init: async function() {
         if (!currentUser) return;
         await this.refreshSubscription();
         await this.checkPaymentRedirect();
-        console.log('💳 StripePayments initialized');
+        console.log('StripePayments initialized');
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // OBTENER SUSCRIPCIÓN ACTIVA
-    // ════════════════════════════════════════════════════════════════
-    async refreshSubscription() {
+    refreshSubscription: async function() {
         if (!currentUser) return null;
-
         try {
-            // Obtener suscripción activa
-            const { data: sub, error } = await sbClient
+            var result = await sbClient
                 .from('subscriptions')
                 .select('*, subscription_plans(*)')
                 .eq('user_id', currentUser.id)
@@ -7834,228 +7812,156 @@ var StripePayments = {
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
-
-            this._currentSubscription = sub;
-
-            // Obtener productos comprados (pagos únicos exitosos)
-            const { data: payments } = await sbClient
+            this._currentSubscription = result.data;
+            var paymentsResult = await sbClient
                 .from('payments')
                 .select('metadata')
                 .eq('user_id', currentUser.id)
-                .eq('status', 'succeeded')
-                .not('metadata->product_slug', 'is', null);
-
-            this._purchasedProducts = (payments || [])
-                .map(p => p.metadata?.product_slug)
+                .eq('status', 'succeeded');
+            this._purchasedProducts = (paymentsResult.data || [])
+                .map(function(p) { return p.metadata ? p.metadata.product_slug : null; })
                 .filter(Boolean);
-
-            return sub;
+            return result.data;
         } catch (e) {
             console.error('Error refreshing subscription:', e);
             return null;
         }
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // INICIAR CHECKOUT — Suscripción o pago único
-    // ════════════════════════════════════════════════════════════════
-    async checkout(productSlug) {
+    checkout: async function(productSlug) {
         if (!currentUser) {
-            this._showNotification('Debes iniciar sesión primero', 'error');
+            showNotification('Debes iniciar sesion primero', 'error');
             return;
         }
-
         var product = this.CATALOG[productSlug];
         if (!product) {
-            this._showNotification('Producto no encontrado', 'error');
+            showNotification('Producto no encontrado', 'error');
             return;
         }
-
         try {
-            this._showNotification('Preparando pago...', 'info');
-
+            showNotification('Preparando pago...', 'info');
             var session = await sbClient.auth.getSession();
             var token = session.data.session.access_token;
-
             var response = await fetch(
                 SUPABASE_URL + '/functions/v1/stripe-checkout',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token,
+                        'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({
                         priceId: product.priceId,
-                        mode: product.mode,
-                    }),
+                        mode: product.mode
+                    })
                 }
             );
-
             var result = await response.json();
-
             if (result.error) {
-                this._showNotification('Error: ' + result.error, 'error');
+                showNotification('Error: ' + result.error, 'error');
                 return;
             }
-
-            // Redirigir a Stripe Checkout
             if (result.url) {
                 window.location.href = result.url;
             }
         } catch (error) {
             console.error('Checkout error:', error);
-            this._showNotification('Error al procesar. Intenta de nuevo.', 'error');
+            showNotification('Error al procesar. Intenta de nuevo.', 'error');
         }
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // ABRIR PORTAL DE FACTURACIÓN (cancelar, cambiar tarjeta, etc.)
-    // ════════════════════════════════════════════════════════════════
-    async openBillingPortal() {
+    openBillingPortal: async function() {
         if (!currentUser) return;
-
         try {
             var session = await sbClient.auth.getSession();
             var token = session.data.session.access_token;
-
             var response = await fetch(
                 SUPABASE_URL + '/functions/v1/stripe-checkout',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token,
+                        'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({ action: 'billing_portal' }),
+                    body: JSON.stringify({ action: 'billing_portal' })
                 }
             );
-
             var result = await response.json();
             if (result.url) {
                 window.open(result.url, '_blank');
             }
         } catch (error) {
             console.error('Billing portal error:', error);
-            this._showNotification('Error al abrir portal de facturación', 'error');
         }
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // VERIFICAR REDIRECT DESPUÉS DE PAGO
-    // ════════════════════════════════════════════════════════════════
-    async checkPaymentRedirect() {
+    checkPaymentRedirect: async function() {
         var params = new URLSearchParams(window.location.search);
         var status = params.get('payment');
-
         if (status === 'success') {
-            this._showNotification('¡Pago exitoso! Tu cuenta ha sido actualizada. 🎉', 'success');
+            showNotification('Pago exitoso! Tu cuenta ha sido actualizada.', 'success');
             window.history.replaceState({}, '', window.location.pathname);
-            // Esperar un momento para que el webhook procese
-            setTimeout(async () => { await this.refreshSubscription(); }, 2000);
+            setTimeout(async function() { await StripePayments.refreshSubscription(); }, 2000);
         } else if (status === 'canceled') {
-            this._showNotification('Pago cancelado. Puedes intentar de nuevo.', 'info');
+            showNotification('Pago cancelado. Puedes intentar de nuevo.', 'info');
             window.history.replaceState({}, '', window.location.pathname);
         }
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // VERIFICAR ACCESO — ¿Tiene suscripción activa a este producto?
-    // ════════════════════════════════════════════════════════════════
-    hasActiveSubscription(productSlug) {
+    hasActiveSubscription: function(productSlug) {
         if (!this._currentSubscription) return false;
-        var planSlug = this._currentSubscription.metadata?.plan_slug;
+        var planSlug = this._currentSubscription.metadata ? this._currentSubscription.metadata.plan_slug : null;
         return planSlug === productSlug;
     },
 
-    hasPurchased(productSlug) {
-        return this._purchasedProducts.includes(productSlug);
+    hasPurchased: function(productSlug) {
+        return this._purchasedProducts.indexOf(productSlug) !== -1;
     },
 
-    hasAccess(productSlug) {
+    hasAccess: function(productSlug) {
         return this.hasActiveSubscription(productSlug) || this.hasPurchased(productSlug);
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // OBTENER HISTORIAL DE PAGOS
-    // ════════════════════════════════════════════════════════════════
-    async getPaymentHistory() {
+    getPaymentHistory: async function() {
         if (!currentUser) return [];
-
-        var { data } = await sbClient
+        var result = await sbClient
             .from('payments')
             .select('*')
             .eq('user_id', currentUser.id)
             .order('created_at', { ascending: false })
             .limit(50);
-
-        return data || [];
+        return result.data || [];
     },
 
-    // ════════════════════════════════════════════════════════════════
-    // OBTENER PRODUCTOS POR CATEGORÍA
-    // ════════════════════════════════════════════════════════════════
-    getProductsByCategory(category) {
-        var results = {};
-        for (var slug in this.CATALOG) {
-            if (this.CATALOG[slug].category === category) {
-                results[slug] = this.CATALOG[slug];
-            }
-        }
-        return results;
-    },
-
-    getSubscriptions() { return this.getProductsByCategory('education'); },
-    getCRMPlans() { return this.getProductsByCategory('crm'); },
-    getCertifications() { return this.getProductsByCategory('certification'); },
-    getSchoolProducts() { return this.getProductsByCategory('school'); },
-
-    // ════════════════════════════════════════════════════════════════
-    // GENERAR HTML DE PRICING (para insertar en cualquier página)
-    // ════════════════════════════════════════════════════════════════
-    renderPricingCards(category, containerId) {
+    renderPricingCards: function(category, containerId) {
         var container = document.getElementById(containerId);
         if (!container) return;
-
-        var products = category ? this.getProductsByCategory(category) : this.CATALOG;
+        var self = this;
         var html = '';
-
-        for (var slug in products) {
-            var p = products[slug];
+        var keys = Object.keys(this.CATALOG);
+        for (var i = 0; i < keys.length; i++) {
+            var slug = keys[i];
+            var p = this.CATALOG[slug];
+            if (category && p.category !== category) continue;
             var isOwned = this.hasAccess(slug);
-            var period = p.mode === 'subscription' ? '/mes' : ' único';
-            var btnText = isOwned ? '✅ Activo' : (p.mode === 'subscription' ? 'Suscribirse' : 'Comprar');
+            var period = p.mode === 'subscription' ? '/mes' : ' unico';
+            var btnText = isOwned ? 'Activo' : (p.mode === 'subscription' ? 'Suscribirse' : 'Comprar');
             var btnClass = isOwned ? 'btn-owned' : 'btn-buy';
-
             html += '<div class="pricing-card">';
-            html += '  <h3>' + p.name + '</h3>';
-            html += '  <div class="price">$' + p.amount + '<span>' + period + '</span></div>';
-            html += '  <ul>';
-            p.features.forEach(function(f) {
-                html += '    <li>✓ ' + f + '</li>';
-            });
-            html += '  </ul>';
-            html += '  <button class="' + btnClass + '" ' +
-                    (isOwned ? 'disabled' : 'onclick="StripePayments.checkout(\'' + slug + '\')"') +
-                    '>' + btnText + '</button>';
+            html += '<h3>' + p.name + '</h3>';
+            html += '<div class="price">$' + p.amount + '<span>' + period + '</span></div>';
+            html += '<ul>';
+            for (var j = 0; j < p.features.length; j++) {
+                html += '<li>' + p.features[j] + '</li>';
+            }
+            html += '</ul>';
+            if (isOwned) {
+                html += '<button class="' + btnClass + '" disabled>' + btnText + '</button>';
+            } else {
+                html += '<button class="' + btnClass + '" onclick="StripePayments.checkout(\'' + slug + '\')">' + btnText + '</button>';
+            }
             html += '</div>';
         }
-
         container.innerHTML = html;
-    },
-
-    // ════════════════════════════════════════════════════════════════
-    // NOTIFICACIÓN (usa la función existente del CRM o crea una)
-    // ════════════════════════════════════════════════════════════════
-    _showNotification(message, type) {
-        if (typeof showNotification === 'function') {
-            showNotification(message, type);
-        } else {
-            alert(message);
-        }
     }
 };
-
-// ── Inicializar después de login ──
-// Agregar esto donde se confirma que el usuario está logueado:
-// await StripePayments.init();
