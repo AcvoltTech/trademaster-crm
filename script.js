@@ -7672,7 +7672,24 @@ function deleteInspReport(id) {
     localStorage.setItem('tm_insp_reports_' + companyId, JSON.stringify(inspReportsData));
     renderInspReports();
 }// STRIPE PAYMENTS MODULE
-// Agregar a script.js despues de sbClient
+// ========== STRIPE PAYMENTS MODULE ==========
+// Notification helper for Stripe module
+function showNotification(message, type) {
+    var existing = document.getElementById('stripe-notification');
+    if (existing) existing.remove();
+    var colors = {
+        success: { bg: '#10B981', icon: '✅' },
+        error:   { bg: '#EF4444', icon: '❌' },
+        info:    { bg: '#3B82F6', icon: 'ℹ️' }
+    };
+    var c = colors[type] || colors.info;
+    var div = document.createElement('div');
+    div.id = 'stripe-notification';
+    div.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;padding:14px 22px;border-radius:8px;color:#fff;font-size:14px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;background:' + c.bg + ';transition:opacity 0.3s;';
+    div.innerHTML = '<span>' + c.icon + '</span><span>' + message + '</span>';
+    document.body.appendChild(div);
+    setTimeout(function() { div.style.opacity = '0'; setTimeout(function() { div.remove(); }, 300); }, 4000);
+}
 
 var StripePayments = {
 
