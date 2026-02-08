@@ -7672,3 +7672,390 @@ function deleteInspReport(id) {
     localStorage.setItem('tm_insp_reports_' + companyId, JSON.stringify(inspReportsData));
     renderInspReports();
 }
+// ============================================================================
+// STRIPE PAYMENTS MODULE — Agregar a script.js después de sbClient
+// ============================================================================
+// Copia y pega este bloque completo en script.js
+// Posición: después de la línea "var sbClient = window.supabase.createClient(...)"
+// ============================================================================
+
+// ════════════════════════════════════════════════════════════════════════════
+// STRIPE PAYMENTS — Catálogo completo Tech School AC Volt
+// ════════════════════════════════════════════════════════════════════════════
+
+var StripePayments = {
+
+    // ── CATÁLOGO: 14 Productos con Price IDs reales ──
+    CATALOG: {
+        // === SUSCRIPCIONES MENSUALES (7) ===
+        'maestro-ac': {
+            name: 'Maestro AC App',
+            priceId: 'price_1SyIR0EHIPukEiZCzWQQJ5wL',
+            amount: 20,
+            mode: 'subscription',
+            category: 'education',
+            features: ['App de entrenamiento', '700+ preguntas', 'Videos de todos los niveles']
+        },
+        'clases-principiante': {
+            name: 'Clases en Vivo - PRINCIPIANTE',
+            priceId: 'price_1Sy3EEEHIPukEiZCLQXBwPF4',
+            amount: 119,
+            mode: 'subscription',
+            category: 'education',
+            features: ['Clases martes y miércoles', 'Q&A los lunes', 'MaestroAC App incluida', 'Videos pregrabados']
+        },
+        'crm-profesional': {
+            name: 'Trade Master CRM - Profesional',
+            priceId: 'price_1Sy2lwEHIPukEiZCFRw6sjBj',
+            amount: 149,
+            mode: 'subscription',
+            category: 'crm',
+            features: ['GPS Dispatch', 'Estimados 150+ partes', 'Facturación', 'Firmas digitales']
+        },
+        'clases-intermedio': {
+            name: 'Clases en Vivo - NIVEL INTERMEDIO',
+            priceId: 'price_1SyHZREHIPukEiZCpt88XKru',
+            amount: 299,
+            mode: 'subscription',
+            category: 'education',
+            features: ['Clases sábados y domingos', 'La Trinidad del Oficio completa', 'MaestroAC + Trade Master CRM + iFix', 'Videos + Q&A']
+        },
+        'crm-enterprise': {
+            name: 'Trade Master CRM - Enterprise',
+            priceId: 'price_1Sy2yhEHIPukEiZCytG3YgUF',
+            amount: 299,
+            mode: 'subscription',
+            category: 'crm',
+            features: ['Todo en Profesional', 'Multi-técnicos ilimitados', 'Reportes avanzados', 'Soporte prioritario']
+        },
+        'mentoria-trinidad': {
+            name: 'Mentoría HVACR - La Trinidad + Empresa',
+            priceId: 'price_1SyHazEHIPukEiZCMgwYJh3Y',
+            amount: 699,
+            mode: 'subscription',
+            category: 'education',
+            features: ['Todo de Intermedio', 'Mentoría exclusiva con Maestro Mario', 'Estrategias de negocio', 'Clases todos los días']
+        },
+
+        // === PAGOS ÚNICOS (7) ===
+        'student-id': {
+            name: 'Student ID - ACVOLT Tech School',
+            priceId: 'price_1SyRHUEHIPukEiZCasFMSqy1',
+            amount: 150,
+            mode: 'payment',
+            category: 'school',
+            features: ['Credencial oficial ACVOLT']
+        },
+        'impresion-certificado': {
+            name: 'Impresión del Certificado ACVOLT',
+            priceId: 'price_1SyS3VEHIPukEiZCIuVoFSW2',
+            amount: 250,
+            mode: 'payment',
+            category: 'school',
+            features: ['Certificado impreso oficial', 'Demostrar conocimiento de 700 preguntas por nivel']
+        },
+        'a2l-certification': {
+            name: 'A2L Refrigerants - Safety Certification',
+            priceId: 'price_1SyHlhEHIPukEiZCYlLTAGjf',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['700 preguntas preparación', 'Examen oficial', 'Honorarios del proctor', 'R-32, R-454B, detección fugas']
+        },
+        'epa-608': {
+            name: 'EPA 608 Certification - Exam & Study',
+            priceId: 'price_1Sy3H8EHIPukEiZCJ6k89xx3',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['700 preguntas preparación', 'Examen oficial', 'Proctor (4 hrs máximo)', 'Ciclo de refrigeración completo']
+        },
+        'heating-certification': {
+            name: 'Heating Technician - Certification',
+            priceId: 'price_1Sy3KzEHIPukEiZCcfqThm1l',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['700 preguntas', 'Examen + proctor', 'Gas natural/LP, furnaces 80%/90%+', 'Combustión, intercambiadores']
+        },
+        'hvac-certification': {
+            name: 'HVAC Certification - Exam & Study',
+            priceId: 'price_1Sy3N3EHIPukEiZCPupDOhqZ',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['700 preguntas', 'Examen + proctor', 'Compresores, TXV, heat pumps', 'Superheat/subcooling, diagnóstico']
+        },
+        'hvac-excellence': {
+            name: 'HVAC EXCELENCE - Installation & Service',
+            priceId: 'price_1SyHNvEHIPukEiZCJo7frOlV',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['Examen + paquete de estudio', 'Honorarios del proctor']
+        },
+        'osha-30': {
+            name: 'OSHA 30 Hours - Safety Certification',
+            priceId: 'price_1SyHd6EHIPukEiZCaEqbUz5N',
+            amount: 599,
+            mode: 'payment',
+            category: 'certification',
+            features: ['700 preguntas preparación', 'Acceso al curso oficial', 'Seguridad eléctrica, caídas, EPP', 'LOTO, espacios confinados']
+        },
+    },
+
+    // ── Cache de suscripción actual ──
+    _currentSubscription: null,
+    _purchasedProducts: [],
+
+    // ════════════════════════════════════════════════════════════════
+    // INICIALIZAR — Llamar después de login
+    // ════════════════════════════════════════════════════════════════
+    async init() {
+        if (!currentUser) return;
+        await this.refreshSubscription();
+        await this.checkPaymentRedirect();
+        console.log('💳 StripePayments initialized');
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // OBTENER SUSCRIPCIÓN ACTIVA
+    // ════════════════════════════════════════════════════════════════
+    async refreshSubscription() {
+        if (!currentUser) return null;
+
+        try {
+            // Obtener suscripción activa
+            const { data: sub, error } = await sbClient
+                .from('subscriptions')
+                .select('*, subscription_plans(*)')
+                .eq('user_id', currentUser.id)
+                .in('status', ['active', 'trialing'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            this._currentSubscription = sub;
+
+            // Obtener productos comprados (pagos únicos exitosos)
+            const { data: payments } = await sbClient
+                .from('payments')
+                .select('metadata')
+                .eq('user_id', currentUser.id)
+                .eq('status', 'succeeded')
+                .not('metadata->product_slug', 'is', null);
+
+            this._purchasedProducts = (payments || [])
+                .map(p => p.metadata?.product_slug)
+                .filter(Boolean);
+
+            return sub;
+        } catch (e) {
+            console.error('Error refreshing subscription:', e);
+            return null;
+        }
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // INICIAR CHECKOUT — Suscripción o pago único
+    // ════════════════════════════════════════════════════════════════
+    async checkout(productSlug) {
+        if (!currentUser) {
+            this._showNotification('Debes iniciar sesión primero', 'error');
+            return;
+        }
+
+        var product = this.CATALOG[productSlug];
+        if (!product) {
+            this._showNotification('Producto no encontrado', 'error');
+            return;
+        }
+
+        try {
+            this._showNotification('Preparando pago...', 'info');
+
+            var session = await sbClient.auth.getSession();
+            var token = session.data.session.access_token;
+
+            var response = await fetch(
+                SUPABASE_URL + '/functions/v1/stripe-checkout',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({
+                        priceId: product.priceId,
+                        mode: product.mode,
+                    }),
+                }
+            );
+
+            var result = await response.json();
+
+            if (result.error) {
+                this._showNotification('Error: ' + result.error, 'error');
+                return;
+            }
+
+            // Redirigir a Stripe Checkout
+            if (result.url) {
+                window.location.href = result.url;
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            this._showNotification('Error al procesar. Intenta de nuevo.', 'error');
+        }
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // ABRIR PORTAL DE FACTURACIÓN (cancelar, cambiar tarjeta, etc.)
+    // ════════════════════════════════════════════════════════════════
+    async openBillingPortal() {
+        if (!currentUser) return;
+
+        try {
+            var session = await sbClient.auth.getSession();
+            var token = session.data.session.access_token;
+
+            var response = await fetch(
+                SUPABASE_URL + '/functions/v1/stripe-checkout',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({ action: 'billing_portal' }),
+                }
+            );
+
+            var result = await response.json();
+            if (result.url) {
+                window.open(result.url, '_blank');
+            }
+        } catch (error) {
+            console.error('Billing portal error:', error);
+            this._showNotification('Error al abrir portal de facturación', 'error');
+        }
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // VERIFICAR REDIRECT DESPUÉS DE PAGO
+    // ════════════════════════════════════════════════════════════════
+    async checkPaymentRedirect() {
+        var params = new URLSearchParams(window.location.search);
+        var status = params.get('payment');
+
+        if (status === 'success') {
+            this._showNotification('¡Pago exitoso! Tu cuenta ha sido actualizada. 🎉', 'success');
+            window.history.replaceState({}, '', window.location.pathname);
+            // Esperar un momento para que el webhook procese
+            setTimeout(async () => { await this.refreshSubscription(); }, 2000);
+        } else if (status === 'canceled') {
+            this._showNotification('Pago cancelado. Puedes intentar de nuevo.', 'info');
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // VERIFICAR ACCESO — ¿Tiene suscripción activa a este producto?
+    // ════════════════════════════════════════════════════════════════
+    hasActiveSubscription(productSlug) {
+        if (!this._currentSubscription) return false;
+        var planSlug = this._currentSubscription.metadata?.plan_slug;
+        return planSlug === productSlug;
+    },
+
+    hasPurchased(productSlug) {
+        return this._purchasedProducts.includes(productSlug);
+    },
+
+    hasAccess(productSlug) {
+        return this.hasActiveSubscription(productSlug) || this.hasPurchased(productSlug);
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // OBTENER HISTORIAL DE PAGOS
+    // ════════════════════════════════════════════════════════════════
+    async getPaymentHistory() {
+        if (!currentUser) return [];
+
+        var { data } = await sbClient
+            .from('payments')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        return data || [];
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // OBTENER PRODUCTOS POR CATEGORÍA
+    // ════════════════════════════════════════════════════════════════
+    getProductsByCategory(category) {
+        var results = {};
+        for (var slug in this.CATALOG) {
+            if (this.CATALOG[slug].category === category) {
+                results[slug] = this.CATALOG[slug];
+            }
+        }
+        return results;
+    },
+
+    getSubscriptions() { return this.getProductsByCategory('education'); },
+    getCRMPlans() { return this.getProductsByCategory('crm'); },
+    getCertifications() { return this.getProductsByCategory('certification'); },
+    getSchoolProducts() { return this.getProductsByCategory('school'); },
+
+    // ════════════════════════════════════════════════════════════════
+    // GENERAR HTML DE PRICING (para insertar en cualquier página)
+    // ════════════════════════════════════════════════════════════════
+    renderPricingCards(category, containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+
+        var products = category ? this.getProductsByCategory(category) : this.CATALOG;
+        var html = '';
+
+        for (var slug in products) {
+            var p = products[slug];
+            var isOwned = this.hasAccess(slug);
+            var period = p.mode === 'subscription' ? '/mes' : ' único';
+            var btnText = isOwned ? '✅ Activo' : (p.mode === 'subscription' ? 'Suscribirse' : 'Comprar');
+            var btnClass = isOwned ? 'btn-owned' : 'btn-buy';
+
+            html += '<div class="pricing-card">';
+            html += '  <h3>' + p.name + '</h3>';
+            html += '  <div class="price">$' + p.amount + '<span>' + period + '</span></div>';
+            html += '  <ul>';
+            p.features.forEach(function(f) {
+                html += '    <li>✓ ' + f + '</li>';
+            });
+            html += '  </ul>';
+            html += '  <button class="' + btnClass + '" ' +
+                    (isOwned ? 'disabled' : 'onclick="StripePayments.checkout(\'' + slug + '\')"') +
+                    '>' + btnText + '</button>';
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // NOTIFICACIÓN (usa la función existente del CRM o crea una)
+    // ════════════════════════════════════════════════════════════════
+    _showNotification(message, type) {
+        if (typeof showNotification === 'function') {
+            showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
+};
+
+// ── Inicializar después de login ──
+// Agregar esto donde se confirma que el usuario está logueado:
+// await StripePayments.init();
