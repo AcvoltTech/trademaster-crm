@@ -4218,6 +4218,229 @@
       </div>
     </div>
 
+    <!-- ==================== FLOATING SUPPORT BUTTON ==================== -->
+    <div id="supportButton" class="support-fab" onclick="toggleSupportMenu()">
+      <span class="support-fab-icon">🛟</span>
+    </div>
+    
+    <div id="supportMenu" class="support-menu">
+      <div class="support-menu-header">
+        <h4>🛟 Soporte Técnico</h4>
+        <button onclick="toggleSupportMenu()" class="support-close">×</button>
+      </div>
+      <div class="support-menu-body">
+        <p style="margin-bottom:12px;color:#64748b;font-size:13px;">¿Necesitas ayuda? Estamos aquí para ti.</p>
+        
+        <a href="tel:+19096390448" class="support-option">
+          <span class="support-option-icon" style="background:#dcfce7;color:#16a34a;">📞</span>
+          <div>
+            <strong>Llamar a Soporte</strong>
+            <small>(909) 639-0448</small>
+          </div>
+        </a>
+        
+        <a href="mailto:trademastersusacrm@gmail.com?subject=Soporte%20Trade%20Master%20CRM" class="support-option">
+          <span class="support-option-icon" style="background:#dbeafe;color:#1d4ed8;">📧</span>
+          <div>
+            <strong>Enviar Email</strong>
+            <small>trademastersusacrm@gmail.com</small>
+          </div>
+        </a>
+        
+        <a href="https://wa.me/19096390448?text=Hola,%20necesito%20ayuda%20con%20Trade%20Master%20CRM" target="_blank" class="support-option">
+          <span class="support-option-icon" style="background:#dcfce7;color:#16a34a;">💬</span>
+          <div>
+            <strong>WhatsApp</strong>
+            <small>Chat en vivo</small>
+          </div>
+        </a>
+        
+        <div class="support-divider"></div>
+        
+        <a href="#" onclick="openForgotPassword();return false;" class="support-option">
+          <span class="support-option-icon" style="background:#fef3c7;color:#d97706;">🔑</span>
+          <div>
+            <strong>Olvidé mi Contraseña</strong>
+            <small>Recuperar acceso</small>
+          </div>
+        </a>
+      </div>
+      <div class="support-menu-footer">
+        <small>Horario: Lun-Vie 8am-6pm PST</small>
+      </div>
+    </div>
+    
+    <style>
+      /* Support FAB Button */
+      .support-fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(249,115,22,0.4);
+        z-index: 9998;
+        transition: all 0.3s ease;
+      }
+      .support-fab:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 30px rgba(249,115,22,0.5);
+      }
+      .support-fab-icon {
+        font-size: 28px;
+      }
+      
+      /* Support Menu */
+      .support-menu {
+        position: fixed;
+        bottom: 100px;
+        right: 24px;
+        width: 300px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: none;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+      }
+      .support-menu.show {
+        display: block;
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .support-menu-header {
+        background: linear-gradient(135deg, #1e3a5f, #2d4a6f);
+        color: white;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .support-menu-header h4 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .support-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        opacity: 0.8;
+      }
+      .support-close:hover { opacity: 1; }
+      .support-menu-body {
+        padding: 16px;
+      }
+      .support-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #1f2937;
+        transition: background 0.2s;
+        margin-bottom: 8px;
+      }
+      .support-option:hover {
+        background: #f3f4f6;
+      }
+      .support-option-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+      .support-option strong {
+        display: block;
+        font-size: 14px;
+      }
+      .support-option small {
+        color: #64748b;
+        font-size: 12px;
+      }
+      .support-divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 12px 0;
+      }
+      .support-menu-footer {
+        background: #f9fafb;
+        padding: 12px 16px;
+        text-align: center;
+        color: #64748b;
+        border-top: 1px solid #e5e7eb;
+      }
+      
+      @media (max-width: 480px) {
+        .support-fab {
+          bottom: 16px;
+          right: 16px;
+          width: 54px;
+          height: 54px;
+        }
+        .support-menu {
+          right: 16px;
+          left: 16px;
+          width: auto;
+          bottom: 86px;
+        }
+      }
+    </style>
+
     <script src="script.js"></script>
+    <script>
+      // Support Menu Toggle
+      function toggleSupportMenu() {
+        var menu = document.getElementById('supportMenu');
+        menu.classList.toggle('show');
+      }
+      
+      // Close support menu when clicking outside
+      document.addEventListener('click', function(e) {
+        var menu = document.getElementById('supportMenu');
+        var fab = document.getElementById('supportButton');
+        if (menu && fab && !menu.contains(e.target) && !fab.contains(e.target)) {
+          menu.classList.remove('show');
+        }
+      });
+      
+      // Forgot Password Function
+      function openForgotPassword() {
+        toggleSupportMenu();
+        var email = prompt('Ingresa tu email para recuperar tu contraseña:');
+        if (email && email.includes('@')) {
+          // Try to send password reset
+          if (typeof sbClient !== 'undefined') {
+            sbClient.auth.resetPasswordForEmail(email, {
+              redirectTo: window.location.origin + '/reset-password'
+            }).then(function(result) {
+              if (result.error) {
+                alert('❌ Error: ' + result.error.message + '\n\nPor favor contacta a soporte.');
+              } else {
+                alert('✅ ¡Email enviado!\n\nRevisa tu bandeja de entrada (y spam) para el link de recuperación.\n\nSi no llega en 5 minutos, contacta a soporte.');
+              }
+            });
+          } else {
+            alert('Por favor contacta a soporte para recuperar tu contraseña:\n\n📧 soporte@trademastersusa.org\n📞 (909) 555-1234');
+          }
+        } else if (email) {
+          alert('Por favor ingresa un email válido');
+        }
+      }
+    </script>
   </body>
 </html>
