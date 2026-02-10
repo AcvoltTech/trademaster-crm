@@ -8699,22 +8699,55 @@ function previewTechPhotoAlt(input) {
 async function handleTechCreateAlt(e) {
     e.preventDefault();
     var name = document.getElementById('techNameAlt').value.trim();
+    var email = document.getElementById('techEmailAlt').value.trim();
+    
     if (!name) { alert('Ingresa el nombre del técnico'); return; }
+    if (!email) { alert('Ingresa el email del técnico'); return; }
+    
+    // Check if creating CRM login
+    var createLogin = document.getElementById('techCreateLoginAlt').checked;
+    var password = document.getElementById('techPasswordAlt').value;
+    var passwordConfirm = document.getElementById('techPasswordConfirmAlt').value;
+    
+    if (createLogin) {
+        if (!password || password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+        if (password !== passwordConfirm) {
+            alert('Las contraseñas no coinciden');
+            return;
+        }
+    }
 
     var techData = {
         company_id: companyId,
         name: name,
         phone: document.getElementById('techPhoneAlt').value.trim(),
-        email: document.getElementById('techEmailAlt').value.trim(),
+        email: email,
         specialty: document.getElementById('techSpecialtyAlt').value,
         status: 'available'
     };
 
+    // Show loading
+    var btn = e.target.querySelector('button[type="submit"]');
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
     try {
+        // First create the technician
         var res = await sbClient.from('technicians').insert(techData).select().single();
-        if (res.error) { alert('Error: ' + res.error.message); return; }
+        if (res.error) { 
+            btn.disabled = false;
+            btn.textContent = originalText;
+            alert('Error: ' + res.error.message); 
+            return; 
+        }
+        
         if (res.data) {
             techsData.push(res.data);
+            var techId = res.data.id;
 
             // Save vehicle info
             var vehicleInfo = {
@@ -8724,16 +8757,64 @@ async function handleTechCreateAlt(e) {
                 color: document.getElementById('techVehicleColorAlt').value
             };
             if (vehicleInfo.vehicle || vehicleInfo.plate) {
-                localStorage.setItem('techVehicle_' + res.data.id, JSON.stringify(vehicleInfo));
+                localStorage.setItem('techVehicle_' + techId, JSON.stringify(vehicleInfo));
             }
 
             // Save photo
             if (window._techPhotoAlt) {
-                localStorage.setItem('techPhoto_' + res.data.id, window._techPhotoAlt);
+                localStorage.setItem('techPhoto_' + techId, window._techPhotoAlt);
                 window._techPhotoAlt = null;
             }
 
-            alert('✅ Técnico "' + name + '" creado exitosamente');
+            // Create CRM login if checkbox is checked
+            if (createLogin && password) {
+                try {
+                    // Create user in Supabase Auth
+                    var authRes = await sbClient.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: { 
+                                name: name, 
+                                company_id: companyId,
+                                role: 'technician',
+                                technician_id: techId
+                            }
+                        }
+                    });
+                    
+                    if (authRes.error) {
+                        console.log('Auth error:', authRes.error.message);
+                        if (authRes.error.message.includes('already registered')) {
+                            alert('⚠️ Técnico creado pero el email ya tiene cuenta. Puede usar su contraseña existente para entrar.');
+                        } else {
+                            alert('⚠️ Técnico creado pero hubo error en la cuenta: ' + authRes.error.message);
+                        }
+                    } else {
+                        // Save to team_users table
+                        var teamUserData = {
+                            company_id: companyId,
+                            user_id: authRes.data.user ? authRes.data.user.id : null,
+                            name: name,
+                            email: email,
+                            phone: techData.phone,
+                            role: 'technician',
+                            technician_id: techId,
+                            status: 'active',
+                            created_at: new Date().toISOString()
+                        };
+                        await sbClient.from('team_users').insert([teamUserData]);
+                        
+                        alert('✅ Técnico "' + name + '" creado exitosamente!\n\n📱 Ya puede entrar al CRM con:\n📧 Email: ' + email + '\n🔑 Contraseña: (la que ingresaste)');
+                    }
+                } catch(authErr) {
+                    console.log('Auth exception:', authErr);
+                    alert('✅ Técnico creado pero hubo un problema con el acceso al CRM. Puedes agregarlo manualmente en Usuarios y Equipo.');
+                }
+            } else {
+                alert('✅ Técnico "' + name + '" creado exitosamente');
+            }
+
             hideTechFormAlt();
             e.target.reset();
             document.getElementById('techPhotoPreviewAlt').innerHTML = '<span style="font-size:11px;color:var(--text-muted);text-align:center;">📷 Foto del<br>Técnico</span>';
@@ -8744,6 +8825,9 @@ async function handleTechCreateAlt(e) {
     } catch(err) {
         alert('Error al crear técnico: ' + err.message);
     }
+    
+    btn.disabled = false;
+    btn.textContent = originalText;
 }
 
 // Improve technicians full list rendering
