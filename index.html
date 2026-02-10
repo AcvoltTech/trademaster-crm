@@ -132,39 +132,45 @@
           </div>
           <div id="registerForm" class="auth-form">
             <h2>Crear Cuenta Empresarial</h2>
+            <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;">
+              <strong>⚠️ IMPORTANTE:</strong> Todos los campos son obligatorios. Necesitamos tu información completa para brindarte soporte y enviarte tu guía de onboarding.
+            </div>
             <div id="registerError" class="error-msg" style="display:none;"></div>
             <div id="registerSuccess" class="success-msg" style="display:none;"></div>
-            <form onsubmit="handleRegister(event)">
+            <form onsubmit="handleRegister(event)" id="registerFormEl">
               <div class="form-group">
-                <label>Nombre de la Empresa</label>
-                <input type="text" id="companyName" placeholder="Nombre de la Empresa" required>
+                <label>Nombre de la Empresa <span style="color:#dc2626">*</span></label>
+                <input type="text" id="companyName" placeholder="Ej: ABC Heating & Cooling LLC" required minlength="3" title="Mínimo 3 caracteres">
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Nombre</label>
-                  <input type="text" id="firstName" placeholder="Nombre" required>
+                  <label>Nombre <span style="color:#dc2626">*</span></label>
+                  <input type="text" id="firstName" placeholder="Tu nombre" required minlength="2">
                 </div>
                 <div class="form-group">
-                  <label>Apellido</label>
-                  <input type="text" id="lastName" placeholder="Apellido" required>
+                  <label>Apellido <span style="color:#dc2626">*</span></label>
+                  <input type="text" id="lastName" placeholder="Tu apellido" required minlength="2">
                 </div>
               </div>
               <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="registerEmail" placeholder="tu@email.com" required>
+                <label>Email <span style="color:#dc2626">*</span></label>
+                <input type="email" id="registerEmail" placeholder="tu@email.com (preferible Gmail)" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Ingresa un email válido">
+                <small style="color:#6b7280;font-size:11px;">📧 Usaremos este email para enviarte tu guía y soporte</small>
               </div>
               <div class="form-group">
-                <label>Teléfono</label>
-                <input type="tel" id="phone" placeholder="(555) 123-4567" required>
+                <label>Teléfono <span style="color:#dc2626">*</span></label>
+                <input type="tel" id="phone" placeholder="(555) 123-4567" required minlength="10" pattern="[\d\s\-\(\)\+]{10,}" title="Ingresa un teléfono válido (mínimo 10 dígitos)" oninput="formatPhone(this)">
+                <small style="color:#6b7280;font-size:11px;">📞 Para contactarte si necesitas ayuda</small>
               </div>
               <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
+                <label>Contraseña <span style="color:#dc2626">*</span></label>
+                <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
               </div>
               <div class="form-group">
-                <label>Confirmar Contraseña</label>
-                <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required>
+                <label>Confirmar Contraseña <span style="color:#dc2626">*</span></label>
+                <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required minlength="6">
               </div>
+              <p style="font-size:11px;color:#6b7280;margin-bottom:12px;text-align:center;">Al registrarte aceptas recibir tu guía de onboarding y comunicaciones de soporte.</p>
               <button type="submit" class="btn-primary" id="registerBtn">Crear Cuenta Empresarial</button>
             </form>
             <p class="auth-link">¿Ya tienes cuenta? <a href="#" onclick="switchTab('login')">Inicia sesión</a></p>
@@ -4408,6 +4414,56 @@
 
     <script src="script.js"></script>
     <script>
+      // Format phone number as user types
+      function formatPhone(input) {
+        var phone = input.value.replace(/\D/g, '');
+        if (phone.length >= 10) {
+          input.value = '(' + phone.slice(0,3) + ') ' + phone.slice(3,6) + '-' + phone.slice(6,10);
+        }
+      }
+      
+      // Validate registration form before submit
+      function validateRegistration() {
+        var phone = document.getElementById('phone').value.replace(/\D/g, '');
+        var email = document.getElementById('registerEmail').value;
+        var company = document.getElementById('companyName').value.trim();
+        var firstName = document.getElementById('firstName').value.trim();
+        var lastName = document.getElementById('lastName').value.trim();
+        
+        if (company.length < 3) {
+          alert('❌ El nombre de la empresa debe tener al menos 3 caracteres');
+          return false;
+        }
+        if (firstName.length < 2 || lastName.length < 2) {
+          alert('❌ Por favor ingresa tu nombre y apellido completos');
+          return false;
+        }
+        if (!email.includes('@') || !email.includes('.')) {
+          alert('❌ Por favor ingresa un email válido');
+          return false;
+        }
+        if (phone.length < 10) {
+          alert('❌ El teléfono debe tener al menos 10 dígitos\n\nNecesitamos tu número para poder contactarte y darte soporte.');
+          return false;
+        }
+        return true;
+      }
+      
+      // Override form submission to add validation
+      document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('registerFormEl');
+        if (form) {
+          var originalSubmit = form.onsubmit;
+          form.onsubmit = function(e) {
+            if (!validateRegistration()) {
+              e.preventDefault();
+              return false;
+            }
+            if (originalSubmit) return originalSubmit(e);
+          };
+        }
+      });
+      
       // Support Menu Toggle
       function toggleSupportMenu() {
         var menu = document.getElementById('supportMenu');
