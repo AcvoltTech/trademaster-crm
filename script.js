@@ -355,6 +355,125 @@ function updateKPIs() {
     if (document.getElementById('hcpOpenEstimates')) renderHCPDashboard();
 }
 
+// ===== COMMAND CENTER MAP =====
+var commandCenterMap = null;
+var ccMarkers = [];
+
+function refreshCommandCenter() {
+    loadTechnicians();
+    loadJobs();
+    loadAdvisors();
+    setTimeout(function() {
+        renderHCPDashboard();
+        refreshCommandCenterMap();
+    }, 500);
+    alert('✅ Centro de Mando actualizado');
+}
+
+function initCommandCenterMap() {
+    var mapDiv = document.getElementById('commandCenterMap');
+    if (!mapDiv || typeof google === 'undefined') return;
+    
+    if (!commandCenterMap) {
+        commandCenterMap = new google.maps.Map(mapDiv, {
+            center: { lat: 34.1083, lng: -117.2898 },
+            zoom: 10,
+            styles: [
+                { featureType: "poi", stylers: [{ visibility: "off" }] },
+                { featureType: "transit", stylers: [{ visibility: "off" }] }
+            ]
+        });
+    }
+    
+    refreshCommandCenterMap();
+}
+
+function refreshCommandCenterMap() {
+    if (!commandCenterMap) {
+        initCommandCenterMap();
+        return;
+    }
+    
+    // Clear existing markers
+    ccMarkers.forEach(function(m) { m.setMap(null); });
+    ccMarkers = [];
+    
+    var bounds = new google.maps.LatLngBounds();
+    var hasMarkers = false;
+    
+    // Add TECHNICIAN markers (green/yellow circles)
+    (techsData || []).forEach(function(t) {
+        if (t.last_lat && t.last_lng) {
+            var isAvailable = t.status === 'available' || t.status === 'Disponible' || !t.status;
+            var marker = new google.maps.Marker({
+                position: { lat: t.last_lat, lng: t.last_lng },
+                map: commandCenterMap,
+                title: '👷 ' + t.name,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: isAvailable ? '#10b981' : '#f59e0b',
+                    fillOpacity: 1,
+                    strokeWeight: 3,
+                    strokeColor: 'white',
+                    scale: 12
+                },
+                zIndex: 100
+            });
+            
+            var lastUpdate = t.last_location_at ? getTimeAgo(t.last_location_at) : 'desconocido';
+            var infoContent = '<div style="min-width:180px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '-') + '<br>Estado: ' + (isAvailable ? '🟢 Disponible' : '🔶 Ocupado') + '<br><small>Última actualización: ' + lastUpdate + '</small></div>';
+            var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+            marker.addListener('click', function() { infoWindow.open(commandCenterMap, marker); });
+            
+            ccMarkers.push(marker);
+            bounds.extend(marker.getPosition());
+            hasMarkers = true;
+        }
+    });
+    
+    // Add JOB markers (red/blue pins)
+    (jobsData || []).forEach(function(j) {
+        if (j.lat && j.lng && j.status !== 'completed' && j.status !== 'cancelled') {
+            var isNew = !j.technician_id || j.status === 'pending';
+            var isInProgress = j.status === 'in_progress';
+            var markerColor = isInProgress ? '#3b82f6' : '#ef4444';
+            
+            var marker = new google.maps.Marker({
+                position: { lat: j.lat, lng: j.lng },
+                map: commandCenterMap,
+                title: '📍 ' + (j.title || 'Trabajo'),
+                icon: {
+                    url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36"><path fill="' + markerColor + '" d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12zm0 16c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z"/></svg>'),
+                    scaledSize: new google.maps.Size(24, 36),
+                    anchor: new google.maps.Point(12, 36)
+                },
+                zIndex: 50
+            });
+            
+            var techName = 'Sin asignar';
+            if (j.technician_id) {
+                var tech = techsData.find(function(t) { return t.id === j.technician_id; });
+                if (tech) techName = tech.name;
+            }
+            var infoContent = '<div style="min-width:200px;"><strong>📍 ' + (j.title || 'Trabajo') + '</strong><br>👷 ' + techName + '<br>📍 ' + (j.address || '-') + '<br>Estado: ' + (isInProgress ? '🚐 En Progreso' : '🆕 Nuevo') + '</div>';
+            var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+            marker.addListener('click', function() { infoWindow.open(commandCenterMap, marker); });
+            
+            ccMarkers.push(marker);
+            bounds.extend(marker.getPosition());
+            hasMarkers = true;
+        }
+    });
+    
+    if (hasMarkers) {
+        commandCenterMap.fitBounds(bounds);
+        var listener = google.maps.event.addListener(commandCenterMap, 'idle', function() {
+            if (commandCenterMap.getZoom() > 14) commandCenterMap.setZoom(14);
+            google.maps.event.removeListener(listener);
+        });
+    }
+}
+
 // ===== NAVIGATION =====
 function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
@@ -366,7 +485,7 @@ function showSection(name) {
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
     if (al) al.classList.add('active');
-    if (name === 'dashboard') { renderDashboardDynamic(); renderHCPDashboard(); }
+    if (name === 'dashboard') { renderDashboardDynamic(); renderHCPDashboard(); setTimeout(initCommandCenterMap, 500); }
     if (name === 'calendar') { initCalendar(); }
     if (name === 'inbox') { loadInbox(); }
     if (name === 'clients') { loadClients(); }
@@ -618,10 +737,20 @@ function renderServiceCallCards() {
             html += '<button class="btn-primary btn-sm" style="flex:1;background:#10b981;border-color:#10b981;" onclick="updateJobToCompleted(\'' + j.id + '\')">✅ Completar</button>';
         }
         
+        // Button to see technician location
+        if (j.technician_id && techsData) {
+            var techForLoc = techsData.find(function(t) { return t.id === j.technician_id; });
+            if (techForLoc && techForLoc.last_lat && techForLoc.last_lng) {
+                html += '<button class="btn-secondary btn-sm" onclick="showTechOnMap(\'' + j.technician_id + '\')" title="Ver ubicación del técnico">👷📍</button>';
+            } else {
+                html += '<button class="btn-secondary btn-sm" onclick="alert(\'El técnico no ha reportado ubicación\')" title="Técnico sin ubicación" style="opacity:0.5;">👷❓</button>';
+            }
+        }
+        
         if (j.lat && j.lng) {
-            html += '<a href="https://maps.google.com/?q=' + j.lat + ',' + j.lng + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+            html += '<a href="https://maps.google.com/?q=' + j.lat + ',' + j.lng + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;" title="Ver trabajo en mapa">🗺️</a>';
         } else if (j.address) {
-            html += '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.address) + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+            html += '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.address) + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;" title="Ver trabajo en mapa">🗺️</a>';
         }
         
         html += '</div>';
@@ -766,6 +895,56 @@ function initServiceCallsMap() {
 // Alias for backwards compatibility
 function loadServiceCalls() { renderServiceCallsFromJobs(); }
 function renderServiceCalls() { renderServiceCallCards(); }
+
+// Show technician location on the service calls map
+function showTechOnMap(techId) {
+    var tech = techsData.find(function(t) { return t.id === techId; });
+    if (!tech) { alert('Técnico no encontrado'); return; }
+    
+    if (!tech.last_lat || !tech.last_lng) {
+        alert('El técnico ' + tech.name + ' no ha reportado su ubicación');
+        return;
+    }
+    
+    // Scroll to map
+    var mapDiv = document.getElementById('serviceCallsMap');
+    if (mapDiv) {
+        mapDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Center map on technician
+    if (serviceCallsMap) {
+        var techPos = { lat: tech.last_lat, lng: tech.last_lng };
+        serviceCallsMap.setCenter(techPos);
+        serviceCallsMap.setZoom(15);
+        
+        // Add or update tech marker
+        if (window.scTechMarker) {
+            window.scTechMarker.setMap(null);
+        }
+        
+        window.scTechMarker = new google.maps.Marker({
+            position: techPos,
+            map: serviceCallsMap,
+            title: tech.name + ' - Última ubicación',
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: '#8b5cf6',
+                fillOpacity: 1,
+                strokeWeight: 3,
+                strokeColor: 'white',
+                scale: 14
+            },
+            zIndex: 1000
+        });
+        
+        var lastUpdate = tech.last_location_at ? getTimeAgo(tech.last_location_at) : 'desconocido';
+        var infoContent = '<div style="min-width:180px;padding:8px;"><strong>👷 ' + tech.name + '</strong><br>📱 ' + (tech.phone || '-') + '<br><small>Última actualización: ' + lastUpdate + '</small><br><br><a href="tel:' + tech.phone + '" style="color:#3b82f6;">📞 Llamar</a> | <a href="sms:' + tech.phone + '" style="color:#10b981;">💬 Texto</a></div>';
+        
+        var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+        infoWindow.open(serviceCallsMap, window.scTechMarker);
+    }
+}
 
 // ===== LEADS =====
 function showLeadForm() { document.getElementById('leadFormContainer').style.display = 'block'; document.getElementById('leadForm').reset(); }
@@ -6738,19 +6917,55 @@ document.addEventListener('DOMContentLoaded', function() { setTimeout(applyLangu
 // ===== HCP DASHBOARD =====
 var employeeStatusMap = null;
 function renderHCPDashboard() {
+    // ESTIMADOS
     var openEst = jobsData.filter(function(j){ return j.status==='open'||j.status==='pending'; });
     var estTotal = openEst.reduce(function(s,j){ return s+(parseFloat(j.total_cost)||0);},0);
-    document.getElementById('hcpOpenEstimates').textContent = openEst.length;
-    document.getElementById('hcpEstimatesAmount').textContent = '$'+estTotal.toLocaleString('en-US',{minimumFractionDigits:2});
-    var unschedJobs = jobsData.filter(function(j){ return !j.scheduled_date&&j.status!=='completed'&&j.status!=='cancelled'; });
-    var unschedTotal = unschedJobs.reduce(function(s,j){ return s+(parseFloat(j.total_cost)||0);},0);
-    document.getElementById('hcpUnschedJobs').textContent = unschedJobs.length;
-    document.getElementById('hcpJobsAmount').textContent = '$'+unschedTotal.toLocaleString('en-US',{minimumFractionDigits:2});
-    var openInv = (window.invoicesData||[]).filter(function(i){ return i.status==='sent'||i.status==='partial'||i.status==='overdue'; });
-    var invTotal = openInv.reduce(function(s,i){ return s+((parseFloat(i.total)||0)-(parseFloat(i.amount_paid)||0));},0);
-    document.getElementById('hcpOpenInvoices').textContent = openInv.length;
-    document.getElementById('hcpInvoicesAmount').textContent = '$'+invTotal.toLocaleString('en-US',{minimumFractionDigits:2});
-    renderYTDKpis(); renderEmployeeStatus();
+    var el1 = document.getElementById('hcpOpenEstimates');
+    var el2 = document.getElementById('hcpEstimatesAmount');
+    if (el1) el1.textContent = openEst.length;
+    if (el2) el2.textContent = '$'+estTotal.toLocaleString('en-US',{minimumFractionDigits:2});
+    
+    // LLAMADAS DE SERVICIO (from jobsData/work_orders)
+    var activeJobs = jobsData.filter(function(j){ return j.status !== 'completed' && j.status !== 'cancelled'; });
+    var newJobs = jobsData.filter(function(j){ return (j.status === 'pending' || !j.status) && !j.technician_id; });
+    var assignedJobs = jobsData.filter(function(j){ return j.status === 'pending' && j.technician_id; });
+    var enrouteJobs = jobsData.filter(function(j){ return j.status === 'in_progress'; });
+    
+    var el3 = document.getElementById('hcpActiveServiceCalls');
+    var el4 = document.getElementById('hcpSCNew');
+    var el5 = document.getElementById('hcpSCAssigned');
+    var el6 = document.getElementById('hcpSCEnroute');
+    if (el3) el3.textContent = activeJobs.length;
+    if (el4) el4.textContent = newJobs.length;
+    if (el5) el5.textContent = assignedJobs.length;
+    if (el6) el6.textContent = enrouteJobs.length;
+    
+    // HOME ADVISORS
+    var activeAdvisors = (advisorsData || []).filter(function(a){ return a.status === 'active'; });
+    var pendingComm = (advisorSales || []).filter(function(s){ return !s.commission_paid; }).reduce(function(sum, s){ return sum + (s.commission_amount || 0); }, 0);
+    
+    var el7 = document.getElementById('hcpActiveAdvisors');
+    var el8 = document.getElementById('hcpAdvPendingComm');
+    if (el7) el7.textContent = activeAdvisors.length;
+    if (el8) el8.textContent = formatMoney(pendingComm);
+    
+    // TÉCNICOS
+    var availableTechs = techsData.filter(function(t){ return t.status === 'available' || t.status === 'Disponible' || !t.status; });
+    var busyTechs = techsData.filter(function(t){ return t.status === 'busy' || t.status === 'Ocupado' || t.status === 'en_route'; });
+    var offlineTechs = techsData.filter(function(t){ return t.status === 'offline' || t.status === 'Offline'; });
+    var onlineTechs = techsData.filter(function(t){ return t.last_lat && t.last_lng; });
+    
+    var el9 = document.getElementById('hcpTechsAvailable');
+    var el10 = document.getElementById('hcpTechsOnline');
+    var el11 = document.getElementById('hcpTechsBusy');
+    var el12 = document.getElementById('hcpTechsOffline');
+    if (el9) el9.textContent = availableTechs.length;
+    if (el10) el10.textContent = onlineTechs.length;
+    if (el11) el11.textContent = busyTechs.length;
+    if (el12) el12.textContent = offlineTechs.length;
+    
+    renderYTDKpis(); 
+    renderEmployeeStatus();
 }
 function renderYTDKpis() {
     var period = document.getElementById('ytdPeriod').value, now = new Date(), startDate;
