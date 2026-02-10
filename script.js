@@ -1502,6 +1502,706 @@ function renderReferrals(referrals) {
     c.innerHTML = h + '</tbody></table>';
 }
 
+// ===== HOME ADVISORS EXPANDED MODULE - COMMISSIONS, LEADS, RECEIPTS =====
+var advisorLeads = [];
+var advisorSales = [];
+var advisorReceipts = [];
+var advisorFollowUps = [];
+
+// Commission tiers based on profit
+var COMMISSION_TIERS = [
+    { minProfit: 10000, rate: 0.20, label: '20%' },
+    { minProfit: 7000, rate: 0.15, label: '15%' },
+    { minProfit: 5000, rate: 0.10, label: '10%' },
+    { minProfit: 0, rate: 0.05, label: '5%' }
+];
+
+var LEAD_EXPIRY_DAYS = 15;
+
+// Tab switching for advisors section
+function setAdvTab(tab) {
+    ['team','leads','sales','receipts','referrals'].forEach(function(t) {
+        var tabName = t.charAt(0).toUpperCase() + t.slice(1);
+        var btn = document.getElementById('advTab' + tabName);
+        var content = document.getElementById('advContent' + tabName);
+        if (btn) btn.classList.remove('active');
+        if (content) content.style.display = 'none';
+    });
+    var activeTabName = tab.charAt(0).toUpperCase() + tab.slice(1);
+    var activeBtn = document.getElementById('advTab' + activeTabName);
+    var activeContent = document.getElementById('advContent' + activeTabName);
+    if (activeBtn) activeBtn.classList.add('active');
+    if (activeContent) activeContent.style.display = 'block';
+    
+    if (tab === 'leads') renderAdvLeads();
+    if (tab === 'sales') renderAdvSales();
+    if (tab === 'receipts') renderAdvReceipts();
+    if (tab === 'referrals') loadReferrals();
+}
+
+// Enhanced loadAdvisors to also load related data
+var originalLoadAdvisors = loadAdvisors;
+loadAdvisors = async function() {
+    await originalLoadAdvisors();
+    populateAdvisorSelects();
+    loadAdvisorLeads();
+    loadAdvisorSales();
+    loadAdvisorReceipts();
+    loadAdvisorFollowUps();
+    updateAdvKPIs();
+};
+
+function populateAdvisorSelects() {
+    var selectors = ['advLeadFilterAdvisor','advSalesFilterAdvisor','advRcptFilterAdvisor','assignAdvisorSelect','saleAdvisorSelect','advRcptAdvisor'];
+    selectors.forEach(function(selId) {
+        var sel = document.getElementById(selId);
+        if (!sel) return;
+        var isFilter = selId.includes('Filter');
+        sel.innerHTML = isFilter ? '<option value="">Todos los Advisors</option>' : '<option value="">Seleccionar Advisor...</option>';
+        advisorsData.forEach(function(a) {
+            if (a.status === 'active') sel.innerHTML += '<option value="' + a.id + '">' + a.name + '</option>';
+        });
+    });
+}
+
+function getAdvisorStats(advisorId) {
+    var now = new Date();
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    var activeLeads = advisorLeads.filter(function(l) { return l.advisor_id === advisorId && (l.status === 'new' || l.status === 'followup'); }).length;
+    var monthSalesData = advisorSales.filter(function(s) { return s.advisor_id === advisorId && new Date(s.sale_date) >= monthStart; });
+    var monthSales = monthSalesData.reduce(function(sum, s) { return sum + (s.sale_amount || 0); }, 0);
+    var pendingComm = advisorSales.filter(function(s) { return s.advisor_id === advisorId && !s.commission_paid; }).reduce(function(sum, s) { return sum + (s.commission_amount || 0); }, 0);
+    
+    return { activeLeads: activeLeads, monthSales: monthSales, pendingComm: pendingComm };
+}
+
+function updateAdvKPIs() {
+    var pendingComm = advisorSales.filter(function(s) { return !s.commission_paid; }).reduce(function(sum, s) { return sum + (s.commission_amount || 0); }, 0);
+    var activeLeads = advisorLeads.filter(function(l) { return l.status === 'new' || l.status === 'followup'; }).length;
+    var now = new Date();
+    var expiringLeads = advisorLeads.filter(function(l) {
+        if (l.status === 'won' || l.status === 'lost') return false;
+        var created = new Date(l.created_at || l.assigned_date);
+        var daysDiff = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return daysDiff >= LEAD_EXPIRY_DAYS;
+    }).length;
+    var unmatchedRcpt = advisorReceipts.filter(function(r) { return r.match_status !== 'matched'; }).length;
+    
+    var el1 = document.getElementById('advKpiPendingComm');
+    var el2 = document.getElementById('advKpiActiveLeads');
+    var el3 = document.getElementById('advKpiExpiringLeads');
+    var el4 = document.getElementById('advKpiUnmatchedRcpt');
+    if (el1) el1.textContent = '$' + formatMoney(pendingComm);
+    if (el2) el2.textContent = activeLeads;
+    if (el3) el3.textContent = expiringLeads;
+    if (el4) el4.textContent = unmatchedRcpt;
+}
+
+// ===== ADVISOR LEADS =====
+async function loadAdvisorLeads() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('advisor_leads').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+        advisorLeads = res.data || [];
+    } catch(e) { advisorLeads = JSON.parse(localStorage.getItem('tm_advisor_leads_' + companyId) || '[]'); }
+    checkExpiringLeads();
+}
+
+function checkExpiringLeads() {
+    var now = new Date();
+    var expiringLeads = advisorLeads.filter(function(l) {
+        if (l.status === 'won' || l.status === 'lost') return false;
+        var created = new Date(l.created_at || l.assigned_date);
+        var daysDiff = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        return daysDiff >= LEAD_EXPIRY_DAYS;
+    });
+    
+    var alertDiv = document.getElementById('advExpiringLeadsAlert');
+    var listDiv = document.getElementById('advExpiringLeadsList');
+    if (!alertDiv || !listDiv) return;
+    
+    if (expiringLeads.length > 0) {
+        alertDiv.style.display = 'block';
+        var h = '<ul style="margin:0;padding-left:20px;font-size:12px;">';
+        expiringLeads.forEach(function(l) {
+            var advisor = advisorsData.find(function(a) { return a.id === l.advisor_id; });
+            h += '<li>' + (l.client_name || 'Lead') + ' - Asignado a: ' + (advisor ? advisor.name : 'N/A') + ' <button class="btn-sm" style="font-size:10px;margin-left:8px;" onclick="rotateLeadToNext(\'' + l.id + '\')">🔄 Rotar</button></li>';
+        });
+        listDiv.innerHTML = h + '</ul>';
+    } else {
+        alertDiv.style.display = 'none';
+    }
+}
+
+async function rotateLeadToNext(leadId) {
+    var lead = advisorLeads.find(function(l) { return l.id === leadId; });
+    if (!lead) return;
+    
+    var activeAdvisors = advisorsData.filter(function(a) { return a.status === 'active'; });
+    if (activeAdvisors.length <= 1) { alert('No hay otros advisors activos para rotar'); return; }
+    
+    var currentIdx = activeAdvisors.findIndex(function(a) { return a.id === lead.advisor_id; });
+    var nextIdx = (currentIdx + 1) % activeAdvisors.length;
+    if (activeAdvisors[nextIdx].id === lead.advisor_id) nextIdx = (nextIdx + 1) % activeAdvisors.length;
+    
+    lead.advisor_id = activeAdvisors[nextIdx].id;
+    lead.rotated_at = new Date().toISOString();
+    lead.rotation_count = (lead.rotation_count || 0) + 1;
+    
+    try {
+        await sbClient.from('advisor_leads').update(lead).eq('id', leadId);
+    } catch(e) { saveAdvisorLeadsLocal(); }
+    
+    loadAdvisorLeads();
+    renderAdvLeads();
+    alert('✅ Lead rotado a ' + activeAdvisors[nextIdx].name);
+}
+
+function renderAdvLeads() {
+    var c = document.getElementById('advLeadsTable');
+    if (!c) return;
+    
+    var filterAdvisor = document.getElementById('advLeadFilterAdvisor');
+    var filterStatus = document.getElementById('advLeadFilterStatus');
+    var fAdv = filterAdvisor ? filterAdvisor.value : '';
+    var fStat = filterStatus ? filterStatus.value : '';
+    
+    var filtered = advisorLeads.filter(function(l) {
+        if (fAdv && l.advisor_id !== fAdv) return false;
+        if (fStat && l.status !== fStat) return false;
+        return true;
+    });
+    
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay leads asignados.</p>'; return; }
+    
+    var h = '<table class="data-table"><thead><tr><th>Cliente</th><th>Advisor</th><th>Fuente</th><th>Status</th><th>Días</th><th>Acciones</th></tr></thead><tbody>';
+    filtered.forEach(function(l) {
+        var advisor = advisorsData.find(function(a) { return a.id === l.advisor_id; });
+        var created = new Date(l.created_at || l.assigned_date);
+        var daysDiff = Math.floor((new Date() - created) / (1000 * 60 * 60 * 24));
+        var daysColor = daysDiff >= 15 ? '#ef4444' : daysDiff >= 10 ? '#f59e0b' : '#10b981';
+        var statusBadge = l.status === 'new' ? '🆕 Nuevo' : l.status === 'followup' ? '🔄 Seguimiento' : l.status === 'won' ? '🏆 Ganado' : '❌ Perdido';
+        var statusColor = l.status === 'won' ? '#10b981' : l.status === 'lost' ? '#ef4444' : '#3b82f6';
+        
+        h += '<tr>';
+        h += '<td><strong>' + (l.client_name || '-') + '</strong><br><small>' + (l.address || '') + '</small></td>';
+        h += '<td>' + (advisor ? advisor.name : '-') + '</td>';
+        h += '<td>' + (l.lead_source === 'self' ? '👤 Propio' : '🏢 Empresa') + '</td>';
+        h += '<td><span style="color:' + statusColor + ';font-weight:600;">' + statusBadge + '</span></td>';
+        h += '<td style="color:' + daysColor + ';font-weight:600;">' + daysDiff + '</td>';
+        h += '<td>';
+        if (l.status !== 'won' && l.status !== 'lost') {
+            h += '<button class="btn-sm" onclick="updateLeadStatus(\'' + l.id + '\',\'won\')" title="Marcar Ganado" style="background:#10b981;color:white;border:none;margin-right:4px;">🏆</button>';
+            h += '<button class="btn-sm" onclick="updateLeadStatus(\'' + l.id + '\',\'lost\')" title="Marcar Perdido" style="background:#ef4444;color:white;border:none;">❌</button>';
+        }
+        h += '</td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+async function updateLeadStatus(leadId, status) {
+    var lead = advisorLeads.find(function(l) { return l.id === leadId; });
+    if (!lead) return;
+    lead.status = status;
+    lead.closed_at = new Date().toISOString();
+    try {
+        await sbClient.from('advisor_leads').update({ status: status, closed_at: lead.closed_at }).eq('id', leadId);
+    } catch(e) { saveAdvisorLeadsLocal(); }
+    loadAdvisorLeads();
+    renderAdvLeads();
+    updateAdvKPIs();
+}
+
+function showAssignLeadModal() {
+    document.getElementById('assignLeadModal').style.display = 'block';
+    var sel = document.getElementById('assignLeadSelect');
+    sel.innerHTML = '<option value="">Seleccionar...</option><option value="__new__">➕ Crear Nuevo Lead</option>';
+    if (typeof leadsData !== 'undefined') {
+        leadsData.forEach(function(l) { sel.innerHTML += '<option value="lead_' + l.id + '">' + l.name + ' - ' + (l.phone || '') + '</option>'; });
+    }
+    if (typeof clientsData !== 'undefined') {
+        clientsData.forEach(function(c) { sel.innerHTML += '<option value="client_' + c.id + '">' + c.name + ' - ' + (c.phone || '') + '</option>'; });
+    }
+}
+
+function hideAssignLeadModal() { document.getElementById('assignLeadModal').style.display = 'none'; }
+
+async function assignLeadToAdvisor() {
+    var leadVal = document.getElementById('assignLeadSelect').value;
+    var advisorId = document.getElementById('assignAdvisorSelect').value;
+    var source = document.getElementById('assignLeadSource').value;
+    var notes = document.getElementById('assignLeadNotes').value;
+    
+    if (!leadVal || !advisorId) { alert('Selecciona lead y advisor'); return; }
+    
+    var clientName = '', address = '', phone = '', email = '';
+    if (leadVal === '__new__') {
+        clientName = prompt('Nombre del cliente:');
+        if (!clientName) return;
+        phone = prompt('Teléfono:') || '';
+        address = prompt('Dirección:') || '';
+    } else if (leadVal.startsWith('lead_') && typeof leadsData !== 'undefined') {
+        var leadId = leadVal.replace('lead_', '');
+        var lead = leadsData.find(function(l) { return l.id === leadId; });
+        if (lead) { clientName = lead.name; address = lead.address; phone = lead.phone; email = lead.email; }
+    } else if (leadVal.startsWith('client_') && typeof clientsData !== 'undefined') {
+        var clientId = leadVal.replace('client_', '');
+        var client = clientsData.find(function(c) { return c.id === clientId; });
+        if (client) { clientName = client.name; address = client.address; phone = client.phone; email = client.email; }
+    }
+    
+    var newLead = {
+        id: 'advlead_' + Date.now(),
+        company_id: companyId,
+        advisor_id: advisorId,
+        client_name: clientName,
+        address: address,
+        phone: phone,
+        email: email,
+        lead_source: source,
+        status: 'new',
+        notes: notes,
+        created_at: new Date().toISOString(),
+        rotation_count: 0
+    };
+    
+    try {
+        var res = await sbClient.from('advisor_leads').insert([newLead]).select();
+        if (res.error) throw res.error;
+        newLead.id = res.data[0].id;
+    } catch(e) { advisorLeads.push(newLead); saveAdvisorLeadsLocal(); }
+    
+    hideAssignLeadModal();
+    loadAdvisorLeads();
+    renderAdvLeads();
+    updateAdvKPIs();
+    alert('✅ Lead asignado correctamente');
+}
+
+function saveAdvisorLeadsLocal() { localStorage.setItem('tm_advisor_leads_' + companyId, JSON.stringify(advisorLeads)); }
+
+// ===== ADVISOR SALES & COMMISSIONS =====
+async function loadAdvisorSales() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('advisor_sales').select('*').eq('company_id', companyId).order('sale_date', { ascending: false });
+        advisorSales = res.data || [];
+    } catch(e) { advisorSales = JSON.parse(localStorage.getItem('tm_advisor_sales_' + companyId) || '[]'); }
+}
+
+function calcCommission(saleAmount, materialsCost, laborCost) {
+    var profit = saleAmount - materialsCost - laborCost;
+    var tier = COMMISSION_TIERS.find(function(t) { return profit >= t.minProfit; }) || COMMISSION_TIERS[COMMISSION_TIERS.length - 1];
+    return { profit: profit, rate: tier.rate, label: tier.label, commission: profit * tier.rate };
+}
+
+function calcSaleCommission() {
+    var saleAmount = parseFloat(document.getElementById('saleTotalAmount').value) || 0;
+    var materials = parseFloat(document.getElementById('saleMaterialsCost').value) || 0;
+    var labor = parseFloat(document.getElementById('saleLaborCost').value) || 0;
+    
+    var calc = calcCommission(saleAmount, materials, labor);
+    
+    var el1 = document.getElementById('saleCalcProfit');
+    var el2 = document.getElementById('saleCalcTier');
+    var el3 = document.getElementById('saleCalcPct');
+    var el4 = document.getElementById('saleCalcComm');
+    if (el1) el1.textContent = '$' + formatMoney(calc.profit);
+    if (el2) el2.textContent = calc.profit >= 10000 ? 'ELITE' : calc.profit >= 7000 ? 'PRO' : calc.profit >= 5000 ? 'STANDARD' : 'BASE';
+    if (el3) el3.textContent = calc.label;
+    if (el4) el4.textContent = '$' + formatMoney(calc.commission);
+}
+
+function showAddSaleModal() {
+    document.getElementById('addSaleModal').style.display = 'block';
+    var dateEl = document.getElementById('saleDate');
+    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+    calcSaleCommission();
+}
+function hideAddSaleModal() { document.getElementById('addSaleModal').style.display = 'none'; }
+
+async function saveSale() {
+    var advisorId = document.getElementById('saleAdvisorSelect').value;
+    if (!advisorId) { alert('Selecciona un vendedor'); return; }
+    
+    var saleAmount = parseFloat(document.getElementById('saleTotalAmount').value) || 0;
+    var materials = parseFloat(document.getElementById('saleMaterialsCost').value) || 0;
+    var labor = parseFloat(document.getElementById('saleLaborCost').value) || 0;
+    var calc = calcCommission(saleAmount, materials, labor);
+    
+    var sale = {
+        id: 'sale_' + Date.now(),
+        company_id: companyId,
+        advisor_id: advisorId,
+        client_name: document.getElementById('saleClientName').value,
+        address: document.getElementById('saleAddress').value,
+        sale_date: document.getElementById('saleDate').value,
+        sale_amount: saleAmount,
+        materials_cost: materials,
+        labor_cost: labor,
+        profit: calc.profit,
+        commission_rate: calc.rate,
+        commission_amount: calc.commission,
+        commission_paid: false,
+        lead_source: document.getElementById('saleLeadSource').value,
+        description: document.getElementById('saleDescription').value,
+        created_at: new Date().toISOString()
+    };
+    
+    try {
+        var res = await sbClient.from('advisor_sales').insert([sale]).select();
+        if (res.error) throw res.error;
+        sale.id = res.data[0].id;
+    } catch(e) { advisorSales.push(sale); saveAdvisorSalesLocal(); }
+    
+    hideAddSaleModal();
+    loadAdvisorSales();
+    renderAdvSales();
+    updateAdvKPIs();
+    alert('✅ Venta registrada. Comisión: $' + formatMoney(calc.commission));
+}
+
+function saveAdvisorSalesLocal() { localStorage.setItem('tm_advisor_sales_' + companyId, JSON.stringify(advisorSales)); }
+
+function renderAdvSales() {
+    var c = document.getElementById('advSalesTable');
+    if (!c) return;
+    
+    var filterAdvisor = document.getElementById('advSalesFilterAdvisor');
+    var filterMonth = document.getElementById('advSalesFilterMonth');
+    var fAdv = filterAdvisor ? filterAdvisor.value : '';
+    var fMonth = filterMonth ? filterMonth.value : '';
+    
+    var filtered = advisorSales.filter(function(s) {
+        if (fAdv && s.advisor_id !== fAdv) return false;
+        if (fMonth !== '') {
+            var saleMonth = new Date(s.sale_date).getMonth();
+            if (saleMonth !== parseInt(fMonth)) return false;
+        }
+        return true;
+    });
+    
+    var totalSales = 0, totalProfit = 0, totalComm = 0, paidComm = 0;
+    filtered.forEach(function(s) {
+        totalSales += s.sale_amount || 0;
+        totalProfit += s.profit || 0;
+        totalComm += s.commission_amount || 0;
+        if (s.commission_paid) paidComm += s.commission_amount || 0;
+    });
+    
+    var el1 = document.getElementById('advSalesTotal');
+    var el2 = document.getElementById('advProfitTotal');
+    var el3 = document.getElementById('advCommTotal');
+    var el4 = document.getElementById('advCommPaid');
+    if (el1) el1.textContent = '$' + formatMoney(totalSales);
+    if (el2) el2.textContent = '$' + formatMoney(totalProfit);
+    if (el3) el3.textContent = '$' + formatMoney(totalComm);
+    if (el4) el4.textContent = '$' + formatMoney(paidComm);
+    
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay ventas registradas.</p>'; return; }
+    
+    var h = '<table class="data-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Vendedor</th><th>Venta</th><th>Ganancia</th><th>Comisión</th><th>Status</th><th>Acciones</th></tr></thead><tbody>';
+    filtered.forEach(function(s) {
+        var advisor = advisorsData.find(function(a) { return a.id === s.advisor_id; });
+        var paidBadge = s.commission_paid ? '<span style="color:#10b981;">✅ Pagada</span>' : '<span style="color:#f59e0b;">⏳ Pendiente</span>';
+        
+        h += '<tr>';
+        h += '<td>' + formatDate(s.sale_date) + '</td>';
+        h += '<td><strong>' + (s.client_name || '-') + '</strong></td>';
+        h += '<td>' + (advisor ? advisor.name : '-') + '</td>';
+        h += '<td style="font-weight:600;">$' + formatMoney(s.sale_amount) + '</td>';
+        h += '<td style="color:#3b82f6;">$' + formatMoney(s.profit) + '</td>';
+        h += '<td style="font-weight:700;color:#10b981;">$' + formatMoney(s.commission_amount) + ' (' + (s.commission_rate * 100) + '%)</td>';
+        h += '<td>' + paidBadge + '</td>';
+        h += '<td>';
+        if (!s.commission_paid) {
+            h += '<button class="btn-sm" style="background:#10b981;color:white;border:none;" onclick="markCommissionPaid(\'' + s.id + '\')">💵 Pagar</button>';
+        }
+        h += '</td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+async function markCommissionPaid(saleId) {
+    var sale = advisorSales.find(function(s) { return s.id === saleId; });
+    if (!sale) return;
+    if (!confirm('¿Marcar comisión de $' + formatMoney(sale.commission_amount) + ' como PAGADA?')) return;
+    
+    sale.commission_paid = true;
+    sale.paid_at = new Date().toISOString();
+    
+    try {
+        await sbClient.from('advisor_sales').update({ commission_paid: true, paid_at: sale.paid_at }).eq('id', saleId);
+    } catch(e) { saveAdvisorSalesLocal(); }
+    
+    renderAdvSales();
+    updateAdvKPIs();
+}
+
+// ===== ADVISOR RECEIPTS =====
+async function loadAdvisorReceipts() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('advisor_receipts').select('*').eq('company_id', companyId).order('receipt_date', { ascending: false });
+        advisorReceipts = res.data || [];
+    } catch(e) { advisorReceipts = JSON.parse(localStorage.getItem('tm_advisor_receipts_' + companyId) || '[]'); }
+}
+
+function showAdvReceiptModal() {
+    document.getElementById('advReceiptModal').style.display = 'block';
+    var dateEl = document.getElementById('advRcptDate');
+    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+    
+    var saleSel = document.getElementById('advRcptSale');
+    if (saleSel) {
+        saleSel.innerHTML = '<option value="">-- Sin venta asociada --</option>';
+        advisorSales.forEach(function(s) {
+            saleSel.innerHTML += '<option value="' + s.id + '">' + formatDate(s.sale_date) + ' - ' + s.client_name + ' ($' + formatMoney(s.sale_amount) + ')</option>';
+        });
+    }
+}
+function hideAdvReceiptModal() { document.getElementById('advReceiptModal').style.display = 'none'; }
+
+function previewAdvRcptPhoto(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = document.getElementById('advRcptPhotoPreview');
+            if (img) { img.src = e.target.result; img.style.display = 'block'; }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveAdvReceipt() {
+    var advisorId = document.getElementById('advRcptAdvisor').value;
+    if (!advisorId) { alert('Selecciona un vendedor'); return; }
+    
+    var photoData = null;
+    var photoInput = document.getElementById('advRcptPhoto');
+    if (photoInput && photoInput.files && photoInput.files[0]) {
+        photoData = await new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onload = function(e) { resolve(e.target.result); };
+            reader.readAsDataURL(photoInput.files[0]);
+        });
+    }
+    
+    var receipt = {
+        id: 'advrcpt_' + Date.now(),
+        company_id: companyId,
+        advisor_id: advisorId,
+        vendor: document.getElementById('advRcptVendor').value,
+        amount: parseFloat(document.getElementById('advRcptAmount').value) || 0,
+        receipt_date: document.getElementById('advRcptDate').value,
+        receipt_number: document.getElementById('advRcptNumber').value,
+        sale_id: document.getElementById('advRcptSale').value || null,
+        photo: photoData,
+        match_status: 'pending',
+        created_at: new Date().toISOString()
+    };
+    
+    receipt.match_status = matchReceiptWithCompany(receipt);
+    
+    try {
+        var res = await sbClient.from('advisor_receipts').insert([receipt]).select();
+        if (res.error) throw res.error;
+    } catch(e) { advisorReceipts.push(receipt); saveAdvisorReceiptsLocal(); }
+    
+    hideAdvReceiptModal();
+    loadAdvisorReceipts();
+    renderAdvReceipts();
+    updateAdvKPIs();
+    
+    if (receipt.match_status === 'matched') {
+        alert('✅ Recibo guardado y CONCILIADO automáticamente');
+    } else if (receipt.match_status === 'mismatch') {
+        alert('⚠️ Recibo guardado pero hay DIFERENCIAS con recibos de la empresa');
+    } else {
+        alert('📋 Recibo guardado. Pendiente de conciliar.');
+    }
+}
+
+function matchReceiptWithCompany(advReceipt) {
+    if (typeof receiptsData === 'undefined' || !receiptsData || !receiptsData.length) return 'pending';
+    
+    var matches = receiptsData.filter(function(r) {
+        var sameVendor = r.provider && advReceipt.vendor && r.provider.toLowerCase().includes(advReceipt.vendor.toLowerCase());
+        var sameDate = r.date === advReceipt.receipt_date;
+        var sameAmount = Math.abs((r.amount || 0) - advReceipt.amount) < 1;
+        return sameVendor && sameDate && sameAmount;
+    });
+    
+    if (matches.length > 0) return 'matched';
+    
+    var partialMatches = receiptsData.filter(function(r) {
+        var sameVendor = r.provider && advReceipt.vendor && r.provider.toLowerCase().includes(advReceipt.vendor.toLowerCase());
+        var closeDate = Math.abs(new Date(r.date) - new Date(advReceipt.receipt_date)) < 3 * 24 * 60 * 60 * 1000;
+        return sameVendor && closeDate;
+    });
+    
+    if (partialMatches.length > 0) return 'mismatch';
+    return 'pending';
+}
+
+function saveAdvisorReceiptsLocal() { localStorage.setItem('tm_advisor_receipts_' + companyId, JSON.stringify(advisorReceipts)); }
+
+function renderAdvReceipts() {
+    var c = document.getElementById('advReceiptsTable');
+    if (!c) return;
+    
+    var filterAdvisor = document.getElementById('advRcptFilterAdvisor');
+    var filterStatus = document.getElementById('advRcptFilterStatus');
+    var fAdv = filterAdvisor ? filterAdvisor.value : '';
+    var fStat = filterStatus ? filterStatus.value : '';
+    
+    var filtered = advisorReceipts.filter(function(r) {
+        if (fAdv && r.advisor_id !== fAdv) return false;
+        if (fStat && r.match_status !== fStat) return false;
+        return true;
+    });
+    
+    var matched = filtered.filter(function(r) { return r.match_status === 'matched'; }).length;
+    var mismatch = filtered.filter(function(r) { return r.match_status === 'mismatch'; }).length;
+    var pending = filtered.filter(function(r) { return r.match_status === 'pending'; }).length;
+    
+    var el1 = document.getElementById('advRcptCount');
+    var el2 = document.getElementById('advRcptMatched');
+    var el3 = document.getElementById('advRcptMismatch');
+    var el4 = document.getElementById('advRcptPending');
+    if (el1) el1.textContent = filtered.length;
+    if (el2) el2.textContent = matched;
+    if (el3) el3.textContent = mismatch;
+    if (el4) el4.textContent = pending;
+    
+    if (filtered.length === 0) { c.innerHTML = '<p class="empty-msg">No hay recibos de vendedores.</p>'; return; }
+    
+    var h = '<table class="data-table"><thead><tr><th>Fecha</th><th>Vendedor</th><th>Proveedor</th><th>Monto</th><th># Recibo</th><th>Status</th><th>Acciones</th></tr></thead><tbody>';
+    filtered.forEach(function(r) {
+        var advisor = advisorsData.find(function(a) { return a.id === r.advisor_id; });
+        var statusBadge = r.match_status === 'matched' ? '<span style="color:#10b981;">✅ Conciliado</span>' : 
+                          r.match_status === 'mismatch' ? '<span style="color:#f59e0b;">⚠️ Diferencias</span>' : 
+                          '<span style="color:#94a3b8;">⏳ Pendiente</span>';
+        
+        h += '<tr>';
+        h += '<td>' + formatDate(r.receipt_date) + '</td>';
+        h += '<td>' + (advisor ? advisor.name : '-') + '</td>';
+        h += '<td>' + (r.vendor || '-') + '</td>';
+        h += '<td style="font-weight:600;">$' + formatMoney(r.amount) + '</td>';
+        h += '<td>' + (r.receipt_number || '-') + '</td>';
+        h += '<td>' + statusBadge + '</td>';
+        h += '<td>';
+        if (r.photo) h += '<button class="btn-sm" onclick="viewAdvReceiptPhoto(\'' + r.id + '\')" title="Ver foto">📷</button> ';
+        if (r.match_status !== 'matched') {
+            h += '<button class="btn-sm" style="background:#10b981;color:white;border:none;" onclick="manualMatchReceipt(\'' + r.id + '\')">✅</button>';
+        }
+        h += '</td></tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+function viewAdvReceiptPhoto(receiptId) {
+    var r = advisorReceipts.find(function(x) { return x.id === receiptId; });
+    if (r && r.photo) {
+        var win = window.open();
+        win.document.write('<img src="' + r.photo + '" style="max-width:100%;">');
+    }
+}
+
+async function manualMatchReceipt(receiptId) {
+    if (!confirm('¿Marcar este recibo como CONCILIADO manualmente?')) return;
+    var r = advisorReceipts.find(function(x) { return x.id === receiptId; });
+    if (!r) return;
+    r.match_status = 'matched';
+    r.matched_manually = true;
+    try {
+        await sbClient.from('advisor_receipts').update({ match_status: 'matched', matched_manually: true }).eq('id', receiptId);
+    } catch(e) { saveAdvisorReceiptsLocal(); }
+    renderAdvReceipts();
+    updateAdvKPIs();
+}
+
+// ===== ADVISOR FOLLOW-UPS =====
+async function loadAdvisorFollowUps() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('advisor_followups').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+        advisorFollowUps = res.data || [];
+    } catch(e) { advisorFollowUps = JSON.parse(localStorage.getItem('tm_advisor_followups_' + companyId) || '[]'); }
+    renderAdvFollowUps();
+}
+
+function showFollowUpModal() {
+    document.getElementById('followUpModal').style.display = 'block';
+    var sel = document.getElementById('fuLeadSelect');
+    if (sel) {
+        sel.innerHTML = '<option value="">Seleccionar Lead...</option>';
+        advisorLeads.filter(function(l) { return l.status !== 'won' && l.status !== 'lost'; }).forEach(function(l) {
+            sel.innerHTML += '<option value="' + l.id + '">' + l.client_name + '</option>';
+        });
+    }
+}
+function hideFollowUpModal() { document.getElementById('followUpModal').style.display = 'none'; }
+
+async function saveFollowUp() {
+    var leadId = document.getElementById('fuLeadSelect').value;
+    if (!leadId) { alert('Selecciona un lead'); return; }
+    
+    var lead = advisorLeads.find(function(l) { return l.id === leadId; });
+    
+    var followUp = {
+        id: 'fu_' + Date.now(),
+        company_id: companyId,
+        lead_id: leadId,
+        advisor_id: lead ? lead.advisor_id : null,
+        type: document.getElementById('fuType').value,
+        notes: document.getElementById('fuNotes').value,
+        quote_amount: parseFloat(document.getElementById('fuQuoteAmount').value) || null,
+        next_followup_date: document.getElementById('fuNextDate').value || null,
+        created_at: new Date().toISOString()
+    };
+    
+    try {
+        var res = await sbClient.from('advisor_followups').insert([followUp]).select();
+        if (res.error) throw res.error;
+    } catch(e) { advisorFollowUps.push(followUp); localStorage.setItem('tm_advisor_followups_' + companyId, JSON.stringify(advisorFollowUps)); }
+    
+    if (lead && lead.status === 'new') {
+        lead.status = 'followup';
+        try { await sbClient.from('advisor_leads').update({ status: 'followup' }).eq('id', leadId); } catch(e) { saveAdvisorLeadsLocal(); }
+    }
+    
+    hideFollowUpModal();
+    loadAdvisorFollowUps();
+    loadAdvisorLeads();
+    alert('✅ Seguimiento registrado');
+}
+
+function renderAdvFollowUps() {
+    var c = document.getElementById('advFollowUpsTable');
+    if (!c) return;
+    
+    if (advisorFollowUps.length === 0) { c.innerHTML = '<p class="empty-msg">No hay seguimientos registrados.</p>'; return; }
+    
+    var h = '<table class="data-table"><thead><tr><th>Fecha</th><th>Lead</th><th>Tipo</th><th>Notas</th><th>Cotización</th></tr></thead><tbody>';
+    advisorFollowUps.slice(0, 20).forEach(function(f) {
+        var lead = advisorLeads.find(function(l) { return l.id === f.lead_id; });
+        var typeIcon = f.type === 'call' ? '📞' : f.type === 'visit' ? '🏠' : f.type === 'quote' ? '📝' : f.type === 'text' ? '💬' : '📧';
+        
+        h += '<tr>';
+        h += '<td>' + formatDate(f.created_at) + '</td>';
+        h += '<td>' + (lead ? lead.client_name : '-') + '</td>';
+        h += '<td>' + typeIcon + ' ' + (f.type || '-') + '</td>';
+        h += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + (f.notes || '-') + '</td>';
+        h += '<td>' + (f.quote_amount ? '$' + formatMoney(f.quote_amount) : '-') + '</td>';
+        h += '</tr>';
+    });
+    c.innerHTML = h + '</tbody></table>';
+}
+
+// End of expanded advisors module
+
 function renderComponentList() {
     var c = document.getElementById('componentsList');
     if (!currentEquipType) { c.innerHTML = '<p class="empty-msg">Selecciona un tipo de equipo primero</p>'; return; }
