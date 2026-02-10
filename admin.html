@@ -71,7 +71,9 @@
             width: 36px; height: 36px; background: var(--primary); color: var(--white);
             border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;
         }
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 0.5rem; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 0.5rem; border: none; cursor: pointer; }
+        .btn-refresh { background: var(--light); color: var(--dark); }
+        .btn-refresh:hover { background: #e5e7eb; }
         
         /* Stats */
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; padding: 2rem; }
@@ -92,7 +94,7 @@
         /* Content */
         .content { padding: 0 2rem 2rem; }
         .card { background: var(--white); border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-        .card-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .card-header h2 { font-size: 1.25rem; color: var(--dark); }
         .search-box { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--light); border-radius: 0.5rem; }
         .search-box input { border: none; background: none; outline: none; width: 200px; }
@@ -119,6 +121,7 @@
         .badge-gray { background: #f3f4f6; color: #6b7280; }
         .badge-blue { background: #dbeafe; color: #2563eb; }
         .badge-purple { background: #f3e8ff; color: #9333ea; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
         .actions { display: flex; gap: 0.5rem; }
         .action-btn {
             width: 32px; height: 32px; border: none; background: var(--light);
@@ -127,17 +130,32 @@
         .action-btn:hover { background: var(--primary); color: var(--white); }
         
         /* Tabs */
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--white); padding: 0.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--white); padding: 0.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap; }
         .tab { padding: 0.75rem 1.5rem; border: none; background: none; font-size: 0.9rem; font-weight: 500; color: var(--gray); cursor: pointer; border-radius: 0.5rem; }
         .tab:hover { background: var(--light); }
         .tab.active { background: var(--primary); color: var(--white); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
+        /* Loading */
+        .loading { text-align: center; padding: 3rem; color: var(--gray); }
+        .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid var(--light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Empty state */
+        .empty { text-align: center; padding: 3rem; color: var(--gray); }
+        .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* Connection status */
+        .conn-status { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; }
+        .conn-status.online { background: #dcfce7; color: #16a34a; }
+        .conn-status.offline { background: #fee2e2; color: #dc2626; }
+
         @media (max-width: 768px) {
             .stats { padding: 1rem; }
             .content { padding: 0 1rem 1rem; }
             .header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
+            .search-box input { width: 150px; }
         }
     </style>
 </head>
@@ -162,7 +180,7 @@
                 <button type="submit" class="btn btn-primary">Entrar →</button>
             </form>
             <p style="text-align:center; margin-top:1.5rem; color:var(--gray); font-size:0.8rem;">
-                Demo: floresmario30@gmail.com / admin123
+                Acceso: floresmario30@gmail.com
             </p>
         </div>
     </div>
@@ -172,11 +190,13 @@
         <header class="header">
             <h1>🔐 Trade<span>Masters</span> Admin</h1>
             <div class="header-right">
+                <span class="conn-status" id="connStatus">⏳ Conectando...</span>
+                <button class="btn-sm btn-refresh" onclick="loadData()">🔄 Actualizar</button>
                 <div class="user-badge">
                     <div class="avatar" id="userAvatar">M</div>
                     <span id="userName">Admin</span>
                 </div>
-                <button class="btn btn-sm btn-danger" onclick="logout()">Salir</button>
+                <button class="btn-sm btn-danger" onclick="logout()">Salir</button>
             </div>
         </header>
 
@@ -184,39 +204,37 @@
             <div class="stat-card">
                 <div class="stat-card-top">
                     <div class="stat-icon blue">👥</div>
-                    <span class="stat-trend">↑ 12%</span>
+                    <span class="stat-trend">Supabase</span>
                 </div>
-                <h3 id="statUsers">6</h3>
-                <p>Total Usuarios</p>
+                <h3 id="statUsers">-</h3>
+                <p>Total Empresas</p>
             </div>
             <div class="stat-card">
                 <div class="stat-card-top">
                     <div class="stat-icon green">💳</div>
-                    <span class="stat-trend">↑ 8%</span>
                 </div>
-                <h3 id="statPaid">4</h3>
+                <h3 id="statPaid">-</h3>
                 <p>Suscripciones Activas</p>
             </div>
             <div class="stat-card">
                 <div class="stat-card-top">
                     <div class="stat-icon orange">💰</div>
-                    <span class="stat-trend">↑ 15%</span>
                 </div>
-                <h3 id="statMRR">$898</h3>
+                <h3 id="statMRR">$-</h3>
                 <p>Ingresos Mensuales</p>
             </div>
             <div class="stat-card">
                 <div class="stat-card-top">
                     <div class="stat-icon purple">🆓</div>
                 </div>
-                <h3 id="statFree">2</h3>
-                <p>Usuarios Free/Trial</p>
+                <h3 id="statFree">-</h3>
+                <p>Free / Trial</p>
             </div>
         </div>
 
         <div class="content">
             <div class="tabs">
-                <button class="tab active" onclick="showTab('users', this)">👥 Usuarios</button>
+                <button class="tab active" onclick="showTab('users', this)">👥 Empresas</button>
                 <button class="tab" onclick="showTab('subs', this)">💳 Suscripciones</button>
                 <button class="tab" onclick="showTab('activity', this)">📊 Actividad</button>
             </div>
@@ -225,7 +243,7 @@
             <div class="tab-content active" id="usersTab">
                 <div class="card">
                     <div class="card-header">
-                        <h2>👥 Usuarios Registrados</h2>
+                        <h2>👥 Empresas Registradas</h2>
                         <div class="search-box">
                             <span>🔍</span>
                             <input type="text" placeholder="Buscar..." id="searchInput" onkeyup="filterTable()">
@@ -241,15 +259,17 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Usuario</th>
                                     <th>Empresa</th>
+                                    <th>Teléfono</th>
                                     <th>Registro</th>
                                     <th>Plan</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="usersTable"></tbody>
+                            <tbody id="usersTable">
+                                <tr><td colspan="6" class="loading"><div class="spinner"></div><br>Cargando datos...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -259,21 +279,22 @@
             <div class="tab-content" id="subsTab">
                 <div class="card">
                     <div class="card-header">
-                        <h2>💳 Suscripciones Activas</h2>
+                        <h2>💳 Suscripciones</h2>
                     </div>
                     <div class="table-wrap">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Usuario</th>
+                                    <th>Empresa</th>
                                     <th>Plan</th>
                                     <th>Monto</th>
-                                    <th>Inicio</th>
-                                    <th>Próximo Cobro</th>
                                     <th>Estado</th>
+                                    <th>Stripe ID</th>
                                 </tr>
                             </thead>
-                            <tbody id="subsTable"></tbody>
+                            <tbody id="subsTable">
+                                <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -290,12 +311,14 @@
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
-                                    <th>Usuario</th>
-                                    <th>Acción</th>
-                                    <th>Detalles</th>
+                                    <th>Empresa</th>
+                                    <th>Último Login</th>
+                                    <th>Logins Totales</th>
                                 </tr>
                             </thead>
-                            <tbody id="activityTable"></tbody>
+                            <tbody id="activityTable">
+                                <tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -303,34 +326,21 @@
         </div>
     </div>
 
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // DATOS DEMO
-        const users = [
-            { id: 1, name: 'Carlos Rodriguez', company: 'Cool Air HVAC', email: 'carlos@coolairhvac.com', date: '2024-01-15', plan: 'profesional', status: 'active' },
-            { id: 2, name: 'Maria Santos', company: 'Freeze Master', email: 'maria@freezemaster.com', date: '2024-01-20', plan: 'enterprise', status: 'active' },
-            { id: 3, name: 'Jose Martinez', company: 'Quick Fix AC', email: 'jose@quickfixac.com', date: '2024-02-01', plan: 'free', status: 'trial' },
-            { id: 4, name: 'Ana Garcia', company: 'Pro Electric', email: 'ana@proelectric.com', date: '2024-02-05', plan: 'profesional', status: 'active' },
-            { id: 5, name: 'Luis Hernandez', company: 'ComfortZone HVAC', email: 'luis@comfortzone.com', date: '2024-02-08', plan: 'free', status: 'trial' },
-            { id: 6, name: 'Roberto Mendez', company: 'Arctic Cooling', email: 'roberto@arctic.com', date: '2024-02-09', plan: 'profesional', status: 'active' }
-        ];
+        // CONFIGURACIÓN SUPABASE
+        const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0NjQ2NDIsImV4cCI6MjA1MjA0MDY0Mn0.VjrHEsXMa6QKfFr8vJfZgP2eSNM4_nS5lF7JmVLWqRM';
+        
+        let supabase;
+        let allCompanies = [];
 
-        const subs = [
-            { name: 'Carlos Rodriguez', company: 'Cool Air HVAC', plan: 'profesional', amount: 149.99, start: '2024-01-15', next: '2024-03-15', status: 'active' },
-            { name: 'Maria Santos', company: 'Freeze Master', plan: 'enterprise', amount: 299.00, start: '2024-01-20', next: '2024-03-20', status: 'active' },
-            { name: 'Ana Garcia', company: 'Pro Electric', plan: 'profesional', amount: 149.99, start: '2024-02-05', next: '2024-03-05', status: 'active' },
-            { name: 'Roberto Mendez', company: 'Arctic Cooling', plan: 'profesional', amount: 149.99, start: '2024-02-09', next: '2024-03-09', status: 'active' }
-        ];
-
-        const activity = [
-            { date: '2024-02-09 10:30', user: 'Mario Flores', action: 'Login', details: 'Acceso al panel admin' },
-            { date: '2024-02-09 09:15', user: 'Roberto Mendez', action: 'Registro', details: 'Nueva empresa registrada' },
-            { date: '2024-02-08 16:45', user: 'Carlos Rodriguez', action: 'Pago', details: 'Renovación plan Profesional' },
-            { date: '2024-02-08 14:20', user: 'Maria Santos', action: 'Cliente', details: 'Agregó 3 nuevos clientes' },
-            { date: '2024-02-07 11:00', user: 'Ana Garcia', action: 'Estimado', details: 'Creó estimado por $2,500' }
-        ];
-
-        let currentFilter = 'all';
-        let allUsers = [...users];
+        // INICIALIZAR SUPABASE
+        function initSupabase() {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log('Supabase inicializado');
+        }
 
         // LOGIN
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -339,7 +349,7 @@
             const pass = document.getElementById('password').value;
             const error = document.getElementById('errorMsg');
 
-            const validEmails = ['floresmario30@gmail.com', 'admin@trademastersusa.org', 'mario@acvolt.com'];
+            const validEmails = ['floresmario30@gmail.com', 'admin@trademastersusa.org', 'mario@acvolt.com', 'acvoltelectrical@gmail.com'];
 
             if (validEmails.includes(email.toLowerCase()) && pass.length >= 4) {
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -348,7 +358,7 @@
                 document.getElementById('userAvatar').textContent = email[0].toUpperCase();
                 loadData();
             } else {
-                error.textContent = 'Email no autorizado o contraseña muy corta (min 4 caracteres)';
+                error.textContent = 'Email no autorizado o contraseña muy corta';
                 error.classList.add('show');
             }
         });
@@ -360,84 +370,166 @@
             document.getElementById('password').value = '';
         }
 
-        function loadData() {
-            renderUsers(users);
-            renderSubs();
-            renderActivity();
-            updateStats();
+        // CARGAR DATOS DE SUPABASE
+        async function loadData() {
+            const status = document.getElementById('connStatus');
+            status.textContent = '⏳ Cargando...';
+            status.className = 'conn-status';
+
+            try {
+                // Cargar empresas
+                const { data, error } = await supabase
+                    .from('companies')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allCompanies = data || [];
+                console.log('Empresas cargadas:', allCompanies);
+
+                status.textContent = '🟢 Conectado';
+                status.className = 'conn-status online';
+
+                renderCompanies(allCompanies);
+                renderSubs(allCompanies);
+                renderActivity(allCompanies);
+                updateStats(allCompanies);
+
+            } catch (err) {
+                console.error('Error:', err);
+                status.textContent = '🔴 Error';
+                status.className = 'conn-status offline';
+                
+                document.getElementById('usersTable').innerHTML = `
+                    <tr><td colspan="6" class="empty">
+                        <div class="empty-icon">⚠️</div>
+                        Error al cargar: ${err.message}
+                    </td></tr>`;
+            }
         }
 
-        function renderUsers(data) {
+        // RENDERIZAR EMPRESAS
+        function renderCompanies(companies) {
             const tbody = document.getElementById('usersTable');
-            tbody.innerHTML = data.map(u => `
-                <tr data-plan="${u.plan}">
+            
+            if (!companies || companies.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" class="empty">
+                        <div class="empty-icon">📭</div>
+                        No hay empresas registradas
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = companies.map(c => `
+                <tr data-plan="${c.plan || 'free'}">
                     <td>
                         <div class="user-cell">
-                            <div class="avatar">${u.name.split(' ').map(n=>n[0]).join('')}</div>
+                            <div class="avatar">${getInitials(c.name)}</div>
                             <div>
-                                <h4>${u.name}</h4>
-                                <p>${u.email}</p>
+                                <h4>${c.name || 'Sin nombre'}</h4>
+                                <p>${c.email || 'Sin email'}</p>
                             </div>
                         </div>
                     </td>
-                    <td>${u.company}</td>
-                    <td>${u.date}</td>
-                    <td><span class="badge ${getPlanBadge(u.plan)}">${u.plan}</span></td>
-                    <td><span class="badge ${getStatusBadge(u.status)}">${u.status === 'active' ? '✓ Activo' : '⏱ Trial'}</span></td>
+                    <td>${c.phone || '-'}</td>
+                    <td>${formatDate(c.created_at)}</td>
+                    <td><span class="badge ${getPlanBadge(c.plan)}">${c.plan || 'free'}</span></td>
+                    <td>${getStatusBadge(c.subscription_status)}</td>
                     <td>
                         <div class="actions">
-                            <button class="action-btn" onclick="alert('Ver usuario: ${u.name}')">👁</button>
-                            <button class="action-btn" onclick="alert('Editar: ${u.name}')">✏️</button>
+                            <button class="action-btn" onclick="viewCompany('${c.id}')" title="Ver">👁</button>
+                            <button class="action-btn" onclick="editCompany('${c.id}')" title="Editar">✏️</button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        function renderSubs() {
+        // RENDERIZAR SUSCRIPCIONES
+        function renderSubs(companies) {
             const tbody = document.getElementById('subsTable');
-            tbody.innerHTML = subs.map(s => `
+            const paid = companies.filter(c => c.plan && c.plan !== 'free');
+            
+            if (paid.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty">No hay suscripciones activas</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = paid.map(c => `
                 <tr>
                     <td>
                         <div class="user-cell">
-                            <div class="avatar">${s.name.split(' ').map(n=>n[0]).join('')}</div>
+                            <div class="avatar">${getInitials(c.name)}</div>
                             <div>
-                                <h4>${s.name}</h4>
-                                <p>${s.company}</p>
+                                <h4>${c.name || 'Sin nombre'}</h4>
+                                <p>${c.email || ''}</p>
                             </div>
                         </div>
                     </td>
-                    <td><span class="badge ${getPlanBadge(s.plan)}">${s.plan}</span></td>
-                    <td><strong>$${s.amount.toFixed(2)}</strong>/mes</td>
-                    <td>${s.start}</td>
-                    <td>${s.next}</td>
-                    <td><span class="badge badge-success">✓ Activo</span></td>
+                    <td><span class="badge ${getPlanBadge(c.plan)}">${c.plan}</span></td>
+                    <td><strong>${getPlanPrice(c.plan)}</strong>/mes</td>
+                    <td>${getStatusBadge(c.subscription_status)}</td>
+                    <td><code style="font-size:0.7rem">${c.stripe_subscription_id || '-'}</code></td>
                 </tr>
             `).join('');
         }
 
-        function renderActivity() {
+        // RENDERIZAR ACTIVIDAD
+        function renderActivity(companies) {
             const tbody = document.getElementById('activityTable');
-            tbody.innerHTML = activity.map(a => `
+            
+            const sorted = [...companies].sort((a, b) => {
+                const dateA = a.last_login ? new Date(a.last_login) : new Date(0);
+                const dateB = b.last_login ? new Date(b.last_login) : new Date(0);
+                return dateB - dateA;
+            });
+
+            tbody.innerHTML = sorted.map(c => `
                 <tr>
-                    <td>${a.date}</td>
-                    <td><strong>${a.user}</strong></td>
-                    <td><span class="badge badge-blue">${a.action}</span></td>
-                    <td>${a.details}</td>
+                    <td>${formatDate(c.created_at)}</td>
+                    <td><strong>${c.name || 'Sin nombre'}</strong></td>
+                    <td>${c.last_login ? formatDateTime(c.last_login) : 'Nunca'}</td>
+                    <td>${c.login_count || 0} veces</td>
                 </tr>
             `).join('');
         }
 
-        function updateStats() {
-            const total = users.length;
-            const paid = users.filter(u => u.plan !== 'free').length;
-            const free = users.filter(u => u.plan === 'free').length;
-            const mrr = subs.reduce((sum, s) => sum + s.amount, 0);
+        // ACTUALIZAR ESTADÍSTICAS
+        function updateStats(companies) {
+            const total = companies.length;
+            const paid = companies.filter(c => c.plan && c.plan !== 'free' && c.subscription_status === 'active').length;
+            const free = companies.filter(c => !c.plan || c.plan === 'free').length;
+            
+            let mrr = 0;
+            companies.forEach(c => {
+                if (c.subscription_status === 'active') {
+                    if (c.plan === 'profesional') mrr += 149.99;
+                    if (c.plan === 'enterprise') mrr += 299;
+                }
+            });
 
             document.getElementById('statUsers').textContent = total;
             document.getElementById('statPaid').textContent = paid;
             document.getElementById('statFree').textContent = free;
             document.getElementById('statMRR').textContent = '$' + mrr.toFixed(0);
+        }
+
+        // HELPERS
+        function getInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         function getPlanBadge(plan) {
@@ -446,10 +538,21 @@
             return 'badge-gray';
         }
 
-        function getStatusBadge(status) {
-            return status === 'active' ? 'badge-success' : 'badge-warning';
+        function getPlanPrice(plan) {
+            if (plan === 'enterprise') return '$299';
+            if (plan === 'profesional') return '$149.99';
+            return '$0';
         }
 
+        function getStatusBadge(status) {
+            if (status === 'active') return '<span class="badge badge-success">✓ Activo</span>';
+            if (status === 'trial') return '<span class="badge badge-warning">⏱ Trial</span>';
+            if (status === 'past_due') return '<span class="badge badge-danger">⚠ Vencido</span>';
+            if (status === 'cancelled') return '<span class="badge badge-gray">✕ Cancelado</span>';
+            return '<span class="badge badge-gray">-</span>';
+        }
+
+        // TABS
         function showTab(tab, btn) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -457,27 +560,62 @@
             document.getElementById(tab + 'Tab').classList.add('active');
         }
 
+        // FILTROS
         function filterPlan(plan, btn) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            currentFilter = plan;
             
             if (plan === 'all') {
-                renderUsers(users);
+                renderCompanies(allCompanies);
             } else {
-                renderUsers(users.filter(u => u.plan === plan));
+                renderCompanies(allCompanies.filter(c => (c.plan || 'free') === plan));
             }
         }
 
         function filterTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = users.filter(u => 
-                u.name.toLowerCase().includes(search) || 
-                u.company.toLowerCase().includes(search) ||
-                u.email.toLowerCase().includes(search)
+            const filtered = allCompanies.filter(c => 
+                (c.name && c.name.toLowerCase().includes(search)) || 
+                (c.email && c.email.toLowerCase().includes(search)) ||
+                (c.phone && c.phone.includes(search))
             );
-            renderUsers(filtered);
+            renderCompanies(filtered);
         }
+
+        // VER/EDITAR EMPRESA
+        function viewCompany(id) {
+            const company = allCompanies.find(c => c.id === id);
+            if (company) {
+                alert(`📋 ${company.name}\n\n📧 Email: ${company.email || 'N/A'}\n📱 Teléfono: ${company.phone || 'N/A'}\n💳 Plan: ${company.plan || 'free'}\n📅 Registro: ${formatDate(company.created_at)}`);
+            }
+        }
+
+        async function editCompany(id) {
+            const company = allCompanies.find(c => c.id === id);
+            if (!company) return;
+
+            const newPlan = prompt(`Cambiar plan de "${company.name}":\n\nOpciones: free, profesional, enterprise\n\nPlan actual: ${company.plan || 'free'}`, company.plan || 'free');
+            
+            if (newPlan && ['free', 'profesional', 'enterprise'].includes(newPlan)) {
+                try {
+                    const { error } = await supabase
+                        .from('companies')
+                        .update({ plan: newPlan, subscription_status: newPlan === 'free' ? 'trial' : 'active' })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    alert('✅ Plan actualizado');
+                    loadData();
+                } catch (err) {
+                    alert('❌ Error: ' + err.message);
+                }
+            }
+        }
+
+        // INICIALIZAR
+        document.addEventListener('DOMContentLoaded', () => {
+            initSupabase();
+        });
     </script>
 </body>
 </html>
