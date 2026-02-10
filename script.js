@@ -383,13 +383,29 @@ function showSection(name) {
     if (name === 'marketing') { renderMarketing(); }
     if (name === 'pricebook') { renderPriceBook(); }
     if (name === 'reports') { renderReports(); }
-    if (name === 'servicecalls') { loadServiceCalls(); }
+    if (name === 'servicecalls') { initServiceCallsSection(); }
 }
 
-// ===== SERVICE CALLS / LLAMADAS DE SERVICIO =====
-var serviceCallsData = [];
+// ===== SERVICE CALLS / LLAMADAS DE SERVICIO (Uses Jobs/Work Orders) =====
 var serviceCallsMap = null;
 var scMarkers = [];
+
+async function initServiceCallsSection() {
+    // Always load fresh data when entering this section
+    try {
+        await loadTechnicians();
+        await loadJobs();
+    } catch(e) { console.log('Error loading data:', e); }
+    
+    populateSCTechSelect();
+    renderServiceCallCards();
+    updateSCKpis();
+    setTimeout(initServiceCallsMap, 500); // Delay for map container to be ready
+}
+
+function renderServiceCallsFromJobs() {
+    initServiceCallsSection();
+}
 
 function showServiceCallForm() { 
     document.getElementById('serviceCallFormContainer').style.display = 'block'; 
@@ -406,11 +422,9 @@ function populateSCTechSelect() {
     var sel = document.getElementById('scTechAssign');
     if (!sel) return;
     sel.innerHTML = '<option value="">-- Asignar después --</option>';
-    if (typeof techniciansData !== 'undefined') {
-        techniciansData.forEach(function(t) {
-            if (t.status === 'available' || t.status === 'active' || !t.status) {
-                sel.innerHTML += '<option value="' + t.id + '">' + t.name + ' (' + (t.specialty || 'General') + ')</option>';
-            }
+    if (typeof techsData !== 'undefined' && techsData) {
+        techsData.forEach(function(t) {
+            sel.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
         });
     }
 }
@@ -418,31 +432,33 @@ function populateSCTechSelect() {
 async function handleServiceCallCreate(event) {
     event.preventDefault();
     
-    var serviceCall = {
-        id: 'sc_' + Date.now(),
+    var techId = document.getElementById('scTechAssign').value || null;
+    var urgencyMap = { 'emergency': 'urgent', 'priority': 'high', 'normal': 'medium' };
+    var urgency = document.getElementById('scUrgency').value;
+    
+    // Create as a work_order (job) so it syncs everywhere
+    var newJob = {
         company_id: companyId,
-        client_name: document.getElementById('scClientName').value,
-        phone: document.getElementById('scClientPhone').value,
+        title: document.getElementById('scClientName').value + ' - ' + document.getElementById('scProblem').value.substring(0, 50),
         address: document.getElementById('scAddress').value,
-        problem: document.getElementById('scProblem').value,
-        urgency: document.getElementById('scUrgency').value,
+        phone: document.getElementById('scClientPhone').value,
+        notes: document.getElementById('scProblem').value + (document.getElementById('scNotes').value ? '\n\nNotas: ' + document.getElementById('scNotes').value : ''),
+        technician_id: techId,
+        status: techId ? 'pending' : 'pending',
+        priority: urgencyMap[urgency] || 'medium',
+        scheduled_date: document.getElementById('scPreferredDate').value || null,
         property_type: document.getElementById('scPropertyType').value,
-        tech_id: document.getElementById('scTechAssign').value || null,
-        preferred_date: document.getElementById('scPreferredDate').value || null,
-        preferred_time: document.getElementById('scPreferredTime').value || null,
-        notes: document.getElementById('scNotes').value || null,
-        status: document.getElementById('scTechAssign').value ? 'assigned' : 'new',
         created_at: new Date().toISOString(),
         lat: null,
         lng: null
     };
     
     // Try to geocode the address
-    if (serviceCall.address && typeof google !== 'undefined' && google.maps) {
+    if (newJob.address && typeof google !== 'undefined' && google.maps) {
         try {
             var geocoder = new google.maps.Geocoder();
             var result = await new Promise(function(resolve) {
-                geocoder.geocode({ address: serviceCall.address }, function(results, status) {
+                geocoder.geocode({ address: newJob.address }, function(results, status) {
                     if (status === 'OK' && results[0]) {
                         resolve(results[0].geometry.location);
                     } else {
@@ -451,56 +467,51 @@ async function handleServiceCallCreate(event) {
                 });
             });
             if (result) {
-                serviceCall.lat = result.lat();
-                serviceCall.lng = result.lng();
+                newJob.lat = result.lat();
+                newJob.lng = result.lng();
             }
         } catch(e) { console.log('Geocode error:', e); }
     }
     
     try {
-        var res = await sbClient.from('service_calls').insert([serviceCall]).select();
+        var res = await sbClient.from('work_orders').insert([newJob]).select();
         if (res.error) throw res.error;
-        serviceCall.id = res.data[0].id;
     } catch(e) { 
-        serviceCallsData.push(serviceCall); 
-        saveServiceCallsLocal(); 
+        alert('Error guardando: ' + (e.message || e));
+        return;
     }
     
     hideServiceCallForm();
-    loadServiceCalls();
-    
-    var techName = '';
-    if (serviceCall.tech_id && typeof techniciansData !== 'undefined') {
-        var tech = techniciansData.find(function(t) { return t.id === serviceCall.tech_id; });
-        if (tech) techName = ' y asignada a ' + tech.name;
-    }
-    alert('✅ Llamada de servicio registrada' + techName);
-}
-
-async function loadServiceCalls() {
-    if (!companyId) return;
-    try {
-        var res = await sbClient.from('service_calls').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
-        serviceCallsData = res.data || [];
-    } catch(e) { 
-        serviceCallsData = JSON.parse(localStorage.getItem('tm_service_calls_' + companyId) || '[]'); 
-    }
-    renderServiceCalls();
+    await loadJobs(); // Reload jobs data
+    renderServiceCallCards();
     updateSCKpis();
-    initServiceCallsMap();
-}
-
-function saveServiceCallsLocal() {
-    localStorage.setItem('tm_service_calls_' + companyId, JSON.stringify(serviceCallsData));
+    
+    alert('✅ Llamada de servicio creada');
 }
 
 function updateSCKpis() {
+    if (!jobsData) return;
+    
     var today = new Date().toISOString().split('T')[0];
-    var newCalls = serviceCallsData.filter(function(sc) { return sc.status === 'new'; }).length;
-    var assigned = serviceCallsData.filter(function(sc) { return sc.status === 'assigned'; }).length;
-    var enroute = serviceCallsData.filter(function(sc) { return sc.status === 'enroute'; }).length;
-    var completedToday = serviceCallsData.filter(function(sc) { 
-        return sc.status === 'completed' && sc.completed_at && sc.completed_at.startsWith(today); 
+    
+    // New = pending without technician
+    var newCalls = jobsData.filter(function(j) { 
+        return (j.status === 'pending' || !j.status) && !j.technician_id; 
+    }).length;
+    
+    // Assigned = pending/in_progress with technician
+    var assigned = jobsData.filter(function(j) { 
+        return (j.status === 'pending' || j.status === 'in_progress') && j.technician_id; 
+    }).length;
+    
+    // En route - we'll use in_progress as "en camino"
+    var enroute = jobsData.filter(function(j) { 
+        return j.status === 'in_progress'; 
+    }).length;
+    
+    // Completed today
+    var completedToday = jobsData.filter(function(j) { 
+        return j.status === 'completed' && j.updated_at && j.updated_at.startsWith(today); 
     }).length;
     
     var el1 = document.getElementById('scKpiNew');
@@ -513,17 +524,21 @@ function updateSCKpis() {
     if (el4) el4.textContent = completedToday;
 }
 
-function renderServiceCalls() {
+function renderServiceCallCards() {
     var container = document.getElementById('serviceCallsGrid');
     if (!container) return;
     
     var filterStatus = document.getElementById('scFilterStatus');
     var filter = filterStatus ? filterStatus.value : 'active';
     
-    var filtered = serviceCallsData.filter(function(sc) {
-        if (filter === 'active') return sc.status !== 'completed' && sc.status !== 'cancelled';
+    var filtered = (jobsData || []).filter(function(j) {
+        if (filter === 'active') return j.status !== 'completed' && j.status !== 'cancelled';
         if (filter === 'all') return true;
-        return sc.status === filter;
+        if (filter === 'new') return (j.status === 'pending' || !j.status) && !j.technician_id;
+        if (filter === 'assigned') return j.status === 'pending' && j.technician_id;
+        if (filter === 'enroute') return j.status === 'in_progress';
+        if (filter === 'completed') return j.status === 'completed';
+        return j.status === filter;
     });
     
     if (filtered.length === 0) {
@@ -532,25 +547,40 @@ function renderServiceCalls() {
     }
     
     var html = '';
-    filtered.forEach(function(sc) {
+    filtered.forEach(function(j) {
+        // Determine visual status
+        var visualStatus = 'new';
+        if (j.status === 'completed') visualStatus = 'completed';
+        else if (j.status === 'cancelled') visualStatus = 'cancelled';
+        else if (j.status === 'in_progress') visualStatus = 'enroute';
+        else if (j.technician_id) visualStatus = 'assigned';
+        
         var statusConfig = {
             'new': { color: '#ef4444', bg: '#fef2f2', icon: '🆕', label: 'NUEVA' },
             'assigned': { color: '#f59e0b', bg: '#fffbeb', icon: '👷', label: 'ASIGNADA' },
-            'enroute': { color: '#3b82f6', bg: '#eff6ff', icon: '🚐', label: 'EN CAMINO' },
+            'enroute': { color: '#3b82f6', bg: '#eff6ff', icon: '🚐', label: 'EN PROGRESO' },
             'completed': { color: '#10b981', bg: '#f0fdf4', icon: '✅', label: 'COMPLETADA' },
             'cancelled': { color: '#94a3b8', bg: '#f8fafc', icon: '❌', label: 'CANCELADA' }
         };
-        var status = statusConfig[sc.status] || statusConfig['new'];
-        var urgencyBadge = sc.urgency === 'emergency' ? '<span style="background:#ef4444;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🔴 EMERGENCIA</span>' : 
-                          sc.urgency === 'priority' ? '<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🟡 PRIORITARIO</span>' : '';
+        var status = statusConfig[visualStatus] || statusConfig['new'];
         
-        var techName = '-';
-        if (sc.tech_id && typeof techniciansData !== 'undefined') {
-            var tech = techniciansData.find(function(t) { return t.id === sc.tech_id; });
+        // Urgency badge
+        var urgencyBadge = j.priority === 'urgent' ? '<span style="background:#ef4444;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🔴 URGENTE</span>' : 
+                          j.priority === 'high' ? '<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🟡 ALTA</span>' : '';
+        
+        // Tech name
+        var techName = 'Sin asignar';
+        if (j.technician_id && techsData) {
+            var tech = techsData.find(function(t) { return t.id === j.technician_id; });
             if (tech) techName = tech.name;
+            if (j.technicians && j.technicians.name) techName = j.technicians.name;
         }
         
-        var timeAgo = getTimeAgo(sc.created_at);
+        var timeAgo = getTimeAgo(j.created_at);
+        
+        // Extract client name and problem from title/notes
+        var clientName = j.title ? j.title.split(' - ')[0] : 'Cliente';
+        var problem = j.notes || j.title || 'Sin descripción';
         
         html += '<div class="sc-card" style="background:' + status.bg + ';border:2px solid ' + status.color + ';border-radius:12px;padding:16px;position:relative;">';
         
@@ -559,15 +589,15 @@ function renderServiceCalls() {
         
         // Client info
         html += '<div style="margin-bottom:12px;">';
-        html += '<h4 style="font-size:16px;color:#1e293b;margin:0 0 4px 0;">👤 ' + sc.client_name + urgencyBadge + '</h4>';
-        html += '<p style="font-size:13px;color:#64748b;margin:0;">📱 <a href="tel:' + sc.phone + '" style="color:#3b82f6;text-decoration:none;">' + sc.phone + '</a></p>';
-        html += '<p style="font-size:12px;color:#64748b;margin:4px 0 0 0;">📍 ' + sc.address + '</p>';
+        html += '<h4 style="font-size:16px;color:#1e293b;margin:0 0 4px 0;padding-right:100px;">👤 ' + clientName + urgencyBadge + '</h4>';
+        if (j.phone) html += '<p style="font-size:13px;color:#64748b;margin:0;">📱 <a href="tel:' + j.phone + '" style="color:#3b82f6;text-decoration:none;">' + j.phone + '</a></p>';
+        html += '<p style="font-size:12px;color:#64748b;margin:4px 0 0 0;">📍 ' + (j.address || 'Sin dirección') + '</p>';
         html += '</div>';
         
         // Problem
         html += '<div style="background:white;border-radius:8px;padding:10px;margin-bottom:12px;">';
         html += '<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0;">PROBLEMA:</p>';
-        html += '<p style="font-size:13px;color:#334155;margin:0;">' + sc.problem + '</p>';
+        html += '<p style="font-size:13px;color:#334155;margin:0;max-height:60px;overflow:hidden;">' + problem + '</p>';
         html += '</div>';
         
         // Tech assigned and time
@@ -578,20 +608,20 @@ function renderServiceCalls() {
         
         // Action buttons
         html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-        html += '<a href="tel:' + sc.phone + '" class="btn-primary btn-sm" style="flex:1;text-align:center;text-decoration:none;min-width:80px;">📞 Llamar</a>';
+        if (j.phone) html += '<a href="tel:' + j.phone + '" class="btn-primary btn-sm" style="flex:1;text-align:center;text-decoration:none;min-width:80px;">📞 Llamar</a>';
         
-        if (sc.status === 'new') {
-            html += '<button class="btn-primary btn-sm" style="flex:1;background:#f59e0b;border-color:#f59e0b;" onclick="showAssignTechModal(\'' + sc.id + '\')">👷 Asignar</button>';
-        } else if (sc.status === 'assigned') {
-            html += '<button class="btn-primary btn-sm" style="flex:1;background:#3b82f6;border-color:#3b82f6;" onclick="updateSCStatus(\'' + sc.id + '\',\'enroute\')">🚐 En Camino</button>';
-        } else if (sc.status === 'enroute') {
-            html += '<button class="btn-primary btn-sm" style="flex:1;background:#10b981;border-color:#10b981;" onclick="updateSCStatus(\'' + sc.id + '\',\'completed\')">✅ Completar</button>';
+        if (visualStatus === 'new') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#f59e0b;border-color:#f59e0b;" onclick="showAssignTechModal(\'' + j.id + '\')">👷 Asignar</button>';
+        } else if (visualStatus === 'assigned') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#3b82f6;border-color:#3b82f6;" onclick="updateJobToInProgress(\'' + j.id + '\')">🚐 En Progreso</button>';
+        } else if (visualStatus === 'enroute') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#10b981;border-color:#10b981;" onclick="updateJobToCompleted(\'' + j.id + '\')">✅ Completar</button>';
         }
         
-        if (sc.lat && sc.lng) {
-            html += '<a href="https://maps.google.com/?q=' + sc.lat + ',' + sc.lng + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
-        } else {
-            html += '<a href="https://maps.google.com/?q=' + encodeURIComponent(sc.address) + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+        if (j.lat && j.lng) {
+            html += '<a href="https://maps.google.com/?q=' + j.lat + ',' + j.lng + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+        } else if (j.address) {
+            html += '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.address) + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
         }
         
         html += '</div>';
@@ -616,21 +646,21 @@ function getTimeAgo(dateStr) {
     return diffDays + ' días';
 }
 
-function showAssignTechModal(scId) {
-    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
-    if (!sc) return;
+function showAssignTechModal(jobId) {
+    var job = jobsData.find(function(j) { return j.id === jobId; });
+    if (!job) return;
     
     var techOptions = '<option value="">Seleccionar técnico...</option>';
-    if (typeof techniciansData !== 'undefined') {
-        techniciansData.forEach(function(t) {
-            techOptions += '<option value="' + t.id + '">' + t.name + ' (' + (t.specialty || 'General') + ')</option>';
+    if (typeof techsData !== 'undefined' && techsData) {
+        techsData.forEach(function(t) {
+            techOptions += '<option value="' + t.id + '">' + t.name + '</option>';
         });
     }
     
     var modal = document.createElement('div');
     modal.id = 'assignTechModal';
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = '<div style="background:white;border-radius:12px;padding:24px;max-width:400px;width:90%;"><h3 style="margin:0 0 16px 0;color:#1e3a5f;">👷 Asignar Técnico</h3><p style="margin:0 0 8px 0;font-size:13px;"><strong>' + sc.client_name + '</strong><br>' + sc.address + '</p><select id="modalTechSelect" style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;margin:12px 0;font-size:14px;">' + techOptions + '</select><div style="display:flex;gap:8px;"><button onclick="assignTechFromModal(\'' + scId + '\')" class="btn-primary" style="flex:1;">✅ Asignar</button><button onclick="closeAssignTechModal()" class="btn-secondary" style="flex:1;">Cancelar</button></div></div>';
+    modal.innerHTML = '<div style="background:white;border-radius:12px;padding:24px;max-width:400px;width:90%;"><h3 style="margin:0 0 16px 0;color:#1e3a5f;">👷 Asignar Técnico</h3><p style="margin:0 0 8px 0;font-size:13px;"><strong>' + job.title + '</strong><br>' + (job.address || '') + '</p><select id="modalTechSelect" style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;margin:12px 0;font-size:14px;">' + techOptions + '</select><div style="display:flex;gap:8px;"><button onclick="assignTechFromModal(\'' + jobId + '\')" class="btn-primary" style="flex:1;">✅ Asignar</button><button onclick="closeAssignTechModal()" class="btn-secondary" style="flex:1;">Cancelar</button></div></div>';
     document.body.appendChild(modal);
 }
 
@@ -639,49 +669,43 @@ function closeAssignTechModal() {
     if (modal) modal.remove();
 }
 
-async function assignTechFromModal(scId) {
+async function assignTechFromModal(jobId) {
     var techId = document.getElementById('modalTechSelect').value;
     if (!techId) { alert('Selecciona un técnico'); return; }
     
-    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
-    if (!sc) return;
-    
-    sc.tech_id = techId;
-    sc.status = 'assigned';
-    sc.assigned_at = new Date().toISOString();
-    
     try {
-        await sbClient.from('service_calls').update({ tech_id: techId, status: 'assigned', assigned_at: sc.assigned_at }).eq('id', scId);
-    } catch(e) { saveServiceCallsLocal(); }
+        await sbClient.from('work_orders').update({ technician_id: techId, status: 'pending' }).eq('id', jobId);
+    } catch(e) { alert('Error: ' + e.message); return; }
     
     closeAssignTechModal();
-    renderServiceCalls();
+    await loadJobs();
+    renderServiceCallCards();
     updateSCKpis();
     
-    var tech = techniciansData.find(function(t) { return t.id === techId; });
-    alert('✅ Llamada asignada a ' + (tech ? tech.name : 'técnico'));
+    var tech = techsData.find(function(t) { return t.id === techId; });
+    alert('✅ Trabajo asignado a ' + (tech ? tech.name : 'técnico'));
 }
 
-async function updateSCStatus(scId, newStatus) {
-    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
-    if (!sc) return;
-    
-    sc.status = newStatus;
-    if (newStatus === 'enroute') sc.enroute_at = new Date().toISOString();
-    if (newStatus === 'completed') sc.completed_at = new Date().toISOString();
-    
+async function updateJobToInProgress(jobId) {
     try {
-        var updateData = { status: newStatus };
-        if (newStatus === 'enroute') updateData.enroute_at = sc.enroute_at;
-        if (newStatus === 'completed') updateData.completed_at = sc.completed_at;
-        await sbClient.from('service_calls').update(updateData).eq('id', scId);
-    } catch(e) { saveServiceCallsLocal(); }
+        await sbClient.from('work_orders').update({ status: 'in_progress' }).eq('id', jobId);
+    } catch(e) { alert('Error: ' + e.message); return; }
     
-    renderServiceCalls();
+    await loadJobs();
+    renderServiceCallCards();
     updateSCKpis();
+    alert('🚐 Trabajo marcado En Progreso');
+}
+
+async function updateJobToCompleted(jobId) {
+    try {
+        await sbClient.from('work_orders').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', jobId);
+    } catch(e) { alert('Error: ' + e.message); return; }
     
-    var statusLabels = { 'enroute': 'En Camino 🚐', 'completed': 'Completada ✅' };
-    alert('Estado actualizado: ' + (statusLabels[newStatus] || newStatus));
+    await loadJobs();
+    renderServiceCallCards();
+    updateSCKpis();
+    alert('✅ Trabajo completado');
 }
 
 function initServiceCallsMap() {
@@ -690,26 +714,29 @@ function initServiceCallsMap() {
     
     if (!serviceCallsMap) {
         serviceCallsMap = new google.maps.Map(mapDiv, {
-            center: { lat: 34.1083, lng: -117.2898 }, // San Bernardino default
+            center: { lat: 34.1083, lng: -117.2898 },
             zoom: 10
         });
     }
     
-    // Clear existing markers
     scMarkers.forEach(function(m) { m.setMap(null); });
     scMarkers = [];
     
     var bounds = new google.maps.LatLngBounds();
     var hasMarkers = false;
     
-    serviceCallsData.forEach(function(sc) {
-        if (sc.lat && sc.lng && sc.status !== 'completed' && sc.status !== 'cancelled') {
-            var markerColor = sc.status === 'new' ? '#ef4444' : sc.status === 'assigned' ? '#f59e0b' : sc.status === 'enroute' ? '#3b82f6' : '#10b981';
+    (jobsData || []).forEach(function(j) {
+        if (j.lat && j.lng && j.status !== 'completed' && j.status !== 'cancelled') {
+            var visualStatus = 'new';
+            if (j.status === 'in_progress') visualStatus = 'enroute';
+            else if (j.technician_id) visualStatus = 'assigned';
+            
+            var markerColor = visualStatus === 'new' ? '#ef4444' : visualStatus === 'assigned' ? '#f59e0b' : '#3b82f6';
             
             var marker = new google.maps.Marker({
-                position: { lat: sc.lat, lng: sc.lng },
+                position: { lat: j.lat, lng: j.lng },
                 map: serviceCallsMap,
-                title: sc.client_name + ' - ' + sc.problem,
+                title: j.title,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     fillColor: markerColor,
@@ -720,7 +747,7 @@ function initServiceCallsMap() {
                 }
             });
             
-            var infoContent = '<div style="min-width:200px;"><strong>' + sc.client_name + '</strong><br>' + sc.phone + '<br><small>' + sc.address + '</small><br><br><strong>Problema:</strong> ' + sc.problem + '</div>';
+            var infoContent = '<div style="min-width:200px;"><strong>' + j.title + '</strong><br>' + (j.phone || '') + '<br><small>' + (j.address || '') + '</small></div>';
             var infoWindow = new google.maps.InfoWindow({ content: infoContent });
             marker.addListener('click', function() { infoWindow.open(serviceCallsMap, marker); });
             
@@ -735,6 +762,10 @@ function initServiceCallsMap() {
         if (scMarkers.length === 1) serviceCallsMap.setZoom(14);
     }
 }
+
+// Alias for backwards compatibility
+function loadServiceCalls() { renderServiceCallsFromJobs(); }
+function renderServiceCalls() { renderServiceCallCards(); }
 
 // ===== LEADS =====
 function showLeadForm() { document.getElementById('leadFormContainer').style.display = 'block'; document.getElementById('leadForm').reset(); }
