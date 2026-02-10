@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Master Admin - Panel Seguro</title>
+    <title>Trade Master Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #1e40af;
             --primary-dark: #1e3a8a;
@@ -24,976 +19,226 @@
             --light: #f3f4f6;
             --white: #ffffff;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--light);
-            min-height: 100vh;
-        }
-
-        /* Login Container */
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        body { font-family: 'Inter', sans-serif; background: var(--light); min-height: 100vh; }
+        
+        /* Login */
+        .login-container {
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            padding: 1rem;
         }
-
-        .auth-box {
-            background: var(--white);
-            padding: 2.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            width: 100%;
-            max-width: 420px;
+        .login-container.hidden { display: none; }
+        .login-box {
+            background: var(--white); padding: 2.5rem; border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 400px;
         }
-
-        .auth-logo {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-logo h1 {
-            font-size: 1.75rem;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .auth-logo h1 span {
-            color: var(--accent);
-        }
-
-        .auth-logo p {
-            color: var(--gray);
-            font-size: 0.875rem;
-        }
-
-        .security-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #dcfce7;
-            color: #16a34a;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.75rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--dark);
-        }
-
+        .login-logo { text-align: center; margin-bottom: 2rem; }
+        .login-logo h1 { font-size: 1.75rem; color: var(--primary); }
+        .login-logo h1 span { color: var(--accent); }
+        .login-logo p { color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--dark); }
         .form-group input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: all 0.2s;
+            width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb;
+            border-radius: 0.5rem; font-size: 1rem;
         }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
-        }
-
-        .phone-input-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .phone-input-group select {
-            padding: 0.875rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            background: var(--white);
-        }
-
-        .phone-input-group input {
-            flex: 1;
-        }
-
+        .form-group input:focus { outline: none; border-color: var(--primary); }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
+            display: block; width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem;
+            font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center;
         }
-
-        .btn-primary {
-            background: var(--primary);
-            color: var(--white);
+        .btn-primary { background: var(--primary); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: var(--white); }
+        .error-msg { background: #fee2e2; color: #dc2626; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; }
+        .error-msg.show { display: block; }
+        
+        /* Dashboard */
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+        .header {
+            background: var(--white); padding: 1rem 2rem; display: flex;
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
         }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
+        .header h1 { font-size: 1.5rem; color: var(--primary); }
+        .header h1 span { color: var(--accent); }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .user-badge {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: var(--light); padding: 0.5rem 1rem; border-radius: 2rem;
         }
-
-        .btn-primary:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
+        .avatar {
+            width: 36px; height: 36px; background: var(--primary); color: var(--white);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;
         }
-
-        .btn-success {
-            background: var(--success);
-            color: var(--white);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: #dcfce7;
-            color: #16a34a;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        /* OTP Input */
-        .otp-container {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin: 1.5rem 0;
-        }
-
-        .otp-input {
-            width: 50px;
-            height: 60px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .otp-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
-        }
-
-        .resend-code {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .resend-code a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .resend-code a:hover {
-            text-decoration: underline;
-        }
-
-        .timer {
-            color: var(--gray);
-            font-size: 0.875rem;
-        }
-
-        /* Steps indicator */
-        .steps {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .step {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            transition: all 0.3s;
-        }
-
-        .step.active {
-            background: var(--primary);
-            width: 30px;
-            border-radius: 5px;
-        }
-
-        .step.completed {
-            background: var(--success);
-        }
-
-        /* Hide/show auth steps */
-        .auth-step {
-            display: none;
-        }
-
-        .auth-step.active {
-            display: block;
-        }
-
-        /* Admin Dashboard */
-        .admin-container {
-            display: none;
-        }
-
-        .admin-container.active {
-            display: block;
-        }
-
-        .auth-container.hidden {
-            display: none;
-        }
-
-        /* Header */
-        .admin-header {
-            background: var(--white);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .admin-header h1 {
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-
-        .admin-header h1 span {
-            color: var(--accent);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .admin-user {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: var(--light);
-            border-radius: 2rem;
-        }
-
-        .admin-user-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--primary);
-            color: var(--white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-
-        .session-timer {
-            font-size: 0.75rem;
-            color: var(--gray);
-            background: var(--light);
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            padding: 2rem;
-        }
-
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 0.5rem; }
+        
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; padding: 2rem; }
         .stat-card {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background: var(--white); padding: 1.5rem; border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-
-        .stat-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
+        .stat-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .stat-icon.blue { background: #dbeafe; }
+        .stat-icon.green { background: #dcfce7; }
+        .stat-icon.orange { background: #ffedd5; }
+        .stat-icon.purple { background: #f3e8ff; }
+        .stat-trend { font-size: 0.75rem; font-weight: 600; color: #16a34a; background: #dcfce7; padding: 0.25rem 0.5rem; border-radius: 1rem; }
+        .stat-card h3 { font-size: 2rem; color: var(--dark); }
+        .stat-card p { color: var(--gray); font-size: 0.875rem; }
+        
+        /* Content */
+        .content { padding: 0 2rem 2rem; }
+        .card { background: var(--white); border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { font-size: 1.25rem; color: var(--dark); }
+        .search-box { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--light); border-radius: 0.5rem; }
+        .search-box input { border: none; background: none; outline: none; width: 200px; }
+        .filters { display: flex; gap: 0.5rem; padding: 1rem 1.5rem; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: var(--white);
+            border-radius: 2rem; font-size: 0.8125rem; cursor: pointer;
         }
-
-        .stat-card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .stat-card-icon.blue { background: #dbeafe; }
-        .stat-card-icon.green { background: #dcfce7; }
-        .stat-card-icon.orange { background: #ffedd5; }
-        .stat-card-icon.purple { background: #f3e8ff; }
-
-        .stat-card h3 {
-            font-size: 2rem;
-            color: var(--dark);
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-card p {
-            color: var(--gray);
-            font-size: 0.875rem;
-        }
-
-        .stat-trend {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .stat-trend.up {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 0 2rem 2rem;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            background: var(--white);
-            padding: 0.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            background: none;
-            font-size: 0.9375rem;
-            font-weight: 500;
-            color: var(--gray);
-            cursor: pointer;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .tab:hover {
-            background: var(--light);
-        }
-
-        .tab.active {
-            background: var(--primary);
-            color: var(--white);
-        }
-
-        /* Data Table */
-        .data-section {
-            background: var(--white);
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .data-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .data-header h2 {
-            font-size: 1.25rem;
-            color: var(--dark);
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: var(--light);
-            border-radius: 0.5rem;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .search-box:focus-within {
-            border-color: var(--primary);
-            background: var(--white);
-        }
-
-        .search-box input {
-            border: none;
-            background: none;
-            outline: none;
-            font-size: 0.9375rem;
-            width: 200px;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-
-        .data-table th {
-            text-align: left;
-            padding: 1rem 1.5rem;
-            background: var(--light);
-            font-weight: 600;
-            color: var(--dark);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .data-table td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.9375rem;
-        }
-
-        .data-table tbody tr:hover {
-            background: #f9fafb;
-        }
-
-        /* Badges */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.375rem 0.75rem;
-            border-radius: 2rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
+        .filter-btn:hover, .filter-btn.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
+        
+        /* Table */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { text-align: left; padding: 1rem 1.5rem; background: var(--light); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: var(--dark); }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+        tr:hover { background: #f9fafb; }
+        .user-cell { display: flex; align-items: center; gap: 0.75rem; }
+        .user-cell .avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); }
+        .user-cell h4 { font-weight: 500; color: var(--dark); }
+        .user-cell p { font-size: 0.8rem; color: var(--gray); }
+        .badge { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; }
         .badge-success { background: #dcfce7; color: #16a34a; }
         .badge-warning { background: #fef3c7; color: #d97706; }
-        .badge-danger { background: #fee2e2; color: #dc2626; }
-        .badge-info { background: #dbeafe; color: #2563eb; }
         .badge-gray { background: #f3f4f6; color: #6b7280; }
-
-        .plan-free { background: #f3f4f6; color: #6b7280; }
-        .plan-starter { background: #dbeafe; color: #2563eb; }
-        .plan-profesional { background: #fef3c7; color: #d97706; }
-        .plan-enterprise { background: #f3e8ff; color: #9333ea; }
-
-        /* User Row */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: var(--white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .user-details h4 {
-            font-weight: 500;
-            color: var(--dark);
-            margin-bottom: 0.125rem;
-        }
-
-        .user-details p {
-            font-size: 0.8125rem;
-            color: var(--gray);
-        }
-
-        /* Actions */
-        .actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
+        .badge-blue { background: #dbeafe; color: #2563eb; }
+        .badge-purple { background: #f3e8ff; color: #9333ea; }
+        .actions { display: flex; gap: 0.5rem; }
         .action-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: var(--light);
-            border-radius: 0.375rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            width: 32px; height: 32px; border: none; background: var(--light);
+            border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
+        .action-btn:hover { background: var(--primary); color: var(--white); }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--white); padding: 0.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab { padding: 0.75rem 1.5rem; border: none; background: none; font-size: 0.9rem; font-weight: 500; color: var(--gray); cursor: pointer; border-radius: 0.5rem; }
+        .tab:hover { background: var(--light); }
+        .tab.active { background: var(--primary); color: var(--white); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .action-btn:hover {
-            background: var(--primary);
-            color: var(--white);
-        }
-
-        .action-btn.danger:hover {
-            background: var(--danger);
-        }
-
-        /* Filters */
-        .filters {
-            display: flex;
-            gap: 0.5rem;
-            padding: 1rem 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            background: var(--white);
-            border-radius: 2rem;
-            font-size: 0.8125rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: var(--primary);
-            color: var(--white);
-            border-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--white);
-            border-radius: 1rem;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .modal-header h3 {
-            font-size: 1.25rem;
-            color: var(--dark);
-        }
-
-        .modal-close {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: var(--light);
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            padding: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        /* Loading */
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 3rem;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--light);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Chart container */
-        .chart-container {
-            padding: 2rem;
-            background: var(--white);
-            border-radius: 1rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .chart-header h3 {
-            font-size: 1.125rem;
-            color: var(--dark);
-        }
-
-        .revenue-amount {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--success);
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-            }
-
-            .main-content {
-                padding: 0 1rem 1rem;
-            }
-
-            .admin-header {
-                padding: 1rem;
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .search-box input {
-                width: 150px;
-            }
-        }
-
-        /* Activity Log Styles */
-        .activity-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
-        }
-
-        .activity-icon.login { background: #dbeafe; }
-        .activity-icon.signup { background: #dcfce7; }
-        .activity-icon.payment { background: #fef3c7; }
-        .activity-icon.action { background: #f3e8ff; }
-
-        .activity-details {
-            flex: 1;
-        }
-
-        .activity-details h4 {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-
-        .activity-details p {
-            font-size: 0.875rem;
-            color: var(--gray);
-        }
-
-        .activity-time {
-            font-size: 0.75rem;
-            color: var(--gray);
-            white-space: nowrap;
+            .stats { padding: 1rem; }
+            .content { padding: 0 1rem 1rem; }
+            .header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Authentication Container -->
-    <div class="auth-container" id="authContainer">
-        <div class="auth-box">
-            <div class="auth-logo">
+    <!-- LOGIN -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-box">
+            <div class="login-logo">
                 <h1>🔐 Trade<span>Masters</span></h1>
-                <p>Panel de Administración Seguro</p>
-                <div class="security-badge">
-                    🛡️ Protegido con 2FA
-                </div>
+                <p>Panel de Administración</p>
             </div>
-
-            <!-- Step 1: Email & Password -->
-            <div class="auth-step active" id="step1">
-                <div class="steps">
-                    <div class="step active"></div>
-                    <div class="step"></div>
+            <div class="error-msg" id="errorMsg"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>📧 Email</label>
+                    <input type="email" id="email" placeholder="tu@email.com" required autocomplete="off">
                 </div>
-                
-                <div class="error-message" id="loginError"></div>
-                
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label>📧 Email de Administrador</label>
-                        <input type="email" id="adminEmail" placeholder="tu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>🔑 Contraseña</label>
-                        <input type="password" id="adminPassword" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="loginBtn">
-                        Continuar →
-                    </button>
-                </form>
-            </div>
-
-            <!-- Step 2: Phone Verification -->
-            <div class="auth-step" id="step2">
-                <div class="steps">
-                    <div class="step completed"></div>
-                    <div class="step active"></div>
+                <div class="form-group">
+                    <label>🔑 Contraseña</label>
+                    <input type="password" id="password" placeholder="••••••••" required autocomplete="off">
                 </div>
-
-                <div class="success-message show" style="text-align: center;">
-                    📱 Código enviado a tu teléfono
-                </div>
-
-                <p style="text-align: center; color: var(--gray); margin-bottom: 1.5rem;">
-                    Ingresa el código de 6 dígitos que enviamos a<br>
-                    <strong id="maskedPhone">+1 *** *** **89</strong>
-                </p>
-
-                <div class="otp-container">
-                    <input type="text" class="otp-input" maxlength="1" data-index="0">
-                    <input type="text" class="otp-input" maxlength="1" data-index="1">
-                    <input type="text" class="otp-input" maxlength="1" data-index="2">
-                    <input type="text" class="otp-input" maxlength="1" data-index="3">
-                    <input type="text" class="otp-input" maxlength="1" data-index="4">
-                    <input type="text" class="otp-input" maxlength="1" data-index="5">
-                </div>
-
-                <div class="error-message" id="otpError"></div>
-
-                <button class="btn btn-primary" id="verifyOtpBtn" disabled>
-                    🔓 Verificar y Entrar
-                </button>
-
-                <div class="resend-code">
-                    <span class="timer" id="resendTimer">Reenviar código en 60s</span>
-                    <a href="#" id="resendLink" style="display: none;" onclick="resendCode()">Reenviar código</a>
-                </div>
-
-                <button class="btn btn-outline" style="margin-top: 1rem;" onclick="backToStep1()">
-                    ← Volver
-                </button>
-            </div>
+                <button type="submit" class="btn btn-primary">Entrar →</button>
+            </form>
+            <p style="text-align:center; margin-top:1.5rem; color:var(--gray); font-size:0.8rem;">
+                Demo: floresmario30@gmail.com / admin123
+            </p>
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
-    <div class="admin-container" id="adminDashboard">
-        <!-- Header -->
-        <header class="admin-header">
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+        <header class="header">
             <h1>🔐 Trade<span>Masters</span> Admin</h1>
-            <div class="header-actions">
-                <span class="session-timer" id="sessionTimer">Sesión: 30:00</span>
-                <button class="btn btn-sm" onclick="refreshData()" style="background: var(--light);">
-                    🔄 Actualizar
-                </button>
-                <div class="admin-user">
-                    <div class="admin-user-avatar" id="userAvatar">M</div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <div class="avatar" id="userAvatar">M</div>
                     <span id="userName">Admin</span>
                 </div>
-                <button class="btn btn-sm" style="background: var(--danger); color: white;" onclick="logout()">
-                    🚪 Salir
-                </button>
+                <button class="btn btn-sm btn-danger" onclick="logout()">Salir</button>
             </div>
         </header>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
+        <div class="stats">
             <div class="stat-card">
-                <div class="stat-card-header">
-                    <div class="stat-card-icon blue">👥</div>
-                    <span class="stat-trend up">↑ 12%</span>
+                <div class="stat-card-top">
+                    <div class="stat-icon blue">👥</div>
+                    <span class="stat-trend">↑ 12%</span>
                 </div>
-                <h3 id="totalUsers">0</h3>
-                <p>Total Usuarios Registrados</p>
+                <h3 id="statUsers">6</h3>
+                <p>Total Usuarios</p>
             </div>
             <div class="stat-card">
-                <div class="stat-card-header">
-                    <div class="stat-card-icon green">💳</div>
-                    <span class="stat-trend up">↑ 8%</span>
+                <div class="stat-card-top">
+                    <div class="stat-icon green">💳</div>
+                    <span class="stat-trend">↑ 8%</span>
                 </div>
-                <h3 id="paidUsers">0</h3>
+                <h3 id="statPaid">4</h3>
                 <p>Suscripciones Activas</p>
             </div>
             <div class="stat-card">
-                <div class="stat-card-header">
-                    <div class="stat-card-icon orange">💰</div>
-                    <span class="stat-trend up">↑ 15%</span>
+                <div class="stat-card-top">
+                    <div class="stat-icon orange">💰</div>
+                    <span class="stat-trend">↑ 15%</span>
                 </div>
-                <h3 id="monthlyRevenue">$0</h3>
-                <p>Ingresos Mensuales (MRR)</p>
+                <h3 id="statMRR">$898</h3>
+                <p>Ingresos Mensuales</p>
             </div>
             <div class="stat-card">
-                <div class="stat-card-header">
-                    <div class="stat-card-icon purple">🆓</div>
+                <div class="stat-card-top">
+                    <div class="stat-icon purple">🆓</div>
                 </div>
-                <h3 id="freeUsers">0</h3>
-                <p>Usuarios Free / Trial</p>
+                <h3 id="statFree">2</h3>
+                <p>Usuarios Free/Trial</p>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Tabs -->
+        <div class="content">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('users', this)">👥 Usuarios</button>
-                <button class="tab" onclick="switchTab('subscriptions', this)">💳 Suscripciones</button>
-                <button class="tab" onclick="switchTab('activity', this)">📊 Actividad</button>
-                <button class="tab" onclick="switchTab('security', this)">🔐 Seguridad</button>
+                <button class="tab active" onclick="showTab('users', this)">👥 Usuarios</button>
+                <button class="tab" onclick="showTab('subs', this)">💳 Suscripciones</button>
+                <button class="tab" onclick="showTab('activity', this)">📊 Actividad</button>
             </div>
 
-            <!-- Users Tab -->
+            <!-- USERS TAB -->
             <div class="tab-content active" id="usersTab">
-                <div class="data-section">
-                    <div class="data-header">
+                <div class="card">
+                    <div class="card-header">
                         <h2>👥 Usuarios Registrados</h2>
                         <div class="search-box">
                             <span>🔍</span>
-                            <input type="text" placeholder="Buscar..." id="searchUsers" onkeyup="filterUsers()">
+                            <input type="text" placeholder="Buscar..." id="searchInput" onkeyup="filterTable()">
                         </div>
                     </div>
                     <div class="filters">
-                        <button class="filter-btn active" onclick="filterByPlan('all', this)">Todos</button>
-                        <button class="filter-btn" onclick="filterByPlan('free', this)">Free</button>
-                        <button class="filter-btn" onclick="filterByPlan('trial', this)">Trial</button>
-                        <button class="filter-btn" onclick="filterByPlan('profesional', this)">Profesional</button>
-                        <button class="filter-btn" onclick="filterByPlan('enterprise', this)">Enterprise</button>
+                        <button class="filter-btn active" onclick="filterPlan('all', this)">Todos</button>
+                        <button class="filter-btn" onclick="filterPlan('free', this)">Free</button>
+                        <button class="filter-btn" onclick="filterPlan('profesional', this)">Profesional</button>
+                        <button class="filter-btn" onclick="filterPlan('enterprise', this)">Enterprise</button>
                     </div>
-                    <div class="table-container">
-                        <table class="data-table">
+                    <div class="table-wrap">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>Usuario</th>
@@ -1004,800 +249,235 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="usersTableBody">
-                                <!-- Dynamic content -->
-                            </tbody>
+                            <tbody id="usersTable"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Subscriptions Tab -->
-            <div class="tab-content" id="subscriptionsTab">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div>
-                            <h3>💰 Ingresos Recurrentes Mensuales (MRR)</h3>
-                            <p class="revenue-amount" id="mrrAmount">$0.00</p>
-                        </div>
-                        <span class="badge badge-success">Este Mes</span>
+            <!-- SUBS TAB -->
+            <div class="tab-content" id="subsTab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>💳 Suscripciones Activas</h2>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                        <div style="text-align: center; padding: 1rem; background: var(--light); border-radius: 0.5rem;">
-                            <h4 id="proCount">0</h4>
-                            <p style="font-size: 0.875rem; color: var(--gray);">Profesional<br>$149.99/mes</p>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--light); border-radius: 0.5rem;">
-                            <h4 id="entCount">0</h4>
-                            <p style="font-size: 0.875rem; color: var(--gray);">Enterprise<br>$299/mes</p>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--light); border-radius: 0.5rem;">
-                            <h4 id="churnRate">0%</h4>
-                            <p style="font-size: 0.875rem; color: var(--gray);">Churn Rate</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="data-section">
-                    <div class="data-header">
-                        <h2>📋 Historial de Pagos</h2>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
+                    <div class="table-wrap">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>Usuario</th>
                                     <th>Plan</th>
                                     <th>Monto</th>
-                                    <th>Fecha</th>
+                                    <th>Inicio</th>
+                                    <th>Próximo Cobro</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
-                            <tbody id="paymentsTableBody">
-                                <!-- Dynamic content -->
-                            </tbody>
+                            <tbody id="subsTable"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Activity Tab -->
+            <!-- ACTIVITY TAB -->
             <div class="tab-content" id="activityTab">
-                <div class="data-section">
-                    <div class="data-header">
+                <div class="card">
+                    <div class="card-header">
                         <h2>📊 Actividad Reciente</h2>
                     </div>
-                    <div style="padding: 1.5rem;" id="activityList">
-                        <!-- Dynamic content -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Security Tab -->
-            <div class="tab-content" id="securityTab">
-                <div class="data-section">
-                    <div class="data-header">
-                        <h2>🔐 Sesiones Activas y Seguridad</h2>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h4 style="margin-bottom: 1rem;">Tu sesión actual</h4>
-                        <div style="background: var(--light); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-                            <p><strong>📍 IP:</strong> <span id="currentIP">Cargando...</span></p>
-                            <p><strong>🌐 Navegador:</strong> <span id="currentBrowser">Cargando...</span></p>
-                            <p><strong>⏰ Inicio:</strong> <span id="sessionStart">Cargando...</span></p>
-                        </div>
-
-                        <h4 style="margin-bottom: 1rem;">Últimos accesos</h4>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>IP</th>
-                                        <th>Navegador</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="securityTableBody">
-                                    <!-- Dynamic content -->
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTable"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- User Detail Modal -->
-    <div class="modal-overlay" id="userModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>👤 Detalles del Usuario</h3>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="modal-body" id="userModalBody">
-                <!-- Dynamic content -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
-                <button class="btn btn-primary" id="saveUserBtn">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
-        // ============================================
-        // CONFIGURACIÓN
-        // ============================================
-        const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0NjQ2NDIsImV4cCI6MjA1MjA0MDY0Mn0.VjrHEsXMa6QKfFr8vJfZgP2eSNM4_nS5lF7JmVLWqRM';
-        
-        let supabase;
-        let currentUser = null;
-        let allUsers = [];
-        let sessionTimer = null;
-        let sessionTimeLeft = 30 * 60; // 30 minutes
-        let otpTimer = null;
-        let otpTimeLeft = 60;
+        // DATOS DEMO
+        const users = [
+            { id: 1, name: 'Carlos Rodriguez', company: 'Cool Air HVAC', email: 'carlos@coolairhvac.com', date: '2024-01-15', plan: 'profesional', status: 'active' },
+            { id: 2, name: 'Maria Santos', company: 'Freeze Master', email: 'maria@freezemaster.com', date: '2024-01-20', plan: 'enterprise', status: 'active' },
+            { id: 3, name: 'Jose Martinez', company: 'Quick Fix AC', email: 'jose@quickfixac.com', date: '2024-02-01', plan: 'free', status: 'trial' },
+            { id: 4, name: 'Ana Garcia', company: 'Pro Electric', email: 'ana@proelectric.com', date: '2024-02-05', plan: 'profesional', status: 'active' },
+            { id: 5, name: 'Luis Hernandez', company: 'ComfortZone HVAC', email: 'luis@comfortzone.com', date: '2024-02-08', plan: 'free', status: 'trial' },
+            { id: 6, name: 'Roberto Mendez', company: 'Arctic Cooling', email: 'roberto@arctic.com', date: '2024-02-09', plan: 'profesional', status: 'active' }
+        ];
 
-        // Initialize Supabase
-        function initSupabase() {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        const subs = [
+            { name: 'Carlos Rodriguez', company: 'Cool Air HVAC', plan: 'profesional', amount: 149.99, start: '2024-01-15', next: '2024-03-15', status: 'active' },
+            { name: 'Maria Santos', company: 'Freeze Master', plan: 'enterprise', amount: 299.00, start: '2024-01-20', next: '2024-03-20', status: 'active' },
+            { name: 'Ana Garcia', company: 'Pro Electric', plan: 'profesional', amount: 149.99, start: '2024-02-05', next: '2024-03-05', status: 'active' },
+            { name: 'Roberto Mendez', company: 'Arctic Cooling', plan: 'profesional', amount: 149.99, start: '2024-02-09', next: '2024-03-09', status: 'active' }
+        ];
 
-        // ============================================
-        // AUTENTICACIÓN - PASO 1: Email & Password
-        // ============================================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const activity = [
+            { date: '2024-02-09 10:30', user: 'Mario Flores', action: 'Login', details: 'Acceso al panel admin' },
+            { date: '2024-02-09 09:15', user: 'Roberto Mendez', action: 'Registro', details: 'Nueva empresa registrada' },
+            { date: '2024-02-08 16:45', user: 'Carlos Rodriguez', action: 'Pago', details: 'Renovación plan Profesional' },
+            { date: '2024-02-08 14:20', user: 'Maria Santos', action: 'Cliente', details: 'Agregó 3 nuevos clientes' },
+            { date: '2024-02-07 11:00', user: 'Ana Garcia', action: 'Estimado', details: 'Creó estimado por $2,500' }
+        ];
+
+        let currentFilter = 'all';
+        let allUsers = [...users];
+
+        // LOGIN
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const errorEl = document.getElementById('loginError');
-            
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Verificando...';
-            errorEl.classList.remove('show');
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('errorMsg');
 
-            // Lista de emails autorizados como admin
-            const authorizedAdmins = [
-                'floresmario30@gmail.com',
-                'admin@trademastersusa.org',
-                'mario@acvolt.com'
-            ];
+            const validEmails = ['floresmario30@gmail.com', 'admin@trademastersusa.org', 'mario@acvolt.com'];
 
-            try {
-                // Verificar si el email está autorizado
-                if (!authorizedAdmins.includes(email.toLowerCase())) {
-                    throw new Error('Este email no tiene permisos de administrador');
-                }
-
-                // Verificar contraseña (para demo: cualquier contraseña de 4+ caracteres)
-                if (password.length < 4) {
-                    throw new Error('Contraseña debe tener al menos 4 caracteres');
-                }
-
-                // Usuario autorizado, guardar info y pasar al paso 2
-                currentUser = {
-                    email: email,
-                    name: email === 'floresmario30@gmail.com' ? 'Mario Flores Corona' : 'Admin',
-                    phone: '+1 *** *** **89'
-                };
-                
-                goToStep2(currentUser);
-                
-            } catch (err) {
-                errorEl.textContent = err.message;
-                errorEl.classList.add('show');
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Continuar →';
-            }
-        });
-        
-        // Función para ir al paso 2 (código SMS)
-
-        // ============================================
-        // AUTENTICACIÓN - PASO 2: Verificación SMS
-        // ============================================
-        function goToStep2(user) {
-            console.log('Going to step 2 with user:', user);
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-            
-            // Mostrar teléfono enmascarado
-            const phone = user.phone || '+1 *** *** **89';
-            document.getElementById('maskedPhone').textContent = phone;
-            
-            // Iniciar timer para reenvío
-            startOtpTimer();
-            
-            // En producción, aquí se enviaría el SMS real via Twilio
-            // Por ahora, simulamos el envío
-            console.log('SMS Code sent (demo): 123456');
-            alert('📱 Código de verificación (demo): 123456');
-        }
-
-        function maskPhone(phone) {
-            if (!phone) return '+1 *** *** **00';
-            const last4 = phone.slice(-4);
-            return `+1 *** *** **${last4.slice(-2)}`;
-        }
-
-        function startOtpTimer() {
-            otpTimeLeft = 60;
-            document.getElementById('resendTimer').style.display = 'inline';
-            document.getElementById('resendLink').style.display = 'none';
-            
-            otpTimer = setInterval(() => {
-                otpTimeLeft--;
-                document.getElementById('resendTimer').textContent = `Reenviar código en ${otpTimeLeft}s`;
-                
-                if (otpTimeLeft <= 0) {
-                    clearInterval(otpTimer);
-                    document.getElementById('resendTimer').style.display = 'none';
-                    document.getElementById('resendLink').style.display = 'inline';
-                }
-            }, 1000);
-        }
-
-        function resendCode() {
-            // En producción, reenviar SMS
-            console.log('SMS Code resent (demo): 123456');
-            startOtpTimer();
-        }
-
-        function backToStep1() {
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step1').classList.add('active');
-            clearInterval(otpTimer);
-            
-            // Limpiar OTP inputs
-            document.querySelectorAll('.otp-input').forEach(input => {
-                input.value = '';
-            });
-        }
-
-        // OTP Input handling
-        const otpInputs = document.querySelectorAll('.otp-input');
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value;
-                
-                // Solo permitir números
-                e.target.value = value.replace(/[^0-9]/g, '');
-                
-                // Auto-avanzar al siguiente input
-                if (value && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus();
-                }
-                
-                // Verificar si todos están llenos
-                checkOtpComplete();
-            });
-
-            input.addEventListener('keydown', (e) => {
-                // Retroceder con backspace
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    otpInputs[index - 1].focus();
-                }
-            });
-
-            // Permitir pegar código completo
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-                
-                pastedData.split('').forEach((char, i) => {
-                    if (otpInputs[i]) {
-                        otpInputs[i].value = char;
-                    }
-                });
-                
-                checkOtpComplete();
-            });
-        });
-
-        function checkOtpComplete() {
-            const otp = Array.from(otpInputs).map(i => i.value).join('');
-            document.getElementById('verifyOtpBtn').disabled = otp.length !== 6;
-        }
-
-        document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
-            const otp = Array.from(otpInputs).map(i => i.value).join('');
-            const errorEl = document.getElementById('otpError');
-            const btn = document.getElementById('verifyOtpBtn');
-            
-            btn.disabled = true;
-            btn.textContent = 'Verificando...';
-            errorEl.classList.remove('show');
-
-            // Para demo, aceptamos "123456" como código válido
-            if (otp === '123456') {
-                // Login exitoso
-                console.log('OTP verified successfully');
-                showDashboard();
+            if (validEmails.includes(email.toLowerCase()) && pass.length >= 4) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.add('active');
+                document.getElementById('userName').textContent = email.split('@')[0];
+                document.getElementById('userAvatar').textContent = email[0].toUpperCase();
+                loadData();
             } else {
-                errorEl.textContent = 'Código incorrecto. Usa: 123456';
-                errorEl.classList.add('show');
-                btn.disabled = false;
-                btn.textContent = '🔓 Verificar y Entrar';
+                error.textContent = 'Email no autorizado o contraseña muy corta (min 4 caracteres)';
+                error.classList.add('show');
             }
         });
-        
-        // ============================================
-        // DASHBOARD
-        // ============================================
-        function showDashboard() {
-            console.log('Showing dashboard...');
-            document.getElementById('authContainer').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.add('active');
-            
-            // Mostrar info del usuario
-            if (currentUser) {
-                document.getElementById('userName').textContent = currentUser.name || currentUser.email;
-                document.getElementById('userAvatar').textContent = getInitials(currentUser.name || currentUser.email);
-            }
-            
-            // Iniciar timer de sesión
-            startSessionTimer();
-            
-            // Cargar datos
-            loadAllData();
-            
-            // Mostrar info de seguridad
-            showSecurityInfo();
-        }
-
-        function startSessionTimer() {
-            sessionTimeLeft = 30 * 60; // 30 minutos
-            
-            sessionTimer = setInterval(() => {
-                sessionTimeLeft--;
-                
-                const minutes = Math.floor(sessionTimeLeft / 60);
-                const seconds = sessionTimeLeft % 60;
-                document.getElementById('sessionTimer').textContent = 
-                    `Sesión: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (sessionTimeLeft <= 0) {
-                    logout();
-                }
-                
-                // Advertencia cuando quedan 5 minutos
-                if (sessionTimeLeft === 300) {
-                    alert('Tu sesión expirará en 5 minutos. Guarda tu trabajo.');
-                }
-            }, 1000);
-        }
 
         function logout() {
-            clearInterval(sessionTimer);
-            clearInterval(otpTimer);
-            
-            // Sign out de Supabase
-            supabase.auth.signOut();
-            
-            // Reset UI
-            document.getElementById('authContainer').classList.remove('hidden');
-            document.getElementById('adminDashboard').classList.remove('active');
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step1').classList.add('active');
-            
-            // Limpiar inputs
-            document.getElementById('adminEmail').value = '';
-            document.getElementById('adminPassword').value = '';
-            document.querySelectorAll('.otp-input').forEach(i => i.value = '');
-            
-            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
         }
 
-        async function logActivity(type, details) {
-            try {
-                await supabase.from('user_activity').insert({
-                    user_email: currentUser?.email,
-                    action_type: type,
-                    action_details: { message: details },
-                    user_agent: navigator.userAgent
-                });
-            } catch (err) {
-                console.log('Error logging activity:', err);
-            }
-        }
-
-        function showSecurityInfo() {
-            document.getElementById('currentBrowser').textContent = getBrowserInfo();
-            document.getElementById('sessionStart').textContent = new Date().toLocaleString('es-MX');
-            
-            // Obtener IP (en producción usar un servicio real)
-            document.getElementById('currentIP').textContent = 'Detectando...';
-            fetch('https://api.ipify.org?format=json')
-                .then(r => r.json())
-                .then(data => {
-                    document.getElementById('currentIP').textContent = data.ip;
-                })
-                .catch(() => {
-                    document.getElementById('currentIP').textContent = 'No disponible';
-                });
-        }
-
-        function getBrowserInfo() {
-            const ua = navigator.userAgent;
-            if (ua.includes('Chrome')) return 'Chrome';
-            if (ua.includes('Firefox')) return 'Firefox';
-            if (ua.includes('Safari')) return 'Safari';
-            if (ua.includes('Edge')) return 'Edge';
-            return 'Desconocido';
-        }
-
-        // ============================================
-        // CARGAR DATOS
-        // ============================================
-        async function loadAllData() {
-            await loadUsers();
-            await loadPayments();
-            await loadActivity();
+        function loadData() {
+            renderUsers(users);
+            renderSubs();
+            renderActivity();
             updateStats();
         }
 
-        async function loadUsers() {
-            try {
-                const { data, error } = await supabase
-                    .from('companies')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                allUsers = data && data.length > 0 ? data : getDemoUsers();
-            } catch (err) {
-                console.log('Using demo data:', err);
-                allUsers = getDemoUsers();
-            }
-            
-            renderUsersTable(allUsers);
-        }
-
-        function getDemoUsers() {
-            return [
-                { id: '1', name: 'Cool Air HVAC', owner_name: 'Carlos Rodriguez', email: 'carlos@coolairhvac.com', phone: '(323) 555-1234', created_at: '2024-01-15T10:30:00Z', plan: 'profesional', subscription_status: 'active' },
-                { id: '2', name: 'Freeze Master Refrigeration', owner_name: 'Maria Santos', email: 'maria@freezemaster.com', phone: '(562) 555-5678', created_at: '2024-01-20T08:15:00Z', plan: 'enterprise', subscription_status: 'active' },
-                { id: '3', name: 'Quick Fix AC', owner_name: 'Jose Martinez', email: 'jose@quickfixac.com', phone: '(714) 555-9012', created_at: '2024-02-01T16:45:00Z', plan: 'free', subscription_status: 'trial' },
-                { id: '4', name: 'Pro Electric Solutions', owner_name: 'Ana Garcia', email: 'ana@proelectric.com', phone: '(213) 555-3456', created_at: '2024-02-05T12:00:00Z', plan: 'profesional', subscription_status: 'active' },
-                { id: '5', name: 'ComfortZone HVAC', owner_name: 'Luis Hernandez', email: 'luis@comfortzone.com', phone: '(818) 555-7890', created_at: '2024-02-08T09:30:00Z', plan: 'free', subscription_status: 'trial' },
-                { id: '6', name: 'Arctic Cooling Services', owner_name: 'Roberto Mendez', email: 'roberto@arcticcooling.com', phone: '(626) 555-4567', created_at: '2024-02-09T14:00:00Z', plan: 'profesional', subscription_status: 'active' }
-            ];
-        }
-
-        function renderUsersTable(users) {
-            const tbody = document.getElementById('usersTableBody');
-            
-            if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--gray);">No hay usuarios registrados</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = users.map(user => `
-                <tr>
+        function renderUsers(data) {
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = data.map(u => `
+                <tr data-plan="${u.plan}">
                     <td>
-                        <div class="user-info">
-                            <div class="user-avatar">${getInitials(user.owner_name || user.name)}</div>
-                            <div class="user-details">
-                                <h4>${user.owner_name || 'Sin nombre'}</h4>
-                                <p>${user.email || 'Sin email'}</p>
+                        <div class="user-cell">
+                            <div class="avatar">${u.name.split(' ').map(n=>n[0]).join('')}</div>
+                            <div>
+                                <h4>${u.name}</h4>
+                                <p>${u.email}</p>
                             </div>
                         </div>
                     </td>
-                    <td>${user.name || '-'}</td>
-                    <td>${formatDate(user.created_at)}</td>
-                    <td><span class="badge plan-${user.plan || 'free'}">${capitalizeFirst(user.plan || 'free')}</span></td>
-                    <td>${getStatusBadge(user.subscription_status || 'trial')}</td>
+                    <td>${u.company}</td>
+                    <td>${u.date}</td>
+                    <td><span class="badge ${getPlanBadge(u.plan)}">${u.plan}</span></td>
+                    <td><span class="badge ${getStatusBadge(u.status)}">${u.status === 'active' ? '✓ Activo' : '⏱ Trial'}</span></td>
                     <td>
                         <div class="actions">
-                            <button class="action-btn" onclick="viewUser('${user.id}')" title="Ver">👁️</button>
-                            <button class="action-btn" onclick="editUser('${user.id}')" title="Editar">✏️</button>
+                            <button class="action-btn" onclick="alert('Ver usuario: ${u.name}')">👁</button>
+                            <button class="action-btn" onclick="alert('Editar: ${u.name}')">✏️</button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function loadPayments() {
-            const payments = [
-                { user: 'Carlos Rodriguez', company: 'Cool Air HVAC', plan: 'profesional', amount: 149.99, date: '2024-02-09', status: 'succeeded' },
-                { user: 'Maria Santos', company: 'Freeze Master', plan: 'enterprise', amount: 299.00, date: '2024-02-08', status: 'succeeded' },
-                { user: 'Ana Garcia', company: 'Pro Electric', plan: 'profesional', amount: 149.99, date: '2024-02-05', status: 'succeeded' }
-            ];
-
-            const tbody = document.getElementById('paymentsTableBody');
-            tbody.innerHTML = payments.map(p => `
+        function renderSubs() {
+            const tbody = document.getElementById('subsTable');
+            tbody.innerHTML = subs.map(s => `
                 <tr>
                     <td>
-                        <div class="user-details">
-                            <h4>${p.user}</h4>
-                            <p>${p.company}</p>
+                        <div class="user-cell">
+                            <div class="avatar">${s.name.split(' ').map(n=>n[0]).join('')}</div>
+                            <div>
+                                <h4>${s.name}</h4>
+                                <p>${s.company}</p>
+                            </div>
                         </div>
                     </td>
-                    <td><span class="badge plan-${p.plan}">${capitalizeFirst(p.plan)}</span></td>
-                    <td><strong>$${p.amount.toFixed(2)}</strong></td>
-                    <td>${p.date}</td>
-                    <td><span class="badge badge-success">✓ Pagado</span></td>
+                    <td><span class="badge ${getPlanBadge(s.plan)}">${s.plan}</span></td>
+                    <td><strong>$${s.amount.toFixed(2)}</strong>/mes</td>
+                    <td>${s.start}</td>
+                    <td>${s.next}</td>
+                    <td><span class="badge badge-success">✓ Activo</span></td>
                 </tr>
             `).join('');
         }
 
-        async function loadActivity() {
-            const activities = [
-                { type: 'login', icon: '🔐', user: 'Mario Flores', action: 'Inició sesión', time: 'Hace 2 min' },
-                { type: 'signup', icon: '👤', user: 'Luis Hernandez', action: 'Se registró como nueva empresa', time: 'Hace 1 hora' },
-                { type: 'payment', icon: '💳', user: 'Carlos Rodriguez', action: 'Pagó suscripción Profesional', time: 'Hace 3 horas' },
-                { type: 'action', icon: '📋', user: 'Maria Santos', action: 'Creó 5 nuevos clientes', time: 'Hace 5 horas' },
-                { type: 'login', icon: '🔐', user: 'Ana Garcia', action: 'Inició sesión', time: 'Ayer' }
-            ];
-
-            const list = document.getElementById('activityList');
-            list.innerHTML = activities.map(a => `
-                <div class="activity-item">
-                    <div class="activity-icon ${a.type}">${a.icon}</div>
-                    <div class="activity-details">
-                        <h4>${a.user}</h4>
-                        <p>${a.action}</p>
-                    </div>
-                    <span class="activity-time">${a.time}</span>
-                </div>
-            `).join('');
-
-            // Security log
-            const securityLog = [
-                { date: '2024-02-09 10:30', ip: '192.168.1.100', browser: 'Chrome', status: 'success' },
-                { date: '2024-02-08 14:20', ip: '192.168.1.100', browser: 'Chrome', status: 'success' },
-                { date: '2024-02-07 09:15', ip: '192.168.1.50', browser: 'Safari', status: 'success' }
-            ];
-
-            document.getElementById('securityTableBody').innerHTML = securityLog.map(l => `
+        function renderActivity() {
+            const tbody = document.getElementById('activityTable');
+            tbody.innerHTML = activity.map(a => `
                 <tr>
-                    <td>${l.date}</td>
-                    <td>${l.ip}</td>
-                    <td>${l.browser}</td>
-                    <td><span class="badge badge-success">✓ Exitoso</span></td>
+                    <td>${a.date}</td>
+                    <td><strong>${a.user}</strong></td>
+                    <td><span class="badge badge-blue">${a.action}</span></td>
+                    <td>${a.details}</td>
                 </tr>
             `).join('');
         }
 
         function updateStats() {
-            const total = allUsers.length;
-            const paid = allUsers.filter(u => u.plan && u.plan !== 'free').length;
-            const free = allUsers.filter(u => !u.plan || u.plan === 'free').length;
-            
-            const proCount = allUsers.filter(u => u.plan === 'profesional').length;
-            const entCount = allUsers.filter(u => u.plan === 'enterprise').length;
-            const mrr = (proCount * 149.99) + (entCount * 299);
+            const total = users.length;
+            const paid = users.filter(u => u.plan !== 'free').length;
+            const free = users.filter(u => u.plan === 'free').length;
+            const mrr = subs.reduce((sum, s) => sum + s.amount, 0);
 
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('paidUsers').textContent = paid;
-            document.getElementById('freeUsers').textContent = free;
-            document.getElementById('monthlyRevenue').textContent = `$${mrr.toFixed(0)}`;
-            document.getElementById('mrrAmount').textContent = `$${mrr.toFixed(2)}`;
-            document.getElementById('proCount').textContent = proCount;
-            document.getElementById('entCount').textContent = entCount;
+            document.getElementById('statUsers').textContent = total;
+            document.getElementById('statPaid').textContent = paid;
+            document.getElementById('statFree').textContent = free;
+            document.getElementById('statMRR').textContent = '$' + mrr.toFixed(0);
         }
 
-        // ============================================
-        // FILTROS Y BÚSQUEDA
-        // ============================================
-        function filterUsers() {
-            const search = document.getElementById('searchUsers').value.toLowerCase();
-            const filtered = allUsers.filter(u => 
-                (u.name && u.name.toLowerCase().includes(search)) ||
-                (u.owner_name && u.owner_name.toLowerCase().includes(search)) ||
-                (u.email && u.email.toLowerCase().includes(search))
-            );
-            renderUsersTable(filtered);
-        }
-
-        function filterByPlan(plan, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            if (plan === 'all') {
-                renderUsersTable(allUsers);
-            } else if (plan === 'trial') {
-                renderUsersTable(allUsers.filter(u => u.subscription_status === 'trial'));
-            } else {
-                renderUsersTable(allUsers.filter(u => u.plan === plan));
-            }
-        }
-
-        // ============================================
-        // TABS
-        // ============================================
-        function switchTab(tabName, btn) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(tabName + 'Tab').classList.add('active');
-        }
-
-        // ============================================
-        // MODALES
-        // ============================================
-        function viewUser(userId) {
-            const user = allUsers.find(u => u.id === userId);
-            if (!user) return;
-
-            const modal = document.getElementById('userModal');
-            const body = document.getElementById('userModalBody');
-
-            body.innerHTML = `
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto;">
-                        ${getInitials(user.owner_name || user.name)}
-                    </div>
-                    <h3 style="margin-top: 1rem;">${user.owner_name || 'Sin nombre'}</h3>
-                    <p style="color: var(--gray);">${user.name}</p>
-                </div>
-                
-                <div style="display: grid; gap: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--light); border-radius: 0.5rem;">
-                        <span>📧 Email</span>
-                        <strong>${user.email || 'No registrado'}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--light); border-radius: 0.5rem;">
-                        <span>📱 Teléfono</span>
-                        <strong>${user.phone || 'No registrado'}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--light); border-radius: 0.5rem;">
-                        <span>📅 Registro</span>
-                        <strong>${formatDate(user.created_at)}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--light); border-radius: 0.5rem;">
-                        <span>💳 Plan</span>
-                        <span class="badge plan-${user.plan || 'free'}">${capitalizeFirst(user.plan || 'free')}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--light); border-radius: 0.5rem;">
-                        <span>🔄 Estado</span>
-                        ${getStatusBadge(user.subscription_status || 'trial')}
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('saveUserBtn').style.display = 'none';
-            modal.classList.add('active');
-        }
-
-        function editUser(userId) {
-            const user = allUsers.find(u => u.id === userId);
-            if (!user) return;
-
-            const modal = document.getElementById('userModal');
-            const body = document.getElementById('userModalBody');
-
-            body.innerHTML = `
-                <form id="editUserForm">
-                    <div class="form-group">
-                        <label>Nombre del Dueño</label>
-                        <input type="text" value="${user.owner_name || ''}" id="editOwnerName">
-                    </div>
-                    <div class="form-group">
-                        <label>Empresa</label>
-                        <input type="text" value="${user.name || ''}" id="editCompanyName">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" value="${user.email || ''}" id="editEmail">
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="tel" value="${user.phone || ''}" id="editPhone">
-                    </div>
-                    <div class="form-group">
-                        <label>Plan</label>
-                        <select id="editPlan" style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 0.5rem;">
-                            <option value="free" ${user.plan === 'free' ? 'selected' : ''}>Free</option>
-                            <option value="profesional" ${user.plan === 'profesional' ? 'selected' : ''}>Profesional ($149.99/mes)</option>
-                            <option value="enterprise" ${user.plan === 'enterprise' ? 'selected' : ''}>Enterprise ($299/mes)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Estado</label>
-                        <select id="editStatus" style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 0.5rem;">
-                            <option value="active" ${user.subscription_status === 'active' ? 'selected' : ''}>Activo</option>
-                            <option value="trial" ${user.subscription_status === 'trial' ? 'selected' : ''}>Trial</option>
-                            <option value="suspended" ${user.subscription_status === 'suspended' ? 'selected' : ''}>Suspendido</option>
-                            <option value="cancelled" ${user.subscription_status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
-                        </select>
-                    </div>
-                </form>
-            `;
-
-            document.getElementById('saveUserBtn').style.display = 'inline-flex';
-            document.getElementById('saveUserBtn').onclick = () => saveUser(userId);
-            modal.classList.add('active');
-        }
-
-        async function saveUser(userId) {
-            const updates = {
-                owner_name: document.getElementById('editOwnerName').value,
-                name: document.getElementById('editCompanyName').value,
-                email: document.getElementById('editEmail').value,
-                phone: document.getElementById('editPhone').value,
-                plan: document.getElementById('editPlan').value,
-                subscription_status: document.getElementById('editStatus').value
-            };
-
-            try {
-                const { error } = await supabase
-                    .from('companies')
-                    .update(updates)
-                    .eq('id', userId);
-
-                if (error) throw error;
-                
-                await logActivity('edit_user', `Editó usuario: ${updates.email}`);
-            } catch (err) {
-                console.log('Saving locally:', err);
-                const idx = allUsers.findIndex(u => u.id === userId);
-                if (idx !== -1) {
-                    allUsers[idx] = { ...allUsers[idx], ...updates };
-                }
-            }
-            
-            renderUsersTable(allUsers);
-            updateStats();
-            closeModal();
-        }
-
-        function closeModal() {
-            document.getElementById('userModal').classList.remove('active');
-        }
-
-        // ============================================
-        // UTILIDADES
-        // ============================================
-        function getInitials(name) {
-            if (!name) return '?';
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            return new Date(dateStr).toLocaleDateString('es-MX', { 
-                year: 'numeric', month: 'short', day: 'numeric' 
-            });
-        }
-
-        function capitalizeFirst(str) {
-            if (!str) return '';
-            return str.charAt(0).toUpperCase() + str.slice(1);
+        function getPlanBadge(plan) {
+            if (plan === 'enterprise') return 'badge-purple';
+            if (plan === 'profesional') return 'badge-warning';
+            return 'badge-gray';
         }
 
         function getStatusBadge(status) {
-            const badges = {
-                'active': '<span class="badge badge-success">✓ Activo</span>',
-                'trial': '<span class="badge badge-warning">⏱️ Trial</span>',
-                'suspended': '<span class="badge badge-danger">⛔ Suspendido</span>',
-                'cancelled': '<span class="badge badge-gray">✕ Cancelado</span>',
-                'past_due': '<span class="badge badge-danger">⚠️ Pago vencido</span>'
-            };
-            return badges[status] || '<span class="badge badge-gray">Desconocido</span>';
+            return status === 'active' ? 'badge-success' : 'badge-warning';
         }
 
-        function refreshData() {
-            loadAllData();
+        function showTab(tab, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
         }
 
-        // ============================================
-        // INICIALIZACIÓN
-        // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            initSupabase();
-        });
+        function filterPlan(plan, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = plan;
+            
+            if (plan === 'all') {
+                renderUsers(users);
+            } else {
+                renderUsers(users.filter(u => u.plan === plan));
+            }
+        }
+
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = users.filter(u => 
+                u.name.toLowerCase().includes(search) || 
+                u.company.toLowerCase().includes(search) ||
+                u.email.toLowerCase().includes(search)
+            );
+            renderUsers(filtered);
+        }
     </script>
 </body>
 </html>
