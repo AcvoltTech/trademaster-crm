@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trade Master">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <title>Trade Master - CRM HVACR</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -99,6 +105,25 @@
               <button type="submit" class="btn-primary" id="loginBtn">Iniciar Sesión</button>
             </form>
             <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
+            
+            <!-- Install App Instructions -->
+            <div id="installInstructions" style="margin-top:20px;padding:16px;background:#eff6ff;border-radius:12px;border:1px solid #3b82f6;">
+              <h4 style="margin:0 0 8px 0;color:#1e3a5f;font-size:14px;">📱 ¿Eres técnico o vendedor?</h4>
+              <p style="margin:0 0 12px 0;font-size:12px;color:#475569;">Instala Trade Master en tu celular para acceso rápido:</p>
+              
+              <!-- PWA Install Button (for supported browsers) -->
+              <button id="pwaInstallBtn" onclick="installPWA()" style="display:none;width:100%;padding:12px;background:#f47621;color:white;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px;">
+                📲 Instalar App en mi Celular
+              </button>
+              
+              <!-- Manual instructions -->
+              <div id="manualInstallInstructions" style="font-size:11px;color:#64748b;">
+                <p style="margin:0 0 6px 0;"><strong>iPhone (Safari):</strong></p>
+                <p style="margin:0 0 8px 0;">1. Toca <span style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">⬆️ Compartir</span> → 2. <span style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">Agregar a Inicio</span></p>
+                <p style="margin:0 0 6px 0;"><strong>Android (Chrome):</strong></p>
+                <p style="margin:0;">1. Toca <span style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">⋮ Menú</span> → 2. <span style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">Instalar app</span></p>
+              </div>
+            </div>
           </div>
           <div id="registerForm" class="auth-form">
             <h2>Crear Cuenta Empresarial</h2>
