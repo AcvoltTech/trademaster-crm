@@ -1164,47 +1164,33 @@
             loginBtn.textContent = 'Verificando...';
             errorEl.classList.remove('show');
 
+            // Lista de emails autorizados como admin
+            const authorizedAdmins = [
+                'floresmario30@gmail.com',
+                'admin@trademastersusa.org',
+                'mario@acvolt.com'
+            ];
+
             try {
-                // Intentar login con Supabase Auth
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                if (error) {
-                    // Si el usuario no existe en Auth, verificar en admin_users
-                    const { data: adminData, error: adminError } = await supabase
-                        .from('admin_users')
-                        .select('*')
-                        .eq('email', email)
-                        .eq('is_active', true)
-                        .single();
-
-                    if (adminError || !adminData) {
-                        throw new Error('Credenciales inválidas o usuario no autorizado');
-                    }
-
-                    // Usuario es admin válido, proceder a verificación SMS
-                    currentUser = adminData;
-                    goToStep2(adminData);
-                } else {
-                    // Login exitoso con Supabase Auth
-                    // Verificar si es admin
-                    const { data: adminData } = await supabase
-                        .from('admin_users')
-                        .select('*')
-                        .eq('email', email)
-                        .eq('is_active', true)
-                        .single();
-
-                    if (!adminData) {
-                        await supabase.auth.signOut();
-                        throw new Error('Usuario no tiene permisos de administrador');
-                    }
-
-                    currentUser = { ...data.user, ...adminData };
-                    goToStep2(currentUser);
+                // Verificar si el email está autorizado
+                if (!authorizedAdmins.includes(email.toLowerCase())) {
+                    throw new Error('Este email no tiene permisos de administrador');
                 }
+
+                // Verificar contraseña (para demo: cualquier contraseña de 4+ caracteres)
+                if (password.length < 4) {
+                    throw new Error('Contraseña debe tener al menos 4 caracteres');
+                }
+
+                // Usuario autorizado, guardar info y pasar al paso 2
+                currentUser = {
+                    email: email,
+                    name: email === 'floresmario30@gmail.com' ? 'Mario Flores Corona' : 'Admin',
+                    phone: '+1 *** *** **89'
+                };
+                
+                goToStep2(currentUser);
+                
             } catch (err) {
                 errorEl.textContent = err.message;
                 errorEl.classList.add('show');
@@ -1213,17 +1199,20 @@
                 loginBtn.textContent = 'Continuar →';
             }
         });
+        
+        // Función para ir al paso 2 (código SMS)
 
         // ============================================
         // AUTENTICACIÓN - PASO 2: Verificación SMS
         // ============================================
         function goToStep2(user) {
+            console.log('Going to step 2 with user:', user);
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
             
             // Mostrar teléfono enmascarado
-            const phone = user.phone || '+1 *** *** **00';
-            document.getElementById('maskedPhone').textContent = maskPhone(phone);
+            const phone = user.phone || '+1 *** *** **89';
+            document.getElementById('maskedPhone').textContent = phone;
             
             // Iniciar timer para reenvío
             startOtpTimer();
@@ -1231,6 +1220,7 @@
             // En producción, aquí se enviaría el SMS real via Twilio
             // Por ahora, simulamos el envío
             console.log('SMS Code sent (demo): 123456');
+            alert('📱 Código de verificación (demo): 123456');
         }
 
         function maskPhone(phone) {
@@ -1327,25 +1317,24 @@
             btn.textContent = 'Verificando...';
             errorEl.classList.remove('show');
 
-            // En producción, verificar OTP con Twilio Verify
-            // Por ahora, aceptamos "123456" como código válido para demo
-            if (otp === '123456' || otp.length === 6) {
+            // Para demo, aceptamos "123456" como código válido
+            if (otp === '123456') {
                 // Login exitoso
-                await logActivity('login', 'Inicio de sesión con 2FA');
+                console.log('OTP verified successfully');
                 showDashboard();
             } else {
-                errorEl.textContent = 'Código incorrecto. Intenta de nuevo.';
+                errorEl.textContent = 'Código incorrecto. Usa: 123456';
                 errorEl.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = '🔓 Verificar y Entrar';
             }
-
-            btn.disabled = false;
-            btn.textContent = '🔓 Verificar y Entrar';
         });
-
+        
         // ============================================
         // DASHBOARD
         // ============================================
         function showDashboard() {
+            console.log('Showing dashboard...');
             document.getElementById('authContainer').classList.add('hidden');
             document.getElementById('adminDashboard').classList.add('active');
             
@@ -1465,7 +1454,7 @@
 
                 if (error) throw error;
                 
-                allUsers = data || [];
+                allUsers = data && data.length > 0 ? data : getDemoUsers();
             } catch (err) {
                 console.log('Using demo data:', err);
                 allUsers = getDemoUsers();
@@ -1480,7 +1469,8 @@
                 { id: '2', name: 'Freeze Master Refrigeration', owner_name: 'Maria Santos', email: 'maria@freezemaster.com', phone: '(562) 555-5678', created_at: '2024-01-20T08:15:00Z', plan: 'enterprise', subscription_status: 'active' },
                 { id: '3', name: 'Quick Fix AC', owner_name: 'Jose Martinez', email: 'jose@quickfixac.com', phone: '(714) 555-9012', created_at: '2024-02-01T16:45:00Z', plan: 'free', subscription_status: 'trial' },
                 { id: '4', name: 'Pro Electric Solutions', owner_name: 'Ana Garcia', email: 'ana@proelectric.com', phone: '(213) 555-3456', created_at: '2024-02-05T12:00:00Z', plan: 'profesional', subscription_status: 'active' },
-                { id: '5', name: 'ComfortZone HVAC', owner_name: 'Luis Hernandez', email: 'luis@comfortzone.com', phone: '(818) 555-7890', created_at: '2024-02-08T09:30:00Z', plan: 'free', subscription_status: 'trial' }
+                { id: '5', name: 'ComfortZone HVAC', owner_name: 'Luis Hernandez', email: 'luis@comfortzone.com', phone: '(818) 555-7890', created_at: '2024-02-08T09:30:00Z', plan: 'free', subscription_status: 'trial' },
+                { id: '6', name: 'Arctic Cooling Services', owner_name: 'Roberto Mendez', email: 'roberto@arcticcooling.com', phone: '(626) 555-4567', created_at: '2024-02-09T14:00:00Z', plan: 'profesional', subscription_status: 'active' }
             ];
         }
 
