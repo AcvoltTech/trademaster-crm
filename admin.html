@@ -141,6 +141,9 @@
             </div>
             <button class="btn" id="loginBtn">Entrar →</button>
             <p class="hint">Solo acceso autorizado</p>
+            <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;">
+              <a href="#" onclick="forgotPassword()" style="color:var(--primary);text-decoration:none;font-size:14px;">🔑 ¿Olvidaste tu contraseña?</a>
+            </div>
         </div>
     </div>
 
@@ -795,6 +798,26 @@
     };
 
     document.addEventListener('DOMContentLoaded', init);
+    
+    // Forgot Password
+    window.forgotPassword = function() {
+        var choice = confirm('¿Cómo quieres recuperar tu contraseña?\n\nOK = Por Email\nCancelar = Por Teléfono/WhatsApp');
+        
+        if (choice) {
+            // Email
+            var email = prompt('Ingresa tu email autorizado:');
+            if (email && VALID_EMAILS.indexOf(email.toLowerCase()) >= 0) {
+                alert('📧 Envía un email a:\ntrademastersusacrm@gmail.com\n\nAsunto: Reset Password Admin\n\nIncluye tu email: ' + email + '\n\nTe responderemos con tu nueva contraseña.');
+                window.open('mailto:trademastersusacrm@gmail.com?subject=Reset%20Password%20Admin&body=Email:%20' + encodeURIComponent(email));
+            } else if (email) {
+                alert('❌ Este email no está autorizado para el panel de admin.');
+            }
+        } else {
+            // Phone/WhatsApp
+            alert('📱 Contacta por WhatsApp:\n\n+1 (909) 639-0448\n\nEscribe: "Necesito resetear mi contraseña del Admin Panel"\n\nIncluye tu email autorizado.');
+            window.open('https://wa.me/19096390448?text=Necesito%20resetear%20mi%20contraseña%20del%20Admin%20Panel');
+        }
+    };
 })();
 </script>
 </body>
