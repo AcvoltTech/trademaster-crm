@@ -303,21 +303,21 @@
 
             <!-- HCP-Style Summary Cards - CENTRO DE MANDO -->
             <div class="hcp-summary-grid">
-              <!-- ESTIMADOS -->
-              <div class="hcp-summary-card" onclick="showSection('jobs')" style="border-top:3px solid #f59e0b;">
+              <!-- TRABAJOS GANADOS -->
+              <div class="hcp-summary-card" onclick="showSection('jobs');setTimeout(filterWonJobs,300);" style="border-top:3px solid #10b981;">
                 <div class="hcp-summary-header">
-                  <span class="hcp-summary-icon">📋</span>
-                  <span data-i18n="dash_estimates">Estimados</span>
-                  <button class="hcp-plus-btn" onclick="event.stopPropagation();quickAddAction('estimate')">+</button>
+                  <span class="hcp-summary-icon">🏆</span>
+                  <span>Trabajos Ganados</span>
+                  <button class="hcp-plus-btn" onclick="event.stopPropagation();quickAddAction('job')">+</button>
                 </div>
                 <div class="hcp-summary-body">
-                  <span class="hcp-big-num" id="hcpOpenEstimates">0</span>
+                  <span class="hcp-big-num" id="hcpWonJobs">0</span>
                   <div class="hcp-summary-detail">
-                    <span data-i18n="dash_open_estimates">Estimados abiertos</span> <span class="hcp-summary-info">ⓘ</span>
+                    <span>Por agendar</span> <span class="hcp-summary-info">ⓘ</span>
                   </div>
-                  <span class="hcp-sub-amount" id="hcpEstimatesAmount">$0.00</span>
+                  <span class="hcp-sub-amount" id="hcpWonJobsAmount">$0.00</span>
                 </div>
-                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')" data-i18n="dash_view_all_estimates">Ver todos los estimados</a>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')">Ver trabajos ganados</a>
               </div>
 
               <!-- LLAMADAS DE SERVICIO -->
@@ -385,11 +385,6 @@
               <div class="card-top">
                 <h3>🗺️ Mapa de Operaciones en Tiempo Real</h3>
                 <div style="display:flex;gap:8px;align-items:center;">
-                  <div class="dispatch-legend" style="font-size:11px;">
-                    <span class="legend-item">👷 Técnicos</span>
-                    <span class="legend-item">📍 Trabajos</span>
-                    <span class="legend-item">🏠 Clientes</span>
-                  </div>
                   <button class="btn-secondary btn-sm" onclick="refreshCommandCenterMap()">🔄</button>
                 </div>
               </div>
@@ -397,8 +392,127 @@
               <div style="display:flex;gap:16px;padding:12px 0 0 0;flex-wrap:wrap;font-size:12px;">
                 <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#10b981;border-radius:50%;display:inline-block;"></span> Técnico Disponible</div>
                 <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#f59e0b;border-radius:50%;display:inline-block;"></span> Técnico Ocupado</div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#8b5cf6;border-radius:50%;display:inline-block;"></span> Vendedor</div>
                 <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#ef4444;border-radius:50%;display:inline-block;"></span> Trabajo Nuevo</div>
                 <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#3b82f6;border-radius:50%;display:inline-block;"></span> Trabajo En Progreso</div>
+              </div>
+            </div>
+
+            <!-- ESTADO DE TODOS LOS EMPLEADOS -->
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-top">
+                <h3>👥 Estado de Todo el Personal</h3>
+                <div style="display:flex;gap:8px;">
+                  <span style="font-size:11px;color:#64748b;">👷 Técnicos: <strong id="totalTechsCount">0</strong></span>
+                  <span style="font-size:11px;color:#64748b;">🏠 Vendedores: <strong id="totalAdvisorsCount">0</strong></span>
+                </div>
+              </div>
+              <div id="allEmployeesStatusList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;max-height:300px;overflow-y:auto;padding:8px 0;"></div>
+            </div>
+
+            <!-- INSTALACIONES EN PROGRESO -->
+            <div class="card" style="margin-bottom:20px;border:2px solid #8b5cf6;">
+              <div class="card-top">
+                <h3>🔧 Instalaciones en Progreso</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span style="font-size:12px;color:#64748b;">Total: <strong id="installationsCount">0</strong></span>
+                  <button class="btn-primary btn-sm" onclick="showNewInstallationModal()">+ Nueva Instalación</button>
+                </div>
+              </div>
+              
+              <!-- Installation Status Pipeline -->
+              <div style="display:flex;gap:4px;margin:16px 0;overflow-x:auto;padding-bottom:8px;">
+                <div style="flex:1;min-width:100px;text-align:center;padding:8px;background:#fef3c7;border-radius:8px;">
+                  <div style="font-size:20px;font-weight:bold;color:#f59e0b;" id="instStatusIniciado">0</div>
+                  <div style="font-size:10px;color:#92400e;">🚀 INICIADO</div>
+                </div>
+                <div style="display:flex;align-items:center;color:#cbd5e1;">→</div>
+                <div style="flex:1;min-width:100px;text-align:center;padding:8px;background:#dbeafe;border-radius:8px;">
+                  <div style="font-size:20px;font-weight:bold;color:#3b82f6;" id="instStatusProgreso">0</div>
+                  <div style="font-size:10px;color:#1e40af;">🔧 EN PROGRESO</div>
+                </div>
+                <div style="display:flex;align-items:center;color:#cbd5e1;">→</div>
+                <div style="flex:1;min-width:100px;text-align:center;padding:8px;background:#fce7f3;border-radius:8px;">
+                  <div style="font-size:20px;font-weight:bold;color:#ec4899;" id="instStatusTerminado">0</div>
+                  <div style="font-size:10px;color:#9d174d;">✅ TERMINADO</div>
+                </div>
+                <div style="display:flex;align-items:center;color:#cbd5e1;">→</div>
+                <div style="flex:1;min-width:100px;text-align:center;padding:8px;background:#e0e7ff;border-radius:8px;">
+                  <div style="font-size:20px;font-weight:bold;color:#6366f1;" id="instStatusDocumentado">0</div>
+                  <div style="font-size:10px;color:#3730a3;">📋 DOCUMENTADO</div>
+                </div>
+                <div style="display:flex;align-items:center;color:#cbd5e1;">→</div>
+                <div style="flex:1;min-width:100px;text-align:center;padding:8px;background:#d1fae5;border-radius:8px;">
+                  <div style="font-size:20px;font-weight:bold;color:#10b981;" id="instStatusFinalizado">0</div>
+                  <div style="font-size:10px;color:#065f46;">🏁 FINALIZADO</div>
+                </div>
+              </div>
+
+              <!-- Installations List -->
+              <div id="installationsList" style="max-height:400px;overflow-y:auto;"></div>
+            </div>
+
+            <!-- New Installation Modal -->
+            <div id="newInstallationModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+              <div style="background:white;border-radius:12px;padding:24px;max-width:600px;width:95%;max-height:90vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                  <h3 style="margin:0;color:#1e3a5f;">🔧 Nueva Instalación</h3>
+                  <button onclick="closeInstallationModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+                </div>
+                <form id="newInstallationForm" onsubmit="handleCreateInstallation(event)">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>👤 Cliente</label>
+                      <input type="text" id="instClientName" required placeholder="Nombre del cliente">
+                    </div>
+                    <div class="form-group">
+                      <label>📱 Teléfono</label>
+                      <input type="tel" id="instClientPhone" placeholder="(555) 123-4567">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>📍 Dirección de Instalación</label>
+                    <input type="text" id="instAddress" required placeholder="Dirección completa">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>🏠 Vendedor (Home Advisor)</label>
+                      <select id="instAdvisorId">
+                        <option value="">-- Seleccionar vendedor --</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>💰 Precio de Venta</label>
+                      <input type="number" id="instSalePrice" step="0.01" placeholder="0.00">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>📅 Fecha de Inicio</label>
+                      <input type="date" id="instStartDate" required>
+                    </div>
+                    <div class="form-group">
+                      <label>📅 Fecha Estimada de Fin</label>
+                      <input type="date" id="instEndDate">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>👷 Técnicos Asignados</label>
+                    <div id="instTechCheckboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:8px;background:var(--bg-input);border-radius:8px;"></div>
+                  </div>
+                  <div class="form-group">
+                    <label>🔧 Tipo de Equipo</label>
+                    <input type="text" id="instEquipmentType" placeholder="Ej: AC Split 3 Ton, Furnace 80K BTU">
+                  </div>
+                  <div class="form-group">
+                    <label>📝 Notas</label>
+                    <textarea id="instNotes" rows="2" placeholder="Notas adicionales..."></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary">💾 Crear Instalación</button>
+                    <button type="button" class="btn-secondary" onclick="closeInstallationModal()">Cancelar</button>
+                  </div>
+                </form>
               </div>
             </div>
 
