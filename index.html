@@ -229,8 +229,14 @@
       </aside>
 
       <main class="main-content">
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
+        
         <header class="top-bar">
-          <h1 id="pageTitle">Tablero</h1>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+            <h1 id="pageTitle">Tablero</h1>
+          </div>
           <div class="top-bar-right">
             <!-- Global Search -->
             <div class="global-search-wrap">
