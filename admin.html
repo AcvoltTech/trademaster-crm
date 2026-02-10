@@ -4,618 +4,298 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trade Master Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #1e40af;
-            --primary-dark: #1e3a8a;
-            --accent: #f97316;
-            --success: #22c55e;
-            --warning: #eab308;
-            --danger: #ef4444;
-            --dark: #1f2937;
-            --gray: #6b7280;
-            --light: #f3f4f6;
-            --white: #ffffff;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--light); min-height: 100vh; }
-        
-        /* Login */
-        .login-container {
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        }
-        .login-container.hidden { display: none; }
-        .login-box {
-            background: var(--white); padding: 2.5rem; border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 400px;
-        }
-        .login-logo { text-align: center; margin-bottom: 2rem; }
-        .login-logo h1 { font-size: 1.75rem; color: var(--primary); }
-        .login-logo h1 span { color: var(--accent); }
-        .login-logo p { color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--dark); }
-        .form-group input {
-            width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb;
-            border-radius: 0.5rem; font-size: 1rem;
-        }
-        .form-group input:focus { outline: none; border-color: var(--primary); }
-        .btn {
-            display: block; width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem;
-            font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center;
-        }
-        .btn-primary { background: var(--primary); color: var(--white); }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-danger { background: var(--danger); color: var(--white); }
-        .error-msg { background: #fee2e2; color: #dc2626; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; }
-        .error-msg.show { display: block; }
-        
-        /* Dashboard */
-        .dashboard { display: none; }
-        .dashboard.active { display: block; }
-        .header {
-            background: var(--white); padding: 1rem 2rem; display: flex;
-            justify-content: space-between; align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
-        }
-        .header h1 { font-size: 1.5rem; color: var(--primary); }
-        .header h1 span { color: var(--accent); }
-        .header-right { display: flex; align-items: center; gap: 1rem; }
-        .user-badge {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--light); padding: 0.5rem 1rem; border-radius: 2rem;
-        }
-        .avatar {
-            width: 36px; height: 36px; background: var(--primary); color: var(--white);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;
-        }
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 0.5rem; border: none; cursor: pointer; }
-        .btn-refresh { background: var(--light); color: var(--dark); }
-        .btn-refresh:hover { background: #e5e7eb; }
-        
-        /* Stats */
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; padding: 2rem; }
-        .stat-card {
-            background: var(--white); padding: 1.5rem; border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .stat-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .stat-icon.blue { background: #dbeafe; }
-        .stat-icon.green { background: #dcfce7; }
-        .stat-icon.orange { background: #ffedd5; }
-        .stat-icon.purple { background: #f3e8ff; }
-        .stat-trend { font-size: 0.75rem; font-weight: 600; color: #16a34a; background: #dcfce7; padding: 0.25rem 0.5rem; border-radius: 1rem; }
-        .stat-card h3 { font-size: 2rem; color: var(--dark); }
-        .stat-card p { color: var(--gray); font-size: 0.875rem; }
-        
-        /* Content */
-        .content { padding: 0 2rem 2rem; }
-        .card { background: var(--white); border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-        .card-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .card-header h2 { font-size: 1.25rem; color: var(--dark); }
-        .search-box { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--light); border-radius: 0.5rem; }
-        .search-box input { border: none; background: none; outline: none; width: 200px; }
-        .filters { display: flex; gap: 0.5rem; padding: 1rem 1.5rem; flex-wrap: wrap; }
-        .filter-btn {
-            padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: var(--white);
-            border-radius: 2rem; font-size: 0.8125rem; cursor: pointer;
-        }
-        .filter-btn:hover, .filter-btn.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
-        
-        /* Table */
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th { text-align: left; padding: 1rem 1.5rem; background: var(--light); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: var(--dark); }
-        td { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-        tr:hover { background: #f9fafb; }
-        .user-cell { display: flex; align-items: center; gap: 0.75rem; }
-        .user-cell .avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); }
-        .user-cell h4 { font-weight: 500; color: var(--dark); }
-        .user-cell p { font-size: 0.8rem; color: var(--gray); }
-        .badge { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; }
-        .badge-success { background: #dcfce7; color: #16a34a; }
-        .badge-warning { background: #fef3c7; color: #d97706; }
-        .badge-gray { background: #f3f4f6; color: #6b7280; }
-        .badge-blue { background: #dbeafe; color: #2563eb; }
-        .badge-purple { background: #f3e8ff; color: #9333ea; }
-        .badge-danger { background: #fee2e2; color: #dc2626; }
-        .actions { display: flex; gap: 0.5rem; }
-        .action-btn {
-            width: 32px; height: 32px; border: none; background: var(--light);
-            border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .action-btn:hover { background: var(--primary); color: var(--white); }
-        
-        /* Tabs */
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--white); padding: 0.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap; }
-        .tab { padding: 0.75rem 1.5rem; border: none; background: none; font-size: 0.9rem; font-weight: 500; color: var(--gray); cursor: pointer; border-radius: 0.5rem; }
-        .tab:hover { background: var(--light); }
-        .tab.active { background: var(--primary); color: var(--white); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* Loading */
-        .loading { text-align: center; padding: 3rem; color: var(--gray); }
-        .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid var(--light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Empty state */
-        .empty { text-align: center; padding: 3rem; color: var(--gray); }
-        .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-
-        /* Connection status */
-        .conn-status { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; }
-        .conn-status.online { background: #dcfce7; color: #16a34a; }
-        .conn-status.offline { background: #fee2e2; color: #dc2626; }
-
-        @media (max-width: 768px) {
-            .stats { padding: 1rem; }
-            .content { padding: 0 1rem 1rem; }
-            .header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
-            .search-box input { width: 150px; }
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--primary:#1e40af;--accent:#f97316;--success:#22c55e;--warning:#eab308;--danger:#ef4444;--dark:#1f2937;--gray:#6b7280;--light:#f3f4f6}
+        body{font-family:'Inter',sans-serif;background:var(--light);min-height:100vh}
+        .login-box{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,var(--primary),#1e3a8a)}
+        .login-box.hidden{display:none}
+        .login-card{background:white;padding:2.5rem;border-radius:1rem;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
+        .login-card h1{text-align:center;font-size:1.75rem;color:var(--primary);margin-bottom:0.5rem}
+        .login-card h1 span{color:var(--accent)}
+        .login-card>p{text-align:center;color:var(--gray);margin-bottom:2rem}
+        .form-group{margin-bottom:1.25rem}
+        .form-group label{display:block;margin-bottom:0.5rem;font-weight:500}
+        .form-group input{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem}
+        .form-group input:focus{outline:none;border-color:var(--primary)}
+        .btn{display:block;width:100%;padding:0.875rem;border:none;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--primary);color:white}
+        .btn:hover{background:#1e3a8a}
+        .error{background:#fee2e2;color:#dc2626;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;display:none}
+        .error.show{display:block}
+        .hint{text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem}
+        .dashboard{display:none}
+        .dashboard.active{display:block}
+        .header{background:white;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-wrap:wrap;gap:1rem}
+        .header h1{font-size:1.5rem;color:var(--primary)}
+        .header h1 span{color:var(--accent)}
+        .header-right{display:flex;align-items:center;gap:1rem}
+        .status{font-size:0.75rem;padding:0.25rem 0.75rem;border-radius:1rem;background:#fef3c7;color:#d97706}
+        .status.ok{background:#dcfce7;color:#16a34a}
+        .status.err{background:#fee2e2;color:#dc2626}
+        .avatar{width:36px;height:36px;background:var(--primary);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600}
+        .btn-sm{padding:0.5rem 1rem;font-size:0.875rem;border-radius:0.5rem;border:none;cursor:pointer}
+        .btn-refresh{background:var(--light)}
+        .btn-danger{background:var(--danger);color:white}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;padding:2rem}
+        .stat{background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+        .stat-icon{width:48px;height:48px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:0.75rem}
+        .stat h3{font-size:2rem;color:var(--dark)}
+        .stat p{color:var(--gray);font-size:0.875rem}
+        .content{padding:0 2rem 2rem}
+        .card{background:white;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow:hidden}
+        .card-head{padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+        .card-head h2{font-size:1.25rem}
+        .search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--light);border-radius:0.5rem}
+        .search input{border:none;background:none;outline:none;width:200px}
+        .filters{display:flex;gap:0.5rem;padding:1rem 1.5rem;flex-wrap:wrap}
+        .filter{padding:0.5rem 1rem;border:1px solid #e5e7eb;background:white;border-radius:2rem;font-size:0.8rem;cursor:pointer}
+        .filter:hover,.filter.on{background:var(--primary);color:white;border-color:var(--primary)}
+        .tbl{width:100%;border-collapse:collapse;min-width:600px}
+        .tbl th{text-align:left;padding:1rem 1.5rem;background:var(--light);font-size:0.75rem;text-transform:uppercase;font-weight:600}
+        .tbl td{padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb}
+        .tbl tr:hover{background:#f9fafb}
+        .user{display:flex;align-items:center;gap:0.75rem}
+        .user .avatar{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--accent))}
+        .user h4{font-weight:500}
+        .user small{color:var(--gray);font-size:0.8rem}
+        .badge{display:inline-block;padding:0.375rem 0.75rem;border-radius:2rem;font-size:0.75rem;font-weight:600}
+        .b-green{background:#dcfce7;color:#16a34a}
+        .b-yellow{background:#fef3c7;color:#d97706}
+        .b-gray{background:#f3f4f6;color:#6b7280}
+        .b-purple{background:#f3e8ff;color:#9333ea}
+        .actions{display:flex;gap:0.5rem}
+        .act{width:32px;height:32px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer}
+        .act:hover{background:var(--primary);color:white}
+        .empty{text-align:center;padding:3rem;color:var(--gray)}
+        .wrap{overflow-x:auto}
+        @media(max-width:768px){.stats,.content{padding:1rem}.header{padding:1rem}}
     </style>
 </head>
 <body>
-    <!-- LOGIN -->
-    <div class="login-container" id="loginScreen">
-        <div class="login-box">
-            <div class="login-logo">
-                <h1>🔐 Trade<span>Masters</span></h1>
-                <p>Panel de Administración</p>
+    <div class="login-box" id="login">
+        <div class="login-card">
+            <h1>🔐 Trade<span>Masters</span></h1>
+            <p>Panel de Administración</p>
+            <div class="error" id="err"></div>
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="em" placeholder="tu@email.com">
             </div>
-            <div class="error-msg" id="errorMsg"></div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>📧 Email</label>
-                    <input type="email" id="email" placeholder="tu@email.com" required autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label>🔑 Contraseña</label>
-                    <input type="password" id="password" placeholder="••••••••" required autocomplete="off">
-                </div>
-                <button type="submit" class="btn btn-primary">Entrar →</button>
-            </form>
-            <p style="text-align:center; margin-top:1.5rem; color:var(--gray); font-size:0.8rem;">
-                Acceso: floresmario30@gmail.com
-            </p>
+            <div class="form-group">
+                <label>🔑 Contraseña</label>
+                <input type="password" id="pw" placeholder="••••••••">
+            </div>
+            <button class="btn" id="loginBtn">Entrar →</button>
+            <p class="hint">Acceso: floresmario30@gmail.com / admin123</p>
         </div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="dashboard" id="dashboard">
+    <div class="dashboard" id="dash">
         <header class="header">
             <h1>🔐 Trade<span>Masters</span> Admin</h1>
             <div class="header-right">
-                <span class="conn-status" id="connStatus">⏳ Conectando...</span>
-                <button class="btn-sm btn-refresh" onclick="loadData()">🔄 Actualizar</button>
-                <div class="user-badge">
-                    <div class="avatar" id="userAvatar">M</div>
-                    <span id="userName">Admin</span>
-                </div>
-                <button class="btn-sm btn-danger" onclick="logout()">Salir</button>
+                <span class="status" id="status">⏳ Cargando...</span>
+                <button class="btn-sm btn-refresh" id="refreshBtn">🔄</button>
+                <div class="avatar" id="av">M</div>
+                <button class="btn-sm btn-danger" id="logoutBtn">Salir</button>
             </div>
         </header>
-
         <div class="stats">
-            <div class="stat-card">
-                <div class="stat-card-top">
-                    <div class="stat-icon blue">👥</div>
-                    <span class="stat-trend">Supabase</span>
-                </div>
-                <h3 id="statUsers">-</h3>
-                <p>Total Empresas</p>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-top">
-                    <div class="stat-icon green">💳</div>
-                </div>
-                <h3 id="statPaid">-</h3>
-                <p>Suscripciones Activas</p>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-top">
-                    <div class="stat-icon orange">💰</div>
-                </div>
-                <h3 id="statMRR">$-</h3>
-                <p>Ingresos Mensuales</p>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-top">
-                    <div class="stat-icon purple">🆓</div>
-                </div>
-                <h3 id="statFree">-</h3>
-                <p>Free / Trial</p>
-            </div>
+            <div class="stat"><div class="stat-icon" style="background:#dbeafe">👥</div><h3 id="s1">0</h3><p>Total Empresas</p></div>
+            <div class="stat"><div class="stat-icon" style="background:#dcfce7">💳</div><h3 id="s2">0</h3><p>Suscripciones Activas</p></div>
+            <div class="stat"><div class="stat-icon" style="background:#ffedd5">💰</div><h3 id="s3">$0</h3><p>Ingresos Mensuales</p></div>
+            <div class="stat"><div class="stat-icon" style="background:#f3e8ff">🆓</div><h3 id="s4">0</h3><p>Free / Trial</p></div>
         </div>
-
         <div class="content">
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('users', this)">👥 Empresas</button>
-                <button class="tab" onclick="showTab('subs', this)">💳 Suscripciones</button>
-                <button class="tab" onclick="showTab('activity', this)">📊 Actividad</button>
-            </div>
-
-            <!-- USERS TAB -->
-            <div class="tab-content active" id="usersTab">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>👥 Empresas Registradas</h2>
-                        <div class="search-box">
-                            <span>🔍</span>
-                            <input type="text" placeholder="Buscar..." id="searchInput" onkeyup="filterTable()">
-                        </div>
-                    </div>
-                    <div class="filters">
-                        <button class="filter-btn active" onclick="filterPlan('all', this)">Todos</button>
-                        <button class="filter-btn" onclick="filterPlan('free', this)">Free</button>
-                        <button class="filter-btn" onclick="filterPlan('profesional', this)">Profesional</button>
-                        <button class="filter-btn" onclick="filterPlan('enterprise', this)">Enterprise</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Empresa</th>
-                                    <th>Teléfono</th>
-                                    <th>Registro</th>
-                                    <th>Plan</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTable">
-                                <tr><td colspan="6" class="loading"><div class="spinner"></div><br>Cargando datos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="card">
+                <div class="card-head">
+                    <h2>👥 Empresas Registradas</h2>
+                    <div class="search"><span>🔍</span><input type="text" placeholder="Buscar..." id="q"></div>
                 </div>
-            </div>
-
-            <!-- SUBS TAB -->
-            <div class="tab-content" id="subsTab">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>💳 Suscripciones</h2>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Empresa</th>
-                                    <th>Plan</th>
-                                    <th>Monto</th>
-                                    <th>Estado</th>
-                                    <th>Stripe ID</th>
-                                </tr>
-                            </thead>
-                            <tbody id="subsTable">
-                                <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="filters">
+                    <button class="filter on" data-f="all">Todos</button>
+                    <button class="filter" data-f="free">Free</button>
+                    <button class="filter" data-f="profesional">Profesional</button>
+                    <button class="filter" data-f="enterprise">Enterprise</button>
                 </div>
-            </div>
-
-            <!-- ACTIVITY TAB -->
-            <div class="tab-content" id="activityTab">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>📊 Actividad Reciente</h2>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Empresa</th>
-                                    <th>Último Login</th>
-                                    <th>Logins Totales</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activityTable">
-                                <tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody></table></div>
             </div>
         </div>
     </div>
 
-    <!-- SUPABASE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // CONFIGURACIÓN SUPABASE
-        const SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0NjQ2NDIsImV4cCI6MjA1MjA0MDY0Mn0.VjrHEsXMa6QKfFr8vJfZgP2eSNM4_nS5lF7JmVLWqRM';
+<script>
+(function(){
+    var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
+    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
+    var VALID_EMAILS = ['floresmario30@gmail.com','admin@trademastersusa.org','acvoltelectrical@gmail.com'];
+    
+    var db = null;
+    var companies = [];
+    var curFilter = 'all';
+
+    function init() {
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('Supabase ready');
         
-        let supabase;
-        let allCompanies = [];
-
-        // INICIALIZAR SUPABASE
-        function initSupabase() {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('Supabase inicializado');
-        }
-
-        // LOGIN
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const error = document.getElementById('errorMsg');
-
-            const validEmails = ['floresmario30@gmail.com', 'admin@trademastersusa.org', 'mario@acvolt.com', 'acvoltelectrical@gmail.com'];
-
-            if (validEmails.includes(email.toLowerCase()) && pass.length >= 4) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('dashboard').classList.add('active');
-                document.getElementById('userName').textContent = email.split('@')[0];
-                document.getElementById('userAvatar').textContent = email[0].toUpperCase();
-                loadData();
-            } else {
-                error.textContent = 'Email no autorizado o contraseña muy corta';
-                error.classList.add('show');
-            }
+        document.getElementById('loginBtn').onclick = doLogin;
+        document.getElementById('logoutBtn').onclick = doLogout;
+        document.getElementById('refreshBtn').onclick = fetchData;
+        document.getElementById('q').oninput = doSearch;
+        
+        document.querySelectorAll('.filter').forEach(function(btn){
+            btn.onclick = function(){ doFilter(btn.dataset.f, btn); };
         });
+    }
 
-        function logout() {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('dashboard').classList.remove('active');
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
+    function doLogin() {
+        var email = document.getElementById('em').value;
+        var pass = document.getElementById('pw').value;
+        
+        if (VALID_EMAILS.indexOf(email.toLowerCase()) >= 0 && pass.length >= 4) {
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('dash').classList.add('active');
+            document.getElementById('av').textContent = email[0].toUpperCase();
+            fetchData();
+        } else {
+            document.getElementById('err').textContent = 'Email no autorizado o contraseña corta (min 4)';
+            document.getElementById('err').classList.add('show');
         }
+    }
 
-        // CARGAR DATOS DE SUPABASE
-        async function loadData() {
-            const status = document.getElementById('connStatus');
-            status.textContent = '⏳ Cargando...';
-            status.className = 'conn-status';
+    function doLogout() {
+        document.getElementById('login').classList.remove('hidden');
+        document.getElementById('dash').classList.remove('active');
+        document.getElementById('em').value = '';
+        document.getElementById('pw').value = '';
+    }
 
-            try {
-                // Cargar empresas
-                const { data, error } = await supabase
-                    .from('companies')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+    function fetchData() {
+        var st = document.getElementById('status');
+        st.textContent = '⏳ Cargando...';
+        st.className = 'status';
 
-                if (error) throw error;
-
-                allCompanies = data || [];
-                console.log('Empresas cargadas:', allCompanies);
-
-                status.textContent = '🟢 Conectado';
-                status.className = 'conn-status online';
-
-                renderCompanies(allCompanies);
-                renderSubs(allCompanies);
-                renderActivity(allCompanies);
-                updateStats(allCompanies);
-
-            } catch (err) {
-                console.error('Error:', err);
-                status.textContent = '🔴 Error';
-                status.className = 'conn-status offline';
-                
-                document.getElementById('usersTable').innerHTML = `
-                    <tr><td colspan="6" class="empty">
-                        <div class="empty-icon">⚠️</div>
-                        Error al cargar: ${err.message}
-                    </td></tr>`;
-            }
-        }
-
-        // RENDERIZAR EMPRESAS
-        function renderCompanies(companies) {
-            const tbody = document.getElementById('usersTable');
-            
-            if (!companies || companies.length === 0) {
-                tbody.innerHTML = `
-                    <tr><td colspan="6" class="empty">
-                        <div class="empty-icon">📭</div>
-                        No hay empresas registradas
-                    </td></tr>`;
+        db.from('companies').select('*').order('created_at', {ascending: false}).then(function(res){
+            if (res.error) {
+                st.textContent = '🔴 Error';
+                st.className = 'status err';
+                document.getElementById('tbody').innerHTML = '<tr><td colspan="6" class="empty">Error: '+res.error.message+'</td></tr>';
                 return;
             }
-
-            tbody.innerHTML = companies.map(c => `
-                <tr data-plan="${c.plan || 'free'}">
-                    <td>
-                        <div class="user-cell">
-                            <div class="avatar">${getInitials(c.name)}</div>
-                            <div>
-                                <h4>${c.name || 'Sin nombre'}</h4>
-                                <p>${c.email || 'Sin email'}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${c.phone || '-'}</td>
-                    <td>${formatDate(c.created_at)}</td>
-                    <td><span class="badge ${getPlanBadge(c.plan)}">${c.plan || 'free'}</span></td>
-                    <td>${getStatusBadge(c.subscription_status)}</td>
-                    <td>
-                        <div class="actions">
-                            <button class="action-btn" onclick="viewCompany('${c.id}')" title="Ver">👁</button>
-                            <button class="action-btn" onclick="editCompany('${c.id}')" title="Editar">✏️</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // RENDERIZAR SUSCRIPCIONES
-        function renderSubs(companies) {
-            const tbody = document.getElementById('subsTable');
-            const paid = companies.filter(c => c.plan && c.plan !== 'free');
             
-            if (paid.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty">No hay suscripciones activas</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = paid.map(c => `
-                <tr>
-                    <td>
-                        <div class="user-cell">
-                            <div class="avatar">${getInitials(c.name)}</div>
-                            <div>
-                                <h4>${c.name || 'Sin nombre'}</h4>
-                                <p>${c.email || ''}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span class="badge ${getPlanBadge(c.plan)}">${c.plan}</span></td>
-                    <td><strong>${getPlanPrice(c.plan)}</strong>/mes</td>
-                    <td>${getStatusBadge(c.subscription_status)}</td>
-                    <td><code style="font-size:0.7rem">${c.stripe_subscription_id || '-'}</code></td>
-                </tr>
-            `).join('');
-        }
-
-        // RENDERIZAR ACTIVIDAD
-        function renderActivity(companies) {
-            const tbody = document.getElementById('activityTable');
+            companies = res.data || [];
+            console.log('Loaded:', companies.length);
             
-            const sorted = [...companies].sort((a, b) => {
-                const dateA = a.last_login ? new Date(a.last_login) : new Date(0);
-                const dateB = b.last_login ? new Date(b.last_login) : new Date(0);
-                return dateB - dateA;
-            });
-
-            tbody.innerHTML = sorted.map(c => `
-                <tr>
-                    <td>${formatDate(c.created_at)}</td>
-                    <td><strong>${c.name || 'Sin nombre'}</strong></td>
-                    <td>${c.last_login ? formatDateTime(c.last_login) : 'Nunca'}</td>
-                    <td>${c.login_count || 0} veces</td>
-                </tr>
-            `).join('');
-        }
-
-        // ACTUALIZAR ESTADÍSTICAS
-        function updateStats(companies) {
-            const total = companies.length;
-            const paid = companies.filter(c => c.plan && c.plan !== 'free' && c.subscription_status === 'active').length;
-            const free = companies.filter(c => !c.plan || c.plan === 'free').length;
+            st.textContent = '🟢 Conectado';
+            st.className = 'status ok';
             
-            let mrr = 0;
-            companies.forEach(c => {
-                if (c.subscription_status === 'active') {
-                    if (c.plan === 'profesional') mrr += 149.99;
-                    if (c.plan === 'enterprise') mrr += 299;
-                }
-            });
-
-            document.getElementById('statUsers').textContent = total;
-            document.getElementById('statPaid').textContent = paid;
-            document.getElementById('statFree').textContent = free;
-            document.getElementById('statMRR').textContent = '$' + mrr.toFixed(0);
-        }
-
-        // HELPERS
-        function getInitials(name) {
-            if (!name) return '?';
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
-        }
-
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        function getPlanBadge(plan) {
-            if (plan === 'enterprise') return 'badge-purple';
-            if (plan === 'profesional') return 'badge-warning';
-            return 'badge-gray';
-        }
-
-        function getPlanPrice(plan) {
-            if (plan === 'enterprise') return '$299';
-            if (plan === 'profesional') return '$149.99';
-            return '$0';
-        }
-
-        function getStatusBadge(status) {
-            if (status === 'active') return '<span class="badge badge-success">✓ Activo</span>';
-            if (status === 'trial') return '<span class="badge badge-warning">⏱ Trial</span>';
-            if (status === 'past_due') return '<span class="badge badge-danger">⚠ Vencido</span>';
-            if (status === 'cancelled') return '<span class="badge badge-gray">✕ Cancelado</span>';
-            return '<span class="badge badge-gray">-</span>';
-        }
-
-        // TABS
-        function showTab(tab, btn) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(tab + 'Tab').classList.add('active');
-        }
-
-        // FILTROS
-        function filterPlan(plan, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            if (plan === 'all') {
-                renderCompanies(allCompanies);
-            } else {
-                renderCompanies(allCompanies.filter(c => (c.plan || 'free') === plan));
-            }
-        }
-
-        function filterTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allCompanies.filter(c => 
-                (c.name && c.name.toLowerCase().includes(search)) || 
-                (c.email && c.email.toLowerCase().includes(search)) ||
-                (c.phone && c.phone.includes(search))
-            );
-            renderCompanies(filtered);
-        }
-
-        // VER/EDITAR EMPRESA
-        function viewCompany(id) {
-            const company = allCompanies.find(c => c.id === id);
-            if (company) {
-                alert(`📋 ${company.name}\n\n📧 Email: ${company.email || 'N/A'}\n📱 Teléfono: ${company.phone || 'N/A'}\n💳 Plan: ${company.plan || 'free'}\n📅 Registro: ${formatDate(company.created_at)}`);
-            }
-        }
-
-        async function editCompany(id) {
-            const company = allCompanies.find(c => c.id === id);
-            if (!company) return;
-
-            const newPlan = prompt(`Cambiar plan de "${company.name}":\n\nOpciones: free, profesional, enterprise\n\nPlan actual: ${company.plan || 'free'}`, company.plan || 'free');
-            
-            if (newPlan && ['free', 'profesional', 'enterprise'].includes(newPlan)) {
-                try {
-                    const { error } = await supabase
-                        .from('companies')
-                        .update({ plan: newPlan, subscription_status: newPlan === 'free' ? 'trial' : 'active' })
-                        .eq('id', id);
-
-                    if (error) throw error;
-                    alert('✅ Plan actualizado');
-                    loadData();
-                } catch (err) {
-                    alert('❌ Error: ' + err.message);
-                }
-            }
-        }
-
-        // INICIALIZAR
-        document.addEventListener('DOMContentLoaded', () => {
-            initSupabase();
+            render(companies);
+            updateStats(companies);
         });
-    </script>
+    }
+
+    function render(list) {
+        var tb = document.getElementById('tbody');
+        if (!list || list.length === 0) {
+            tb.innerHTML = '<tr><td colspan="6" class="empty">No hay empresas</td></tr>';
+            return;
+        }
+        tb.innerHTML = list.map(function(c) {
+            return '<tr>' +
+                '<td><div class="user"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'Sin nombre')+'</h4><small>'+(c.email||'')+'</small></div></div></td>' +
+                '<td>'+(c.phone||'-')+'</td>' +
+                '<td>'+fmtDate(c.created_at)+'</td>' +
+                '<td><span class="badge '+planClass(c.plan)+'">'+(c.plan||'free')+'</span></td>' +
+                '<td>'+statusBadge(c.subscription_status)+'</td>' +
+                '<td><div class="actions"><button class="act" onclick="viewC(\''+c.id+'\')">👁</button><button class="act" onclick="editC(\''+c.id+'\')">✏️</button></div></td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function updateStats(list) {
+        var total = list.length;
+        var paid = list.filter(function(c){ return c.subscription_status === 'active' && c.plan && c.plan !== 'free'; }).length;
+        var free = list.filter(function(c){ return !c.plan || c.plan === 'free'; }).length;
+        var mrr = 0;
+        list.forEach(function(c) {
+            if (c.subscription_status === 'active') {
+                if (c.plan === 'profesional') mrr += 149.99;
+                if (c.plan === 'enterprise') mrr += 299;
+            }
+        });
+        document.getElementById('s1').textContent = total;
+        document.getElementById('s2').textContent = paid;
+        document.getElementById('s3').textContent = '$' + Math.round(mrr);
+        document.getElementById('s4').textContent = free;
+    }
+
+    function initials(n) {
+        if (!n) return '?';
+        return n.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);
+    }
+
+    function fmtDate(d) {
+        if (!d) return '-';
+        return d.slice(0,10);
+    }
+
+    function planClass(p) {
+        if (p === 'enterprise') return 'b-purple';
+        if (p === 'profesional') return 'b-yellow';
+        return 'b-gray';
+    }
+
+    function statusBadge(s) {
+        if (s === 'active') return '<span class="badge b-green">✓ Activo</span>';
+        if (s === 'trial') return '<span class="badge b-yellow">⏱ Trial</span>';
+        return '<span class="badge b-gray">-</span>';
+    }
+
+    function doFilter(f, btn) {
+        document.querySelectorAll('.filter').forEach(function(b){b.classList.remove('on')});
+        btn.classList.add('on');
+        curFilter = f;
+        if (f === 'all') {
+            render(companies);
+        } else {
+            render(companies.filter(function(c){return (c.plan||'free') === f}));
+        }
+    }
+
+    function doSearch() {
+        var q = document.getElementById('q').value.toLowerCase();
+        var filtered = companies.filter(function(c) {
+            return (c.name && c.name.toLowerCase().indexOf(q) >= 0) ||
+                   (c.email && c.email.toLowerCase().indexOf(q) >= 0) ||
+                   (c.phone && c.phone.indexOf(q) >= 0);
+        });
+        render(filtered);
+    }
+
+    window.viewC = function(id) {
+        var c = companies.find(function(x){return x.id === id});
+        if (c) alert('📋 ' + c.name + '\n\n📧 ' + (c.email||'N/A') + '\n📱 ' + (c.phone||'N/A') + '\n💳 ' + (c.plan||'free') + '\n📅 ' + fmtDate(c.created_at));
+    };
+
+    window.editC = function(id) {
+        var c = companies.find(function(x){return x.id === id});
+        if (!c) return;
+        var np = prompt('Plan para "'+c.name+'":\n\nOpciones: free, profesional, enterprise\nActual: '+(c.plan||'free'), c.plan||'free');
+        if (np && ['free','profesional','enterprise'].indexOf(np) >= 0) {
+            db.from('companies').update({plan: np, subscription_status: np === 'free' ? 'trial' : 'active'}).eq('id', id).then(function(res){
+                if (res.error) {
+                    alert('❌ Error: ' + res.error.message);
+                } else {
+                    alert('✅ Actualizado');
+                    fetchData();
+                }
+            });
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
 </body>
 </html>
