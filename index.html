@@ -106,6 +106,11 @@
             </form>
             <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
             
+            <!-- Forgot Password -->
+            <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;">
+              <a href="#" onclick="showForgotPassword()" style="color:#1e3a5f;text-decoration:none;font-size:14px;">🔑 ¿Olvidaste tu contraseña?</a>
+            </div>
+            
             <!-- Install App Instructions -->
             <div id="installInstructions" style="margin-top:20px;padding:16px;background:#eff6ff;border-radius:12px;border:1px solid #3b82f6;">
               <h4 style="margin:0 0 8px 0;color:#1e3a5f;font-size:14px;">📱 ¿Eres técnico o vendedor?</h4>
@@ -4418,27 +4423,70 @@
         }
       });
       
-      // Forgot Password Function
+      // Forgot Password Function - 100% Automático
       function openForgotPassword() {
         toggleSupportMenu();
-        var email = prompt('Ingresa tu email para recuperar tu contraseña:');
+        showForgotPassword();
+      }
+      
+      function showForgotPassword() {
+        var email = prompt('Ingresa tu email registrado para recuperar tu contraseña:');
+        
         if (email && email.includes('@')) {
-          // Try to send password reset
-          if (typeof sbClient !== 'undefined') {
-            sbClient.auth.resetPasswordForEmail(email, {
-              redirectTo: window.location.origin + '/reset-password'
-            }).then(function(result) {
-              if (result.error) {
-                alert('❌ Error: ' + result.error.message + '\n\nPor favor contacta a soporte.');
-              } else {
-                alert('✅ ¡Email enviado!\n\nRevisa tu bandeja de entrada (y spam) para el link de recuperación.\n\nSi no llega en 5 minutos, contacta a soporte.');
-              }
-            });
-          } else {
-            alert('Por favor contacta a soporte para recuperar tu contraseña:\n\n📧 soporte@trademastersusa.org\n📞 (909) 555-1234');
-          }
+            // Show loading
+            alert('⏳ Enviando email de recuperación...\n\nEspera un momento.');
+            
+            // Use Supabase automatic password reset
+            if (typeof sbClient !== 'undefined') {
+                sbClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '?reset=true'
+                }).then(function(result) {
+                    if (result.error) {
+                        alert('❌ Error: ' + result.error.message + '\n\nVerifica que el email esté registrado correctamente.');
+                    } else {
+                        alert('✅ ¡Email enviado!\n\nRevisa tu bandeja de entrada (y carpeta de spam).\n\nHaz clic en el link del email para crear tu nueva contraseña.\n\n⏰ El link expira en 1 hora.');
+                    }
+                });
+            } else {
+                alert('❌ Error de conexión. Recarga la página e intenta de nuevo.');
+            }
         } else if (email) {
-          alert('Por favor ingresa un email válido');
+            alert('Por favor ingresa un email válido');
+        }
+      }
+      
+      // Check if user came from password reset link
+      window.addEventListener('load', function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reset') === 'true' || window.location.hash.includes('type=recovery')) {
+            setTimeout(function() {
+                showResetPasswordForm();
+            }, 1000);
+        }
+      });
+      
+      function showResetPasswordForm() {
+        var newPass = prompt('Ingresa tu NUEVA contraseña (mínimo 6 caracteres):');
+        if (newPass && newPass.length >= 6) {
+            var confirmPass = prompt('Confirma tu nueva contraseña:');
+            if (newPass === confirmPass) {
+                if (typeof sbClient !== 'undefined') {
+                    sbClient.auth.updateUser({ password: newPass }).then(function(result) {
+                        if (result.error) {
+                            alert('❌ Error: ' + result.error.message);
+                        } else {
+                            alert('✅ ¡Contraseña actualizada!\n\nYa puedes iniciar sesión con tu nueva contraseña.');
+                            window.location.href = window.location.origin + window.location.pathname;
+                        }
+                    });
+                }
+            } else {
+                alert('❌ Las contraseñas no coinciden. Intenta de nuevo.');
+                showResetPasswordForm();
+            }
+        } else if (newPass) {
+            alert('❌ La contraseña debe tener al menos 6 caracteres.');
+            showResetPasswordForm();
         }
       }
     </script>
