@@ -3,6 +3,58 @@ var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
 var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===== PWA INSTALLATION =====
+var deferredPrompt = null;
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registered:', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('ServiceWorker registration failed:', error);
+            });
+    });
+}
+
+// Listen for PWA install prompt
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show the install button
+    var installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) {
+        installBtn.style.display = 'block';
+    }
+});
+
+// PWA Install function
+function installPWA() {
+    if (!deferredPrompt) {
+        alert('📱 Para instalar la app:\n\niPhone: Toca Compartir ⬆️ → "Agregar a Inicio"\n\nAndroid: Toca el menú ⋮ → "Instalar app"');
+        return;
+    }
+    
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+            alert('✅ ¡App instalada! Búscala en tu pantalla de inicio.');
+        }
+        deferredPrompt = null;
+        var installBtn = document.getElementById('pwaInstallBtn');
+        if (installBtn) installBtn.style.display = 'none';
+    });
+}
+
+// Detect if running as installed PWA
+window.addEventListener('appinstalled', function() {
+    console.log('Trade Master PWA installed');
+    deferredPrompt = null;
+});
+
 var leadsMap = null, dispatchMap = null, trackingMap = null;
 var markers = [], dispatchMarkers = [];
 var leadsData = [], techsData = [], jobsData = [];
