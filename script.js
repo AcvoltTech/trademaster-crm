@@ -209,6 +209,151 @@ async function loadTimeClock() {
 }
 
 // ===== AUTH =====
+
+// Mobile Menu Toggle
+function toggleMobileMenu() {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.getElementById('mobileOverlay');
+    if (sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+    } else {
+        sidebar.classList.add('mobile-open');
+        overlay.classList.add('active');
+    }
+}
+
+// Close mobile menu when clicking a nav link
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.nav-link')) {
+        var sidebar = document.querySelector('.sidebar');
+        var overlay = document.getElementById('mobileOverlay');
+        if (sidebar && sidebar.classList.contains('mobile-open')) {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        }
+    }
+});
+
+// Role-based access control
+var currentUserRole = 'admin'; // Default role, will be set on login
+
+function applyUserRole(role) {
+    currentUserRole = role;
+    document.body.classList.remove('role-admin', 'role-technician', 'role-advisor', 'role-dispatcher', 'role-accounting', 'role-viewer');
+    
+    // Apply role class to body
+    document.body.classList.add('role-' + role);
+    
+    // Hide navigation items based on role
+    hideNavForRole(role);
+    
+    // Update UI based on role
+    updateUIForRole(role);
+    
+    console.log('Role applied:', role);
+}
+
+function hideNavForRole(role) {
+    // Get all nav links
+    var allNavLinks = document.querySelectorAll('.nav-link');
+    
+    // Define what each role can see
+    var rolePermissions = {
+        'owner': ['all'], // Can see everything
+        'admin': ['all'], // Can see everything
+        'accounting': ['dashboard', 'invoices', 'collections', 'payroll', 'expenses', 'receipts', 'reports'],
+        'dispatcher': ['dashboard', 'servicecalls', 'dispatch', 'jobs', 'technicians', 'clients', 'calendar', 'inbox'],
+        'technician': ['dashboard', 'servicecalls', 'jobs'], // Only their assigned work
+        'advisor': ['dashboard', 'leads', 'clients', 'pipeline', 'advisors'], // Only their leads/sales
+        'viewer': ['dashboard', 'reports'] // View only
+    };
+    
+    var allowedSections = rolePermissions[role] || rolePermissions['viewer'];
+    
+    // If role has 'all' access, show everything
+    if (allowedSections.includes('all')) {
+        allNavLinks.forEach(function(link) {
+            link.style.display = '';
+        });
+        return;
+    }
+    
+    // Hide/show nav links based on permissions
+    allNavLinks.forEach(function(link) {
+        var onclick = link.getAttribute('onclick') || '';
+        var sectionMatch = onclick.match(/showSection\('([^']+)'\)/);
+        if (sectionMatch) {
+            var section = sectionMatch[1];
+            if (allowedSections.includes(section)) {
+                link.style.display = '';
+            } else {
+                link.style.display = 'none';
+            }
+        }
+    });
+    
+    // ALWAYS hide "Usuarios y Equipo" for non-admin/owner roles
+    if (role !== 'owner' && role !== 'admin') {
+        var teamLink = document.querySelector('[onclick*="showSection(\'team\')"]');
+        if (teamLink) teamLink.style.display = 'none';
+        
+        // Also hide settings for non-admins
+        var settingsLink = document.querySelector('[onclick*="showSection(\'settings\')"]');
+        if (settingsLink) settingsLink.style.display = 'none';
+        
+        // Hide Mi Dinero for non-owners
+        var mymoneyLink = document.querySelector('[onclick*="showSection(\'mymoney\')"]');
+        if (mymoneyLink) mymoneyLink.style.display = 'none';
+    }
+}
+
+function updateUIForRole(role) {
+    // For technicians - will filter jobs to show only assigned ones
+    if (role === 'technician') {
+        console.log('Technician role applied - showing only assigned jobs');
+        // The job filtering will happen in loadJobs function
+    }
+    
+    // For advisors - will filter to show only their leads
+    if (role === 'advisor') {
+        console.log('Advisor role applied - showing only their leads');
+        // The lead filtering will happen in loadLeads function
+    }
+    
+    // Redirect non-admins away from restricted sections if they somehow get there
+    if (role !== 'owner' && role !== 'admin') {
+        var currentSection = document.querySelector('.section.active');
+        if (currentSection) {
+            var sectionId = currentSection.id.replace('-section', '');
+            if (sectionId === 'team' || sectionId === 'settings' || sectionId === 'mymoney') {
+                showSection('dashboard');
+            }
+        }
+    }
+}
+
+async function loadUserRole() {
+    if (!currentUser || !companyId) return;
+    try {
+        var res = await sbClient.from('team_users').select('role').eq('user_id', currentUser.id).eq('company_id', companyId).single();
+        if (res.data && res.data.role) {
+            applyUserRole(res.data.role);
+        } else {
+            // Check if user is company owner
+            var compRes = await sbClient.from('companies').select('owner_id').eq('id', companyId).single();
+            if (compRes.data && compRes.data.owner_id === currentUser.id) {
+                applyUserRole('owner');
+            } else {
+                applyUserRole('admin'); // Default
+            }
+        }
+    } catch(e) {
+        console.log('Could not load user role, defaulting to admin');
+        applyUserRole('admin');
+    }
+}
+
 function switchTab(tab) {
     var lf = document.getElementById('loginForm');
     var rf = document.getElementById('registerForm');
@@ -233,7 +378,7 @@ async function handleLogin(event) {
             password: document.getElementById('loginPassword').value
         });
         if (res.error) { err.textContent = res.error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : res.error.message; err.style.display = 'block'; }
-        else { currentUser = res.data.user; await loadCompanyId(); showDashboard(); }
+        else { currentUser = res.data.user; await loadCompanyId(); await loadUserRole(); showDashboard(); }
     } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
     btn.disabled = false; btn.textContent = 'Iniciar Sesión';
 }
@@ -9032,15 +9177,19 @@ function previewRolePerms() {
     }
 }
 
-function saveTeamUser() {
+async function saveTeamUser() {
     var name = document.getElementById('tuName').value.trim();
     var email = document.getElementById('tuEmail').value.trim();
     var username = document.getElementById('tuUsername').value.trim();
     var password = document.getElementById('tuPassword').value;
     var passwordConfirm = document.getElementById('tuPasswordConfirm').value;
     
-    if (!name || !username || !password) {
-        alert('⚠️ Nombre, usuario y contraseña son obligatorios.');
+    if (!name || !email || !password) {
+        alert('⚠️ Nombre, email y contraseña son obligatorios.');
+        return;
+    }
+    if (!email.includes('@')) {
+        alert('⚠️ Por favor ingresa un email válido.');
         return;
     }
     if (password.length < 6) {
@@ -9051,10 +9200,11 @@ function saveTeamUser() {
         alert('⚠️ Las contraseñas no coinciden.');
         return;
     }
-    // Check duplicate username
-    var dup = teamUsers.find(function(u) { return u.username === username; });
+    
+    // Check duplicate email in local list
+    var dup = teamUsers.find(function(u) { return u.email === email; });
     if (dup) {
-        alert('⚠️ El nombre de usuario "' + username + '" ya existe.');
+        alert('⚠️ El email "' + email + '" ya está registrado.');
         return;
     }
     
@@ -9068,26 +9218,90 @@ function saveTeamUser() {
         }
     }
     
-    var user = {
-        id: 'user_' + Date.now(),
-        name: name,
-        email: email,
-        phone: document.getElementById('tuPhone').value,
-        username: username,
-        password: btoa(password), // Base64 encoded (basic obfuscation)
-        role: role,
-        status: document.getElementById('tuStatus').value,
-        notes: document.getElementById('tuNotes').value,
-        sections: rolePermissions[role].sections,
-        created: new Date().toISOString(),
-        lastLogin: null
-    };
+    // Show loading
+    var btn = document.querySelector('#teamUserForm .btn-primary');
+    var originalText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Creando usuario...'; }
     
-    teamUsers.push(user);
-    localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
-    hideTeamUserForm();
-    renderTeamUsers();
-    alert('✅ Usuario "' + name + '" creado con rol: ' + rolePermissions[role].label);
+    try {
+        // Create user in Supabase Auth
+        var authRes = await sbClient.auth.admin.createUser({
+            email: email,
+            password: password,
+            email_confirm: true, // Auto-confirm email
+            user_metadata: { 
+                name: name, 
+                company_id: companyId,
+                role: role 
+            }
+        });
+        
+        var authUserId = null;
+        if (authRes.error) {
+            // If admin API not available, try regular signup
+            console.log('Admin API not available, trying regular signup');
+            var signupRes = await sbClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: { name: name, company_id: companyId, role: role }
+                }
+            });
+            if (signupRes.error) {
+                throw new Error(signupRes.error.message);
+            }
+            authUserId = signupRes.data.user ? signupRes.data.user.id : null;
+        } else {
+            authUserId = authRes.data.user ? authRes.data.user.id : null;
+        }
+        
+        // Save to team_users table in Supabase
+        var teamUserData = {
+            company_id: companyId,
+            user_id: authUserId,
+            name: name,
+            email: email,
+            phone: document.getElementById('tuPhone').value || null,
+            username: username || email.split('@')[0],
+            role: role,
+            status: document.getElementById('tuStatus').value,
+            notes: document.getElementById('tuNotes').value || null,
+            created_at: new Date().toISOString()
+        };
+        
+        var dbRes = await sbClient.from('team_users').insert([teamUserData]).select();
+        if (dbRes.error) {
+            console.log('Could not save to team_users table:', dbRes.error);
+        }
+        
+        // Also save to local array for immediate UI update
+        var user = {
+            id: authUserId || ('user_' + Date.now()),
+            name: name,
+            email: email,
+            phone: document.getElementById('tuPhone').value,
+            username: username || email.split('@')[0],
+            role: role,
+            status: document.getElementById('tuStatus').value,
+            notes: document.getElementById('tuNotes').value,
+            sections: rolePermissions[role].sections,
+            created: new Date().toISOString(),
+            lastLogin: null
+        };
+        
+        teamUsers.push(user);
+        localStorage.setItem('tm_team_users_' + companyId, JSON.stringify(teamUsers));
+        hideTeamUserForm();
+        renderTeamUsers();
+        alert('✅ Usuario "' + name + '" creado con rol: ' + rolePermissions[role].label + '\n\n📧 Email: ' + email + '\n🔑 Contraseña: (la que ingresaste)\n\nEl usuario puede iniciar sesión con estas credenciales.');
+        
+    } catch(e) {
+        alert('❌ Error creando usuario: ' + e.message);
+        console.error('Error creating user:', e);
+    }
+    
+    // Restore button
+    if (btn) { btn.disabled = false; btn.textContent = originalText || 'Guardar Usuario'; }
 }
 
 function renderTeamUsers() {
