@@ -684,30 +684,39 @@
         document.getElementById('modalDelete').classList.add('show');
     };
     
-    window.confirmDelete = function() {
+    window.confirmDelete = async function() {
         if (!deleteCompanyId) return;
         
-        // Delete related data first
-        Promise.all([
-            db.from('technicians').delete().eq('company_id', deleteCompanyId),
-            db.from('team_users').delete().eq('company_id', deleteCompanyId),
-            db.from('clients').delete().eq('company_id', deleteCompanyId),
-            db.from('jobs').delete().eq('company_id', deleteCompanyId),
-            db.from('work_orders').delete().eq('company_id', deleteCompanyId),
-            db.from('leads').delete().eq('company_id', deleteCompanyId)
-        ]).then(function() {
+        var companyToDelete = deleteCompanyId;
+        
+        // Cerrar modal inmediatamente para evitar que se quede pegado
+        closeModal('modalDelete');
+        
+        try {
+            // Delete related data first (ignorar errores de tablas que no existen)
+            await Promise.allSettled([
+                db.from('technicians').delete().eq('company_id', companyToDelete),
+                db.from('team_users').delete().eq('company_id', companyToDelete),
+                db.from('clients').delete().eq('company_id', companyToDelete),
+                db.from('jobs').delete().eq('company_id', companyToDelete),
+                db.from('work_orders').delete().eq('company_id', companyToDelete),
+                db.from('leads').delete().eq('company_id', companyToDelete)
+            ]);
+            
             // Delete company
-            db.from('companies').delete().eq('id', deleteCompanyId).then(function(res) {
-                if (res.error) {
-                    alert('❌ Error: ' + res.error.message);
-                } else {
-                    alert('✅ Empresa eliminada');
-                    closeModal('modalDelete');
-                    deleteCompanyId = null;
-                    fetchData();
-                }
-            });
-        });
+            var res = await db.from('companies').delete().eq('id', companyToDelete);
+            
+            if (res.error) {
+                alert('❌ Error al eliminar empresa: ' + res.error.message);
+            } else {
+                alert('✅ Empresa eliminada correctamente');
+                fetchData();
+            }
+        } catch (err) {
+            alert('❌ Error inesperado: ' + err.message);
+        }
+        
+        deleteCompanyId = null;
     };
     
     window.closeModal = function(id) {
