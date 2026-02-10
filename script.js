@@ -6,6 +6,7 @@ var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 var leadsMap = null, dispatchMap = null, trackingMap = null;
 var markers = [], dispatchMarkers = [];
 var leadsData = [], techsData = [], jobsData = [];
+var installationsData = []; // Installations tracking
 var currentUser = null, companyId = null;
 var trackingInterval = null;
 
@@ -421,7 +422,36 @@ function refreshCommandCenterMap() {
             });
             
             var lastUpdate = t.last_location_at ? getTimeAgo(t.last_location_at) : 'desconocido';
-            var infoContent = '<div style="min-width:180px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '-') + '<br>Estado: ' + (isAvailable ? '🟢 Disponible' : '🔶 Ocupado') + '<br><small>Última actualización: ' + lastUpdate + '</small></div>';
+            var infoContent = '<div style="min-width:180px;"><strong>👷 ' + t.name + '</strong><br>📱 ' + (t.phone || '-') + '<br>Estado: ' + (isAvailable ? '🟢 Disponible' : '🔶 Ocupado') + '<br><small>Última ubicación: ' + lastUpdate + '</small></div>';
+            var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+            marker.addListener('click', function() { infoWindow.open(commandCenterMap, marker); });
+            
+            ccMarkers.push(marker);
+            bounds.extend(marker.getPosition());
+            hasMarkers = true;
+        }
+    });
+    
+    // Add ADVISOR/SALESPERSON markers (purple circles)
+    (advisorsData || []).forEach(function(a) {
+        if (a.last_lat && a.last_lng) {
+            var marker = new google.maps.Marker({
+                position: { lat: a.last_lat, lng: a.last_lng },
+                map: commandCenterMap,
+                title: '🏠 ' + a.name,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#8b5cf6',
+                    fillOpacity: 1,
+                    strokeWeight: 3,
+                    strokeColor: 'white',
+                    scale: 12
+                },
+                zIndex: 90
+            });
+            
+            var lastUpdate = a.last_location_at ? getTimeAgo(a.last_location_at) : 'desconocido';
+            var infoContent = '<div style="min-width:180px;"><strong>🏠 ' + a.name + '</strong><br>📱 ' + (a.phone || '-') + '<br>Tipo: Vendedor/Advisor<br><small>Última ubicación: ' + lastUpdate + '</small></div>';
             var infoWindow = new google.maps.InfoWindow({ content: infoContent });
             marker.addListener('click', function() { infoWindow.open(commandCenterMap, marker); });
             
@@ -472,6 +502,320 @@ function refreshCommandCenterMap() {
             google.maps.event.removeListener(listener);
         });
     }
+    
+    // Update all employees status list
+    renderAllEmployeesStatus();
+}
+
+function renderAllEmployeesStatus() {
+    var container = document.getElementById('allEmployeesStatusList');
+    if (!container) return;
+    
+    var html = '';
+    var techCount = (techsData || []).length;
+    var advCount = (advisorsData || []).length;
+    
+    // Update counts
+    var el1 = document.getElementById('totalTechsCount');
+    var el2 = document.getElementById('totalAdvisorsCount');
+    if (el1) el1.textContent = techCount;
+    if (el2) el2.textContent = advCount;
+    
+    // TECHNICIANS
+    (techsData || []).forEach(function(t) {
+        var isAvailable = t.status === 'available' || t.status === 'Disponible' || !t.status;
+        var hasLocation = t.last_lat && t.last_lng;
+        var statusColor = isAvailable ? '#10b981' : '#f59e0b';
+        var statusText = isAvailable ? 'Disponible' : 'Ocupado';
+        var locationText = hasLocation ? '📍 Con ubicación' : '❓ Sin ubicación';
+        var lastUpdate = t.last_location_at ? getTimeAgo(t.last_location_at) : '';
+        
+        // Find assigned job
+        var assignedJob = jobsData.find(function(j) { return j.technician_id === t.id && j.status !== 'completed' && j.status !== 'cancelled'; });
+        var jobInfo = assignedJob ? '<br><small style="color:#3b82f6;">🔧 ' + (assignedJob.title || 'Trabajo asignado').substring(0,30) + '</small>' : '';
+        
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-input);border-radius:8px;border-left:3px solid ' + statusColor + ';">';
+        html += '<div style="width:40px;height:40px;background:' + statusColor + ';border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">👷</div>';
+        html += '<div style="flex:1;">';
+        html += '<strong style="font-size:13px;">' + t.name + '</strong>';
+        html += '<div style="font-size:11px;color:#64748b;">' + statusText + ' • ' + locationText + (lastUpdate ? ' • ' + lastUpdate : '') + '</div>';
+        html += jobInfo;
+        html += '</div>';
+        if (t.phone) html += '<a href="tel:' + t.phone + '" style="color:#3b82f6;font-size:18px;">📞</a>';
+        html += '</div>';
+    });
+    
+    // ADVISORS/SALESPEOPLE
+    (advisorsData || []).forEach(function(a) {
+        if (a.status !== 'active') return;
+        var hasLocation = a.last_lat && a.last_lng;
+        var locationText = hasLocation ? '📍 Con ubicación' : '❓ Sin ubicación';
+        var lastUpdate = a.last_location_at ? getTimeAgo(a.last_location_at) : '';
+        
+        // Calculate pending commission
+        var pendingComm = (advisorSales || []).filter(function(s) { return s.advisor_id === a.id && !s.commission_paid; }).reduce(function(sum, s) { return sum + (s.commission_amount || 0); }, 0);
+        var commInfo = pendingComm > 0 ? '<br><small style="color:#10b981;">💰 $' + pendingComm.toFixed(2) + ' pendiente</small>' : '';
+        
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-input);border-radius:8px;border-left:3px solid #8b5cf6;">';
+        html += '<div style="width:40px;height:40px;background:#8b5cf6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">🏠</div>';
+        html += '<div style="flex:1;">';
+        html += '<strong style="font-size:13px;">' + a.name + '</strong>';
+        html += '<div style="font-size:11px;color:#64748b;">Vendedor • ' + locationText + (lastUpdate ? ' • ' + lastUpdate : '') + '</div>';
+        html += commInfo;
+        html += '</div>';
+        if (a.phone) html += '<a href="tel:' + a.phone + '" style="color:#3b82f6;font-size:18px;">📞</a>';
+        html += '</div>';
+    });
+    
+    if (html === '') {
+        html = '<p class="empty-msg" style="grid-column:1/-1;">No hay empleados registrados. Agrega técnicos en Despacho y vendedores en Home Advisors.</p>';
+    }
+    
+    container.innerHTML = html;
+}
+
+// ===== INSTALLATIONS MODULE =====
+var INST_STATUSES = ['iniciado', 'en_progreso', 'terminado', 'documentado', 'finalizado'];
+var INST_STATUS_LABELS = {
+    iniciado: '🚀 Iniciado',
+    en_progreso: '🔧 En Progreso', 
+    terminado: '✅ Terminado',
+    documentado: '📋 Documentado',
+    finalizado: '🏁 Finalizado'
+};
+var INST_STATUS_COLORS = {
+    iniciado: '#f59e0b',
+    en_progreso: '#3b82f6',
+    terminado: '#ec4899',
+    documentado: '#6366f1',
+    finalizado: '#10b981'
+};
+
+async function loadInstallations() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('installations').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+        installationsData = res.data || [];
+    } catch(e) {
+        installationsData = JSON.parse(localStorage.getItem('tm_installations_' + companyId) || '[]');
+    }
+    renderInstallations();
+}
+
+function saveInstallationsLocal() {
+    localStorage.setItem('tm_installations_' + companyId, JSON.stringify(installationsData));
+}
+
+function showNewInstallationModal() {
+    document.getElementById('newInstallationModal').style.display = 'flex';
+    document.getElementById('newInstallationForm').reset();
+    document.getElementById('instStartDate').value = new Date().toISOString().split('T')[0];
+    populateInstallationSelects();
+}
+
+function closeInstallationModal() {
+    document.getElementById('newInstallationModal').style.display = 'none';
+}
+
+function populateInstallationSelects() {
+    // Populate advisors/sellers
+    var advSelect = document.getElementById('instAdvisorId');
+    if (advSelect) {
+        advSelect.innerHTML = '<option value="">-- Seleccionar vendedor --</option>';
+        (advisorsData || []).forEach(function(a) {
+            if (a.status === 'active') {
+                advSelect.innerHTML += '<option value="' + a.id + '">' + a.name + '</option>';
+            }
+        });
+    }
+    
+    // Populate technicians as checkboxes
+    var techContainer = document.getElementById('instTechCheckboxes');
+    if (techContainer) {
+        var html = '';
+        (techsData || []).forEach(function(t) {
+            html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">';
+            html += '<input type="checkbox" name="instTechs" value="' + t.id + '" data-name="' + t.name + '">';
+            html += '<span style="font-size:13px;">' + t.name + '</span></label>';
+        });
+        techContainer.innerHTML = html || '<span style="color:#94a3b8;font-size:12px;">No hay técnicos. Agrega técnicos en Despacho.</span>';
+    }
+}
+
+async function handleCreateInstallation(event) {
+    event.preventDefault();
+    
+    // Get selected technicians
+    var selectedTechs = [];
+    document.querySelectorAll('input[name="instTechs"]:checked').forEach(function(cb) {
+        selectedTechs.push({ id: cb.value, name: cb.getAttribute('data-name') });
+    });
+    
+    var installation = {
+        id: 'inst_' + Date.now(),
+        company_id: companyId,
+        client_name: document.getElementById('instClientName').value,
+        client_phone: document.getElementById('instClientPhone').value,
+        address: document.getElementById('instAddress').value,
+        advisor_id: document.getElementById('instAdvisorId').value || null,
+        sale_price: parseFloat(document.getElementById('instSalePrice').value) || 0,
+        start_date: document.getElementById('instStartDate').value,
+        end_date: document.getElementById('instEndDate').value || null,
+        technicians: selectedTechs,
+        equipment_type: document.getElementById('instEquipmentType').value,
+        notes: document.getElementById('instNotes').value,
+        status: 'iniciado',
+        inspections: {
+            permit_pulled: false,
+            rough_inspection: false,
+            final_inspection: false,
+            city_approval: false
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    };
+    
+    // Get advisor name
+    if (installation.advisor_id && advisorsData) {
+        var adv = advisorsData.find(function(a) { return a.id === installation.advisor_id; });
+        if (adv) installation.advisor_name = adv.name;
+    }
+    
+    try {
+        var res = await sbClient.from('installations').insert([installation]).select();
+        if (res.error) throw res.error;
+        installation.id = res.data[0].id;
+    } catch(e) {
+        installationsData.unshift(installation);
+        saveInstallationsLocal();
+    }
+    
+    closeInstallationModal();
+    loadInstallations();
+    alert('✅ Instalación creada exitosamente');
+}
+
+function renderInstallations() {
+    var container = document.getElementById('installationsList');
+    if (!container) return;
+    
+    // Update status counts
+    var counts = { iniciado: 0, en_progreso: 0, terminado: 0, documentado: 0, finalizado: 0 };
+    installationsData.forEach(function(inst) {
+        if (counts.hasOwnProperty(inst.status)) counts[inst.status]++;
+    });
+    
+    document.getElementById('instStatusIniciado').textContent = counts.iniciado;
+    document.getElementById('instStatusProgreso').textContent = counts.en_progreso;
+    document.getElementById('instStatusTerminado').textContent = counts.terminado;
+    document.getElementById('instStatusDocumentado').textContent = counts.documentado;
+    document.getElementById('instStatusFinalizado').textContent = counts.finalizado;
+    document.getElementById('installationsCount').textContent = installationsData.length;
+    
+    // Filter to show only active (not finalized)
+    var activeInst = installationsData.filter(function(inst) { return inst.status !== 'finalizado'; });
+    
+    if (activeInst.length === 0) {
+        container.innerHTML = '<p class="empty-msg">No hay instalaciones en progreso. Usa el botón "+ Nueva Instalación" para agregar una.</p>';
+        return;
+    }
+    
+    var html = '';
+    activeInst.forEach(function(inst) {
+        var statusColor = INST_STATUS_COLORS[inst.status] || '#94a3b8';
+        var statusLabel = INST_STATUS_LABELS[inst.status] || inst.status;
+        
+        // Technicians list
+        var techNames = (inst.technicians || []).map(function(t) { return t.name; }).join(', ') || 'Sin asignar';
+        
+        // Inspections progress
+        var inspections = inst.inspections || {};
+        var inspTotal = 4;
+        var inspDone = (inspections.permit_pulled ? 1 : 0) + (inspections.rough_inspection ? 1 : 0) + (inspections.final_inspection ? 1 : 0) + (inspections.city_approval ? 1 : 0);
+        var inspPercent = Math.round((inspDone / inspTotal) * 100);
+        
+        html += '<div style="border:2px solid ' + statusColor + ';border-radius:12px;padding:16px;margin-bottom:12px;background:white;">';
+        
+        // Header
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">';
+        html += '<div>';
+        html += '<h4 style="margin:0 0 4px 0;font-size:15px;">👤 ' + inst.client_name + '</h4>';
+        html += '<p style="margin:0;font-size:12px;color:#64748b;">📍 ' + (inst.address || '-') + '</p>';
+        html += '</div>';
+        html += '<span style="background:' + statusColor + ';color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;">' + statusLabel + '</span>';
+        html += '</div>';
+        
+        // Details grid
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;font-size:12px;">';
+        html += '<div><span style="color:#94a3b8;">🏠 Vendedor:</span><br><strong>' + (inst.advisor_name || '-') + '</strong></div>';
+        html += '<div><span style="color:#94a3b8;">💰 Venta:</span><br><strong>$' + (inst.sale_price || 0).toLocaleString() + '</strong></div>';
+        html += '<div><span style="color:#94a3b8;">👷 Técnicos:</span><br><strong>' + techNames + '</strong></div>';
+        html += '<div><span style="color:#94a3b8;">🔧 Equipo:</span><br><strong>' + (inst.equipment_type || '-') + '</strong></div>';
+        html += '</div>';
+        
+        // Inspections progress bar
+        html += '<div style="margin-bottom:12px;">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px;"><span>📋 Inspecciones</span><span>' + inspDone + '/' + inspTotal + ' (' + inspPercent + '%)</span></div>';
+        html += '<div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;">';
+        html += '<div style="background:' + statusColor + ';height:100%;width:' + inspPercent + '%;transition:width 0.3s;"></div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Inspection checkboxes
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:11px;">';
+        html += '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 8px;background:#f8fafc;border-radius:4px;">';
+        html += '<input type="checkbox" ' + (inspections.permit_pulled ? 'checked' : '') + ' onchange="toggleInspection(\'' + inst.id + '\',\'permit_pulled\',this.checked)"> Permiso</label>';
+        html += '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 8px;background:#f8fafc;border-radius:4px;">';
+        html += '<input type="checkbox" ' + (inspections.rough_inspection ? 'checked' : '') + ' onchange="toggleInspection(\'' + inst.id + '\',\'rough_inspection\',this.checked)"> Rough Insp.</label>';
+        html += '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 8px;background:#f8fafc;border-radius:4px;">';
+        html += '<input type="checkbox" ' + (inspections.final_inspection ? 'checked' : '') + ' onchange="toggleInspection(\'' + inst.id + '\',\'final_inspection\',this.checked)"> Final Insp.</label>';
+        html += '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 8px;background:#f8fafc;border-radius:4px;">';
+        html += '<input type="checkbox" ' + (inspections.city_approval ? 'checked' : '') + ' onchange="toggleInspection(\'' + inst.id + '\',\'city_approval\',this.checked)"> City Approval</label>';
+        html += '</div>';
+        
+        // Status change buttons
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+        INST_STATUSES.forEach(function(s) {
+            var isActive = inst.status === s;
+            var btnColor = isActive ? INST_STATUS_COLORS[s] : '#e5e7eb';
+            var textColor = isActive ? 'white' : '#64748b';
+            html += '<button onclick="updateInstallationStatus(\'' + inst.id + '\',\'' + s + '\')" style="padding:6px 10px;border:none;border-radius:6px;font-size:10px;cursor:pointer;background:' + btnColor + ';color:' + textColor + ';font-weight:' + (isActive ? '600' : '400') + ';">' + INST_STATUS_LABELS[s] + '</button>';
+        });
+        html += '</div>';
+        
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+async function updateInstallationStatus(instId, newStatus) {
+    var inst = installationsData.find(function(i) { return i.id === instId; });
+    if (!inst) return;
+    
+    inst.status = newStatus;
+    inst.updated_at = new Date().toISOString();
+    
+    try {
+        await sbClient.from('installations').update({ status: newStatus, updated_at: inst.updated_at }).eq('id', instId);
+    } catch(e) { saveInstallationsLocal(); }
+    
+    renderInstallations();
+}
+
+async function toggleInspection(instId, inspectionKey, checked) {
+    var inst = installationsData.find(function(i) { return i.id === instId; });
+    if (!inst) return;
+    
+    if (!inst.inspections) inst.inspections = {};
+    inst.inspections[inspectionKey] = checked;
+    inst.updated_at = new Date().toISOString();
+    
+    try {
+        await sbClient.from('installations').update({ inspections: inst.inspections, updated_at: inst.updated_at }).eq('id', instId);
+    } catch(e) { saveInstallationsLocal(); }
+    
+    renderInstallations();
 }
 
 // ===== NAVIGATION =====
@@ -485,7 +829,7 @@ function showSection(name) {
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
     if (al) al.classList.add('active');
-    if (name === 'dashboard') { renderDashboardDynamic(); renderHCPDashboard(); setTimeout(initCommandCenterMap, 500); }
+    if (name === 'dashboard') { renderDashboardDynamic(); renderHCPDashboard(); loadInstallations(); setTimeout(initCommandCenterMap, 500); }
     if (name === 'calendar') { initCalendar(); }
     if (name === 'inbox') { loadInbox(); }
     if (name === 'clients') { loadClients(); }
@@ -1217,12 +1561,21 @@ async function loadJobs() {
     updateJobPermitSelect();
 }
 
+// Filter to show only won/approved jobs ready to schedule
+function filterWonJobs() {
+    var filterSelect = document.getElementById('jobsFilterStatus');
+    if (filterSelect) {
+        filterSelect.value = 'won';
+        renderJobsList();
+    }
+}
+
 function renderJobsList() {
     var c = document.getElementById('jobsList');
     if (jobsData.length === 0) { c.innerHTML = '<p class="empty-msg">No hay trabajos pendientes.</p>'; return; }
 
-    var jobStatuses = ['pending','in_progress','completed','cancelled'];
-    var jobStatusLabels = {pending:'Pendiente',in_progress:'En Progreso',completed:'Completado',cancelled:'Cancelado'};
+    var jobStatuses = ['pending','in_progress','approved','won','quoted','completed','cancelled'];
+    var jobStatusLabels = {pending:'Pendiente',in_progress:'En Progreso',approved:'Aprobado',won:'Ganado',quoted:'Cotizado',completed:'Completado',cancelled:'Cancelado'};
 
     var priorities = ['low','medium','high','urgent'];
     var priorityLabels = {low:'Baja',medium:'Normal',high:'Alta',urgent:'Urgente'};
@@ -6917,13 +7270,15 @@ document.addEventListener('DOMContentLoaded', function() { setTimeout(applyLangu
 // ===== HCP DASHBOARD =====
 var employeeStatusMap = null;
 function renderHCPDashboard() {
-    // ESTIMADOS
-    var openEst = jobsData.filter(function(j){ return j.status==='open'||j.status==='pending'; });
-    var estTotal = openEst.reduce(function(s,j){ return s+(parseFloat(j.total_cost)||0);},0);
-    var el1 = document.getElementById('hcpOpenEstimates');
-    var el2 = document.getElementById('hcpEstimatesAmount');
-    if (el1) el1.textContent = openEst.length;
-    if (el2) el2.textContent = '$'+estTotal.toLocaleString('en-US',{minimumFractionDigits:2});
+    // TRABAJOS GANADOS (approved, won, ready to schedule)
+    var wonJobs = jobsData.filter(function(j){ 
+        return (j.status === 'approved' || j.status === 'won' || j.status === 'quoted') && !j.scheduled_date; 
+    });
+    var wonTotal = wonJobs.reduce(function(s,j){ return s + (parseFloat(j.total_cost) || 0); }, 0);
+    var el1 = document.getElementById('hcpWonJobs');
+    var el2 = document.getElementById('hcpWonJobsAmount');
+    if (el1) el1.textContent = wonJobs.length;
+    if (el2) el2.textContent = '$' + wonTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
     
     // LLAMADAS DE SERVICIO (from jobsData/work_orders)
     var activeJobs = jobsData.filter(function(j){ return j.status !== 'completed' && j.status !== 'cancelled'; });
