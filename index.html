@@ -188,6 +188,7 @@
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_operations">Operaciones</span>
+            <a href="#" onclick="showSection('servicecalls')" class="nav-link"><span>📞</span> <span data-i18n="nav_servicecalls">Llamadas de Servicio</span></a>
             <a href="#" onclick="showSection('dispatch')" class="nav-link"><span>🚚</span> <span data-i18n="nav_dispatch">Despacho</span></a>
             <a href="#" onclick="showSection('jobs')" class="nav-link"><span>🔧</span> <span data-i18n="nav_jobs">Trabajos</span></a>
             <a href="#" onclick="showSection('technicians')" class="nav-link"><span>👷</span> <span data-i18n="nav_technicians">Técnicos</span></a>
@@ -737,6 +738,137 @@
               <div id="leadsList"></div>
             </div>
             <div class="card"><h3>Mapa de Leads</h3><div id="leadsMap" style="width:100%;height:500px;border-radius:8px;"></div></div>
+          </div>
+
+          <!-- ===== SERVICE CALLS / LLAMADAS DE SERVICIO ===== -->
+          <div id="servicecalls-section" class="section">
+            <!-- KPI Cards -->
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #ef4444;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🆕</span> Nuevas</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="scKpiNew">0</span><span class="hcp-sub-amount">Sin asignar</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">👷</span> Asignadas</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="scKpiAssigned">0</span><span class="hcp-sub-amount">Esperando</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🚐</span> En Camino</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="scKpiEnroute">0</span><span class="hcp-sub-amount">En ruta</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">✅</span> Completadas Hoy</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="scKpiCompleted">0</span><span class="hcp-sub-amount">Finalizadas</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-top">
+                <h3>📞 Llamadas de Servicio</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <select id="scFilterStatus" onchange="renderServiceCalls()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                    <option value="active">🔴 Activas (sin completar)</option>
+                    <option value="new">🆕 Nuevas</option>
+                    <option value="assigned">👷 Asignadas</option>
+                    <option value="enroute">🚐 En Camino</option>
+                    <option value="completed">✅ Completadas</option>
+                    <option value="all">📋 Todas</option>
+                  </select>
+                  <button class="btn-primary btn-sm" onclick="showServiceCallForm()">+ Nueva Llamada</button>
+                </div>
+              </div>
+
+              <!-- New Service Call Form -->
+              <div id="serviceCallFormContainer" style="display:none;margin:16px 0;padding:20px;background:var(--bg-input);border:2px solid var(--primary);border-radius:12px;">
+                <h4 style="color:var(--primary);margin-bottom:16px;">📞 Nueva Llamada de Servicio</h4>
+                <form id="serviceCallForm" onsubmit="handleServiceCallCreate(event)">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>👤 Nombre del Cliente</label>
+                      <input type="text" id="scClientName" required placeholder="Nombre completo">
+                    </div>
+                    <div class="form-group">
+                      <label>📱 Teléfono</label>
+                      <input type="tel" id="scClientPhone" required placeholder="(555) 123-4567">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>📍 Dirección del Servicio</label>
+                    <input type="text" id="scAddress" required placeholder="Dirección completa">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>🔧 Problema / Descripción</label>
+                      <textarea id="scProblem" rows="2" required placeholder="¿Cuál es el problema? AC no enfría, calefacción no enciende, etc."></textarea>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>⚡ Urgencia</label>
+                      <select id="scUrgency">
+                        <option value="normal">🟢 Normal</option>
+                        <option value="priority">🟡 Prioritario</option>
+                        <option value="emergency">🔴 Emergencia</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>🏠 Tipo de Propiedad</label>
+                      <select id="scPropertyType">
+                        <option value="residential">🏠 Residencial</option>
+                        <option value="commercial">🏢 Comercial</option>
+                        <option value="industrial">🏭 Industrial</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>👷 Asignar Técnico (opcional)</label>
+                      <select id="scTechAssign">
+                        <option value="">-- Asignar después --</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>📅 Fecha Preferida</label>
+                      <input type="date" id="scPreferredDate">
+                    </div>
+                    <div class="form-group">
+                      <label>🕐 Hora Preferida</label>
+                      <select id="scPreferredTime">
+                        <option value="">Cualquier hora</option>
+                        <option value="morning">🌅 Mañana (8am-12pm)</option>
+                        <option value="afternoon">☀️ Tarde (12pm-5pm)</option>
+                        <option value="asap">⚡ Lo antes posible</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>📝 Notas Adicionales</label>
+                    <textarea id="scNotes" rows="2" placeholder="Código de acceso, mascota, instrucciones especiales..."></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary">💾 Guardar Llamada</button>
+                    <button type="button" class="btn-secondary" onclick="hideServiceCallForm()">Cancelar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Service Calls Cards Grid -->
+              <div id="serviceCallsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
+            </div>
+
+            <!-- Service Calls Map -->
+            <div class="card">
+              <div class="card-top">
+                <h3>🗺️ Mapa de Llamadas de Servicio</h3>
+                <div class="dispatch-legend">
+                  <span class="legend-item"><span style="color:#ef4444;">📍</span> Nueva</span>
+                  <span class="legend-item"><span style="color:#f59e0b;">📍</span> Asignada</span>
+                  <span class="legend-item"><span style="color:#3b82f6;">📍</span> En Camino</span>
+                  <span class="legend-item"><span style="color:#10b981;">📍</span> Completada</span>
+                </div>
+              </div>
+              <div id="serviceCallsMap" style="width:100%;height:400px;border-radius:8px;"></div>
+            </div>
           </div>
 
           <!-- ===== DISPATCH ===== -->
