@@ -766,11 +766,11 @@
               <div class="card-top">
                 <h3>📞 Llamadas de Servicio</h3>
                 <div style="display:flex;gap:8px;align-items:center;">
-                  <select id="scFilterStatus" onchange="renderServiceCalls()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-                    <option value="active">🔴 Activas (sin completar)</option>
-                    <option value="new">🆕 Nuevas</option>
+                  <select id="scFilterStatus" onchange="renderServiceCallCards()" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                    <option value="active" selected>🔴 Activas (sin completar)</option>
+                    <option value="new">🆕 Nuevas (sin asignar)</option>
                     <option value="assigned">👷 Asignadas</option>
-                    <option value="enroute">🚐 En Camino</option>
+                    <option value="enroute">🚐 En Progreso</option>
                     <option value="completed">✅ Completadas</option>
                     <option value="all">📋 Todas</option>
                   </select>
