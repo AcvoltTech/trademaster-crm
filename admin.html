@@ -18,10 +18,11 @@
         .login-card>p{text-align:center;color:var(--gray);margin-bottom:2rem}
         .form-group{margin-bottom:1.25rem}
         .form-group label{display:block;margin-bottom:0.5rem;font-weight:500}
-        .form-group input{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem}
-        .form-group input:focus{outline:none;border-color:var(--primary)}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem;font-family:inherit}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary)}
         .btn{display:block;width:100%;padding:0.875rem;border:none;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--primary);color:white}
         .btn:hover{background:#1e3a8a}
+        .btn:disabled{background:#ccc;cursor:not-allowed}
         .error{background:#fee2e2;color:#dc2626;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;display:none}
         .error.show{display:block}
         .hint{text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem}
@@ -38,13 +39,14 @@
         .btn-sm{padding:0.5rem 1rem;font-size:0.875rem;border-radius:0.5rem;border:none;cursor:pointer}
         .btn-refresh{background:var(--light)}
         .btn-danger{background:var(--danger);color:white}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;padding:2rem}
+        .btn-success{background:var(--success);color:white}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;padding:2rem}
         .stat{background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
         .stat-icon{width:48px;height:48px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:0.75rem}
         .stat h3{font-size:2rem;color:var(--dark)}
         .stat p{color:var(--gray);font-size:0.875rem}
         .content{padding:0 2rem 2rem}
-        .card{background:white;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow:hidden}
+        .card{background:white;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:1.5rem}
         .card-head{padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
         .card-head h2{font-size:1.25rem}
         .search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--light);border-radius:0.5rem}
@@ -65,12 +67,62 @@
         .b-yellow{background:#fef3c7;color:#d97706}
         .b-gray{background:#f3f4f6;color:#6b7280}
         .b-purple{background:#f3e8ff;color:#9333ea}
+        .b-blue{background:#dbeafe;color:#1d4ed8}
+        .b-red{background:#fee2e2;color:#dc2626}
         .actions{display:flex;gap:0.5rem}
-        .act{width:32px;height:32px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer}
+        .act{width:32px;height:32px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer;font-size:0.9rem}
         .act:hover{background:var(--primary);color:white}
+        .act.danger:hover{background:var(--danger)}
         .empty{text-align:center;padding:3rem;color:var(--gray)}
         .wrap{overflow-x:auto}
         @media(max-width:768px){.stats,.content{padding:1rem}.header{padding:1rem}}
+        
+        /* Modal */
+        .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+        .modal-bg.show{display:flex}
+        .modal{background:white;border-radius:1rem;width:100%;max-width:600px;max-height:90vh;overflow:auto;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
+        .modal-head{padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+        .modal-head h3{font-size:1.25rem}
+        .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)}
+        .modal-body{padding:1.5rem}
+        .modal-foot{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem}
+        .modal-foot .btn{width:auto;padding:0.75rem 1.5rem}
+        
+        /* Notifications bell */
+        .notif-wrap{position:relative}
+        .notif-btn{background:var(--light);border:none;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;position:relative}
+        .notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:white;font-size:0.65rem;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+        .notif-badge.hidden{display:none}
+        .notif-dropdown{position:absolute;top:50px;right:0;background:white;border-radius:0.75rem;box-shadow:0 10px 40px rgba(0,0,0,0.15);width:320px;max-height:400px;overflow:auto;display:none;z-index:100}
+        .notif-dropdown.show{display:block}
+        .notif-item{padding:1rem;border-bottom:1px solid #e5e7eb;cursor:pointer}
+        .notif-item:hover{background:#f9fafb}
+        .notif-item.unread{background:#eff6ff}
+        .notif-item h4{font-size:0.875rem;margin-bottom:0.25rem}
+        .notif-item p{font-size:0.75rem;color:var(--gray)}
+        .notif-empty{padding:2rem;text-align:center;color:var(--gray)}
+        
+        /* Tabs */
+        .tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;padding:0 1.5rem}
+        .tab{padding:1rem 1.5rem;border:none;background:none;font-size:0.9rem;font-weight:500;cursor:pointer;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px}
+        .tab:hover{color:var(--primary)}
+        .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .tab-content{display:none;padding:1.5rem}
+        .tab-content.active{display:block}
+        
+        /* Employee list */
+        .emp-list{display:grid;gap:0.75rem}
+        .emp-item{display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--light);border-radius:0.5rem}
+        .emp-item .avatar{width:44px;height:44px}
+        .emp-info{flex:1}
+        .emp-info h4{font-size:0.9rem}
+        .emp-info p{font-size:0.8rem;color:var(--gray)}
+        
+        /* Payment list */
+        .pay-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #e5e7eb}
+        .pay-item:last-child{border-bottom:none}
+        .pay-amount{font-weight:700;color:var(--success)}
+        .pay-date{font-size:0.8rem;color:var(--gray)}
     </style>
 </head>
 <body>
@@ -88,7 +140,7 @@
                 <input type="password" id="pw" placeholder="••••••••">
             </div>
             <button class="btn" id="loginBtn">Entrar →</button>
-            <p class="hint">Acceso: floresmario30@gmail.com / admin123</p>
+            <p class="hint">Solo acceso autorizado</p>
         </div>
     </div>
 
@@ -97,6 +149,12 @@
             <h1>🔐 Trade<span>Masters</span> Admin</h1>
             <div class="header-right">
                 <span class="status" id="status">⏳ Cargando...</span>
+                <div class="notif-wrap">
+                    <button class="notif-btn" id="notifBtn">🔔<span class="notif-badge hidden" id="notifBadge">0</span></button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div id="notifList"><div class="notif-empty">Sin notificaciones</div></div>
+                    </div>
+                </div>
                 <button class="btn-sm btn-refresh" id="refreshBtn">🔄</button>
                 <div class="avatar" id="av">M</div>
                 <button class="btn-sm btn-danger" id="logoutBtn">Salir</button>
@@ -107,6 +165,7 @@
             <div class="stat"><div class="stat-icon" style="background:#dcfce7">💳</div><h3 id="s2">0</h3><p>Suscripciones Activas</p></div>
             <div class="stat"><div class="stat-icon" style="background:#ffedd5">💰</div><h3 id="s3">$0</h3><p>Ingresos Mensuales</p></div>
             <div class="stat"><div class="stat-icon" style="background:#f3e8ff">🆓</div><h3 id="s4">0</h3><p>Free / Trial</p></div>
+            <div class="stat"><div class="stat-icon" style="background:#fef3c7">👷</div><h3 id="s5">0</h3><p>Total Empleados</p></div>
         </div>
         <div class="content">
             <div class="card">
@@ -120,7 +179,81 @@
                     <button class="filter" data-f="profesional">Profesional</button>
                     <button class="filter" data-f="enterprise">Enterprise</button>
                 </div>
-                <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody></table></div>
+                <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Empleados</th><th>Acciones</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody></table></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Empresa -->
+    <div class="modal-bg" id="modalView">
+        <div class="modal">
+            <div class="modal-head">
+                <h3 id="modalTitle">Detalles de Empresa</h3>
+                <button class="modal-close" onclick="closeModal('modalView')">×</button>
+            </div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('info')">📋 Info</button>
+                <button class="tab" onclick="switchTab('employees')">👷 Empleados</button>
+                <button class="tab" onclick="switchTab('payments')">💳 Pagos</button>
+            </div>
+            <div class="tab-content active" id="tab-info">
+                <div id="companyInfo"></div>
+            </div>
+            <div class="tab-content" id="tab-employees">
+                <div id="employeesList"></div>
+            </div>
+            <div class="tab-content" id="tab-payments">
+                <div id="paymentsList"></div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalView')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Enviar Email -->
+    <div class="modal-bg" id="modalEmail">
+        <div class="modal">
+            <div class="modal-head">
+                <h3>📧 Enviar Email</h3>
+                <button class="modal-close" onclick="closeModal('modalEmail')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Para:</label>
+                    <input type="text" id="emailTo" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Asunto:</label>
+                    <input type="text" id="emailSubject" placeholder="Asunto del email">
+                </div>
+                <div class="form-group">
+                    <label>Mensaje:</label>
+                    <textarea id="emailBody" rows="6" placeholder="Escribe tu mensaje..."></textarea>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalEmail')">Cancelar</button>
+                <button class="btn btn-sm btn-success" onclick="sendEmail()">📤 Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminar -->
+    <div class="modal-bg" id="modalDelete">
+        <div class="modal" style="max-width:400px">
+            <div class="modal-head">
+                <h3>⚠️ Confirmar Eliminación</h3>
+                <button class="modal-close" onclick="closeModal('modalDelete')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:1rem">¿Estás seguro de eliminar esta empresa?</p>
+                <p style="font-weight:600;color:var(--danger)" id="deleteCompanyName"></p>
+                <p style="margin-top:1rem;font-size:0.85rem;color:var(--gray)">Esta acción eliminará todos los datos asociados (clientes, trabajos, técnicos, etc.) y no se puede deshacer.</p>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalDelete')">Cancelar</button>
+                <button class="btn btn-sm btn-danger" onclick="confirmDelete()">🗑️ Eliminar</button>
             </div>
         </div>
     </div>
@@ -133,7 +266,12 @@
     
     var db = null;
     var companies = [];
+    var employees = {};
+    var notifications = [];
     var curFilter = 'all';
+    var selectedCompany = null;
+    var deleteCompanyId = null;
+    var lastCheckTime = null;
 
     function init() {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -143,10 +281,21 @@
         document.getElementById('logoutBtn').onclick = doLogout;
         document.getElementById('refreshBtn').onclick = fetchData;
         document.getElementById('q').oninput = doSearch;
+        document.getElementById('notifBtn').onclick = toggleNotifications;
         
         document.querySelectorAll('.filter').forEach(function(btn){
             btn.onclick = function(){ doFilter(btn.dataset.f, btn); };
         });
+        
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.notif-wrap')) {
+                document.getElementById('notifDropdown').classList.remove('show');
+            }
+        });
+        
+        // Load last check time
+        lastCheckTime = localStorage.getItem('adminLastCheck') || new Date(Date.now() - 86400000).toISOString();
     }
 
     function doLogin() {
@@ -158,6 +307,7 @@
             document.getElementById('dash').classList.add('active');
             document.getElementById('av').textContent = email[0].toUpperCase();
             fetchData();
+            checkNewRegistrations();
         } else {
             document.getElementById('err').textContent = 'Email no autorizado o contraseña corta (min 4)';
             document.getElementById('err').classList.add('show');
@@ -176,6 +326,7 @@
         st.textContent = '⏳ Cargando...';
         st.className = 'status';
 
+        // Fetch companies
         db.from('companies').select('*').order('created_at', {ascending: false}).then(function(res){
             if (res.error) {
                 st.textContent = '🔴 Error';
@@ -190,9 +341,98 @@
             st.textContent = '🟢 Conectado';
             st.className = 'status ok';
             
+            // Fetch all employees
+            fetchAllEmployees();
+            
             render(companies);
             updateStats(companies);
         });
+    }
+    
+    function fetchAllEmployees() {
+        // Fetch technicians
+        db.from('technicians').select('*').then(function(res) {
+            if (res.data) {
+                res.data.forEach(function(t) {
+                    if (!employees[t.company_id]) employees[t.company_id] = [];
+                    t.type = 'technician';
+                    employees[t.company_id].push(t);
+                });
+            }
+        });
+        
+        // Fetch team_users
+        db.from('team_users').select('*').then(function(res) {
+            if (res.data) {
+                res.data.forEach(function(u) {
+                    if (!employees[u.company_id]) employees[u.company_id] = [];
+                    u.type = 'user';
+                    employees[u.company_id].push(u);
+                });
+                updateStats(companies);
+            }
+        });
+    }
+    
+    function checkNewRegistrations() {
+        db.from('companies').select('*').gt('created_at', lastCheckTime).order('created_at', {ascending: false}).then(function(res) {
+            if (res.data && res.data.length > 0) {
+                notifications = res.data.map(function(c) {
+                    return {
+                        id: c.id,
+                        title: '🆕 Nueva empresa registrada',
+                        message: c.name + ' - ' + (c.email || 'Sin email'),
+                        time: c.created_at,
+                        read: false
+                    };
+                });
+                updateNotificationBadge();
+                renderNotifications();
+            }
+        });
+        
+        // Update last check time
+        lastCheckTime = new Date().toISOString();
+        localStorage.setItem('adminLastCheck', lastCheckTime);
+    }
+    
+    function updateNotificationBadge() {
+        var unread = notifications.filter(function(n) { return !n.read; }).length;
+        var badge = document.getElementById('notifBadge');
+        if (unread > 0) {
+            badge.textContent = unread;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+    
+    function renderNotifications() {
+        var list = document.getElementById('notifList');
+        if (notifications.length === 0) {
+            list.innerHTML = '<div class="notif-empty">Sin notificaciones nuevas</div>';
+            return;
+        }
+        list.innerHTML = notifications.map(function(n) {
+            return '<div class="notif-item '+(n.read?'':'unread')+'" onclick="markRead(\''+n.id+'\')">' +
+                '<h4>'+n.title+'</h4>' +
+                '<p>'+n.message+'</p>' +
+                '<p style="margin-top:4px;font-size:0.7rem;">'+fmtDateTime(n.time)+'</p>' +
+            '</div>';
+        }).join('');
+    }
+    
+    window.markRead = function(id) {
+        notifications.forEach(function(n) {
+            if (n.id === id) n.read = true;
+        });
+        updateNotificationBadge();
+        renderNotifications();
+    };
+    
+    function toggleNotifications() {
+        var dd = document.getElementById('notifDropdown');
+        dd.classList.toggle('show');
     }
 
     function render(list) {
@@ -202,13 +442,19 @@
             return;
         }
         tb.innerHTML = list.map(function(c) {
+            var empCount = employees[c.id] ? employees[c.id].length : 0;
             return '<tr>' +
                 '<td><div class="user"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'Sin nombre')+'</h4><small>'+(c.email||'')+'</small></div></div></td>' +
                 '<td>'+(c.phone||'-')+'</td>' +
                 '<td>'+fmtDate(c.created_at)+'</td>' +
                 '<td><span class="badge '+planClass(c.plan)+'">'+(c.plan||'free')+'</span></td>' +
-                '<td>'+statusBadge(c.subscription_status)+'</td>' +
-                '<td><div class="actions"><button class="act" onclick="viewC(\''+c.id+'\')">👁</button><button class="act" onclick="editC(\''+c.id+'\')">✏️</button></div></td>' +
+                '<td><span class="badge b-blue">👷 '+empCount+'</span></td>' +
+                '<td><div class="actions">' +
+                    '<button class="act" onclick="viewCompany(\''+c.id+'\')" title="Ver detalles">👁</button>' +
+                    '<button class="act" onclick="editPlan(\''+c.id+'\')" title="Cambiar plan">✏️</button>' +
+                    '<button class="act" onclick="openEmailModal(\''+c.id+'\')" title="Enviar email">📧</button>' +
+                    '<button class="act danger" onclick="openDeleteModal(\''+c.id+'\')" title="Eliminar">🗑️</button>' +
+                '</div></td>' +
             '</tr>';
         }).join('');
     }
@@ -224,10 +470,17 @@
                 if (c.plan === 'enterprise') mrr += 299;
             }
         });
+        
+        var totalEmps = 0;
+        Object.keys(employees).forEach(function(k) {
+            totalEmps += employees[k].length;
+        });
+        
         document.getElementById('s1').textContent = total;
         document.getElementById('s2').textContent = paid;
         document.getElementById('s3').textContent = '$' + Math.round(mrr);
         document.getElementById('s4').textContent = free;
+        document.getElementById('s5').textContent = totalEmps;
     }
 
     function initials(n) {
@@ -238,6 +491,12 @@
     function fmtDate(d) {
         if (!d) return '-';
         return d.slice(0,10);
+    }
+    
+    function fmtDateTime(d) {
+        if (!d) return '-';
+        var dt = new Date(d);
+        return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
     }
 
     function planClass(p) {
@@ -273,12 +532,61 @@
         render(filtered);
     }
 
-    window.viewC = function(id) {
-        var c = companies.find(function(x){return x.id === id});
-        if (c) alert('📋 ' + c.name + '\n\n📧 ' + (c.email||'N/A') + '\n📱 ' + (c.phone||'N/A') + '\n💳 ' + (c.plan||'free') + '\n📅 ' + fmtDate(c.created_at));
+    // View company details
+    window.viewCompany = function(id) {
+        selectedCompany = companies.find(function(x){return x.id === id});
+        if (!selectedCompany) return;
+        
+        document.getElementById('modalTitle').textContent = selectedCompany.name || 'Empresa';
+        
+        // Info tab
+        document.getElementById('companyInfo').innerHTML = 
+            '<div style="display:grid;gap:1rem">' +
+                '<div><strong>📧 Email:</strong> '+(selectedCompany.email||'N/A')+'</div>' +
+                '<div><strong>📱 Teléfono:</strong> '+(selectedCompany.phone||'N/A')+'</div>' +
+                '<div><strong>💳 Plan:</strong> <span class="badge '+planClass(selectedCompany.plan)+'">'+(selectedCompany.plan||'free')+'</span></div>' +
+                '<div><strong>📊 Estado:</strong> '+statusBadge(selectedCompany.subscription_status)+'</div>' +
+                '<div><strong>📅 Registro:</strong> '+fmtDateTime(selectedCompany.created_at)+'</div>' +
+                '<div><strong>🆔 ID:</strong> <code style="font-size:0.75rem;background:#f3f4f6;padding:2px 6px;border-radius:4px">'+selectedCompany.id+'</code></div>' +
+            '</div>';
+        
+        // Employees tab
+        var emps = employees[id] || [];
+        if (emps.length === 0) {
+            document.getElementById('employeesList').innerHTML = '<div class="empty">Sin empleados registrados</div>';
+        } else {
+            document.getElementById('employeesList').innerHTML = '<div class="emp-list">' +
+                emps.map(function(e) {
+                    var role = e.type === 'technician' ? '🔧 Técnico' : '👤 ' + (e.role || 'Usuario');
+                    return '<div class="emp-item">' +
+                        '<div class="avatar">'+initials(e.name)+'</div>' +
+                        '<div class="emp-info"><h4>'+(e.name||'Sin nombre')+'</h4><p>'+(e.email||e.phone||'-')+' • '+role+'</p></div>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        }
+        
+        // Payments tab (placeholder - would need Stripe integration)
+        document.getElementById('paymentsList').innerHTML = 
+            '<div style="margin-bottom:1rem;padding:1rem;background:#fef3c7;border-radius:0.5rem;font-size:0.85rem">' +
+                '⚠️ Para ver pagos reales, necesitas conectar la API de Stripe.' +
+            '</div>' +
+            '<div class="pay-item"><div><strong>Ejemplo - Pro Plan</strong><div class="pay-date">Feb 10, 2026</div></div><div class="pay-amount">$149.99</div></div>' +
+            '<div class="pay-item"><div><strong>Ejemplo - Pro Plan</strong><div class="pay-date">Jan 10, 2026</div></div><div class="pay-amount">$149.99</div></div>';
+        
+        switchTab('info');
+        document.getElementById('modalView').classList.add('show');
+    };
+    
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        document.querySelector('.tab[onclick*="'+tab+'"]').classList.add('active');
+        document.getElementById('tab-'+tab).classList.add('active');
     };
 
-    window.editC = function(id) {
+    // Edit plan
+    window.editPlan = function(id) {
         var c = companies.find(function(x){return x.id === id});
         if (!c) return;
         var np = prompt('Plan para "'+c.name+'":\n\nOpciones: free, profesional, enterprise\nActual: '+(c.plan||'free'), c.plan||'free');
@@ -287,11 +595,80 @@
                 if (res.error) {
                     alert('❌ Error: ' + res.error.message);
                 } else {
-                    alert('✅ Actualizado');
+                    alert('✅ Plan actualizado a: ' + np);
                     fetchData();
                 }
             });
         }
+    };
+    
+    // Email modal
+    window.openEmailModal = function(id) {
+        var c = companies.find(function(x){return x.id === id});
+        if (!c || !c.email) {
+            alert('Esta empresa no tiene email registrado');
+            return;
+        }
+        document.getElementById('emailTo').value = c.email;
+        document.getElementById('emailSubject').value = '';
+        document.getElementById('emailBody').value = '';
+        document.getElementById('modalEmail').classList.add('show');
+    };
+    
+    window.sendEmail = function() {
+        var to = document.getElementById('emailTo').value;
+        var subject = document.getElementById('emailSubject').value;
+        var body = document.getElementById('emailBody').value;
+        
+        if (!subject || !body) {
+            alert('Por favor completa el asunto y mensaje');
+            return;
+        }
+        
+        // Open default email client
+        var mailtoLink = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.open(mailtoLink);
+        
+        closeModal('modalEmail');
+    };
+    
+    // Delete modal
+    window.openDeleteModal = function(id) {
+        var c = companies.find(function(x){return x.id === id});
+        if (!c) return;
+        deleteCompanyId = id;
+        document.getElementById('deleteCompanyName').textContent = c.name + ' (' + (c.email||'sin email') + ')';
+        document.getElementById('modalDelete').classList.add('show');
+    };
+    
+    window.confirmDelete = function() {
+        if (!deleteCompanyId) return;
+        
+        // Delete related data first
+        Promise.all([
+            db.from('technicians').delete().eq('company_id', deleteCompanyId),
+            db.from('team_users').delete().eq('company_id', deleteCompanyId),
+            db.from('clients').delete().eq('company_id', deleteCompanyId),
+            db.from('jobs').delete().eq('company_id', deleteCompanyId),
+            db.from('work_orders').delete().eq('company_id', deleteCompanyId),
+            db.from('leads').delete().eq('company_id', deleteCompanyId)
+        ]).then(function() {
+            // Delete company
+            db.from('companies').delete().eq('id', deleteCompanyId).then(function(res) {
+                if (res.error) {
+                    alert('❌ Error: ' + res.error.message);
+                } else {
+                    alert('✅ Empresa eliminada');
+                    closeModal('modalDelete');
+                    deleteCompanyId = null;
+                    fetchData();
+                }
+            });
+        });
+    };
+    
+    window.closeModal = function(id) {
+        document.getElementById(id).classList.remove('show');
     };
 
     document.addEventListener('DOMContentLoaded', init);
