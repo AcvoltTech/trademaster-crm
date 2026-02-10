@@ -360,8 +360,8 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo' };
-    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', servicecalls:'Llamadas de Servicio', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo' };
+    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', servicecalls:'Service Calls', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
@@ -383,6 +383,357 @@ function showSection(name) {
     if (name === 'marketing') { renderMarketing(); }
     if (name === 'pricebook') { renderPriceBook(); }
     if (name === 'reports') { renderReports(); }
+    if (name === 'servicecalls') { loadServiceCalls(); }
+}
+
+// ===== SERVICE CALLS / LLAMADAS DE SERVICIO =====
+var serviceCallsData = [];
+var serviceCallsMap = null;
+var scMarkers = [];
+
+function showServiceCallForm() { 
+    document.getElementById('serviceCallFormContainer').style.display = 'block'; 
+    document.getElementById('serviceCallForm').reset();
+    document.getElementById('scPreferredDate').value = new Date().toISOString().split('T')[0];
+    populateSCTechSelect();
+}
+
+function hideServiceCallForm() { 
+    document.getElementById('serviceCallFormContainer').style.display = 'none'; 
+}
+
+function populateSCTechSelect() {
+    var sel = document.getElementById('scTechAssign');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Asignar después --</option>';
+    if (typeof techniciansData !== 'undefined') {
+        techniciansData.forEach(function(t) {
+            if (t.status === 'available' || t.status === 'active' || !t.status) {
+                sel.innerHTML += '<option value="' + t.id + '">' + t.name + ' (' + (t.specialty || 'General') + ')</option>';
+            }
+        });
+    }
+}
+
+async function handleServiceCallCreate(event) {
+    event.preventDefault();
+    
+    var serviceCall = {
+        id: 'sc_' + Date.now(),
+        company_id: companyId,
+        client_name: document.getElementById('scClientName').value,
+        phone: document.getElementById('scClientPhone').value,
+        address: document.getElementById('scAddress').value,
+        problem: document.getElementById('scProblem').value,
+        urgency: document.getElementById('scUrgency').value,
+        property_type: document.getElementById('scPropertyType').value,
+        tech_id: document.getElementById('scTechAssign').value || null,
+        preferred_date: document.getElementById('scPreferredDate').value || null,
+        preferred_time: document.getElementById('scPreferredTime').value || null,
+        notes: document.getElementById('scNotes').value || null,
+        status: document.getElementById('scTechAssign').value ? 'assigned' : 'new',
+        created_at: new Date().toISOString(),
+        lat: null,
+        lng: null
+    };
+    
+    // Try to geocode the address
+    if (serviceCall.address && typeof google !== 'undefined' && google.maps) {
+        try {
+            var geocoder = new google.maps.Geocoder();
+            var result = await new Promise(function(resolve) {
+                geocoder.geocode({ address: serviceCall.address }, function(results, status) {
+                    if (status === 'OK' && results[0]) {
+                        resolve(results[0].geometry.location);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+            if (result) {
+                serviceCall.lat = result.lat();
+                serviceCall.lng = result.lng();
+            }
+        } catch(e) { console.log('Geocode error:', e); }
+    }
+    
+    try {
+        var res = await sbClient.from('service_calls').insert([serviceCall]).select();
+        if (res.error) throw res.error;
+        serviceCall.id = res.data[0].id;
+    } catch(e) { 
+        serviceCallsData.push(serviceCall); 
+        saveServiceCallsLocal(); 
+    }
+    
+    hideServiceCallForm();
+    loadServiceCalls();
+    
+    var techName = '';
+    if (serviceCall.tech_id && typeof techniciansData !== 'undefined') {
+        var tech = techniciansData.find(function(t) { return t.id === serviceCall.tech_id; });
+        if (tech) techName = ' y asignada a ' + tech.name;
+    }
+    alert('✅ Llamada de servicio registrada' + techName);
+}
+
+async function loadServiceCalls() {
+    if (!companyId) return;
+    try {
+        var res = await sbClient.from('service_calls').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+        serviceCallsData = res.data || [];
+    } catch(e) { 
+        serviceCallsData = JSON.parse(localStorage.getItem('tm_service_calls_' + companyId) || '[]'); 
+    }
+    renderServiceCalls();
+    updateSCKpis();
+    initServiceCallsMap();
+}
+
+function saveServiceCallsLocal() {
+    localStorage.setItem('tm_service_calls_' + companyId, JSON.stringify(serviceCallsData));
+}
+
+function updateSCKpis() {
+    var today = new Date().toISOString().split('T')[0];
+    var newCalls = serviceCallsData.filter(function(sc) { return sc.status === 'new'; }).length;
+    var assigned = serviceCallsData.filter(function(sc) { return sc.status === 'assigned'; }).length;
+    var enroute = serviceCallsData.filter(function(sc) { return sc.status === 'enroute'; }).length;
+    var completedToday = serviceCallsData.filter(function(sc) { 
+        return sc.status === 'completed' && sc.completed_at && sc.completed_at.startsWith(today); 
+    }).length;
+    
+    var el1 = document.getElementById('scKpiNew');
+    var el2 = document.getElementById('scKpiAssigned');
+    var el3 = document.getElementById('scKpiEnroute');
+    var el4 = document.getElementById('scKpiCompleted');
+    if (el1) el1.textContent = newCalls;
+    if (el2) el2.textContent = assigned;
+    if (el3) el3.textContent = enroute;
+    if (el4) el4.textContent = completedToday;
+}
+
+function renderServiceCalls() {
+    var container = document.getElementById('serviceCallsGrid');
+    if (!container) return;
+    
+    var filterStatus = document.getElementById('scFilterStatus');
+    var filter = filterStatus ? filterStatus.value : 'active';
+    
+    var filtered = serviceCallsData.filter(function(sc) {
+        if (filter === 'active') return sc.status !== 'completed' && sc.status !== 'cancelled';
+        if (filter === 'all') return true;
+        return sc.status === filter;
+    });
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;">No hay llamadas de servicio ' + (filter === 'active' ? 'activas' : 'en este filtro') + '. Usa el botón + Nueva Llamada para agregar.</p>';
+        return;
+    }
+    
+    var html = '';
+    filtered.forEach(function(sc) {
+        var statusConfig = {
+            'new': { color: '#ef4444', bg: '#fef2f2', icon: '🆕', label: 'NUEVA' },
+            'assigned': { color: '#f59e0b', bg: '#fffbeb', icon: '👷', label: 'ASIGNADA' },
+            'enroute': { color: '#3b82f6', bg: '#eff6ff', icon: '🚐', label: 'EN CAMINO' },
+            'completed': { color: '#10b981', bg: '#f0fdf4', icon: '✅', label: 'COMPLETADA' },
+            'cancelled': { color: '#94a3b8', bg: '#f8fafc', icon: '❌', label: 'CANCELADA' }
+        };
+        var status = statusConfig[sc.status] || statusConfig['new'];
+        var urgencyBadge = sc.urgency === 'emergency' ? '<span style="background:#ef4444;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🔴 EMERGENCIA</span>' : 
+                          sc.urgency === 'priority' ? '<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">🟡 PRIORITARIO</span>' : '';
+        
+        var techName = '-';
+        if (sc.tech_id && typeof techniciansData !== 'undefined') {
+            var tech = techniciansData.find(function(t) { return t.id === sc.tech_id; });
+            if (tech) techName = tech.name;
+        }
+        
+        var timeAgo = getTimeAgo(sc.created_at);
+        
+        html += '<div class="sc-card" style="background:' + status.bg + ';border:2px solid ' + status.color + ';border-radius:12px;padding:16px;position:relative;">';
+        
+        // Status badge
+        html += '<div style="position:absolute;top:12px;right:12px;background:' + status.color + ';color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;">' + status.icon + ' ' + status.label + '</div>';
+        
+        // Client info
+        html += '<div style="margin-bottom:12px;">';
+        html += '<h4 style="font-size:16px;color:#1e293b;margin:0 0 4px 0;">👤 ' + sc.client_name + urgencyBadge + '</h4>';
+        html += '<p style="font-size:13px;color:#64748b;margin:0;">📱 <a href="tel:' + sc.phone + '" style="color:#3b82f6;text-decoration:none;">' + sc.phone + '</a></p>';
+        html += '<p style="font-size:12px;color:#64748b;margin:4px 0 0 0;">📍 ' + sc.address + '</p>';
+        html += '</div>';
+        
+        // Problem
+        html += '<div style="background:white;border-radius:8px;padding:10px;margin-bottom:12px;">';
+        html += '<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0;">PROBLEMA:</p>';
+        html += '<p style="font-size:13px;color:#334155;margin:0;">' + sc.problem + '</p>';
+        html += '</div>';
+        
+        // Tech assigned and time
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:#64748b;">';
+        html += '<span>👷 ' + techName + '</span>';
+        html += '<span>⏱️ ' + timeAgo + '</span>';
+        html += '</div>';
+        
+        // Action buttons
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<a href="tel:' + sc.phone + '" class="btn-primary btn-sm" style="flex:1;text-align:center;text-decoration:none;min-width:80px;">📞 Llamar</a>';
+        
+        if (sc.status === 'new') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#f59e0b;border-color:#f59e0b;" onclick="showAssignTechModal(\'' + sc.id + '\')">👷 Asignar</button>';
+        } else if (sc.status === 'assigned') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#3b82f6;border-color:#3b82f6;" onclick="updateSCStatus(\'' + sc.id + '\',\'enroute\')">🚐 En Camino</button>';
+        } else if (sc.status === 'enroute') {
+            html += '<button class="btn-primary btn-sm" style="flex:1;background:#10b981;border-color:#10b981;" onclick="updateSCStatus(\'' + sc.id + '\',\'completed\')">✅ Completar</button>';
+        }
+        
+        if (sc.lat && sc.lng) {
+            html += '<a href="https://maps.google.com/?q=' + sc.lat + ',' + sc.lng + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+        } else {
+            html += '<a href="https://maps.google.com/?q=' + encodeURIComponent(sc.address) + '" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🗺️</a>';
+        }
+        
+        html += '</div>';
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+function getTimeAgo(dateStr) {
+    if (!dateStr) return '-';
+    var created = new Date(dateStr);
+    var now = new Date();
+    var diffMs = now - created;
+    var diffMins = Math.floor(diffMs / 60000);
+    var diffHours = Math.floor(diffMs / 3600000);
+    var diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return diffMins + ' min';
+    if (diffHours < 24) return diffHours + ' hrs';
+    return diffDays + ' días';
+}
+
+function showAssignTechModal(scId) {
+    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
+    if (!sc) return;
+    
+    var techOptions = '<option value="">Seleccionar técnico...</option>';
+    if (typeof techniciansData !== 'undefined') {
+        techniciansData.forEach(function(t) {
+            techOptions += '<option value="' + t.id + '">' + t.name + ' (' + (t.specialty || 'General') + ')</option>';
+        });
+    }
+    
+    var modal = document.createElement('div');
+    modal.id = 'assignTechModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = '<div style="background:white;border-radius:12px;padding:24px;max-width:400px;width:90%;"><h3 style="margin:0 0 16px 0;color:#1e3a5f;">👷 Asignar Técnico</h3><p style="margin:0 0 8px 0;font-size:13px;"><strong>' + sc.client_name + '</strong><br>' + sc.address + '</p><select id="modalTechSelect" style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;margin:12px 0;font-size:14px;">' + techOptions + '</select><div style="display:flex;gap:8px;"><button onclick="assignTechFromModal(\'' + scId + '\')" class="btn-primary" style="flex:1;">✅ Asignar</button><button onclick="closeAssignTechModal()" class="btn-secondary" style="flex:1;">Cancelar</button></div></div>';
+    document.body.appendChild(modal);
+}
+
+function closeAssignTechModal() {
+    var modal = document.getElementById('assignTechModal');
+    if (modal) modal.remove();
+}
+
+async function assignTechFromModal(scId) {
+    var techId = document.getElementById('modalTechSelect').value;
+    if (!techId) { alert('Selecciona un técnico'); return; }
+    
+    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
+    if (!sc) return;
+    
+    sc.tech_id = techId;
+    sc.status = 'assigned';
+    sc.assigned_at = new Date().toISOString();
+    
+    try {
+        await sbClient.from('service_calls').update({ tech_id: techId, status: 'assigned', assigned_at: sc.assigned_at }).eq('id', scId);
+    } catch(e) { saveServiceCallsLocal(); }
+    
+    closeAssignTechModal();
+    renderServiceCalls();
+    updateSCKpis();
+    
+    var tech = techniciansData.find(function(t) { return t.id === techId; });
+    alert('✅ Llamada asignada a ' + (tech ? tech.name : 'técnico'));
+}
+
+async function updateSCStatus(scId, newStatus) {
+    var sc = serviceCallsData.find(function(s) { return s.id === scId; });
+    if (!sc) return;
+    
+    sc.status = newStatus;
+    if (newStatus === 'enroute') sc.enroute_at = new Date().toISOString();
+    if (newStatus === 'completed') sc.completed_at = new Date().toISOString();
+    
+    try {
+        var updateData = { status: newStatus };
+        if (newStatus === 'enroute') updateData.enroute_at = sc.enroute_at;
+        if (newStatus === 'completed') updateData.completed_at = sc.completed_at;
+        await sbClient.from('service_calls').update(updateData).eq('id', scId);
+    } catch(e) { saveServiceCallsLocal(); }
+    
+    renderServiceCalls();
+    updateSCKpis();
+    
+    var statusLabels = { 'enroute': 'En Camino 🚐', 'completed': 'Completada ✅' };
+    alert('Estado actualizado: ' + (statusLabels[newStatus] || newStatus));
+}
+
+function initServiceCallsMap() {
+    var mapDiv = document.getElementById('serviceCallsMap');
+    if (!mapDiv || typeof google === 'undefined') return;
+    
+    if (!serviceCallsMap) {
+        serviceCallsMap = new google.maps.Map(mapDiv, {
+            center: { lat: 34.1083, lng: -117.2898 }, // San Bernardino default
+            zoom: 10
+        });
+    }
+    
+    // Clear existing markers
+    scMarkers.forEach(function(m) { m.setMap(null); });
+    scMarkers = [];
+    
+    var bounds = new google.maps.LatLngBounds();
+    var hasMarkers = false;
+    
+    serviceCallsData.forEach(function(sc) {
+        if (sc.lat && sc.lng && sc.status !== 'completed' && sc.status !== 'cancelled') {
+            var markerColor = sc.status === 'new' ? '#ef4444' : sc.status === 'assigned' ? '#f59e0b' : sc.status === 'enroute' ? '#3b82f6' : '#10b981';
+            
+            var marker = new google.maps.Marker({
+                position: { lat: sc.lat, lng: sc.lng },
+                map: serviceCallsMap,
+                title: sc.client_name + ' - ' + sc.problem,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: markerColor,
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: 'white',
+                    scale: 12
+                }
+            });
+            
+            var infoContent = '<div style="min-width:200px;"><strong>' + sc.client_name + '</strong><br>' + sc.phone + '<br><small>' + sc.address + '</small><br><br><strong>Problema:</strong> ' + sc.problem + '</div>';
+            var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+            marker.addListener('click', function() { infoWindow.open(serviceCallsMap, marker); });
+            
+            scMarkers.push(marker);
+            bounds.extend(marker.getPosition());
+            hasMarkers = true;
+        }
+    });
+    
+    if (hasMarkers) {
+        serviceCallsMap.fitBounds(bounds);
+        if (scMarkers.length === 1) serviceCallsMap.setZoom(14);
+    }
 }
 
 // ===== LEADS =====
