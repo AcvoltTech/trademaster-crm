@@ -1817,39 +1817,348 @@
               <div id="inspReportsList"></div>
             </div>
           </div>
-          <!-- ===== HOME ADVISORS (Vendedores) ===== -->
+          <!-- ===== HOME ADVISORS (Vendedores) - MÓDULO COMPLETO ===== -->
           <div id="advisors-section" class="section">
-            <div class="card">
-              <div class="card-top"><h3>🏠 Home Advisors (Vendedores)</h3><button class="btn-primary btn-sm" onclick="showAdvisorForm()">+ Nuevo Advisor</button></div>
-              <div id="advisorFormContainer" style="display:none;margin-bottom:16px;">
-                <form id="advisorForm" onsubmit="handleAdvisorCreate(event)">
-                  <div class="form-row">
-                    <div class="form-group"><label>Nombre</label><input type="text" id="advisorName" required placeholder="Nombre completo"></div>
-                    <div class="form-group"><label>Teléfono</label><input type="tel" id="advisorPhone" required placeholder="(555) 123-4567"></div>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group"><label>Email</label><input type="email" id="advisorEmail" placeholder="email@empresa.com"></div>
-                    <div class="form-group"><label>Especialidad</label>
-                      <select id="advisorSpecialty">
-                        <option value="Residencial">Residencial</option>
-                        <option value="Comercial">Comercial</option>
-                        <option value="Residencial y Comercial">Residencial y Comercial</option>
-                      </select>
+            
+            <!-- KPI Cards -->
+            <div class="hcp-summary-grid" style="margin-bottom:16px;">
+              <div class="hcp-summary-card" style="border-left:4px solid #10b981;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">💰</span> Comisiones Pendientes</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="advKpiPendingComm">$0</span><span class="hcp-sub-amount">Por pagar</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #3b82f6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🎯</span> Leads Activos</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="advKpiActiveLeads">0</span><span class="hcp-sub-amount">En seguimiento</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #f59e0b;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">⚠️</span> Leads por Vencer</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="advKpiExpiringLeads">0</span><span class="hcp-sub-amount">&gt;15 días sin cerrar</span></div>
+              </div>
+              <div class="hcp-summary-card" style="border-left:4px solid #8b5cf6;">
+                <div class="hcp-summary-header"><span class="hcp-summary-icon">🧾</span> Recibos sin Conciliar</div>
+                <div class="hcp-summary-body"><span class="hcp-big-num" id="advKpiUnmatchedRcpt">0</span><span class="hcp-sub-amount">Pendientes</span></div>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="card" style="margin-bottom:16px;">
+              <div style="display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;">
+                <button class="import-tab active" onclick="setAdvTab('team')" id="advTabTeam">👥 Equipo de Ventas</button>
+                <button class="import-tab" onclick="setAdvTab('leads')" id="advTabLeads">🎯 Leads Asignados</button>
+                <button class="import-tab" onclick="setAdvTab('sales')" id="advTabSales">💵 Ventas y Comisiones</button>
+                <button class="import-tab" onclick="setAdvTab('receipts')" id="advTabReceipts">🧾 Recibos y Conciliación</button>
+                <button class="import-tab" onclick="setAdvTab('referrals')" id="advTabReferrals">📋 Órdenes Referidas</button>
+              </div>
+
+              <!-- TAB: Equipo de Ventas -->
+              <div id="advContentTeam" class="adv-tab-content">
+                <div class="card-top" style="margin-bottom:12px;">
+                  <h3>🏠 Home Advisors (Vendedores)</h3>
+                  <button class="btn-primary btn-sm" onclick="showAdvisorForm()">+ Nuevo Advisor</button>
+                </div>
+                
+                <!-- Commission Tiers Info -->
+                <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #10b981;border-radius:10px;padding:16px;margin-bottom:16px;">
+                  <h4 style="color:#047857;margin-bottom:8px;">📊 Estructura de Comisiones (Basada en Ganancia)</h4>
+                  <p style="font-size:11px;color:#065f46;margin-bottom:10px;"><strong>Fórmula:</strong> Ganancia = Venta - Materiales - Labor</p>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                    <div style="background:white;padding:10px;border-radius:6px;text-align:center;border-left:4px solid #10b981;">
+                      <div style="font-size:20px;font-weight:700;color:#10b981;">20%</div>
+                      <div style="font-size:10px;color:#065f46;">Ganancia $10,000+</div>
+                    </div>
+                    <div style="background:white;padding:10px;border-radius:6px;text-align:center;border-left:4px solid #3b82f6;">
+                      <div style="font-size:20px;font-weight:700;color:#3b82f6;">15%</div>
+                      <div style="font-size:10px;color:#1e40af;">Ganancia $7,000-$9,999</div>
+                    </div>
+                    <div style="background:white;padding:10px;border-radius:6px;text-align:center;border-left:4px solid #f59e0b;">
+                      <div style="font-size:20px;font-weight:700;color:#f59e0b;">10%</div>
+                      <div style="font-size:10px;color:#92400e;">Ganancia $5,000-$6,999</div>
+                    </div>
+                    <div style="background:white;padding:10px;border-radius:6px;text-align:center;border-left:4px solid #94a3b8;">
+                      <div style="font-size:20px;font-weight:700;color:#64748b;">5%</div>
+                      <div style="font-size:10px;color:#475569;">Ganancia &lt;$5,000</div>
                     </div>
                   </div>
-                  <div class="form-group"><label>Zona de cobertura</label><input type="text" id="advisorZone" placeholder="Ej: Inland Empire, San Bernardino, Riverside"></div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn-primary btn-sm">Guardar</button>
-                    <button type="button" class="btn-secondary btn-sm" onclick="hideAdvisorForm()">Cancelar</button>
-                  </div>
-                </form>
+                  <p style="font-size:10px;color:#065f46;margin-top:8px;font-style:italic;">* Aplica igual para leads de la empresa y leads propios del vendedor</p>
+                </div>
+
+                <!-- Advisor Form -->
+                <div id="advisorFormContainer" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+                  <h4 style="color:var(--primary);margin-bottom:12px;">👤 Nuevo Home Advisor</h4>
+                  <form id="advisorForm" onsubmit="handleAdvisorCreate(event)">
+                    <div class="form-row">
+                      <div class="form-group"><label>Nombre Completo</label><input type="text" id="advisorName" required placeholder="Nombre completo"></div>
+                      <div class="form-group"><label>Teléfono</label><input type="tel" id="advisorPhone" required placeholder="(555) 123-4567"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Email</label><input type="email" id="advisorEmail" placeholder="email@empresa.com"></div>
+                      <div class="form-group"><label>Especialidad</label>
+                        <select id="advisorSpecialty">
+                          <option value="Residencial">Residencial</option>
+                          <option value="Comercial">Comercial</option>
+                          <option value="Residencial y Comercial">Residencial y Comercial</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Zona de Cobertura</label><input type="text" id="advisorZone" placeholder="Ej: Inland Empire, San Bernardino, Riverside"></div>
+                      <div class="form-group"><label>Meta Mensual de Ventas ($)</label><input type="number" id="advisorGoal" placeholder="50000" min="0" step="1000"></div>
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn-primary btn-sm">💾 Guardar Advisor</button>
+                      <button type="button" class="btn-secondary btn-sm" onclick="hideAdvisorForm()">Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+                
+                <!-- Advisors List with Stats Cards -->
+                <div id="advisorsList"></div>
               </div>
-              <div id="advisorsList"></div>
+
+              <!-- TAB: Leads Asignados -->
+              <div id="advContentLeads" class="adv-tab-content" style="display:none;">
+                <div class="card-top" style="margin-bottom:12px;">
+                  <h3>🎯 Leads Asignados a Vendedores</h3>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <select id="advLeadFilterAdvisor" onchange="renderAdvLeads()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todos los Advisors</option>
+                    </select>
+                    <select id="advLeadFilterStatus" onchange="renderAdvLeads()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todos los Status</option>
+                      <option value="new">🆕 Nuevo</option>
+                      <option value="followup">🔄 En Seguimiento</option>
+                      <option value="won">🏆 Ganado</option>
+                      <option value="lost">❌ Perdido</option>
+                    </select>
+                    <button class="btn-primary btn-sm" onclick="showAssignLeadModal()">+ Asignar Lead</button>
+                  </div>
+                </div>
+                
+                <!-- Expiring Leads Alert -->
+                <div id="advExpiringLeadsAlert" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:12px;">
+                  <h5 style="color:#92400e;margin-bottom:6px;">⚠️ Leads por Vencer (15+ días sin cerrar)</h5>
+                  <p style="font-size:11px;color:#78350f;margin-bottom:8px;">Estos leads serán rotados automáticamente al siguiente vendedor disponible.</p>
+                  <div id="advExpiringLeadsList"></div>
+                </div>
+                
+                <div id="advLeadsTable"></div>
+                
+                <!-- Lead Assignment Modal -->
+                <div id="assignLeadModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+                  <div style="max-width:500px;margin:60px auto;background:var(--bg-card);border-radius:12px;padding:24px;position:relative;">
+                    <button onclick="hideAssignLeadModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+                    <h3 style="color:var(--primary);margin-bottom:16px;">🎯 Asignar Lead a Vendedor</h3>
+                    <div class="form-group"><label>Seleccionar Lead/Cliente</label>
+                      <select id="assignLeadSelect" style="width:100%;"></select>
+                    </div>
+                    <div class="form-group"><label>Asignar a Advisor</label>
+                      <select id="assignAdvisorSelect" style="width:100%;"></select>
+                    </div>
+                    <div class="form-group"><label>Fuente del Lead</label>
+                      <select id="assignLeadSource" style="width:100%;">
+                        <option value="company">🏢 Lead de la Empresa</option>
+                        <option value="self">👤 Lead Propio del Vendedor</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Notas</label>
+                      <textarea id="assignLeadNotes" rows="2" placeholder="Notas sobre el lead..." style="width:100%;"></textarea>
+                    </div>
+                    <div class="form-actions">
+                      <button class="btn-primary btn-sm" onclick="assignLeadToAdvisor()">✅ Asignar Lead</button>
+                      <button class="btn-secondary btn-sm" onclick="hideAssignLeadModal()">Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB: Ventas y Comisiones -->
+              <div id="advContentSales" class="adv-tab-content" style="display:none;">
+                <div class="card-top" style="margin-bottom:12px;">
+                  <h3>💵 Ventas y Comisiones</h3>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <select id="advSalesFilterAdvisor" onchange="renderAdvSales()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todos los Advisors</option>
+                    </select>
+                    <select id="advSalesFilterMonth" onchange="renderAdvSales()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todo el Año</option>
+                      <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+                      <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                      <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+                      <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                    </select>
+                    <button class="btn-primary btn-sm" onclick="showAddSaleModal()">+ Registrar Venta</button>
+                  </div>
+                </div>
+
+                <!-- Sales Stats -->
+                <div class="hcp-ytd-grid" style="margin-bottom:16px;">
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">VENTAS TOTALES</span><span class="hcp-ytd-value" id="advSalesTotal">$0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">GANANCIA NETA</span><span class="hcp-ytd-value" id="advProfitTotal">$0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">COMISIONES GENERADAS</span><span class="hcp-ytd-value" id="advCommTotal">$0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">COMISIONES PAGADAS</span><span class="hcp-ytd-value" id="advCommPaid">$0</span></div>
+                </div>
+
+                <div id="advSalesTable"></div>
+                
+                <!-- Add Sale Modal -->
+                <div id="addSaleModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+                  <div style="max-width:600px;margin:40px auto;background:var(--bg-card);border-radius:12px;padding:24px;position:relative;">
+                    <button onclick="hideAddSaleModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+                    <h3 style="color:var(--primary);margin-bottom:16px;">💵 Registrar Venta Cerrada</h3>
+                    <div class="form-row">
+                      <div class="form-group"><label>Vendedor</label><select id="saleAdvisorSelect" style="width:100%;"></select></div>
+                      <div class="form-group"><label>Cliente</label><input type="text" id="saleClientName" placeholder="Nombre del cliente"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Dirección</label><input type="text" id="saleAddress" placeholder="Dirección del trabajo"></div>
+                      <div class="form-group"><label>Fecha de Venta</label><input type="date" id="saleDate"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Monto Total de Venta ($)</label><input type="number" id="saleTotalAmount" min="0" step="0.01" placeholder="25000" onchange="calcSaleCommission()"></div>
+                      <div class="form-group"><label>Costo de Materiales ($)</label><input type="number" id="saleMaterialsCost" min="0" step="0.01" placeholder="8000" onchange="calcSaleCommission()"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Costo de Labor ($)</label><input type="number" id="saleLaborCost" min="0" step="0.01" placeholder="3000" onchange="calcSaleCommission()"></div>
+                      <div class="form-group"><label>Fuente del Lead</label>
+                        <select id="saleLeadSource" style="width:100%;">
+                          <option value="company">🏢 Lead de la Empresa</option>
+                          <option value="self">👤 Lead Propio</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <!-- Commission Calculator Preview -->
+                    <div id="saleCommPreview" style="background:#f0fdf4;border:1px solid #10b981;border-radius:8px;padding:12px;margin:12px 0;">
+                      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;">
+                        <div><div style="font-size:10px;color:#065f46;">GANANCIA</div><div id="saleCalcProfit" style="font-size:16px;font-weight:700;color:#047857;">$0</div></div>
+                        <div><div style="font-size:10px;color:#065f46;">TIER</div><div id="saleCalcTier" style="font-size:16px;font-weight:700;color:#047857;">-</div></div>
+                        <div><div style="font-size:10px;color:#065f46;">% COMISIÓN</div><div id="saleCalcPct" style="font-size:16px;font-weight:700;color:#047857;">0%</div></div>
+                        <div><div style="font-size:10px;color:#065f46;">COMISIÓN</div><div id="saleCalcComm" style="font-size:16px;font-weight:700;color:#10b981;">$0</div></div>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group"><label>Descripción del Trabajo</label><textarea id="saleDescription" rows="2" placeholder="Ej: Instalación sistema HVAC 4 toneladas, Trane XR15" style="width:100%;"></textarea></div>
+                    <div class="form-actions">
+                      <button class="btn-primary btn-sm" onclick="saveSale()">💾 Guardar Venta</button>
+                      <button class="btn-secondary btn-sm" onclick="hideAddSaleModal()">Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB: Recibos y Conciliación -->
+              <div id="advContentReceipts" class="adv-tab-content" style="display:none;">
+                <div class="card-top" style="margin-bottom:12px;">
+                  <h3>🧾 Recibos del Vendedor y Conciliación</h3>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <select id="advRcptFilterAdvisor" onchange="renderAdvReceipts()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todos los Advisors</option>
+                    </select>
+                    <select id="advRcptFilterStatus" onchange="renderAdvReceipts()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                      <option value="">Todos</option>
+                      <option value="pending">⏳ Pendientes</option>
+                      <option value="matched">✅ Conciliados</option>
+                      <option value="mismatch">⚠️ Con Diferencias</option>
+                    </select>
+                    <button class="btn-primary btn-sm" onclick="showAdvReceiptModal()">+ Subir Recibo</button>
+                  </div>
+                </div>
+                
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;padding:10px;background:#fef3c7;border-radius:6px;">
+                  ⚠️ <strong>Importante:</strong> Los recibos del vendedor deben coincidir con los recibos de la empresa. El sistema compara automáticamente monto, fecha y proveedor.
+                </p>
+
+                <!-- Reconciliation Summary -->
+                <div class="hcp-ytd-grid" style="margin-bottom:16px;">
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">RECIBOS SUBIDOS</span><span class="hcp-ytd-value" id="advRcptCount">0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">CONCILIADOS</span><span class="hcp-ytd-value" style="color:#10b981;" id="advRcptMatched">0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">CON DIFERENCIAS</span><span class="hcp-ytd-value" style="color:#f59e0b;" id="advRcptMismatch">0</span></div>
+                  <div class="hcp-ytd-card"><span class="hcp-ytd-label">PENDIENTES</span><span class="hcp-ytd-value" style="color:#ef4444;" id="advRcptPending">0</span></div>
+                </div>
+
+                <div id="advReceiptsTable"></div>
+                
+                <!-- Receipt Upload Modal -->
+                <div id="advReceiptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+                  <div style="max-width:500px;margin:60px auto;background:var(--bg-card);border-radius:12px;padding:24px;position:relative;">
+                    <button onclick="hideAdvReceiptModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+                    <h3 style="color:var(--primary);margin-bottom:16px;">🧾 Subir Recibo del Vendedor</h3>
+                    <div class="form-group"><label>Vendedor</label><select id="advRcptAdvisor" style="width:100%;"></select></div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Proveedor</label><input type="text" id="advRcptVendor" placeholder="Ej: US Air Conditioning"></div>
+                      <div class="form-group"><label>Monto ($)</label><input type="number" id="advRcptAmount" min="0" step="0.01" placeholder="0.00"></div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group"><label>Fecha del Recibo</label><input type="date" id="advRcptDate"></div>
+                      <div class="form-group"><label># de Recibo</label><input type="text" id="advRcptNumber" placeholder="INV-12345"></div>
+                    </div>
+                    <div class="form-group"><label>Trabajo/Venta Relacionada</label><select id="advRcptSale" style="width:100%;"><option value="">-- Seleccionar venta --</option></select></div>
+                    <div class="form-group">
+                      <label>📷 Foto del Recibo</label>
+                      <div style="border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;" onclick="document.getElementById('advRcptPhoto').click()">
+                        <span style="font-size:24px;">📷</span>
+                        <p style="font-size:11px;color:var(--text-muted);">Haz clic para subir foto</p>
+                        <img id="advRcptPhotoPreview" src="" style="display:none;max-width:150px;margin-top:8px;border-radius:6px;">
+                      </div>
+                      <input type="file" id="advRcptPhoto" accept="image/*" style="display:none" onchange="previewAdvRcptPhoto(this)">
+                    </div>
+                    <div class="form-actions">
+                      <button class="btn-primary btn-sm" onclick="saveAdvReceipt()">💾 Guardar Recibo</button>
+                      <button class="btn-secondary btn-sm" onclick="hideAdvReceiptModal()">Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB: Órdenes Referidas (existente) -->
+              <div id="advContentReferrals" class="adv-tab-content" style="display:none;">
+                <div class="card-top" style="margin-bottom:12px;">
+                  <h3>📋 Órdenes Referidas por Técnicos</h3>
+                </div>
+                <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Trabajos referidos por técnicos para reemplazo de equipo. Estos son leads pre-calificados listos para cerrar.</p>
+                <div id="referralsList"></div>
+              </div>
             </div>
+
+            <!-- Follow-up Log Card -->
             <div class="card">
-              <div class="card-top"><h3>📋 Órdenes Referidas</h3></div>
-              <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Trabajos referidos por técnicos para reemplazo de equipo</p>
-              <div id="referralsList"></div>
+              <div class="card-top">
+                <h3>📞 Registro de Seguimientos (Follow-Ups)</h3>
+                <button class="btn-primary btn-sm" onclick="showFollowUpModal()">+ Agregar Seguimiento</button>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Registra llamadas, visitas, notas y cotizaciones enviadas a cada lead.</p>
+              <div id="advFollowUpsTable"></div>
+              
+              <!-- Follow-up Modal -->
+              <div id="followUpModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+                <div style="max-width:500px;margin:60px auto;background:var(--bg-card);border-radius:12px;padding:24px;position:relative;">
+                  <button onclick="hideFollowUpModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+                  <h3 style="color:var(--primary);margin-bottom:16px;">📞 Registrar Seguimiento</h3>
+                  <div class="form-group"><label>Lead/Cliente</label><select id="fuLeadSelect" style="width:100%;"></select></div>
+                  <div class="form-group"><label>Tipo de Contacto</label>
+                    <select id="fuType" style="width:100%;">
+                      <option value="call">📞 Llamada</option>
+                      <option value="visit">🏠 Visita</option>
+                      <option value="quote">📝 Cotización Enviada</option>
+                      <option value="text">💬 Mensaje de Texto</option>
+                      <option value="email">📧 Email</option>
+                    </select>
+                  </div>
+                  <div class="form-group"><label>Notas</label><textarea id="fuNotes" rows="3" placeholder="Resumen de la conversación, próximos pasos..." style="width:100%;"></textarea></div>
+                  <div class="form-group">
+                    <label>📷 Adjuntar Fotos (opcional)</label>
+                    <input type="file" id="fuPhotos" accept="image/*" multiple style="width:100%;">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label>Monto Cotizado ($)</label><input type="number" id="fuQuoteAmount" min="0" step="0.01" placeholder="0.00"></div>
+                    <div class="form-group"><label>Próximo Seguimiento</label><input type="date" id="fuNextDate"></div>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn-primary btn-sm" onclick="saveFollowUp()">💾 Guardar</button>
+                    <button class="btn-secondary btn-sm" onclick="hideFollowUpModal()">Cancelar</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
