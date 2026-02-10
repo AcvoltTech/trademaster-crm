@@ -1000,8 +1000,10 @@ function generateTrackingLinks() {
     var c = document.getElementById('trackingLinkContainer');
     if (!c || techsData.length === 0) { if (c) c.innerHTML = 'Agrega técnicos primero en Dispatch.'; return; }
     var h = '';
+    var baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+    if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
     techsData.forEach(function(t) {
-        var url = window.location.origin + '?track=' + t.id;
+        var url = baseUrl + '?track=' + t.id;
         h += '<div style="margin-bottom:12px;"><strong>' + t.name + ':</strong><br><a href="' + url + '" target="_blank" style="color:var(--primary);word-break:break-all;">' + url + '</a></div>';
     });
     c.innerHTML = h;
