@@ -287,9 +287,24 @@
               </div>
             </div>
 
-            <!-- HCP-Style Summary Cards (Estimates / Jobs / Invoices / Plan de Servicios) -->
+            <!-- CENTRO DE MANDO - COMMAND CENTER -->
+            <div class="card" style="margin-bottom:20px;border:2px solid var(--primary);background:linear-gradient(135deg,#1e3a5f 0%,#2d4a6f 100%);">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div>
+                  <h2 style="color:white;margin:0;font-size:24px;">🎯 Centro de Mando</h2>
+                  <p style="color:rgba(255,255,255,0.7);margin:4px 0 0 0;font-size:13px;">Operaciones en tiempo real - Haz clic en cada tarjeta para ver detalles y ubicaciones</p>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-primary btn-sm" onclick="showSection('dispatch')" style="background:#f47621;">🗺️ Ver Mapa General</button>
+                  <button class="btn-secondary btn-sm" onclick="refreshCommandCenter()" style="background:rgba(255,255,255,0.2);color:white;border:none;">🔄 Actualizar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- HCP-Style Summary Cards - CENTRO DE MANDO -->
             <div class="hcp-summary-grid">
-              <div class="hcp-summary-card" onclick="showSection('jobs')">
+              <!-- ESTIMADOS -->
+              <div class="hcp-summary-card" onclick="showSection('jobs')" style="border-top:3px solid #f59e0b;">
                 <div class="hcp-summary-header">
                   <span class="hcp-summary-icon">📋</span>
                   <span data-i18n="dash_estimates">Estimados</span>
@@ -305,46 +320,85 @@
                 <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')" data-i18n="dash_view_all_estimates">Ver todos los estimados</a>
               </div>
 
-              <div class="hcp-summary-card" onclick="showSection('dispatch')">
+              <!-- LLAMADAS DE SERVICIO -->
+              <div class="hcp-summary-card" onclick="showSection('servicecalls')" style="border-top:3px solid #ef4444;">
                 <div class="hcp-summary-header">
-                  <span class="hcp-summary-icon">🔧</span>
-                  <span data-i18n="dash_jobs">Trabajos</span>
-                  <button class="hcp-plus-btn" onclick="event.stopPropagation();quickAddAction('job')">+</button>
+                  <span class="hcp-summary-icon">📞</span>
+                  <span>Llamadas de Servicio</span>
+                  <button class="hcp-plus-btn" onclick="event.stopPropagation();showSection('servicecalls');setTimeout(showServiceCallForm,300);">+</button>
                 </div>
                 <div class="hcp-summary-body">
-                  <span class="hcp-big-num" id="hcpUnschedJobs">0</span>
+                  <span class="hcp-big-num" id="hcpActiveServiceCalls">0</span>
                   <div class="hcp-summary-detail">
-                    <span data-i18n="dash_unsched_jobs">Trabajos sin agendar</span> <span class="hcp-summary-info">ⓘ</span>
+                    <span>Llamadas activas</span> <span class="hcp-summary-info">ⓘ</span>
                   </div>
-                  <span class="hcp-sub-amount" id="hcpJobsAmount">$0.00</span>
+                  <div style="display:flex;gap:12px;font-size:11px;margin-top:4px;">
+                    <span style="color:#ef4444;">🆕 <span id="hcpSCNew">0</span></span>
+                    <span style="color:#f59e0b;">👷 <span id="hcpSCAssigned">0</span></span>
+                    <span style="color:#3b82f6;">🚐 <span id="hcpSCEnroute">0</span></span>
+                  </div>
                 </div>
-                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('jobs')" data-i18n="dash_view_all_jobs">Ver todos los trabajos</a>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('servicecalls')">Ver llamadas de servicio</a>
               </div>
 
-              <div class="hcp-summary-card" onclick="showSection('invoices')">
+              <!-- HOME ADVISORS / VENDEDORES -->
+              <div class="hcp-summary-card" onclick="showSection('advisors')" style="border-top:3px solid #10b981;">
                 <div class="hcp-summary-header">
-                  <span class="hcp-summary-icon">📄</span>
-                  <span data-i18n="dash_invoices">Facturas</span>
+                  <span class="hcp-summary-icon">🏠</span>
+                  <span>Home Advisors</span>
                 </div>
                 <div class="hcp-summary-body">
-                  <span class="hcp-big-num" id="hcpOpenInvoices">0</span>
+                  <span class="hcp-big-num" id="hcpActiveAdvisors">0</span>
                   <div class="hcp-summary-detail">
-                    <span data-i18n="dash_open_invoices">Facturas abiertas</span> <span class="hcp-summary-info">ⓘ</span>
+                    <span>Vendedores activos</span> <span class="hcp-summary-info">ⓘ</span>
                   </div>
-                  <span class="hcp-sub-amount" id="hcpInvoicesAmount">$0.00</span>
+                  <div style="display:flex;gap:8px;font-size:11px;margin-top:4px;">
+                    <span style="color:#10b981;">💰 $<span id="hcpAdvPendingComm">0</span> pendiente</span>
+                  </div>
                 </div>
-                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('invoices')" data-i18n="dash_view_all_invoices">Ver todas las facturas</a>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('advisors')">Ver vendedores</a>
               </div>
 
-              <div class="hcp-summary-card" onclick="showSection('dashboard')">
+              <!-- TÉCNICOS EN CAMPO -->
+              <div class="hcp-summary-card" onclick="showSection('technicians')" style="border-top:3px solid #3b82f6;">
                 <div class="hcp-summary-header">
-                  <span class="hcp-summary-icon">🛡️</span>
-                  <span data-i18n="dash_service_plans">Planes de Servicio</span>
+                  <span class="hcp-summary-icon">👷</span>
+                  <span>Técnicos en Campo</span>
                 </div>
                 <div class="hcp-summary-body">
-                  <p class="hcp-sp-text" data-i18n="dash_sp_desc">Crea planes de servicio para crecer ingresos y fidelizar clientes.</p>
+                  <span class="hcp-big-num" id="hcpTechsAvailable">0</span>
+                  <div class="hcp-summary-detail">
+                    <span>Disponibles</span> <span class="hcp-summary-info">ⓘ</span>
+                  </div>
+                  <div style="display:flex;gap:12px;font-size:11px;margin-top:4px;">
+                    <span style="color:#10b981;">🟢 <span id="hcpTechsOnline">0</span></span>
+                    <span style="color:#f59e0b;">🔶 <span id="hcpTechsBusy">0</span></span>
+                    <span style="color:#94a3b8;">⚫ <span id="hcpTechsOffline">0</span></span>
+                  </div>
                 </div>
-                <a class="hcp-summary-link" onclick="event.stopPropagation();showServicePlanForm()" data-i18n="dash_create_template">+ Crear plantilla</a>
+                <a class="hcp-summary-link" onclick="event.stopPropagation();showSection('dispatch')">Ver en despacho</a>
+              </div>
+            </div>
+
+            <!-- MAPA DE OPERACIONES EN TIEMPO REAL -->
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-top">
+                <h3>🗺️ Mapa de Operaciones en Tiempo Real</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <div class="dispatch-legend" style="font-size:11px;">
+                    <span class="legend-item">👷 Técnicos</span>
+                    <span class="legend-item">📍 Trabajos</span>
+                    <span class="legend-item">🏠 Clientes</span>
+                  </div>
+                  <button class="btn-secondary btn-sm" onclick="refreshCommandCenterMap()">🔄</button>
+                </div>
+              </div>
+              <div id="commandCenterMap" style="width:100%;height:350px;border-radius:8px;"></div>
+              <div style="display:flex;gap:16px;padding:12px 0 0 0;flex-wrap:wrap;font-size:12px;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#10b981;border-radius:50%;display:inline-block;"></span> Técnico Disponible</div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#f59e0b;border-radius:50%;display:inline-block;"></span> Técnico Ocupado</div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#ef4444;border-radius:50%;display:inline-block;"></span> Trabajo Nuevo</div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#3b82f6;border-radius:50%;display:inline-block;"></span> Trabajo En Progreso</div>
               </div>
             </div>
 
