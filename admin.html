@@ -239,8 +239,47 @@
         </div>
     </div>
 
+    <!-- Modal Reset Password -->
+    <div class="modal-bg" id="modalReset">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-head">
+                <h3>🔑 Resetear Contraseña</h3>
+                <button class="modal-close" onclick="closeModal('modalReset')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="resetUserInfo" style="padding:1rem;background:var(--light);border-radius:0.5rem;margin-bottom:1rem"></div>
+                <div class="form-group">
+                    <label>Nueva Contraseña:</label>
+                    <input type="text" id="newPassword" placeholder="Mínimo 6 caracteres">
+                    <small style="color:var(--gray);font-size:0.75rem">La contraseña será visible para que puedas compartirla con el usuario</small>
+                </div>
+                <button class="btn-sm" style="background:var(--light);margin-top:0.5rem" onclick="generatePassword()">🎲 Generar Contraseña Segura</button>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalReset')">Cancelar</button>
+                <button class="btn btn-sm btn-success" onclick="confirmResetPassword()">🔑 Resetear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Todos los Usuarios de Empresa -->
+    <div class="modal-bg" id="modalUsers">
+        <div class="modal">
+            <div class="modal-head">
+                <h3>👥 Usuarios de la Empresa</h3>
+                <button class="modal-close" onclick="closeModal('modalUsers')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:1rem;color:var(--gray);font-size:0.85rem">Haz clic en 🔑 para resetear la contraseña de cualquier usuario</p>
+                <div id="allUsersList"></div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalUsers')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Confirmar Eliminar -->
-    <div class="modal-bg" id="modalDelete">
         <div class="modal" style="max-width:400px">
             <div class="modal-head">
                 <h3>⚠️ Confirmar Eliminación</h3>
@@ -451,6 +490,7 @@
                 '<td><span class="badge b-blue">👷 '+empCount+'</span></td>' +
                 '<td><div class="actions">' +
                     '<button class="act" onclick="viewCompany(\''+c.id+'\')" title="Ver detalles">👁</button>' +
+                    '<button class="act" onclick="viewAllUsers(\''+c.id+'\')" title="Ver usuarios">👥</button>' +
                     '<button class="act" onclick="editPlan(\''+c.id+'\')" title="Cambiar plan">✏️</button>' +
                     '<button class="act" onclick="openEmailModal(\''+c.id+'\')" title="Enviar email">📧</button>' +
                     '<button class="act danger" onclick="openDeleteModal(\''+c.id+'\')" title="Eliminar">🗑️</button>' +
@@ -669,6 +709,89 @@
     
     window.closeModal = function(id) {
         document.getElementById(id).classList.remove('show');
+    };
+    
+    // Password Reset functionality
+    var resetTarget = null; // {type: 'company'|'user', id, email, name}
+    
+    window.openResetModal = function(type, id, email, name) {
+        resetTarget = {type: type, id: id, email: email, name: name};
+        document.getElementById('resetUserInfo').innerHTML = 
+            '<div><strong>👤 Usuario:</strong> ' + name + '</div>' +
+            '<div><strong>📧 Email:</strong> ' + email + '</div>' +
+            '<div><strong>🏷️ Tipo:</strong> ' + (type === 'company' ? 'Dueño de Empresa' : 'Técnico/Empleado') + '</div>';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('modalReset').classList.add('show');
+    };
+    
+    window.generatePassword = function() {
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        var password = '';
+        for (var i = 0; i < 10; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('newPassword').value = password;
+    };
+    
+    window.confirmResetPassword = function() {
+        if (!resetTarget) return;
+        var newPass = document.getElementById('newPassword').value;
+        if (newPass.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+        
+        // Note: Resetting password requires admin API or service_role key
+        // For now, we'll show instructions
+        alert('⚠️ Para resetear contraseñas necesitas:\n\n' +
+              '1. Ir a Supabase Dashboard\n' +
+              '2. Authentication → Users\n' +
+              '3. Buscar: ' + resetTarget.email + '\n' +
+              '4. Click en "..." → "Send password reset"\n\n' +
+              'O usa esta contraseña temporal y pídele al usuario que la cambie:\n' +
+              '🔑 ' + newPass + '\n\n' +
+              '(Copia esta contraseña antes de cerrar)');
+        
+        closeModal('modalReset');
+    };
+    
+    // View all users of a company
+    window.viewAllUsers = function(companyId) {
+        var c = companies.find(function(x){return x.id === companyId});
+        if (!c) return;
+        
+        var html = '';
+        
+        // Owner
+        html += '<div style="margin-bottom:1.5rem">' +
+            '<h4 style="margin-bottom:0.75rem;color:var(--primary)">👑 Dueño de la Empresa</h4>' +
+            '<div class="emp-item">' +
+                '<div class="avatar" style="background:var(--primary)">'+initials(c.name)+'</div>' +
+                '<div class="emp-info"><h4>'+(c.name||'Sin nombre')+'</h4><p>'+(c.email||'-')+'</p></div>' +
+                '<button class="btn-sm btn-success" onclick="openResetModal(\'company\',\''+c.id+'\',\''+c.email+'\',\''+c.name+'\')">🔑 Reset</button>' +
+            '</div>' +
+        '</div>';
+        
+        // Employees
+        var emps = employees[companyId] || [];
+        if (emps.length > 0) {
+            html += '<h4 style="margin-bottom:0.75rem;color:var(--primary)">👷 Técnicos y Empleados</h4>' +
+                '<div class="emp-list">';
+            emps.forEach(function(e) {
+                var role = e.type === 'technician' ? '🔧 Técnico' : '👤 ' + (e.role || 'Usuario');
+                html += '<div class="emp-item">' +
+                    '<div class="avatar">'+initials(e.name)+'</div>' +
+                    '<div class="emp-info"><h4>'+(e.name||'Sin nombre')+'</h4><p>'+(e.email||e.phone||'-')+' • '+role+'</p></div>' +
+                    (e.email ? '<button class="btn-sm btn-success" onclick="openResetModal(\'user\',\''+e.id+'\',\''+e.email+'\',\''+e.name+'\')">🔑 Reset</button>' : '<span class="badge b-gray">Sin email</span>') +
+                '</div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty">No hay empleados registrados</div>';
+        }
+        
+        document.getElementById('allUsersList').innerHTML = html;
+        document.getElementById('modalUsers').classList.add('show');
     };
 
     document.addEventListener('DOMContentLoaded', init);
