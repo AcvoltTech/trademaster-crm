@@ -1059,8 +1059,8 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', servicecalls:'Llamadas de Servicio', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo' };
-    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', servicecalls:'Service Calls', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', servicecalls:'Llamadas de Servicio', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo', hr:'Recursos Humanos' };
+    var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', servicecalls:'Service Calls', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team', hr:'Human Resources' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     var al = document.querySelector('[onclick="showSection(\'' + name + '\')"]');
@@ -1083,6 +1083,7 @@ function showSection(name) {
     if (name === 'pricebook') { renderPriceBook(); }
     if (name === 'reports') { renderReports(); }
     if (name === 'servicecalls') { initServiceCallsSection(); }
+    if (name === 'hr') { loadHRData().then(function() { renderHRSection(); }); }
 }
 
 // ===== SERVICE CALLS / LLAMADAS DE SERVICIO (Uses Jobs/Work Orders) =====
@@ -10025,3 +10026,1709 @@ var StripePayments = {
         container.innerHTML = html;
     }
 };
+// =====================================================
+// TRADE MASTER CRM - MÓDULO DE RECURSOS HUMANOS 🛡️
+// Versión 1.0 - Febrero 2026
+// =====================================================
+
+var hrEmployeesData = [];
+var hrIncidentsData = [];
+var hrWarningsData = [];
+var hrPoliciesData = [];
+var currentHREmployee = null;
+
+// ===== CARGAR DATOS DE RRHH =====
+async function loadHRData() {
+    await Promise.all([
+        loadHREmployees(),
+        loadHRPolicies()
+    ]);
+}
+
+async function loadHREmployees() {
+    var res = await sbClient.from('employees')
+        .select('*, hr_incidents(count), hr_warnings(count)')
+        .eq('company_id', companyId)
+        .order('last_name');
+    if (res.data) hrEmployeesData = res.data;
+}
+
+async function loadHRIncidents(employeeId) {
+    var query = sbClient.from('hr_incidents')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('incident_date', { ascending: false });
+    
+    if (employeeId) query = query.eq('employee_id', employeeId);
+    
+    var res = await query;
+    if (res.data) hrIncidentsData = res.data;
+    return res.data || [];
+}
+
+async function loadHRWarnings(employeeId) {
+    var query = sbClient.from('hr_warnings')
+        .select('*, hr_incidents(*)')
+        .eq('company_id', companyId)
+        .order('issue_date', { ascending: false });
+    
+    if (employeeId) query = query.eq('employee_id', employeeId);
+    
+    var res = await query;
+    if (res.data) hrWarningsData = res.data;
+    return res.data || [];
+}
+
+async function loadHRPolicies() {
+    var res = await sbClient.from('hr_policies')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .order('policy_code');
+    if (res.data) hrPoliciesData = res.data;
+}
+
+// ===== RENDERIZAR SECCIÓN DE RRHH =====
+function renderHRSection() {
+    var main = document.getElementById('mainContent');
+    if (!main) return;
+    
+    main.innerHTML = `
+        <div class="hr-module">
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <h2 style="margin:0;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:28px;">🛡️</span>
+                        Recursos Humanos
+                    </h2>
+                    <p style="margin:5px 0 0;color:#64748b;">Gestión de empleados y cumplimiento legal - California</p>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="showHREmployeeForm()" class="btn-primary" style="display:flex;align-items:center;gap:6px;">
+                        <span>➕</span> Nuevo Empleado
+                    </button>
+                    <button onclick="showHRGuide()" class="btn-secondary" style="display:flex;align-items:center;gap:6px;">
+                        <span>📋</span> Guía Legal
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="hr-tabs" style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #e5e7eb;">
+                <button onclick="showHRTab('employees')" class="hr-tab active" id="hrTabEmployees">
+                    👥 Empleados <span class="badge">${hrEmployeesData.filter(e => e.employment_status === 'active').length}</span>
+                </button>
+                <button onclick="showHRTab('incidents')" class="hr-tab" id="hrTabIncidents">
+                    📝 Incidentes
+                </button>
+                <button onclick="showHRTab('warnings')" class="hr-tab" id="hrTabWarnings">
+                    ⚠️ Advertencias
+                </button>
+                <button onclick="showHRTab('terminations')" class="hr-tab" id="hrTabTerminations">
+                    🚪 Terminaciones
+                </button>
+                <button onclick="showHRTab('policies')" class="hr-tab" id="hrTabPolicies">
+                    📜 Políticas
+                </button>
+            </div>
+            
+            <!-- Content Area -->
+            <div id="hrContent">
+                ${renderHREmployeesList()}
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    addHRStyles();
+}
+
+function showHRTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.hr-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('hrTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    
+    var content = document.getElementById('hrContent');
+    
+    switch(tab) {
+        case 'employees':
+            content.innerHTML = renderHREmployeesList();
+            break;
+        case 'incidents':
+            loadHRIncidents().then(() => {
+                content.innerHTML = renderHRIncidentsList();
+            });
+            break;
+        case 'warnings':
+            loadHRWarnings().then(() => {
+                content.innerHTML = renderHRWarningsList();
+            });
+            break;
+        case 'terminations':
+            content.innerHTML = renderHRTerminationChecklist();
+            break;
+        case 'policies':
+            content.innerHTML = renderHRPolicies();
+            break;
+    }
+}
+
+// ===== LISTA DE EMPLEADOS =====
+function renderHREmployeesList() {
+    var activeEmps = hrEmployeesData.filter(e => e.employment_status === 'active');
+    var inactiveEmps = hrEmployeesData.filter(e => e.employment_status !== 'active');
+    
+    var html = `
+        <div class="hr-search-bar" style="margin-bottom:20px;">
+            <input type="text" id="hrEmployeeSearch" placeholder="🔍 Buscar empleado..." 
+                   onkeyup="filterHREmployees(this.value)" 
+                   style="width:100%;max-width:400px;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;">
+        </div>
+        
+        <div class="hr-employees-grid" id="hrEmployeesGrid">
+    `;
+    
+    if (activeEmps.length === 0) {
+        html += `
+            <div style="text-align:center;padding:60px 20px;color:#64748b;">
+                <div style="font-size:48px;margin-bottom:16px;">👥</div>
+                <h3 style="margin:0 0 8px;">No hay empleados registrados</h3>
+                <p style="margin:0;">Agrega tu primer empleado para comenzar</p>
+                <button onclick="showHREmployeeForm()" class="btn-primary" style="margin-top:20px;">
+                    ➕ Agregar Empleado
+                </button>
+            </div>
+        `;
+    } else {
+        activeEmps.forEach(emp => {
+            var warningCount = emp.hr_warnings?.[0]?.count || 0;
+            var incidentCount = emp.hr_incidents?.[0]?.count || 0;
+            var riskLevel = warningCount >= 3 ? 'high' : warningCount >= 2 ? 'medium' : 'low';
+            var riskColors = { high: '#fee2e2', medium: '#fef3c7', low: '#dcfce7' };
+            var riskIcons = { high: '🔴', medium: '🟡', low: '🟢' };
+            
+            html += `
+                <div class="hr-employee-card" onclick="showHREmployeeProfile('${emp.id}')" 
+                     style="background:white;border-radius:12px;padding:20px;cursor:pointer;border:1px solid #e5e7eb;transition:all 0.2s;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2d5a87);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;">
+                                ${emp.first_name?.charAt(0) || ''}${emp.last_name?.charAt(0) || ''}
+                            </div>
+                            <div>
+                                <h4 style="margin:0;font-size:16px;">${emp.first_name} ${emp.last_name}</h4>
+                                <p style="margin:2px 0 0;color:#64748b;font-size:13px;">${emp.position || 'Sin puesto'}</p>
+                            </div>
+                        </div>
+                        <div style="background:${riskColors[riskLevel]};padding:4px 10px;border-radius:20px;font-size:12px;">
+                            ${riskIcons[riskLevel]} ${warningCount} warn
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;color:#64748b;">
+                        <div>📅 ${emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('es') : 'N/A'}</div>
+                        <div>📝 ${incidentCount} incidentes</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    html += '</div>';
+    
+    // Empleados inactivos
+    if (inactiveEmps.length > 0) {
+        html += `
+            <div style="margin-top:32px;">
+                <h4 style="color:#64748b;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                    <span>📁</span> Empleados Inactivos (${inactiveEmps.length})
+                </h4>
+                <div class="hr-employees-grid">
+        `;
+        inactiveEmps.forEach(emp => {
+            html += `
+                <div class="hr-employee-card inactive" onclick="showHREmployeeProfile('${emp.id}')" 
+                     style="background:#f8fafc;border-radius:12px;padding:16px;cursor:pointer;border:1px solid #e5e7eb;opacity:0.7;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;border-radius:50%;background:#cbd5e1;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">
+                            ${emp.first_name?.charAt(0) || ''}${emp.last_name?.charAt(0) || ''}
+                        </div>
+                        <div>
+                            <h4 style="margin:0;font-size:14px;">${emp.first_name} ${emp.last_name}</h4>
+                            <p style="margin:2px 0 0;color:#94a3b8;font-size:12px;">
+                                ${emp.employment_status === 'terminated' ? '🚪 Terminado' : emp.employment_status}
+                                ${emp.termination_date ? ' - ' + new Date(emp.termination_date).toLocaleDateString('es') : ''}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div></div>';
+    }
+    
+    return html;
+}
+
+function filterHREmployees(query) {
+    var cards = document.querySelectorAll('.hr-employee-card');
+    query = query.toLowerCase();
+    cards.forEach(card => {
+        var text = card.textContent.toLowerCase();
+        card.style.display = text.includes(query) ? 'block' : 'none';
+    });
+}
+
+// ===== PERFIL DE EMPLEADO =====
+async function showHREmployeeProfile(empId) {
+    currentHREmployee = hrEmployeesData.find(e => e.id === empId);
+    if (!currentHREmployee) return;
+    
+    var incidents = await loadHRIncidents(empId);
+    var warnings = await loadHRWarnings(empId);
+    
+    var warningCount = warnings.filter(w => w.status === 'active').length;
+    var riskLevel = warningCount >= 3 ? 'high' : warningCount >= 2 ? 'medium' : 'low';
+    
+    var content = document.getElementById('hrContent');
+    content.innerHTML = `
+        <div class="hr-profile">
+            <!-- Back button -->
+            <button onclick="showHRTab('employees')" style="background:none;border:none;color:#3b82f6;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:20px;font-size:14px;">
+                ← Volver a lista
+            </button>
+            
+            <!-- Profile Header -->
+            <div style="background:white;border-radius:16px;padding:24px;margin-bottom:24px;border:1px solid #e5e7eb;">
+                <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:20px;">
+                    <div style="display:flex;align-items:center;gap:20px;">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2d5a87);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:28px;">
+                            ${currentHREmployee.first_name?.charAt(0) || ''}${currentHREmployee.last_name?.charAt(0) || ''}
+                        </div>
+                        <div>
+                            <h2 style="margin:0;">${currentHREmployee.first_name} ${currentHREmployee.last_name}</h2>
+                            <p style="margin:4px 0 0;color:#64748b;">${currentHREmployee.position || 'Sin puesto asignado'}</p>
+                            <p style="margin:4px 0 0;color:#64748b;font-size:13px;">
+                                📅 Desde: ${currentHREmployee.hire_date ? new Date(currentHREmployee.hire_date).toLocaleDateString('es') : 'N/A'}
+                                &nbsp;|&nbsp;
+                                📧 ${currentHREmployee.email || 'Sin email'}
+                                &nbsp;|&nbsp;
+                                📱 ${currentHREmployee.phone || 'Sin teléfono'}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Indicator -->
+                    <div style="text-align:center;padding:16px 24px;border-radius:12px;background:${riskLevel === 'high' ? '#fee2e2' : riskLevel === 'medium' ? '#fef3c7' : '#dcfce7'};">
+                        <div style="font-size:32px;">${riskLevel === 'high' ? '🔴' : riskLevel === 'medium' ? '🟡' : '🟢'}</div>
+                        <div style="font-weight:bold;margin-top:4px;">${warningCount} Advertencias</div>
+                        <div style="font-size:12px;color:#64748b;">${riskLevel === 'high' ? 'Zona de Riesgo' : riskLevel === 'medium' ? 'Precaución' : 'Normal'}</div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">
+                    <button onclick="showHRIncidentForm('${empId}')" class="btn-secondary" style="display:flex;align-items:center;gap:6px;">
+                        📝 Documentar Incidente
+                    </button>
+                    <button onclick="showHRWarningForm('${empId}')" class="btn-secondary" style="display:flex;align-items:center;gap:6px;">
+                        ⚠️ Crear Write-Up
+                    </button>
+                    ${warningCount >= 3 ? `
+                        <button onclick="showHRTerminationWizard('${empId}')" class="btn-danger" style="display:flex;align-items:center;gap:6px;background:#dc2626;color:white;">
+                            🚪 Proceso de Despido
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div style="background:white;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
+                <h3 style="margin:0 0 20px;display:flex;align-items:center;gap:8px;">
+                    <span>📋</span> Historial de Documentación
+                </h3>
+                
+                ${renderEmployeeTimeline(incidents, warnings)}
+            </div>
+        </div>
+    `;
+}
+
+function renderEmployeeTimeline(incidents, warnings) {
+    // Combinar y ordenar por fecha
+    var timeline = [];
+    
+    incidents.forEach(inc => {
+        timeline.push({
+            type: 'incident',
+            date: new Date(inc.incident_date),
+            data: inc
+        });
+    });
+    
+    warnings.forEach(warn => {
+        timeline.push({
+            type: 'warning',
+            date: new Date(warn.issue_date),
+            data: warn
+        });
+    });
+    
+    timeline.sort((a, b) => b.date - a.date);
+    
+    if (timeline.length === 0) {
+        return `
+            <div style="text-align:center;padding:40px;color:#64748b;">
+                <div style="font-size:48px;margin-bottom:12px;">📭</div>
+                <p>No hay incidentes documentados para este empleado</p>
+                <p style="font-size:13px;">¡Eso es bueno! Pero recuerda documentar cualquier problema.</p>
+            </div>
+        `;
+    }
+    
+    var html = '<div class="hr-timeline">';
+    
+    timeline.forEach((item, idx) => {
+        var isWarning = item.type === 'warning';
+        var icon = isWarning ? '⚠️' : '📝';
+        var color = isWarning ? 
+            (item.data.warning_type === 'final' ? '#dc2626' : item.data.warning_type === 'written' ? '#f59e0b' : '#3b82f6') 
+            : '#64748b';
+        
+        html += `
+            <div class="timeline-item" style="display:flex;gap:16px;padding-bottom:24px;${idx < timeline.length - 1 ? 'border-left:2px solid #e5e7eb;margin-left:12px;padding-left:24px;' : ''}">
+                <div style="width:24px;height:24px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-left:${idx < timeline.length - 1 ? '-37px' : '0'};">
+                    ${icon}
+                </div>
+                <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+                        <div>
+                            <strong style="color:${color};">
+                                ${isWarning ? `Advertencia ${item.data.warning_type === 'verbal' ? 'Verbal' : item.data.warning_type === 'written' ? 'Escrita' : 'FINAL'}` : item.data.title}
+                            </strong>
+                            <div style="font-size:12px;color:#94a3b8;">${item.date.toLocaleDateString('es')} - ${item.date.toLocaleTimeString('es', {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                        ${isWarning ? `<span style="background:${color};color:white;padding:2px 8px;border-radius:4px;font-size:11px;">Strike ${item.data.warning_number}</span>` : ''}
+                    </div>
+                    <p style="margin:0;color:#374151;font-size:14px;line-height:1.5;">
+                        ${isWarning ? item.data.issue_description : item.data.description}
+                    </p>
+                    ${item.data.policy_violated ? `<div style="margin-top:8px;font-size:12px;color:#64748b;">📜 Política: ${item.data.policy_violated}</div>` : ''}
+                    ${item.data.witnesses?.length ? `<div style="margin-top:4px;font-size:12px;color:#64748b;">👥 Testigos: ${item.data.witnesses.join(', ')}</div>` : ''}
+                    ${item.data.employee_signature ? `<div style="margin-top:4px;font-size:12px;color:#22c55e;">✅ Firmado por empleado</div>` : 
+                      item.data.employee_refused_to_sign ? `<div style="margin-top:4px;font-size:12px;color:#dc2626;">❌ Empleado se negó a firmar</div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// ===== ESTILOS CSS =====
+function addHRStyles() {
+    if (document.getElementById('hrStyles')) return;
+    
+    var style = document.createElement('style');
+    style.id = 'hrStyles';
+    style.textContent = `
+        .hr-tabs {
+            overflow-x: auto;
+        }
+        .hr-tab {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .hr-tab:hover {
+            color: #1e3a5f;
+        }
+        .hr-tab.active {
+            color: #1e3a5f;
+            border-bottom-color: #f97316;
+            font-weight: 600;
+        }
+        .hr-tab .badge {
+            background: #e5e7eb;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+        .hr-tab.active .badge {
+            background: #1e3a5f;
+            color: white;
+        }
+        .hr-employees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .hr-employee-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn-danger {
+            background: #dc2626 !important;
+            color: white !important;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            background: #b91c1c !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+// =====================================================
+// TRADE MASTER CRM - MÓDULO DE RECURSOS HUMANOS 🛡️
+// Parte 2: Formularios y Wizard de Terminación
+// =====================================================
+
+// ===== FORMULARIO DE INCIDENTE =====
+function showHRIncidentForm(employeeId) {
+    var emp = hrEmployeesData.find(e => e.id === employeeId);
+    if (!emp) return;
+    
+    var modal = document.createElement('div');
+    modal.id = 'hrIncidentModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h2 style="margin:0;display:flex;align-items:center;gap:10px;">
+                    📝 Documentar Incidente
+                </h2>
+                <button onclick="closeHRModal('hrIncidentModal')" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+            </div>
+            
+            <div style="background:#eff6ff;padding:16px;border-radius:8px;margin-bottom:20px;">
+                <strong>Empleado:</strong> ${emp.first_name} ${emp.last_name}
+                <br><small style="color:#64748b;">Recuerda: Documenta hechos, no opiniones.</small>
+            </div>
+            
+            <form id="hrIncidentForm" onsubmit="saveHRIncident(event, '${employeeId}')">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Fecha y Hora del Incidente *</label>
+                        <input type="datetime-local" name="incident_date" required 
+                               value="${new Date().toISOString().slice(0,16)}"
+                               style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Tipo de Incidente *</label>
+                        <select name="incident_type" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                            <option value="">Seleccionar...</option>
+                            <option value="tardiness">⏰ Tardanza</option>
+                            <option value="absence">📅 Ausencia</option>
+                            <option value="performance">📉 Desempeño</option>
+                            <option value="conduct">😠 Conducta</option>
+                            <option value="safety">⚠️ Seguridad</option>
+                            <option value="policy_violation">📋 Violación de Política</option>
+                            <option value="customer_complaint">😤 Queja de Cliente</option>
+                            <option value="other">📝 Otro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Título del Incidente *</label>
+                    <input type="text" name="title" required placeholder="Ej: Llegó 45 minutos tarde sin avisar"
+                           style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Descripción Detallada * (solo hechos)</label>
+                    <textarea name="description" required rows="4" 
+                              placeholder="Describe exactamente qué pasó, cuándo, dónde. Solo hechos observables, no opiniones."
+                              style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Política Violada</label>
+                        <select name="policy_violated" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                            <option value="">Seleccionar política...</option>
+                            ${hrPoliciesData.map(p => `<option value="${p.policy_name}">${p.policy_code} - ${p.policy_name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Severidad</label>
+                        <select name="severity" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                            <option value="minor">🟢 Menor</option>
+                            <option value="moderate">🟡 Moderada</option>
+                            <option value="serious">🟠 Seria</option>
+                            <option value="critical">🔴 Crítica</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Testigos (separados por coma)</label>
+                    <input type="text" name="witnesses" placeholder="Ej: María García, Juan López"
+                           style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Cliente Afectado (si aplica)</label>
+                    <input type="text" name="client_affected" placeholder="Nombre del cliente"
+                           style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Acción Tomada</label>
+                    <select name="action_taken" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                        <option value="documented">📝 Solo Documentado</option>
+                        <option value="verbal_warning">💬 Advertencia Verbal</option>
+                        <option value="written_warning">📄 Advertencia Escrita</option>
+                        <option value="final_warning">⚠️ Advertencia Final</option>
+                        <option value="suspension">🚫 Suspensión</option>
+                    </select>
+                </div>
+                
+                <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">
+                    <button type="button" onclick="closeHRModal('hrIncidentModal')" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">💾 Guardar Incidente</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function saveHRIncident(event, employeeId) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    
+    var witnesses = formData.get('witnesses');
+    var witnessArray = witnesses ? witnesses.split(',').map(w => w.trim()).filter(w => w) : [];
+    
+    var data = {
+        company_id: companyId,
+        employee_id: employeeId,
+        incident_date: formData.get('incident_date'),
+        incident_type: formData.get('incident_type'),
+        severity: formData.get('severity'),
+        title: formData.get('title'),
+        description: formData.get('description'),
+        policy_violated: formData.get('policy_violated') || null,
+        witnesses: witnessArray,
+        client_affected: formData.get('client_affected') || null,
+        action_taken: formData.get('action_taken'),
+        created_by: currentUser.id
+    };
+    
+    var res = await sbClient.from('hr_incidents').insert(data).select().single();
+    
+    if (res.error) {
+        alert('Error: ' + res.error.message);
+        return;
+    }
+    
+    closeHRModal('hrIncidentModal');
+    
+    // Si la acción fue una advertencia, preguntar si quiere crear el write-up
+    if (['verbal_warning', 'written_warning', 'final_warning'].includes(data.action_taken)) {
+        if (confirm('¿Deseas crear el Write-Up formal para esta advertencia?')) {
+            showHRWarningForm(employeeId, res.data.id);
+            return;
+        }
+    }
+    
+    // Recargar datos y mostrar perfil
+    await loadHREmployees();
+    showHREmployeeProfile(employeeId);
+}
+
+// ===== FORMULARIO DE ADVERTENCIA (WRITE-UP) =====
+async function showHRWarningForm(employeeId, incidentId = null) {
+    var emp = hrEmployeesData.find(e => e.id === employeeId);
+    if (!emp) return;
+    
+    // Contar advertencias existentes
+    var existingWarnings = await loadHRWarnings(employeeId);
+    var warningNumber = existingWarnings.filter(w => w.status === 'active').length + 1;
+    var warningType = warningNumber === 1 ? 'verbal' : warningNumber === 2 ? 'written' : 'final';
+    
+    var modal = document.createElement('div');
+    modal.id = 'hrWarningModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h2 style="margin:0;display:flex;align-items:center;gap:10px;">
+                    ⚠️ Crear Write-Up - Strike ${warningNumber}
+                </h2>
+                <button onclick="closeHRModal('hrWarningModal')" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+            </div>
+            
+            ${warningNumber >= 3 ? `
+                <div style="background:#fee2e2;border:1px solid #dc2626;padding:16px;border-radius:8px;margin-bottom:20px;">
+                    <strong style="color:#dc2626;">🚨 ADVERTENCIA FINAL</strong><br>
+                    <span style="color:#991b1b;">Este es el Strike ${warningNumber}. El siguiente paso podría ser la terminación del empleado.</span>
+                </div>
+            ` : `
+                <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-bottom:20px;">
+                    <strong>Strike ${warningNumber} de 3</strong> - Advertencia ${warningType === 'verbal' ? 'Verbal' : 'Escrita'}
+                    <br><small style="color:#92400e;">El empleado tiene ${3 - warningNumber} oportunidad(es) más antes de terminación.</small>
+                </div>
+            `}
+            
+            <form id="hrWarningForm" onsubmit="saveHRWarning(event, '${employeeId}', ${warningNumber}, '${warningType}', ${incidentId ? `'${incidentId}'` : null})">
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:20px;">
+                    <strong>Empleado:</strong> ${emp.first_name} ${emp.last_name}<br>
+                    <strong>Puesto:</strong> ${emp.position || 'N/A'}<br>
+                    <strong>Fecha de Contratación:</strong> ${emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('es') : 'N/A'}
+                </div>
+                
+                <div>
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Fecha de Emisión *</label>
+                    <input type="date" name="issue_date" required value="${new Date().toISOString().slice(0,10)}"
+                           style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Descripción del Problema *</label>
+                    <textarea name="issue_description" required rows="4" 
+                              placeholder="Describe el problema específico que causó esta advertencia. Incluye fechas, hechos, y referencias a incidentes previos."
+                              style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea>
+                </div>
+                
+                ${warningNumber > 1 ? `
+                    <div style="margin-top:16px;">
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Advertencias Anteriores Referenciadas</label>
+                        <textarea name="previous_warnings_referenced" rows="2"
+                                  placeholder="Ej: Advertencia verbal del 15/01/2026, Advertencia escrita del 01/02/2026"
+                                  style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Comportamiento/Mejora Esperada *</label>
+                    <textarea name="improvement_expected" required rows="3"
+                              placeholder="Describe claramente qué debe cambiar el empleado. Ej: 'El empleado debe llegar a tiempo a todas las citas con clientes y avisar con mínimo 30 minutos de anticipación si hay algún retraso.'"
+                              style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Fecha Límite para Mejorar</label>
+                        <input type="date" name="improvement_deadline"
+                               style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Nombre del Supervisor *</label>
+                        <input type="text" name="supervisor_name" required
+                               style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                    </div>
+                </div>
+                
+                <div style="margin-top:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Consecuencias Si No Hay Mejora *</label>
+                    <textarea name="consequences_if_no_improvement" required rows="2"
+                              style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;">${
+                        warningNumber === 1 ? 'Si el problema continúa, se emitirá una advertencia escrita formal.' :
+                        warningNumber === 2 ? 'Si el problema continúa, se emitirá una advertencia final que podría resultar en la terminación del empleo.' :
+                        'Cualquier incidente adicional resultará en la terminación inmediata del empleo.'
+                    }</textarea>
+                </div>
+                
+                <div style="margin-top:24px;padding:20px;background:#f8fafc;border-radius:8px;">
+                    <h4 style="margin:0 0 12px;">Firma del Empleado</h4>
+                    <p style="font-size:13px;color:#64748b;margin-bottom:12px;">
+                        La firma indica que el empleado ha recibido y leído esta advertencia. No significa que está de acuerdo con ella.
+                    </p>
+                    <div style="display:flex;gap:16px;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="radio" name="signature_status" value="signed" checked>
+                            ✅ Empleado firmó
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="radio" name="signature_status" value="refused">
+                            ❌ Se negó a firmar
+                        </label>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Comentarios del Empleado (opcional)</label>
+                        <textarea name="employee_comments" rows="2" placeholder="El empleado puede agregar sus comentarios aquí..."
+                                  style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">
+                    <button type="button" onclick="closeHRModal('hrWarningModal')" class="btn-secondary">Cancelar</button>
+                    <button type="button" onclick="previewWarning()" class="btn-secondary">👁️ Vista Previa</button>
+                    <button type="submit" class="btn-primary">💾 Guardar Write-Up</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function saveHRWarning(event, employeeId, warningNumber, warningType, incidentId) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    
+    var signatureStatus = formData.get('signature_status');
+    
+    var data = {
+        company_id: companyId,
+        employee_id: employeeId,
+        incident_id: incidentId,
+        warning_type: warningType,
+        warning_number: warningNumber,
+        issue_date: formData.get('issue_date'),
+        issue_description: formData.get('issue_description'),
+        previous_warnings_referenced: formData.get('previous_warnings_referenced') || null,
+        improvement_expected: formData.get('improvement_expected'),
+        improvement_deadline: formData.get('improvement_deadline') || null,
+        consequences_if_no_improvement: formData.get('consequences_if_no_improvement'),
+        supervisor_name: formData.get('supervisor_name'),
+        supervisor_signed_at: new Date().toISOString(),
+        employee_refused_to_sign: signatureStatus === 'refused',
+        employee_signed_at: signatureStatus === 'signed' ? new Date().toISOString() : null,
+        employee_comments: formData.get('employee_comments') || null,
+        status: 'active',
+        created_by: currentUser.id
+    };
+    
+    var res = await sbClient.from('hr_warnings').insert(data).select().single();
+    
+    if (res.error) {
+        alert('Error: ' + res.error.message);
+        return;
+    }
+    
+    closeHRModal('hrWarningModal');
+    alert('✅ Write-Up guardado correctamente');
+    
+    // Recargar datos y mostrar perfil
+    await loadHREmployees();
+    showHREmployeeProfile(employeeId);
+}
+
+// ===== WIZARD DE TERMINACIÓN =====
+function showHRTerminationWizard(employeeId) {
+    var emp = hrEmployeesData.find(e => e.id === employeeId);
+    if (!emp) return;
+    
+    var modal = document.createElement('div');
+    modal.id = 'hrTerminationModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:900px;max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h2 style="margin:0;display:flex;align-items:center;gap:10px;color:#dc2626;">
+                    🚪 Proceso de Despido - Checklist Legal
+                </h2>
+                <button onclick="closeHRModal('hrTerminationModal')" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+            </div>
+            
+            <div style="background:#fee2e2;border:1px solid #dc2626;padding:16px;border-radius:8px;margin-bottom:24px;">
+                <strong style="color:#dc2626;">⚠️ ATENCIÓN</strong><br>
+                <span style="color:#991b1b;">
+                    Un despido mal ejecutado puede costarte decenas de miles de dólares. 
+                    Completa TODOS los pasos de este checklist ANTES de proceder.
+                </span>
+            </div>
+            
+            <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:24px;">
+                <strong>Empleado a Terminar:</strong> ${emp.first_name} ${emp.last_name}<br>
+                <strong>Puesto:</strong> ${emp.position || 'N/A'}<br>
+                <strong>Fecha de Contratación:</strong> ${emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('es') : 'N/A'}
+            </div>
+            
+            <form id="hrTerminationForm">
+                <!-- SECCIÓN 1: DOCUMENTACIÓN -->
+                <div style="margin-bottom:24px;">
+                    <h3 style="color:#1e3a5f;border-bottom:2px solid #e5e7eb;padding-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        📋 1. Documentación Pre-Despido
+                    </h3>
+                    <div style="padding:16px 0;">
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="check_documentation" required style="margin-top:3px;">
+                            <div>
+                                <strong>Tengo mínimo 3 advertencias documentadas y firmadas</strong>
+                                <p style="margin:4px 0 0;color:#64748b;font-size:13px;">Cada advertencia debe tener fecha, hechos específicos, y política violada.</p>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="check_opportunity" required style="margin-top:3px;">
+                            <div>
+                                <strong>Di oportunidad al empleado de mejorar entre advertencias</strong>
+                                <p style="margin:4px 0 0;color:#64748b;font-size:13px;">El empleado debe haber tenido tiempo razonable para corregir su comportamiento.</p>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;">
+                            <input type="checkbox" name="check_consistent" required style="margin-top:3px;">
+                            <div>
+                                <strong>He tratado a otros empleados de manera consistente</strong>
+                                <p style="margin:4px 0 0;color:#64748b;font-size:13px;">No puedo despedir a alguien por algo que permití en otros empleados.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 2: VERIFICACIÓN DE RIESGOS -->
+                <div style="margin-bottom:24px;">
+                    <h3 style="color:#dc2626;border-bottom:2px solid #fee2e2;padding-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        🚨 2. Verificación de Riesgos (CRÍTICO)
+                    </h3>
+                    <div style="padding:16px 0;">
+                        <p style="color:#64748b;margin-bottom:16px;">Si marcas alguna de estas casillas, <strong style="color:#dc2626;">CONSULTA CON UN ABOGADO</strong> antes de proceder:</p>
+                        
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fef3c7;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="risk_complaint" style="margin-top:3px;">
+                            <div>
+                                <strong style="color:#92400e;">⚠️ El empleado reportó discriminación o acoso en los últimos 90 días</strong>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fef3c7;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="risk_workers_comp" style="margin-top:3px;">
+                            <div>
+                                <strong style="color:#92400e;">⚠️ Tiene un claim de Workers Comp abierto o reciente</strong>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fef3c7;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="risk_fmla" style="margin-top:3px;">
+                            <div>
+                                <strong style="color:#92400e;">⚠️ Pidió o tomó FMLA/CFRA recientemente</strong>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fef3c7;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="risk_pregnancy" style="margin-top:3px;">
+                            <div>
+                                <strong style="color:#92400e;">⚠️ Está embarazada o acaba de regresar de maternidad</strong>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fef3c7;border-radius:8px;cursor:pointer;">
+                            <input type="checkbox" name="risk_accommodation" style="margin-top:3px;">
+                            <div>
+                                <strong style="color:#92400e;">⚠️ Pidió acomodación por discapacidad o religión</strong>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 3: PAGO FINAL -->
+                <div style="margin-bottom:24px;">
+                    <h3 style="color:#1e3a5f;border-bottom:2px solid #e5e7eb;padding-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        💰 3. Pago Final (OBLIGATORIO - Labor Code 201)
+                    </h3>
+                    <div style="background:#fee2e2;padding:12px;border-radius:8px;margin:16px 0;">
+                        <strong style="color:#dc2626;">⚠️ El pago DEBE estar listo ANTES de la reunión de despido</strong><br>
+                        <span style="color:#991b1b;font-size:13px;">Penalidad: 1 día de salario por cada día de retraso (máximo 30 días)</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:500;">Horas Trabajadas</label>
+                            <input type="number" name="final_hours" step="0.01" placeholder="0.00" oninput="calculateFinalPay()"
+                                   style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:500;">Overtime (horas)</label>
+                            <input type="number" name="final_overtime_hours" step="0.01" placeholder="0.00" oninput="calculateFinalPay()"
+                                   style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:500;">Vacaciones Acumuladas (horas)</label>
+                            <input type="number" name="final_vacation" step="0.01" placeholder="0.00" oninput="calculateFinalPay()"
+                                   style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="display:block;margin-bottom:6px;font-weight:500;">Rate por Hora ($)</label>
+                            <input type="number" name="hourly_rate" step="0.01" value="${emp.hourly_rate || ''}" oninput="calculateFinalPay()"
+                                   style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">
+                        </div>
+                    </div>
+                    <div style="background:#dcfce7;padding:16px;border-radius:8px;margin-top:16px;">
+                        <strong>Total Pago Final: $<span id="finalPayTotal">0.00</span></strong>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-top:16px;">
+                        <input type="checkbox" name="check_final_pay" required>
+                        <strong>El cheque final está listo para entregar en la reunión</strong>
+                    </label>
+                </div>
+                
+                <!-- SECCIÓN 4: REUNIÓN -->
+                <div style="margin-bottom:24px;">
+                    <h3 style="color:#1e3a5f;border-bottom:2px solid #e5e7eb;padding-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        👥 4. Preparación de la Reunión
+                    </h3>
+                    <div style="padding:16px 0;">
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="check_witness" required style="margin-top:3px;">
+                            <strong>Tengo un testigo programado para la reunión (supervisor o RRHH)</strong>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="check_location" required style="margin-top:3px;">
+                            <strong>Tengo un lugar privado para la reunión</strong>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="check_cobra" style="margin-top:3px;">
+                            <strong>Preparé la información de COBRA (si aplica)</strong>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:white;border-radius:8px;cursor:pointer;">
+                            <input type="checkbox" name="check_equipment" style="margin-top:3px;">
+                            <strong>Tengo lista de equipo/llaves a recuperar</strong>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="riskWarning" style="display:none;background:#dc2626;color:white;padding:20px;border-radius:8px;margin-bottom:24px;">
+                    <strong>🚨 ALTO - RIESGO DETECTADO</strong><br>
+                    Has marcado factores de riesgo. Se recomienda CONSULTAR CON UN ABOGADO antes de proceder con la terminación.
+                </div>
+                
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button type="button" onclick="closeHRModal('hrTerminationModal')" class="btn-secondary">Cancelar</button>
+                    <button type="button" onclick="generateTerminationLetter('${employeeId}')" class="btn-secondary">📄 Generar Carta</button>
+                    <button type="button" onclick="proceedWithTermination('${employeeId}')" class="btn-danger">
+                        🚪 Proceder con Terminación
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Agregar listener para riesgos
+    setTimeout(() => {
+        document.querySelectorAll('[name^="risk_"]').forEach(checkbox => {
+            checkbox.addEventListener('change', checkRisks);
+        });
+    }, 100);
+}
+
+function calculateFinalPay() {
+    var hours = parseFloat(document.querySelector('[name="final_hours"]').value) || 0;
+    var overtime = parseFloat(document.querySelector('[name="final_overtime_hours"]').value) || 0;
+    var vacation = parseFloat(document.querySelector('[name="final_vacation"]').value) || 0;
+    var rate = parseFloat(document.querySelector('[name="hourly_rate"]').value) || 0;
+    
+    var total = (hours * rate) + (overtime * rate * 1.5) + (vacation * rate);
+    document.getElementById('finalPayTotal').textContent = total.toFixed(2);
+}
+
+function checkRisks() {
+    var hasRisk = Array.from(document.querySelectorAll('[name^="risk_"]:checked')).length > 0;
+    document.getElementById('riskWarning').style.display = hasRisk ? 'block' : 'none';
+}
+
+function closeHRModal(modalId) {
+    var modal = document.getElementById(modalId);
+    if (modal) modal.remove();
+}
+
+// ===== FORMULARIO DE POLÍTICA =====
+function showHRPolicyForm() {
+    var modal = document.createElement('div');
+    modal.id = 'hrPolicyModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
+    
+    modal.innerHTML = '<div class="modal-content" style="background:white;border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<h2 style="margin:0;">📜 Nueva Política</h2>' +
+        '<button onclick="closeHRModal(\'hrPolicyModal\')" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button></div>' +
+        
+        '<form id="hrPolicyForm" onsubmit="saveHRPolicy(event)">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+        '<div><label style="display:block;margin-bottom:6px;font-weight:500;">Código *</label>' +
+        '<input type="text" name="policy_code" required placeholder="Ej: ATT-001" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;"></div>' +
+        '<div><label style="display:block;margin-bottom:6px;font-weight:500;">Categoría *</label>' +
+        '<select name="policy_category" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">' +
+        '<option value="attendance">⏰ Asistencia</option>' +
+        '<option value="conduct">🤝 Conducta</option>' +
+        '<option value="safety">⚠️ Seguridad</option>' +
+        '<option value="performance">📈 Desempeño</option>' +
+        '<option value="dress_code">👔 Vestimenta</option>' +
+        '<option value="other">📋 Otro</option></select></div></div>' +
+        
+        '<div style="margin-top:16px;"><label style="display:block;margin-bottom:6px;font-weight:500;">Nombre de la Política *</label>' +
+        '<input type="text" name="policy_name" required placeholder="Ej: Política de Puntualidad" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;"></div>' +
+        
+        '<div style="margin-top:16px;"><label style="display:block;margin-bottom:6px;font-weight:500;">Descripción *</label>' +
+        '<textarea name="policy_description" required rows="4" placeholder="Describe la política en detalle..." style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea></div>' +
+        
+        '<div style="margin-top:16px;"><label style="display:block;margin-bottom:6px;font-weight:500;">Consecuencias</label>' +
+        '<textarea name="policy_consequences" rows="3" placeholder="Ej: Primera ofensa: Advertencia verbal. Segunda: Escrita. Tercera: Final." style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea></div>' +
+        
+        '<div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">' +
+        '<button type="button" onclick="closeHRModal(\'hrPolicyModal\')" class="btn-secondary">Cancelar</button>' +
+        '<button type="submit" class="btn-primary">💾 Guardar Política</button></div></form></div>';
+    
+    document.body.appendChild(modal);
+}
+
+async function saveHRPolicy(event) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    
+    var data = {
+        company_id: companyId,
+        policy_code: formData.get('policy_code'),
+        policy_name: formData.get('policy_name'),
+        policy_category: formData.get('policy_category'),
+        policy_description: formData.get('policy_description'),
+        policy_consequences: formData.get('policy_consequences') || null,
+        effective_date: new Date().toISOString().slice(0,10),
+        is_active: true
+    };
+    
+    var res = await sbClient.from('hr_policies').insert(data).select().single();
+    
+    if (res.error) {
+        alert('Error: ' + res.error.message);
+        return;
+    }
+    
+    closeHRModal('hrPolicyModal');
+    alert('✅ Política creada correctamente');
+    await loadHRPolicies();
+    showHRTab('policies');
+}
+
+// ===== WIZARD DE TERMINACIÓN - FUNCIONES ADICIONALES =====
+function generateHRTerminationLetter(employeeId) {
+    var emp = hrEmployeesData.find(function(e) { return e.id === employeeId; });
+    if (!emp) return;
+    
+    var today = new Date().toLocaleDateString('es', { year: 'numeric', month: 'long', day: 'numeric' });
+    var reasonEl = document.querySelector('[name="termination_reason"]');
+    var reason = reasonEl ? reasonEl.value : '[RAZÓN DE TERMINACIÓN]';
+    
+    var letter = '═══════════════════════════════════════════════════════════════\n' +
+        '                    CARTA DE TERMINACIÓN DE EMPLEO\n' +
+        '═══════════════════════════════════════════════════════════════\n\n' +
+        'Fecha: ' + today + '\n\n' +
+        'Para: ' + emp.first_name + ' ' + emp.last_name + '\n' +
+        'Puesto: ' + (emp.position || 'N/A') + '\n' +
+        'Fecha de Contratación: ' + (emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('es') : 'N/A') + '\n\n' +
+        '───────────────────────────────────────────────────────────────\n\n' +
+        'Estimado/a ' + emp.first_name + ',\n\n' +
+        'Por medio de la presente, le notificamos que su empleo con nuestra empresa ' +
+        'será terminado efectivo inmediatamente.\n\n' +
+        'RAZÓN DE LA TERMINACIÓN:\n' +
+        reason + '\n\n' +
+        'Esta decisión se basa en los incidentes de desempeño que han sido documentados ' +
+        'y discutidos con usted previamente.\n\n' +
+        'PAGO FINAL:\n' +
+        'De acuerdo con el California Labor Code Section 201, su pago final le será ' +
+        'entregado hoy e incluye todas las horas trabajadas y vacaciones acumuladas.\n\n' +
+        'BENEFICIOS:\n' +
+        '- COBRA: Recibirá información sobre la continuación de su seguro médico.\n' +
+        '- 401(k): Contacte al administrador del plan para opciones de su cuenta.\n' +
+        '- Desempleo: Puede aplicar para beneficios de desempleo con el EDD.\n\n' +
+        'DEVOLUCIÓN DE PROPIEDAD:\n' +
+        'Por favor devuelva todas las llaves, uniformes, herramientas y equipo de la empresa.\n\n' +
+        '───────────────────────────────────────────────────────────────\n\n' +
+        'Firma del Empleador: _______________________  Fecha: ___________\n\n' +
+        'Firma del Empleado: ________________________  Fecha: ___________\n' +
+        '(La firma indica recibo de esta carta, no acuerdo con la decisión)\n\n' +
+        '═══════════════════════════════════════════════════════════════\n';
+    
+    // Crear y descargar archivo
+    var blob = new Blob([letter], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Carta_Terminacion_' + emp.last_name + '_' + emp.first_name + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('📄 Carta de terminación descargada');
+}
+
+async function proceedWithHRTermination(employeeId) {
+    var emp = hrEmployeesData.find(function(e) { return e.id === employeeId; });
+    if (!emp) return;
+    
+    // Validar checkboxes requeridos
+    var form = document.getElementById('hrTerminationForm');
+    var requiredChecks = form.querySelectorAll('input[type="checkbox"][required]');
+    var allChecked = true;
+    requiredChecks.forEach(function(cb) {
+        if (!cb.checked) allChecked = false;
+    });
+    
+    if (!allChecked) {
+        alert('❌ Debes completar todos los pasos requeridos del checklist antes de proceder.');
+        return;
+    }
+    
+    var reasonEl = document.querySelector('[name="termination_reason"]');
+    if (!reasonEl || !reasonEl.value.trim()) {
+        alert('❌ Debes especificar la razón de la terminación.');
+        return;
+    }
+    
+    // Confirmar
+    if (!confirm('⚠️ ¿Estás seguro de proceder con la terminación de ' + emp.first_name + ' ' + emp.last_name + '?\n\nEsta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    // Recopilar datos
+    var formData = new FormData(form);
+    var finalHours = parseFloat(formData.get('final_hours')) || 0;
+    var finalOvertime = parseFloat(formData.get('final_overtime')) || 0;
+    var finalVacation = parseFloat(formData.get('final_vacation')) || 0;
+    var hourlyRate = parseFloat(formData.get('hourly_rate')) || emp.hourly_rate || 0;
+    
+    var riskFlags = [];
+    if (formData.get('risk_complaint')) riskFlags.push('recent_complaint');
+    if (formData.get('risk_workers_comp')) riskFlags.push('workers_comp');
+    if (formData.get('risk_fmla')) riskFlags.push('fmla');
+    if (formData.get('risk_pregnancy')) riskFlags.push('pregnancy');
+    if (formData.get('risk_accommodation')) riskFlags.push('accommodation');
+    
+    var terminationData = {
+        company_id: companyId,
+        employee_id: employeeId,
+        termination_type: 'involuntary',
+        termination_date: new Date().toISOString().slice(0,10),
+        last_work_date: new Date().toISOString().slice(0,10),
+        termination_reason: reasonEl.value,
+        termination_reason_code: 'performance',
+        eligible_for_rehire: riskFlags.length === 0,
+        checklist_documentation_complete: true,
+        checklist_no_recent_complaints: !formData.get('risk_complaint'),
+        checklist_consistent_treatment: true,
+        checklist_final_pay_ready: true,
+        checklist_cobra_info_ready: !!formData.get('check_cobra'),
+        checklist_witness_arranged: true,
+        risk_flags: riskFlags,
+        legal_review_required: riskFlags.length > 0,
+        final_pay_date: new Date().toISOString().slice(0,10),
+        final_pay_hours_worked: finalHours,
+        final_pay_overtime: finalOvertime * hourlyRate * 1.5,
+        final_pay_vacation_hours: finalVacation,
+        final_pay_vacation_amount: finalVacation * hourlyRate,
+        final_pay_amount: (finalHours * hourlyRate) + (finalOvertime * hourlyRate * 1.5) + (finalVacation * hourlyRate),
+        meeting_date: new Date().toISOString(),
+        system_access_revoked: false,
+        created_by: currentUser.id
+    };
+    
+    // Insertar terminación
+    var res = await sbClient.from('hr_terminations').insert(terminationData).select().single();
+    
+    if (res.error) {
+        alert('Error: ' + res.error.message);
+        return;
+    }
+    
+    // Actualizar estado del empleado
+    await sbClient.from('employees')
+        .update({ 
+            employment_status: 'terminated', 
+            termination_date: terminationData.termination_date 
+        })
+        .eq('id', employeeId);
+    
+    closeHRModal('hrTerminationModal');
+    alert('✅ Terminación procesada correctamente.\n\n⚠️ Recuerda:\n- Entregar el cheque final AHORA\n- Revocar acceso a sistemas\n- Recuperar llaves y equipo');
+    
+    await loadHREmployees();
+    renderHRSection();
+}
+
+// ===== CERRAR MODALES =====
+function closeHRModal(modalId) {
+    var modal = document.getElementById(modalId);
+    if (modal) modal.remove();
+}
+
+// ===== GUÍA LEGAL =====
+function showHRGuide() {
+    window.open('https://acvolttech.github.io/trademaster-crm/TradeMaster_Proceso_Despido_Legal_California.pdf', '_blank');
+}
+
+// ===== NOTA: AGREGAR AL showSection() =====
+// En la función showSection(), agregar después de la línea "if (name === 'servicecalls')...":
+//
+//     if (name === 'hr') { loadHRData().then(function() { renderHRSection(); }); }
+//
+// Y agregar 'hr' al objeto titles:
+//     titles.hr = 'Recursos Humanos';
+//     titlesEN.hr = 'Human Resources';
+
+// ===== NOTA: AGREGAR AL HTML DEL SIDEBAR =====
+// Agregar este link en la sección de navegación del sidebar:
+//
+// <a href="#" class="nav-link" onclick="showSection('hr')">
+//     <span class="nav-icon">🛡️</span>
+//     <span>Recursos Humanos</span>
+// </a>
+//
+// Y agregar esta sección al HTML:
+//
+// <div id="hr-section" class="section">
+//     <div id="mainContent"></div>
+// </div>
+// =====================================================
+// TRADE MASTER CRM - MÓDULO RRHH ADICIONAL
+// Pre-Hire Checklist, Onboarding Email, Alertas 90 días
+// AGREGAR AL FINAL DE script.js
+// =====================================================
+
+// ===== ENVIAR EMAIL DE ONBOARDING AL EMPLEADO =====
+async function sendEmployeeOnboardingEmail(employeeData) {
+    try {
+        // Obtener datos de la empresa
+        var companyRes = await sbClient.from('companies').select('name, owner_name, email').eq('id', companyId).single();
+        var company = companyRes.data;
+        
+        var response = await fetch('https://ucowlcrddzukykbaitzt.supabase.co/functions/v1/send-employee-onboarding', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({
+                employee_name: employeeData.first_name + ' ' + employeeData.last_name,
+                employee_email: employeeData.email,
+                employee_position: employeeData.position,
+                hire_date: employeeData.hire_date,
+                company_name: company.name,
+                manager_name: company.owner_name,
+                manager_email: company.email,
+                hourly_rate: employeeData.hourly_rate
+            })
+        });
+        
+        var result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Email de onboarding enviado a:', employeeData.email);
+            
+            // Actualizar empleado como email enviado
+            await sbClient.from('employees')
+                .update({ 
+                    onboarding_email_sent: true, 
+                    onboarding_email_sent_at: new Date().toISOString() 
+                })
+                .eq('id', employeeData.id);
+            
+            return true;
+        } else {
+            console.error('❌ Error enviando email:', result);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error de conexión:', error);
+        return false;
+    }
+}
+
+// ===== RENDERIZAR PRE-HIRE CHECKLIST =====
+function renderPreHireChecklist(emp) {
+    var allComplete = emp.background_check_status === 'passed' &&
+                      emp.drug_test_status === 'passed' &&
+                      emp.i9_status === 'verified' &&
+                      emp.references_verified &&
+                      emp.drivers_license_verified;
+    
+    return '<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #e5e7eb;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+        '<h3 style="margin:0;display:flex;align-items:center;gap:8px;">' +
+        '<span>📋</span> Pre-Hire Checklist</h3>' +
+        '<span style="background:' + (allComplete ? '#dcfce7' : '#fef3c7') + ';padding:4px 12px;border-radius:20px;font-size:12px;">' +
+        (allComplete ? '✅ Completo' : '⏳ Pendiente') + '</span></div>' +
+        
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">' +
+        
+        // Background Check
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'background_check\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.background_check_status === 'passed' ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.background_check_status === 'passed' ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.background_check_status === 'passed' ? '✅' : '⬜') + '</span>' +
+        '<div><strong>Background Check</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.background_check_status === 'passed' ? 'Aprobado' : emp.background_check_status === 'failed' ? 'Rechazado' : 'Pendiente') + 
+        '</div></div></div></div>' +
+        
+        // Drug Test
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'drug_test\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.drug_test_status === 'passed' ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.drug_test_status === 'passed' ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.drug_test_status === 'passed' ? '✅' : '⬜') + '</span>' +
+        '<div><strong>Drug Test</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.drug_test_status === 'passed' ? 'Negativo' : emp.drug_test_status === 'failed' ? 'Positivo' : 'Pendiente') + 
+        '</div></div></div></div>' +
+        
+        // I-9
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'i9\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.i9_status === 'verified' ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.i9_status === 'verified' ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.i9_status === 'verified' ? '✅' : '⬜') + '</span>' +
+        '<div><strong>I-9 Verificado</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.i9_status === 'verified' ? 'Verificado' : 'Pendiente') + 
+        '</div></div></div></div>' +
+        
+        // Referencias
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'references\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.references_verified ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.references_verified ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.references_verified ? '✅' : '⬜') + '</span>' +
+        '<div><strong>Referencias</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.references_verified ? 'Verificadas' : 'Pendiente') + 
+        '</div></div></div></div>' +
+        
+        // Licencia
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'license\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.drivers_license_verified ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.drivers_license_verified ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.drivers_license_verified ? '✅' : '⬜') + '</span>' +
+        '<div><strong>Licencia de Conducir</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.drivers_license_verified ? 'Verificada' : 'Pendiente') + 
+        '</div></div></div></div>' +
+        
+        // Certificaciones
+        '<div onclick="updatePreHireItem(\'' + emp.id + '\', \'certifications\')" style="cursor:pointer;padding:12px;border-radius:8px;border:1px solid ' + 
+        (emp.certifications_verified ? '#22c55e' : '#e5e7eb') + ';background:' + 
+        (emp.certifications_verified ? '#dcfce7' : 'white') + ';">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:20px;">' + (emp.certifications_verified ? '✅' : '⬜') + '</span>' +
+        '<div><strong>Certificaciones</strong>' +
+        '<div style="font-size:12px;color:#64748b;">' + 
+        (emp.certifications_verified ? 'Verificadas' : 'Pendiente/N/A') + 
+        '</div></div></div></div>' +
+        
+        '</div></div>';
+}
+
+// ===== ACTUALIZAR ITEM DE PRE-HIRE =====
+async function updatePreHireItem(empId, itemType) {
+    var emp = hrEmployeesData.find(function(e) { return e.id === empId; });
+    if (!emp) return;
+    
+    var updateData = {};
+    var newStatus;
+    
+    switch(itemType) {
+        case 'background_check':
+            newStatus = emp.background_check_status === 'passed' ? 'pending' : 'passed';
+            updateData.background_check_status = newStatus;
+            if (newStatus === 'passed') updateData.background_check_date = new Date().toISOString().slice(0,10);
+            break;
+        case 'drug_test':
+            newStatus = emp.drug_test_status === 'passed' ? 'pending' : 'passed';
+            updateData.drug_test_status = newStatus;
+            if (newStatus === 'passed') updateData.drug_test_date = new Date().toISOString().slice(0,10);
+            break;
+        case 'i9':
+            newStatus = emp.i9_status === 'verified' ? 'pending' : 'verified';
+            updateData.i9_status = newStatus;
+            if (newStatus === 'verified') updateData.i9_verified_date = new Date().toISOString().slice(0,10);
+            break;
+        case 'references':
+            updateData.references_verified = !emp.references_verified;
+            break;
+        case 'license':
+            updateData.drivers_license_verified = !emp.drivers_license_verified;
+            break;
+        case 'certifications':
+            updateData.certifications_verified = !emp.certifications_verified;
+            break;
+    }
+    
+    // Verificar si todo está completo
+    var tempEmp = Object.assign({}, emp, updateData);
+    var allComplete = tempEmp.background_check_status === 'passed' &&
+                      tempEmp.drug_test_status === 'passed' &&
+                      tempEmp.i9_status === 'verified' &&
+                      tempEmp.references_verified &&
+                      tempEmp.drivers_license_verified;
+    
+    if (allComplete) {
+        updateData.pre_hire_complete = true;
+        updateData.pre_hire_completed_date = new Date().toISOString().slice(0,10);
+    }
+    
+    await sbClient.from('employees').update(updateData).eq('id', empId);
+    
+    // Recargar y mostrar
+    await loadHREmployees();
+    showHREmployeeProfile(empId);
+}
+
+// ===== RENDERIZAR PERIODO DE PRUEBA =====
+function renderProbationStatus(emp) {
+    if (!emp.hire_date) return '';
+    
+    var hireDate = new Date(emp.hire_date);
+    var today = new Date();
+    var daysInProbation = Math.floor((today - hireDate) / (1000 * 60 * 60 * 24));
+    var probationEndDate = new Date(hireDate);
+    probationEndDate.setDate(probationEndDate.getDate() + 90);
+    var daysRemaining = Math.floor((probationEndDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (emp.probation_status === 'passed') {
+        return '<div style="background:#dcfce7;border:1px solid #22c55e;padding:16px;border-radius:12px;margin-bottom:20px;">' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span style="font-size:24px;">✅</span>' +
+            '<div><strong style="color:#166534;">Periodo de Prueba Completado</strong>' +
+            '<div style="font-size:13px;color:#166534;">Empleado regular desde: ' + 
+            (emp.probation_end_date ? new Date(emp.probation_end_date).toLocaleDateString('es') : 'N/A') + '</div></div></div></div>';
+    }
+    
+    if (daysRemaining < 0) {
+        return '<div style="background:#fee2e2;border:1px solid #dc2626;padding:16px;border-radius:12px;margin-bottom:20px;">' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span style="font-size:24px;">⚠️</span>' +
+            '<div><strong style="color:#dc2626;">Periodo de Prueba Vencido</strong>' +
+            '<div style="font-size:13px;color:#dc2626;">Debes tomar una decisión: Confirmar como empleado regular o terminar.</div></div></div>' +
+            '<div style="display:flex;gap:10px;margin-top:12px;">' +
+            '<button onclick="confirmEmployeeRegular(\'' + emp.id + '\')" class="btn-primary">✅ Confirmar Empleado</button>' +
+            '<button onclick="showHRTerminationWizard(\'' + emp.id + '\')" style="background:#dc2626;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">🚪 Terminar</button>' +
+            '</div></div>';
+    }
+    
+    var progressPercent = Math.min(100, (daysInProbation / 90) * 100);
+    var progressColor = progressPercent >= 80 ? '#f59e0b' : progressPercent >= 60 ? '#3b82f6' : '#22c55e';
+    
+    return '<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #e5e7eb;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+        '<h3 style="margin:0;display:flex;align-items:center;gap:8px;">' +
+        '<span>⏱️</span> Periodo de Prueba</h3>' +
+        '<span style="background:#fef3c7;padding:4px 12px;border-radius:20px;font-size:12px;">' +
+        daysRemaining + ' días restantes</span></div>' +
+        
+        // Progress bar
+        '<div style="background:#e5e7eb;border-radius:10px;height:20px;overflow:hidden;margin-bottom:16px;">' +
+        '<div style="background:' + progressColor + ';height:100%;width:' + progressPercent + '%;transition:width 0.3s;"></div></div>' +
+        
+        '<div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:20px;">' +
+        '<span>Día ' + daysInProbation + ' de 90</span>' +
+        '<span>Termina: ' + probationEndDate.toLocaleDateString('es') + '</span></div>' +
+        
+        // Evaluations
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">' +
+        
+        // 30 días
+        '<div style="text-align:center;padding:12px;border-radius:8px;background:' + 
+        (emp.evaluation_30_day_completed ? '#dcfce7' : daysInProbation >= 30 ? '#fef3c7' : '#f8fafc') + ';">' +
+        '<div style="font-size:20px;">' + (emp.evaluation_30_day_completed ? '✅' : daysInProbation >= 30 ? '⚠️' : '⏳') + '</div>' +
+        '<div style="font-weight:bold;">30 Días</div>' +
+        '<div style="font-size:11px;color:#64748b;">' + (emp.evaluation_30_day_completed ? 'Completada' : daysInProbation >= 30 ? 'Pendiente' : 'Próxima') + '</div>' +
+        (daysInProbation >= 25 && !emp.evaluation_30_day_completed ? 
+        '<button onclick="showEvaluationForm(\'' + emp.id + '\', 30)" style="margin-top:8px;padding:4px 8px;font-size:11px;background:#1e3a5f;color:white;border:none;border-radius:4px;cursor:pointer;">Evaluar</button>' : '') +
+        '</div>' +
+        
+        // 60 días
+        '<div style="text-align:center;padding:12px;border-radius:8px;background:' + 
+        (emp.evaluation_60_day_completed ? '#dcfce7' : daysInProbation >= 60 ? '#fef3c7' : '#f8fafc') + ';">' +
+        '<div style="font-size:20px;">' + (emp.evaluation_60_day_completed ? '✅' : daysInProbation >= 60 ? '⚠️' : '⏳') + '</div>' +
+        '<div style="font-weight:bold;">60 Días</div>' +
+        '<div style="font-size:11px;color:#64748b;">' + (emp.evaluation_60_day_completed ? 'Completada' : daysInProbation >= 60 ? 'Pendiente' : 'Próxima') + '</div>' +
+        (daysInProbation >= 55 && !emp.evaluation_60_day_completed ? 
+        '<button onclick="showEvaluationForm(\'' + emp.id + '\', 60)" style="margin-top:8px;padding:4px 8px;font-size:11px;background:#1e3a5f;color:white;border:none;border-radius:4px;cursor:pointer;">Evaluar</button>' : '') +
+        '</div>' +
+        
+        // 80 días
+        '<div style="text-align:center;padding:12px;border-radius:8px;background:' + 
+        (emp.evaluation_80_day_completed ? '#dcfce7' : daysInProbation >= 80 ? '#fee2e2' : '#f8fafc') + ';">' +
+        '<div style="font-size:20px;">' + (emp.evaluation_80_day_completed ? '✅' : daysInProbation >= 80 ? '🚨' : '⏳') + '</div>' +
+        '<div style="font-weight:bold;">80 Días</div>' +
+        '<div style="font-size:11px;color:#64748b;">' + (emp.evaluation_80_day_completed ? 'Completada' : daysInProbation >= 80 ? '¡URGENTE!' : 'Próxima') + '</div>' +
+        (daysInProbation >= 75 && !emp.evaluation_80_day_completed ? 
+        '<button onclick="showEvaluationForm(\'' + emp.id + '\', 80)" style="margin-top:8px;padding:4px 8px;font-size:11px;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;">Evaluar</button>' : '') +
+        '</div>' +
+        
+        '</div></div>';
+}
+
+// ===== FORMULARIO DE EVALUACIÓN =====
+function showEvaluationForm(empId, dayNumber) {
+    var emp = hrEmployeesData.find(function(e) { return e.id === empId; });
+    if (!emp) return;
+    
+    var modal = document.createElement('div');
+    modal.id = 'hrEvaluationModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
+    
+    modal.innerHTML = '<div class="modal-content" style="background:white;border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<h2 style="margin:0;">📊 Evaluación de ' + dayNumber + ' Días</h2>' +
+        '<button onclick="closeHRModal(\'hrEvaluationModal\')" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button></div>' +
+        
+        '<div style="background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:20px;">' +
+        '<strong>Empleado:</strong> ' + emp.first_name + ' ' + emp.last_name + '<br>' +
+        '<strong>Puesto:</strong> ' + (emp.position || 'N/A') + '</div>' +
+        
+        '<form id="hrEvaluationForm" onsubmit="saveEvaluation(event, \'' + empId + '\', ' + dayNumber + ')">' +
+        
+        '<div style="margin-bottom:16px;">' +
+        '<label style="display:block;margin-bottom:8px;font-weight:bold;">Desempeño General</label>' +
+        '<div style="display:flex;gap:10px;">' +
+        '<label style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-align:center;cursor:pointer;">' +
+        '<input type="radio" name="performance" value="excellent" style="display:block;margin:0 auto 5px;"> 🌟 Excelente</label>' +
+        '<label style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-align:center;cursor:pointer;">' +
+        '<input type="radio" name="performance" value="good" checked style="display:block;margin:0 auto 5px;"> ✅ Bueno</label>' +
+        '<label style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-align:center;cursor:pointer;">' +
+        '<input type="radio" name="performance" value="needs_improvement" style="display:block;margin:0 auto 5px;"> ⚠️ Mejorar</label>' +
+        '<label style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-align:center;cursor:pointer;">' +
+        '<input type="radio" name="performance" value="poor" style="display:block;margin:0 auto 5px;"> ❌ Deficiente</label>' +
+        '</div></div>' +
+        
+        '<div style="margin-bottom:16px;">' +
+        '<label style="display:block;margin-bottom:6px;font-weight:bold;">Notas de la Evaluación *</label>' +
+        '<textarea name="notes" required rows="5" placeholder="Describe el desempeño del empleado, fortalezas, áreas de mejora, y cualquier preocupación..." style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;resize:vertical;"></textarea></div>' +
+        
+        '<div style="margin-bottom:16px;">' +
+        '<label style="display:block;margin-bottom:6px;font-weight:bold;">Recomendación</label>' +
+        '<select name="recommendation" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;">' +
+        '<option value="continue">✅ Continuar en periodo de prueba</option>' +
+        '<option value="extend">⏰ Extender periodo de prueba</option>' +
+        '<option value="confirm">🎉 Confirmar como empleado regular (solo día 80+)</option>' +
+        '<option value="terminate">🚪 Recomendar terminación</option>' +
+        '</select></div>' +
+        
+        '<div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">' +
+        '<button type="button" onclick="closeHRModal(\'hrEvaluationModal\')" class="btn-secondary">Cancelar</button>' +
+        '<button type="submit" class="btn-primary">💾 Guardar Evaluación</button></div>' +
+        '</form></div>';
+    
+    document.body.appendChild(modal);
+}
+
+async function saveEvaluation(event, empId, dayNumber) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    
+    var performance = formData.get('performance');
+    var notes = formData.get('notes');
+    var recommendation = formData.get('recommendation');
+    
+    var updateData = {};
+    var fieldPrefix = 'evaluation_' + dayNumber + '_day_';
+    
+    updateData[fieldPrefix + 'completed'] = true;
+    updateData[fieldPrefix + 'date'] = new Date().toISOString().slice(0,10);
+    updateData[fieldPrefix + 'notes'] = 'Desempeño: ' + performance + '\n\nNotas: ' + notes + '\n\nRecomendación: ' + recommendation;
+    
+    if (recommendation === 'confirm') {
+        updateData.probation_status = 'passed';
+    } else if (recommendation === 'extend') {
+        updateData.probation_extended = true;
+        updateData.probation_extension_reason = notes;
+    }
+    
+    await sbClient.from('employees').update(updateData).eq('id', empId);
+    
+    closeHRModal('hrEvaluationModal');
+    alert('✅ Evaluación guardada');
+    
+    await loadHREmployees();
+    showHREmployeeProfile(empId);
+}
+
+// ===== CONFIRMAR EMPLEADO REGULAR =====
+async function confirmEmployeeRegular(empId) {
+    if (!confirm('¿Confirmar a este empleado como empleado regular?\n\nEsto marca el fin exitoso del periodo de prueba.')) {
+        return;
+    }
+    
+    await sbClient.from('employees').update({
+        probation_status: 'passed',
+        employment_status: 'active'
+    }).eq('id', empId);
+    
+    alert('🎉 ¡Empleado confirmado como regular!');
+    await loadHREmployees();
+    showHREmployeeProfile(empId);
+}
+
+// ===== OBTENER ALERTAS DE PRUEBA PARA DASHBOARD =====
+async function getHRProbationAlerts() {
+    var alerts = [];
+    
+    for (var i = 0; i < hrEmployeesData.length; i++) {
+        var emp = hrEmployeesData[i];
+        if (emp.employment_status !== 'active' || emp.probation_status === 'passed') continue;
+        if (!emp.hire_date) continue;
+        
+        var hireDate = new Date(emp.hire_date);
+        var today = new Date();
+        var daysInProbation = Math.floor((today - hireDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysInProbation >= 85 && daysInProbation <= 90) {
+            alerts.push({
+                type: 'urgent',
+                icon: '🚨',
+                message: emp.first_name + ' ' + emp.last_name + ' - Periodo de prueba termina en ' + (90 - daysInProbation) + ' días',
+                empId: emp.id
+            });
+        } else if (daysInProbation >= 80 && !emp.evaluation_80_day_completed) {
+            alerts.push({
+                type: 'warning',
+                icon: '⚠️',
+                message: emp.first_name + ' ' + emp.last_name + ' - Evaluación de 80 días pendiente',
+                empId: emp.id
+            });
+        } else if (daysInProbation >= 60 && daysInProbation < 80 && !emp.evaluation_60_day_completed) {
+            alerts.push({
+                type: 'info',
+                icon: '📋',
+                message: emp.first_name + ' ' + emp.last_name + ' - Evaluación de 60 días pendiente',
+                empId: emp.id
+            });
+        } else if (daysInProbation >= 30 && daysInProbation < 60 && !emp.evaluation_30_day_completed) {
+            alerts.push({
+                type: 'info',
+                icon: '📋',
+                message: emp.first_name + ' ' + emp.last_name + ' - Evaluación de 30 días pendiente',
+                empId: emp.id
+            });
+        }
+        
+        // Alertas de pre-hire incompleto
+        if (!emp.pre_hire_complete) {
+            if (emp.background_check_status !== 'passed') {
+                alerts.push({
+                    type: 'warning',
+                    icon: '🔍',
+                    message: emp.first_name + ' ' + emp.last_name + ' - Background Check pendiente',
+                    empId: emp.id
+                });
+            }
+            if (emp.drug_test_status !== 'passed') {
+                alerts.push({
+                    type: 'warning',
+                    icon: '🧪',
+                    message: emp.first_name + ' ' + emp.last_name + ' - Drug Test pendiente',
+                    empId: emp.id
+                });
+            }
+        }
+    }
+    
+    return alerts;
+}
