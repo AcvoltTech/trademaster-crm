@@ -20,112 +20,143 @@
         .form-group label{display:block;margin-bottom:0.5rem;font-weight:500}
         .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem;font-family:inherit}
         .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary)}
-        .btn{display:block;width:100%;padding:0.875rem;border:none;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--primary);color:white}
+        .btn{display:block;width:100%;padding:0.875rem;border:none;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--primary);color:white;transition:all 0.2s}
         .btn:hover{background:#1e3a8a}
-        .btn:disabled{background:#ccc;cursor:not-allowed}
         .error{background:#fee2e2;color:#dc2626;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;display:none}
         .error.show{display:block}
-        .hint{text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem}
         .dashboard{display:none}
         .dashboard.active{display:block}
         .header{background:white;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-wrap:wrap;gap:1rem}
         .header h1{font-size:1.5rem;color:var(--primary)}
         .header h1 span{color:var(--accent)}
-        .header-right{display:flex;align-items:center;gap:1rem}
-        .status{font-size:0.75rem;padding:0.25rem 0.75rem;border-radius:1rem;background:#fef3c7;color:#d97706}
-        .status.ok{background:#dcfce7;color:#16a34a}
-        .status.err{background:#fee2e2;color:#dc2626}
+        .header-right{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
         .avatar{width:36px;height:36px;background:var(--primary);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600}
-        .btn-sm{padding:0.5rem 1rem;font-size:0.875rem;border-radius:0.5rem;border:none;cursor:pointer}
+        .btn-sm{padding:0.5rem 1rem;font-size:0.875rem;border-radius:0.5rem;border:none;cursor:pointer;transition:all 0.2s}
         .btn-refresh{background:var(--light)}
         .btn-danger{background:var(--danger);color:white}
         .btn-success{background:var(--success);color:white}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;padding:2rem}
-        .stat{background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-        .stat-icon{width:48px;height:48px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:0.75rem}
-        .stat h3{font-size:2rem;color:var(--dark)}
-        .stat p{color:var(--gray);font-size:0.875rem}
+        .btn-primary{background:var(--primary);color:white}
+        .btn-warning{background:var(--warning);color:white}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;padding:1.5rem 2rem}
+        .stat{background:white;padding:1.25rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);cursor:pointer;transition:transform 0.2s}
+        .stat:hover{transform:translateY(-2px)}
+        .stat-icon{width:44px;height:44px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:0.5rem}
+        .stat h3{font-size:1.75rem;color:var(--dark)}
+        .stat p{color:var(--gray);font-size:0.8rem}
         .content{padding:0 2rem 2rem}
         .card{background:white;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:1.5rem}
-        .card-head{padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-        .card-head h2{font-size:1.25rem}
+        .card-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+        .card-head h2{font-size:1.1rem}
         .search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--light);border-radius:0.5rem}
-        .search input{border:none;background:none;outline:none;width:200px}
-        .filters{display:flex;gap:0.5rem;padding:1rem 1.5rem;flex-wrap:wrap}
-        .filter{padding:0.5rem 1rem;border:1px solid #e5e7eb;background:white;border-radius:2rem;font-size:0.8rem;cursor:pointer}
-        .filter:hover,.filter.on{background:var(--primary);color:white;border-color:var(--primary)}
-        .tbl{width:100%;border-collapse:collapse;min-width:600px}
-        .tbl th{text-align:left;padding:1rem 1.5rem;background:var(--light);font-size:0.75rem;text-transform:uppercase;font-weight:600}
-        .tbl td{padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb}
+        .search input{border:none;background:none;outline:none;width:180px}
+        .tbl{width:100%;border-collapse:collapse}
+        .tbl th{text-align:left;padding:0.875rem 1.25rem;background:var(--light);font-size:0.7rem;text-transform:uppercase;font-weight:600}
+        .tbl td{padding:0.875rem 1.25rem;border-bottom:1px solid #e5e7eb;font-size:0.9rem}
         .tbl tr:hover{background:#f9fafb}
-        .user{display:flex;align-items:center;gap:0.75rem}
-        .user .avatar{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--accent))}
-        .user h4{font-weight:500}
-        .user small{color:var(--gray);font-size:0.8rem}
-        .badge{display:inline-block;padding:0.375rem 0.75rem;border-radius:2rem;font-size:0.75rem;font-weight:600}
+        .badge{display:inline-block;padding:0.3rem 0.6rem;border-radius:2rem;font-size:0.7rem;font-weight:600}
         .b-green{background:#dcfce7;color:#16a34a}
         .b-yellow{background:#fef3c7;color:#d97706}
         .b-gray{background:#f3f4f6;color:#6b7280}
         .b-purple{background:#f3e8ff;color:#9333ea}
         .b-blue{background:#dbeafe;color:#1d4ed8}
         .b-red{background:#fee2e2;color:#dc2626}
-        .actions{display:flex;gap:0.5rem}
-        .act{width:32px;height:32px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer;font-size:0.9rem}
+        .b-orange{background:#ffedd5;color:#ea580c}
+        .actions{display:flex;gap:0.4rem}
+        .act{width:30px;height:30px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer;font-size:0.85rem}
         .act:hover{background:var(--primary);color:white}
         .act.danger:hover{background:var(--danger)}
-        .empty{text-align:center;padding:3rem;color:var(--gray)}
+        .empty{text-align:center;padding:2rem;color:var(--gray)}
         .wrap{overflow-x:auto}
-        @media(max-width:768px){.stats,.content{padding:1rem}.header{padding:1rem}}
+        
+        /* Main Tabs */
+        .main-tabs{display:flex;gap:0;background:white;border-bottom:1px solid #e5e7eb;padding:0 1rem;overflow-x:auto}
+        .main-tab{padding:1rem 1.25rem;border:none;background:none;font-size:0.85rem;font-weight:500;cursor:pointer;color:var(--gray);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:0.5rem}
+        .main-tab:hover{color:var(--primary)}
+        .main-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .main-tab .tab-badge{background:var(--danger);color:white;font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:1rem}
+        .section{display:none}
+        .section.active{display:block}
+        
+        /* Notifications */
+        .notif-wrap{position:relative}
+        .notif-btn{background:var(--light);border:none;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;position:relative}
+        .notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:white;font-size:0.6rem;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+        .notif-badge.hidden{display:none}
+        .notif-dropdown{position:absolute;top:50px;right:0;background:white;border-radius:0.75rem;box-shadow:0 10px 40px rgba(0,0,0,0.15);width:350px;max-height:450px;overflow:auto;display:none;z-index:100}
+        .notif-dropdown.show{display:block}
+        .notif-header{padding:1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+        .notif-header h4{font-size:0.95rem}
+        .notif-item{padding:0.875rem 1rem;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;gap:0.75rem}
+        .notif-item:hover{background:#f9fafb}
+        .notif-item.unread{background:#eff6ff}
+        .notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+        .notif-content h5{font-size:0.85rem;margin-bottom:0.2rem}
+        .notif-content p{font-size:0.75rem;color:var(--gray)}
+        .notif-empty{padding:2rem;text-align:center;color:var(--gray)}
         
         /* Modal */
         .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
         .modal-bg.show{display:flex}
         .modal{background:white;border-radius:1rem;width:100%;max-width:600px;max-height:90vh;overflow:auto;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
-        .modal-head{padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
-        .modal-head h3{font-size:1.25rem}
+        .modal-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+        .modal-head h3{font-size:1.15rem}
         .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)}
         .modal-body{padding:1.5rem}
         .modal-foot{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem}
-        .modal-foot .btn{width:auto;padding:0.75rem 1.5rem}
+        .modal-foot .btn{width:auto;padding:0.6rem 1.25rem}
         
-        /* Notifications bell */
-        .notif-wrap{position:relative}
-        .notif-btn{background:var(--light);border:none;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;position:relative}
-        .notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:white;font-size:0.65rem;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
-        .notif-badge.hidden{display:none}
-        .notif-dropdown{position:absolute;top:50px;right:0;background:white;border-radius:0.75rem;box-shadow:0 10px 40px rgba(0,0,0,0.15);width:320px;max-height:400px;overflow:auto;display:none;z-index:100}
-        .notif-dropdown.show{display:block}
-        .notif-item{padding:1rem;border-bottom:1px solid #e5e7eb;cursor:pointer}
-        .notif-item:hover{background:#f9fafb}
-        .notif-item.unread{background:#eff6ff}
-        .notif-item h4{font-size:0.875rem;margin-bottom:0.25rem}
-        .notif-item p{font-size:0.75rem;color:var(--gray)}
-        .notif-empty{padding:2rem;text-align:center;color:var(--gray)}
+        /* Ticket styles */
+        .ticket-card{border:1px solid #e5e7eb;border-radius:0.75rem;padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:all 0.2s}
+        .ticket-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .ticket-card.urgent{border-left:4px solid var(--danger)}
+        .ticket-card.high{border-left:4px solid var(--warning)}
+        .ticket-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem}
+        .ticket-header h4{font-size:0.95rem}
+        .ticket-meta{display:flex;gap:1rem;font-size:0.8rem;color:var(--gray)}
+        .ticket-preview{font-size:0.85rem;color:var(--gray);margin-top:0.5rem}
         
-        /* Tabs */
-        .tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;padding:0 1.5rem}
-        .tab{padding:1rem 1.5rem;border:none;background:none;font-size:0.9rem;font-weight:500;cursor:pointer;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px}
-        .tab:hover{color:var(--primary)}
-        .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
-        .tab-content{display:none;padding:1.5rem}
-        .tab-content.active{display:block}
+        /* Chat messages */
+        .chat-container{max-height:400px;overflow-y:auto;padding:1rem;background:#f9fafb;border-radius:0.5rem}
+        .chat-msg{margin-bottom:1rem;display:flex;gap:0.75rem}
+        .chat-msg.admin{flex-direction:row-reverse}
+        .chat-bubble{max-width:80%;padding:0.75rem 1rem;border-radius:1rem}
+        .chat-msg.user .chat-bubble{background:white;border:1px solid #e5e7eb;border-bottom-left-radius:0.25rem}
+        .chat-msg.admin .chat-bubble{background:var(--primary);color:white;border-bottom-right-radius:0.25rem}
+        .chat-sender{font-size:0.75rem;color:var(--gray);margin-bottom:0.25rem}
+        .chat-time{font-size:0.7rem;opacity:0.7;margin-top:0.25rem}
         
-        /* Employee list */
-        .emp-list{display:grid;gap:0.75rem}
-        .emp-item{display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--light);border-radius:0.5rem}
-        .emp-item .avatar{width:44px;height:44px}
-        .emp-info{flex:1}
-        .emp-info h4{font-size:0.9rem}
-        .emp-info p{font-size:0.8rem;color:var(--gray)}
+        /* User card */
+        .user-card{display:flex;align-items:center;gap:0.75rem}
+        .user-card .avatar{width:40px;height:40px}
+        .user-card h4{font-weight:500;font-size:0.9rem}
+        .user-card small{color:var(--gray);font-size:0.8rem}
         
-        /* Payment list */
-        .pay-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #e5e7eb}
-        .pay-item:last-child{border-bottom:none}
-        .pay-amount{font-weight:700;color:var(--success)}
-        .pay-date{font-size:0.8rem;color:var(--gray)}
+        /* Current user */
+        .current-user{display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.75rem;background:var(--light);border-radius:2rem}
+        .current-user-info{text-align:right}
+        .current-user-info h4{font-size:0.8rem;font-weight:600}
+        .current-user-info p{font-size:0.65rem;color:var(--gray)}
+        
+        /* Role badges */
+        .role-super{background:linear-gradient(135deg,#f97316,#ea580c);color:white}
+        .role-admin{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:white}
+        .role-support{background:linear-gradient(135deg,#22c55e,#16a34a);color:white}
+        
+        /* Status indicator */
+        .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:0.4rem}
+        .status-dot.online{background:#22c55e}
+        .status-dot.offline{background:#9ca3af}
+        
+        /* Quick actions */
+        .quick-actions{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem}
+        .quick-action{padding:0.5rem 1rem;background:white;border:1px solid #e5e7eb;border-radius:2rem;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem}
+        .quick-action:hover{border-color:var(--primary);color:var(--primary)}
+        
+        @media(max-width:768px){.stats,.content{padding:1rem}.header{padding:1rem}.main-tabs{padding:0}}
     </style>
 </head>
 <body>
+    <!-- LOGIN -->
     <div class="login-box" id="login">
         <div class="login-card">
             <h1>🔐 Trade<span>Masters</span></h1>
@@ -137,698 +168,801 @@
             </div>
             <div class="form-group">
                 <label>🔑 Contraseña</label>
-                <input type="password" id="pw" placeholder="••••••••">
+                <input type="password" id="pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
             </div>
-            <button class="btn" id="loginBtn">Entrar →</button>
-            <p class="hint">Solo acceso autorizado</p>
-            <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;">
-              <a href="#" onclick="forgotPassword()" style="color:var(--primary);text-decoration:none;font-size:14px;">🔑 ¿Olvidaste tu contraseña?</a>
-            </div>
+            <button class="btn" onclick="doLogin()">Entrar →</button>
+            <p style="text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem">Solo acceso autorizado</p>
         </div>
     </div>
 
+    <!-- DASHBOARD -->
     <div class="dashboard" id="dash">
         <header class="header">
             <h1>🔐 Trade<span>Masters</span> Admin</h1>
             <div class="header-right">
-                <span class="status" id="status">⏳ Cargando...</span>
                 <div class="notif-wrap">
-                    <button class="notif-btn" id="notifBtn">🔔<span class="notif-badge hidden" id="notifBadge">0</span></button>
+                    <button class="notif-btn" onclick="toggleNotifications()">🔔<span class="notif-badge" id="notifBadge">0</span></button>
                     <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-header">
+                            <h4>Notificaciones</h4>
+                            <button class="btn-sm" onclick="markAllRead()" style="font-size:0.75rem">Marcar leídas</button>
+                        </div>
                         <div id="notifList"><div class="notif-empty">Sin notificaciones</div></div>
                     </div>
                 </div>
-                <button class="btn-sm btn-refresh" id="refreshBtn">🔄</button>
-                <div class="avatar" id="av">M</div>
-                <button class="btn-sm btn-danger" id="logoutBtn">Salir</button>
+                <button class="btn-sm btn-refresh" onclick="refreshAll()">🔄</button>
+                <div class="current-user">
+                    <div class="current-user-info">
+                        <h4 id="currentUserName">Usuario</h4>
+                        <p id="currentUserRole">Rol</p>
+                    </div>
+                    <div class="avatar" id="av">M</div>
+                </div>
+                <button class="btn-sm btn-danger" onclick="doLogout()">Salir</button>
             </div>
         </header>
-        <div class="stats">
-            <div class="stat"><div class="stat-icon" style="background:#dbeafe">👥</div><h3 id="s1">0</h3><p>Total Empresas</p></div>
-            <div class="stat"><div class="stat-icon" style="background:#dcfce7">💳</div><h3 id="s2">0</h3><p>Suscripciones Activas</p></div>
-            <div class="stat"><div class="stat-icon" style="background:#ffedd5">💰</div><h3 id="s3">$0</h3><p>Ingresos Mensuales</p></div>
-            <div class="stat"><div class="stat-icon" style="background:#f3e8ff">🆓</div><h3 id="s4">0</h3><p>Free / Trial</p></div>
-            <div class="stat"><div class="stat-icon" style="background:#fef3c7">👷</div><h3 id="s5">0</h3><p>Total Empleados</p></div>
+        
+        <!-- Main Tabs -->
+        <div class="main-tabs">
+            <button class="main-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button class="main-tab" onclick="showSection('empresas')">🏢 Empresas</button>
+            <button class="main-tab" onclick="showSection('tickets')">🎫 Soporte <span class="tab-badge" id="ticketsBadge" style="display:none">0</span></button>
+            <button class="main-tab" onclick="showSection('passwords')">🔑 Passwords</button>
+            <button class="main-tab" onclick="showSection('pagos')">💳 Pagos</button>
+            <button class="main-tab" onclick="showSection('admins')" id="tabAdmins">👤 Admins</button>
+            <button class="main-tab" onclick="showSection('logs')">📋 Logs</button>
         </div>
-        <div class="content">
-            <div class="card">
-                <div class="card-head">
-                    <h2>👥 Empresas Registradas</h2>
-                    <div class="search"><span>🔍</span><input type="text" placeholder="Buscar..." id="q"></div>
+        
+        <!-- Section: Dashboard -->
+        <div class="section active" id="secDashboard">
+            <div class="stats">
+                <div class="stat" onclick="showSection('empresas')"><div class="stat-icon" style="background:#dbeafe">🏢</div><h3 id="s1">0</h3><p>Empresas</p></div>
+                <div class="stat" onclick="showSection('empresas')"><div class="stat-icon" style="background:#dcfce7">💳</div><h3 id="s2">0</h3><p>Activas</p></div>
+                <div class="stat" onclick="showSection('pagos')"><div class="stat-icon" style="background:#ffedd5">💰</div><h3 id="s3">$0</h3><p>MRR</p></div>
+                <div class="stat" onclick="showSection('tickets')"><div class="stat-icon" style="background:#fee2e2">🎫</div><h3 id="s6">0</h3><p>Tickets Abiertos</p></div>
+                <div class="stat" onclick="showSection('passwords')"><div class="stat-icon" style="background:#fef3c7">🔑</div><h3 id="s7">0</h3><p>Reset Pendientes</p></div>
+            </div>
+            <div class="content">
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-head"><h2>🕐 Actividad Reciente</h2></div>
+                    <div id="recentActivity" style="padding:1rem"><p class="empty">Cargando...</p></div>
                 </div>
-                <div class="filters">
-                    <button class="filter on" data-f="all">Todos</button>
-                    <button class="filter" data-f="free">Free</button>
-                    <button class="filter" data-f="profesional">Profesional</button>
-                    <button class="filter" data-f="enterprise">Enterprise</button>
+                <!-- Recent Companies -->
+                <div class="card">
+                    <div class="card-head"><h2>🆕 Últimas Empresas Registradas</h2><button class="btn-sm btn-primary" onclick="showSection('empresas')">Ver todas</button></div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Email</th><th>Registro</th><th>Plan</th></tr></thead><tbody id="recentCompanies"></tbody></table></div>
                 </div>
-                <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Empleados</th><th>Acciones</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody></table></div>
+            </div>
+        </div>
+        
+        <!-- Section: Empresas -->
+        <div class="section" id="secEmpresas">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="card">
+                    <div class="card-head">
+                        <h2>🏢 Empresas Registradas</h2>
+                        <div class="search"><span>🔍</span><input type="text" placeholder="Buscar..." id="q" oninput="doSearch()"></div>
+                    </div>
+                    <div style="padding:0.75rem 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;border-bottom:1px solid #e5e7eb">
+                        <button class="btn-sm" style="background:var(--primary);color:white" onclick="filterCompanies('all')">Todos</button>
+                        <button class="btn-sm btn-refresh" onclick="filterCompanies('free')">Free</button>
+                        <button class="btn-sm btn-refresh" onclick="filterCompanies('profesional')">Pro</button>
+                        <button class="btn-sm btn-refresh" onclick="filterCompanies('enterprise')">Enterprise</button>
+                    </div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Acciones</th></tr></thead><tbody id="tbody"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section: Tickets -->
+        <div class="section" id="secTickets">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="filterTickets('all')">📋 Todos</button>
+                    <button class="quick-action" onclick="filterTickets('open')">🟢 Abiertos</button>
+                    <button class="quick-action" onclick="filterTickets('in_progress')">🟡 En Progreso</button>
+                    <button class="quick-action" onclick="filterTickets('waiting_response')">🟠 Esperando</button>
+                    <button class="quick-action" onclick="filterTickets('resolved')">✅ Resueltos</button>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <h2>🎫 Tickets de Soporte</h2>
+                        <div class="search"><span>🔍</span><input type="text" placeholder="Buscar ticket..." oninput="searchTickets(this.value)"></div>
+                    </div>
+                    <div style="padding:1rem" id="ticketsList"><p class="empty">Cargando tickets...</p></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section: Passwords -->
+        <div class="section" id="secPasswords">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="card">
+                    <div class="card-head">
+                        <h2>🔑 Solicitudes de Reset Password</h2>
+                        <button class="btn-sm btn-success" onclick="openManualResetModal()">➕ Reset Manual</button>
+                    </div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Empresa</th><th>Solicitado</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="passwordResets"></tbody></table></div>
+                </div>
+                
+                <!-- Quick Reset Tool -->
+                <div class="card">
+                    <div class="card-head"><h2>⚡ Reset Rápido</h2></div>
+                    <div style="padding:1.5rem">
+                        <p style="font-size:0.9rem;color:var(--gray);margin-bottom:1rem">Busca un usuario por email para resetear su contraseña o enviarle un magic link.</p>
+                        <div style="display:flex;gap:0.5rem">
+                            <input type="email" id="quickResetEmail" placeholder="email@empresa.com" style="flex:1;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem">
+                            <button class="btn-sm btn-primary" onclick="quickSearchUser()">🔍 Buscar</button>
+                        </div>
+                        <div id="quickResetResult" style="margin-top:1rem"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section: Pagos -->
+        <div class="section" id="secPagos">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="stats" style="padding:0 0 1rem 0">
+                    <div class="stat"><div class="stat-icon" style="background:#dcfce7">💵</div><h3 id="totalRevenue">$0</h3><p>Ingresos Totales</p></div>
+                    <div class="stat"><div class="stat-icon" style="background:#dbeafe">📅</div><h3 id="monthlyRevenue">$0</h3><p>Este Mes</p></div>
+                    <div class="stat"><div class="stat-icon" style="background:#f3e8ff">📊</div><h3 id="avgRevenue">$0</h3><p>Promedio/Empresa</p></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <h2>💳 Historial de Pagos</h2>
+                        <button class="btn-sm btn-success" onclick="openAddPaymentModal()">➕ Registrar Pago</button>
+                    </div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Empresa</th><th>Plan</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead><tbody id="paymentsTable"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section: Admins -->
+        <div class="section" id="secAdmins">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="card">
+                    <div class="card-head">
+                        <h2>👤 Usuarios Admin</h2>
+                        <button class="btn-sm btn-success" onclick="openAddAdminModal()" id="btnAddAdmin">➕ Nuevo Admin</button>
+                    </div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Último Login</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="adminsTable"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section: Logs -->
+        <div class="section" id="secLogs">
+            <div class="content" style="padding-top:1.5rem">
+                <div class="card">
+                    <div class="card-head">
+                        <h2>📋 Logs de Actividad</h2>
+                        <select id="logFilter" onchange="filterLogs()" style="padding:0.5rem;border:1px solid #e5e7eb;border-radius:0.5rem">
+                            <option value="all">Todas</option>
+                            <option value="login">Logins</option>
+                            <option value="create">Creaciones</option>
+                            <option value="update">Ediciones</option>
+                            <option value="delete">Eliminaciones</option>
+                        </select>
+                    </div>
+                    <div id="logsContainer" style="max-height:500px;overflow-y:auto"><p class="empty">Cargando logs...</p></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Ver Empresa -->
+    <!-- Modal: Ver Empresa -->
     <div class="modal-bg" id="modalView">
         <div class="modal">
-            <div class="modal-head">
-                <h3 id="modalTitle">Detalles de Empresa</h3>
-                <button class="modal-close" onclick="closeModal('modalView')">×</button>
-            </div>
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('info')">📋 Info</button>
-                <button class="tab" onclick="switchTab('employees')">👷 Empleados</button>
-                <button class="tab" onclick="switchTab('payments')">💳 Pagos</button>
-            </div>
-            <div class="tab-content active" id="tab-info">
-                <div id="companyInfo"></div>
-            </div>
-            <div class="tab-content" id="tab-employees">
-                <div id="employeesList"></div>
-            </div>
-            <div class="tab-content" id="tab-payments">
-                <div id="paymentsList"></div>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalView')">Cerrar</button>
-            </div>
+            <div class="modal-head"><h3 id="modalTitle">Empresa</h3><button class="modal-close" onclick="closeModal('modalView')">×</button></div>
+            <div class="modal-body" id="companyDetails"></div>
+            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalView')">Cerrar</button></div>
         </div>
     </div>
 
-    <!-- Modal Enviar Email -->
-    <div class="modal-bg" id="modalEmail">
-        <div class="modal">
-            <div class="modal-head">
-                <h3>📧 Enviar Email</h3>
-                <button class="modal-close" onclick="closeModal('modalEmail')">×</button>
-            </div>
+    <!-- Modal: Ver Ticket -->
+    <div class="modal-bg" id="modalTicket">
+        <div class="modal" style="max-width:700px">
+            <div class="modal-head"><h3 id="ticketTitle">Ticket</h3><button class="modal-close" onclick="closeModal('modalTicket')">×</button></div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Para:</label>
-                    <input type="text" id="emailTo" readonly>
+                <div id="ticketInfo" style="margin-bottom:1rem"></div>
+                <div class="chat-container" id="ticketChat"></div>
+                <div style="margin-top:1rem">
+                    <textarea id="ticketReply" rows="3" placeholder="Escribe tu respuesta..." style="width:100%;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-family:inherit"></textarea>
+                    <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+                        <select id="ticketStatus" style="padding:0.5rem;border:1px solid #e5e7eb;border-radius:0.5rem">
+                            <option value="in_progress">🟡 En Progreso</option>
+                            <option value="waiting_response">🟠 Esperando Respuesta</option>
+                            <option value="resolved">✅ Resuelto</option>
+                        </select>
+                        <button class="btn-sm btn-primary" onclick="sendTicketReply()">📤 Enviar</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Asunto:</label>
-                    <input type="text" id="emailSubject" placeholder="Asunto del email">
-                </div>
-                <div class="form-group">
-                    <label>Mensaje:</label>
-                    <textarea id="emailBody" rows="6" placeholder="Escribe tu mensaje..."></textarea>
-                </div>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalEmail')">Cancelar</button>
-                <button class="btn btn-sm btn-success" onclick="sendEmail()">📤 Enviar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Reset Password -->
+    <!-- Modal: Reset Password -->
     <div class="modal-bg" id="modalReset">
         <div class="modal" style="max-width:500px">
-            <div class="modal-head">
-                <h3>🔑 Resetear Contraseña</h3>
-                <button class="modal-close" onclick="closeModal('modalReset')">×</button>
-            </div>
+            <div class="modal-head"><h3>🔑 Resetear Contraseña</h3><button class="modal-close" onclick="closeModal('modalReset')">×</button></div>
             <div class="modal-body">
                 <div id="resetUserInfo" style="padding:1rem;background:var(--light);border-radius:0.5rem;margin-bottom:1rem"></div>
                 <div class="form-group">
                     <label>Nueva Contraseña:</label>
-                    <input type="text" id="newPassword" placeholder="Mínimo 6 caracteres">
-                    <small style="color:var(--gray);font-size:0.75rem">La contraseña será visible para que puedas compartirla con el usuario</small>
+                    <div style="display:flex;gap:0.5rem">
+                        <input type="text" id="newPassword" placeholder="Mínimo 6 caracteres" style="flex:1">
+                        <button class="btn-sm btn-refresh" onclick="generatePassword()">🎲</button>
+                    </div>
                 </div>
-                <button class="btn-sm" style="background:var(--light);margin-top:0.5rem" onclick="generatePassword()">🎲 Generar Contraseña Segura</button>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalReset')">Cancelar</button>
-                <button class="btn btn-sm btn-success" onclick="confirmResetPassword()">🔑 Resetear</button>
+                <div style="display:flex;gap:0.5rem;margin-top:1rem">
+                    <button class="btn-sm btn-success" onclick="confirmResetPassword()" style="flex:1">🔑 Resetear</button>
+                    <button class="btn-sm btn-primary" onclick="sendMagicLink()" style="flex:1">✉️ Magic Link</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Ver Todos los Usuarios de Empresa -->
-    <div class="modal-bg" id="modalUsers">
-        <div class="modal">
-            <div class="modal-head">
-                <h3>👥 Usuarios de la Empresa</h3>
-                <button class="modal-close" onclick="closeModal('modalUsers')">×</button>
-            </div>
+    <!-- Modal: Add Admin -->
+    <div class="modal-bg" id="modalAddAdmin">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-head"><h3>➕ Nuevo Admin</h3><button class="modal-close" onclick="closeModal('modalAddAdmin')">×</button></div>
             <div class="modal-body">
-                <p style="margin-bottom:1rem;color:var(--gray);font-size:0.85rem">Haz clic en 🔑 para resetear la contraseña de cualquier usuario</p>
-                <div id="allUsersList"></div>
+                <div class="form-group"><label>Nombre</label><input type="text" id="newAdminName"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="newAdminEmail"></div>
+                <div class="form-group"><label>Contraseña</label><input type="text" id="newAdminPass"><button class="btn-sm btn-refresh" onclick="document.getElementById('newAdminPass').value=generatePass()" style="margin-top:0.5rem">🎲 Generar</button></div>
+                <div class="form-group"><label>Rol</label><select id="newAdminRole"><option value="support">👁️ Soporte</option><option value="admin">⚙️ Admin</option><option value="super_admin">👑 Super Admin</option></select></div>
             </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalUsers')">Cerrar</button>
-            </div>
+            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalAddAdmin')">Cancelar</button><button class="btn btn-sm btn-success" onclick="saveNewAdmin()">💾 Guardar</button></div>
         </div>
     </div>
 
-    <!-- Modal Confirmar Eliminar -->
+    <!-- Modal: Add Payment -->
+    <div class="modal-bg" id="modalAddPayment">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-head"><h3>➕ Registrar Pago</h3><button class="modal-close" onclick="closeModal('modalAddPayment')">×</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Empresa</label><select id="payCompany"></select></div>
+                <div class="form-group"><label>Monto ($)</label><input type="number" id="payAmount" step="0.01"></div>
+                <div class="form-group"><label>Plan</label><select id="payPlan"><option value="profesional">Profesional ($149.99)</option><option value="enterprise">Enterprise ($299)</option></select></div>
+                <div class="form-group"><label>Método</label><select id="payMethod"><option value="stripe">Stripe</option><option value="paypal">PayPal</option><option value="manual">Manual/Transferencia</option></select></div>
+                <div class="form-group"><label>Notas</label><textarea id="payNotes" rows="2"></textarea></div>
+            </div>
+            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalAddPayment')">Cancelar</button><button class="btn btn-sm btn-success" onclick="savePayment()">💾 Guardar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Delete -->
     <div class="modal-bg" id="modalDelete">
         <div class="modal" style="max-width:400px">
-            <div class="modal-head">
-                <h3>⚠️ Confirmar Eliminación</h3>
-                <button class="modal-close" onclick="closeModal('modalDelete')">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom:1rem">¿Estás seguro de eliminar esta empresa?</p>
-                <p style="font-weight:600;color:var(--danger)" id="deleteCompanyName"></p>
-                <p style="margin-top:1rem;font-size:0.85rem;color:var(--gray)">Esta acción eliminará todos los datos asociados (clientes, trabajos, técnicos, etc.) y no se puede deshacer.</p>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalDelete')">Cancelar</button>
-                <button class="btn btn-sm btn-danger" onclick="confirmDelete()">🗑️ Eliminar</button>
-            </div>
+            <div class="modal-head"><h3>⚠️ Confirmar</h3><button class="modal-close" onclick="closeModal('modalDelete')">×</button></div>
+            <div class="modal-body"><p>¿Eliminar <strong id="deleteName"></strong>?</p><p style="font-size:0.85rem;color:var(--gray);margin-top:0.5rem">Esta acción no se puede deshacer.</p></div>
+            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalDelete')">Cancelar</button><button class="btn btn-sm btn-danger" onclick="confirmDelete()">🗑️ Eliminar</button></div>
         </div>
     </div>
 
 <script>
-(function(){
-    var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
-    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
-    var VALID_EMAILS = ['floresmario30@gmail.com','admin@trademastersusa.org','acvoltelectrical@gmail.com'];
-    
-    var db = null;
-    var companies = [];
-    var employees = {};
-    var notifications = [];
-    var curFilter = 'all';
-    var selectedCompany = null;
-    var deleteCompanyId = null;
-    var lastCheckTime = null;
+var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
+var RESEND_FUNCTION_URL = 'https://ucowlcrddzukykbaitzt.supabase.co/functions/v1/send-admin-email';
 
-    function init() {
-        db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log('Supabase ready');
-        
-        document.getElementById('loginBtn').onclick = doLogin;
-        document.getElementById('logoutBtn').onclick = doLogout;
-        document.getElementById('refreshBtn').onclick = fetchData;
-        document.getElementById('q').oninput = doSearch;
-        document.getElementById('notifBtn').onclick = toggleNotifications;
-        
-        document.querySelectorAll('.filter').forEach(function(btn){
-            btn.onclick = function(){ doFilter(btn.dataset.f, btn); };
-        });
-        
-        // Close dropdowns on outside click
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.notif-wrap')) {
-                document.getElementById('notifDropdown').classList.remove('show');
-            }
-        });
-        
-        // Load last check time
-        lastCheckTime = localStorage.getItem('adminLastCheck') || new Date(Date.now() - 86400000).toISOString();
-    }
+var db, currentAdmin, companies=[], tickets=[], payments=[], adminUsers=[], logs=[], notifications=[], resetRequests=[];
+var selectedTicket=null, selectedResetUser=null, deleteTarget=null;
 
-    function doLogin() {
-        var email = document.getElementById('em').value;
-        var pass = document.getElementById('pw').value;
-        
-        if (VALID_EMAILS.indexOf(email.toLowerCase()) >= 0 && pass.length >= 4) {
-            document.getElementById('login').classList.add('hidden');
-            document.getElementById('dash').classList.add('active');
-            document.getElementById('av').textContent = email[0].toUpperCase();
-            fetchData();
-            checkNewRegistrations();
-        } else {
-            document.getElementById('err').textContent = 'Email no autorizado o contraseña corta (min 4)';
-            document.getElementById('err').classList.add('show');
-        }
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.addEventListener('click', function(e) { if (!e.target.closest('.notif-wrap')) document.getElementById('notifDropdown').classList.remove('show'); });
+});
 
-    function doLogout() {
-        document.getElementById('login').classList.remove('hidden');
-        document.getElementById('dash').classList.remove('active');
-        document.getElementById('em').value = '';
-        document.getElementById('pw').value = '';
-    }
+// ========== AUTH ==========
+async function doLogin() {
+    var email = document.getElementById('em').value.trim().toLowerCase();
+    var pass = document.getElementById('pw').value;
+    if (!email || !pass) { showError('Ingresa email y contraseña'); return; }
+    
+    var res = await db.from('admin_users').select('*').eq('email', email).eq('is_active', true).single();
+    if (res.error || !res.data) { showError('Email no autorizado'); return; }
+    if (pass.length < 4) { showError('Contraseña incorrecta'); return; }
+    
+    currentAdmin = res.data;
+    await db.from('admin_users').update({ last_login: new Date().toISOString(), login_count: (currentAdmin.login_count||0)+1 }).eq('id', currentAdmin.id);
+    await logActivity('login');
+    
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('dash').classList.add('active');
+    document.getElementById('av').textContent = initials(currentAdmin.name);
+    document.getElementById('currentUserName').textContent = currentAdmin.name;
+    document.getElementById('currentUserRole').textContent = getRoleName(currentAdmin.role);
+    
+    if (currentAdmin.role !== 'super_admin') document.getElementById('tabAdmins').style.display = 'none';
+    
+    refreshAll();
+    startNotificationPolling();
+}
 
-    function fetchData() {
-        var st = document.getElementById('status');
-        st.textContent = '⏳ Cargando...';
-        st.className = 'status';
+function showError(msg) { var e=document.getElementById('err'); e.textContent=msg; e.classList.add('show'); setTimeout(function(){e.classList.remove('show')},3000); }
+function doLogout() { logActivity('logout'); currentAdmin=null; document.getElementById('login').classList.remove('hidden'); document.getElementById('dash').classList.remove('active'); }
 
-        // Fetch companies
-        db.from('companies').select('*').order('created_at', {ascending: false}).then(function(res){
-            if (res.error) {
-                st.textContent = '🔴 Error';
-                st.className = 'status err';
-                document.getElementById('tbody').innerHTML = '<tr><td colspan="6" class="empty">Error: '+res.error.message+'</td></tr>';
-                return;
-            }
-            
-            companies = res.data || [];
-            console.log('Loaded:', companies.length);
-            
-            st.textContent = '🟢 Conectado';
-            st.className = 'status ok';
-            
-            // Fetch all employees
-            fetchAllEmployees();
-            
-            render(companies);
-            updateStats(companies);
-        });
-    }
-    
-    function fetchAllEmployees() {
-        // Fetch technicians
-        db.from('technicians').select('*').then(function(res) {
-            if (res.data) {
-                res.data.forEach(function(t) {
-                    if (!employees[t.company_id]) employees[t.company_id] = [];
-                    t.type = 'technician';
-                    employees[t.company_id].push(t);
-                });
-            }
-        });
-        
-        // Fetch team_users
-        db.from('team_users').select('*').then(function(res) {
-            if (res.data) {
-                res.data.forEach(function(u) {
-                    if (!employees[u.company_id]) employees[u.company_id] = [];
-                    u.type = 'user';
-                    employees[u.company_id].push(u);
-                });
-                updateStats(companies);
-            }
-        });
-    }
-    
-    function checkNewRegistrations() {
-        db.from('companies').select('*').gt('created_at', lastCheckTime).order('created_at', {ascending: false}).then(function(res) {
-            if (res.data && res.data.length > 0) {
-                notifications = res.data.map(function(c) {
-                    return {
-                        id: c.id,
-                        title: '🆕 Nueva empresa registrada',
-                        message: c.name + ' - ' + (c.email || 'Sin email'),
-                        time: c.created_at,
-                        read: false
-                    };
-                });
-                updateNotificationBadge();
-                renderNotifications();
-            }
-        });
-        
-        // Update last check time
-        lastCheckTime = new Date().toISOString();
-        localStorage.setItem('adminLastCheck', lastCheckTime);
-    }
-    
-    function updateNotificationBadge() {
-        var unread = notifications.filter(function(n) { return !n.read; }).length;
-        var badge = document.getElementById('notifBadge');
-        if (unread > 0) {
-            badge.textContent = unread;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
-    }
-    
-    function renderNotifications() {
-        var list = document.getElementById('notifList');
-        if (notifications.length === 0) {
-            list.innerHTML = '<div class="notif-empty">Sin notificaciones nuevas</div>';
-            return;
-        }
-        list.innerHTML = notifications.map(function(n) {
-            return '<div class="notif-item '+(n.read?'':'unread')+'" onclick="markRead(\''+n.id+'\')">' +
-                '<h4>'+n.title+'</h4>' +
-                '<p>'+n.message+'</p>' +
-                '<p style="margin-top:4px;font-size:0.7rem;">'+fmtDateTime(n.time)+'</p>' +
-            '</div>';
-        }).join('');
-    }
-    
-    window.markRead = function(id) {
-        notifications.forEach(function(n) {
-            if (n.id === id) n.read = true;
-        });
-        updateNotificationBadge();
-        renderNotifications();
-    };
-    
-    function toggleNotifications() {
-        var dd = document.getElementById('notifDropdown');
-        dd.classList.toggle('show');
-    }
+// ========== DATA LOADING ==========
+async function refreshAll() {
+    await Promise.all([loadCompanies(), loadTickets(), loadPayments(), loadAdmins(), loadLogs(), loadResetRequests(), loadNotifications()]);
+    updateDashboard();
+}
 
-    function render(list) {
-        var tb = document.getElementById('tbody');
-        if (!list || list.length === 0) {
-            tb.innerHTML = '<tr><td colspan="6" class="empty">No hay empresas</td></tr>';
-            return;
-        }
-        tb.innerHTML = list.map(function(c) {
-            var empCount = employees[c.id] ? employees[c.id].length : 0;
-            return '<tr>' +
-                '<td><div class="user"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'Sin nombre')+'</h4><small>'+(c.email||'')+'</small></div></div></td>' +
-                '<td>'+(c.phone||'-')+'</td>' +
-                '<td>'+fmtDate(c.created_at)+'</td>' +
-                '<td><span class="badge '+planClass(c.plan)+'">'+(c.plan||'free')+'</span></td>' +
-                '<td><span class="badge b-blue">👷 '+empCount+'</span></td>' +
-                '<td><div class="actions">' +
-                    '<button class="act" onclick="viewCompany(\''+c.id+'\')" title="Ver detalles">👁</button>' +
-                    '<button class="act" onclick="viewAllUsers(\''+c.id+'\')" title="Ver usuarios">👥</button>' +
-                    '<button class="act" onclick="editPlan(\''+c.id+'\')" title="Cambiar plan">✏️</button>' +
-                    '<button class="act" onclick="openEmailModal(\''+c.id+'\')" title="Enviar email">📧</button>' +
-                    '<button class="act danger" onclick="openDeleteModal(\''+c.id+'\')" title="Eliminar">🗑️</button>' +
-                '</div></td>' +
-            '</tr>';
-        }).join('');
+async function loadCompanies() {
+    var res = await db.from('companies').select('*').order('created_at', {ascending:false});
+    companies = res.data || [];
+    renderCompanies(companies);
+    renderRecentCompanies();
+}
+
+async function loadTickets() {
+    var res = await db.from('support_tickets').select('*').order('created_at', {ascending:false});
+    tickets = res.data || [];
+    var open = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+    document.getElementById('s6').textContent = open;
+    var badge = document.getElementById('ticketsBadge');
+    if (open > 0) { badge.textContent = open; badge.style.display = 'inline'; } else { badge.style.display = 'none'; }
+    renderTickets(tickets);
+}
+
+async function loadPayments() {
+    var res = await db.from('payment_history').select('*').order('created_at', {ascending:false});
+    payments = res.data || [];
+    renderPayments();
+}
+
+async function loadAdmins() {
+    var res = await db.from('admin_users').select('*').order('created_at');
+    adminUsers = res.data || [];
+    renderAdmins();
+}
+
+async function loadLogs() {
+    var res = await db.from('admin_activity_logs').select('*').order('created_at', {ascending:false}).limit(100);
+    logs = res.data || [];
+    renderLogs(logs);
+}
+
+async function loadResetRequests() {
+    var res = await db.from('password_reset_requests').select('*').order('requested_at', {ascending:false});
+    resetRequests = res.data || [];
+    document.getElementById('s7').textContent = resetRequests.filter(r => r.status === 'pending').length;
+    renderResetRequests();
+}
+
+async function loadNotifications() {
+    if (!currentAdmin) return;
+    var res = await db.from('admin_notifications').select('*').eq('admin_user_id', currentAdmin.id).order('created_at', {ascending:false}).limit(50);
+    notifications = res.data || [];
+    renderNotifications();
+}
+
+function startNotificationPolling() {
+    setInterval(loadNotifications, 30000);
+    setInterval(loadTickets, 60000);
+}
+
+// ========== RENDERING ==========
+function updateDashboard() {
+    document.getElementById('s1').textContent = companies.length;
+    document.getElementById('s2').textContent = companies.filter(c => c.subscription_status === 'active' && c.plan !== 'free').length;
+    var mrr = 0;
+    companies.forEach(c => { if (c.subscription_status === 'active') { if (c.plan === 'profesional') mrr += 149.99; if (c.plan === 'enterprise') mrr += 299; }});
+    document.getElementById('s3').textContent = '$' + Math.round(mrr);
+    
+    var total = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    var thisMonth = payments.filter(p => new Date(p.created_at).getMonth() === new Date().getMonth()).reduce((sum, p) => sum + (p.amount || 0), 0);
+    document.getElementById('totalRevenue').textContent = '$' + total.toFixed(2);
+    document.getElementById('monthlyRevenue').textContent = '$' + thisMonth.toFixed(2);
+    document.getElementById('avgRevenue').textContent = companies.length ? '$' + (total / companies.length).toFixed(2) : '$0';
+    
+    renderRecentActivity();
+}
+
+function renderCompanies(list) {
+    var tb = document.getElementById('tbody');
+    if (!list.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">No hay empresas</td></tr>'; return; }
+    tb.innerHTML = list.map(c => `<tr>
+        <td><div class="user-card"><div class="avatar">${initials(c.name)}</div><div><h4>${c.name||'Sin nombre'}</h4><small>${c.email||''}</small></div></div></td>
+        <td>${c.phone||'-'}</td>
+        <td>${fmtDate(c.created_at)}</td>
+        <td><span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></td>
+        <td><div class="actions">
+            <button class="act" onclick="viewCompany('${c.id}')" title="Ver">👁</button>
+            <button class="act" onclick="openResetForCompany('${c.id}')" title="Reset Pass">🔑</button>
+            <button class="act danger" onclick="openDelete('company','${c.id}','${c.name}')" title="Eliminar">🗑️</button>
+        </div></td>
+    </tr>`).join('');
+}
+
+function renderRecentCompanies() {
+    var recent = companies.slice(0, 5);
+    document.getElementById('recentCompanies').innerHTML = recent.map(c => `<tr>
+        <td><div class="user-card"><div class="avatar">${initials(c.name)}</div><div><h4>${c.name||'?'}</h4></div></div></td>
+        <td>${c.email||'-'}</td>
+        <td>${fmtDate(c.created_at)}</td>
+        <td><span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="empty">No hay empresas</td></tr>';
+}
+
+function renderTickets(list) {
+    var container = document.getElementById('ticketsList');
+    if (!list.length) { container.innerHTML = '<p class="empty">No hay tickets</p>'; return; }
+    container.innerHTML = list.map(t => `<div class="ticket-card ${t.priority}" onclick="viewTicket('${t.id}')">
+        <div class="ticket-header">
+            <h4>${t.ticket_number} - ${t.subject}</h4>
+            <span class="badge ${statusClass(t.status)}">${statusText(t.status)}</span>
+        </div>
+        <div class="ticket-meta">
+            <span>👤 ${t.user_name||t.user_email}</span>
+            <span>🏢 ${t.company_name||'N/A'}</span>
+            <span>📅 ${fmtDateTime(t.created_at)}</span>
+        </div>
+    </div>`).join('');
+}
+
+function renderPayments() {
+    var tb = document.getElementById('paymentsTable');
+    if (!payments.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay pagos</td></tr>'; return; }
+    tb.innerHTML = payments.map(p => `<tr>
+        <td>${fmtDate(p.created_at)}</td>
+        <td>${p.company_name||'N/A'}</td>
+        <td><span class="badge ${planClass(p.plan)}">${p.plan||'-'}</span></td>
+        <td style="font-weight:600;color:var(--success)">$${(p.amount||0).toFixed(2)}</td>
+        <td>${p.payment_method||'-'}</td>
+        <td><span class="badge ${p.status==='completed'?'b-green':'b-yellow'}">${p.status||'pending'}</span></td>
+    </tr>`).join('');
+}
+
+function renderAdmins() {
+    var tb = document.getElementById('adminsTable');
+    tb.innerHTML = adminUsers.map(u => `<tr>
+        <td><div class="user-card"><div class="avatar ${roleClass(u.role)}">${initials(u.name)}</div><div><h4>${u.name}</h4></div></div></td>
+        <td>${u.email}</td>
+        <td><span class="badge ${roleClass(u.role)}">${getRoleName(u.role)}</span></td>
+        <td>${u.last_login ? fmtDateTime(u.last_login) : 'Nunca'}</td>
+        <td><span class="badge ${u.is_active?'b-green':'b-red'}">${u.is_active?'Activo':'Inactivo'}</span></td>
+        <td><div class="actions">${currentAdmin?.role==='super_admin'?`<button class="act" onclick="editAdmin('${u.id}')">✏️</button>`:''}</div></td>
+    </tr>`).join('');
+}
+
+function renderLogs(list) {
+    var container = document.getElementById('logsContainer');
+    if (!list.length) { container.innerHTML = '<p class="empty">No hay logs</p>'; return; }
+    container.innerHTML = list.map(l => `<div style="display:flex;gap:1rem;padding:0.75rem 1.25rem;border-bottom:1px solid #e5e7eb">
+        <div style="width:36px;height:36px;border-radius:50%;background:${actionColor(l.action)};display:flex;align-items:center;justify-content:center">${actionIcon(l.action)}</div>
+        <div style="flex:1"><strong style="font-size:0.9rem">${actionText(l.action)}</strong>${l.entity_name?' - '+l.entity_name:''}<p style="font-size:0.8rem;color:var(--gray)">${l.admin_name||'Sistema'} • ${fmtDateTime(l.created_at)}</p></div>
+    </div>`).join('');
+}
+
+function renderResetRequests() {
+    var tb = document.getElementById('passwordResets');
+    if (!resetRequests.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay solicitudes</td></tr>'; return; }
+    tb.innerHTML = resetRequests.map(r => `<tr>
+        <td>${r.user_name||'N/A'}</td>
+        <td>${r.user_email}</td>
+        <td>${r.company_name||'-'}</td>
+        <td>${fmtDateTime(r.requested_at)}</td>
+        <td><span class="badge ${r.status==='pending'?'b-yellow':r.status==='completed'?'b-green':'b-gray'}">${r.status}</span></td>
+        <td><div class="actions">${r.status==='pending'?`<button class="act" onclick="handleReset('${r.id}')">🔑</button>`:''}</div></td>
+    </tr>`).join('');
+}
+
+function renderNotifications() {
+    var unread = notifications.filter(n => !n.is_read).length;
+    var badge = document.getElementById('notifBadge');
+    badge.textContent = unread;
+    badge.classList.toggle('hidden', unread === 0);
+    
+    var list = document.getElementById('notifList');
+    if (!notifications.length) { list.innerHTML = '<div class="notif-empty">Sin notificaciones</div>'; return; }
+    list.innerHTML = notifications.slice(0,20).map(n => `<div class="notif-item ${n.is_read?'':'unread'}" onclick="handleNotification('${n.id}','${n.entity_type}','${n.entity_id}')">
+        <div class="notif-icon" style="background:${notifColor(n.type)}">${notifIcon(n.type)}</div>
+        <div class="notif-content"><h5>${n.title}</h5><p>${n.message||''}</p><p style="font-size:0.7rem;margin-top:0.25rem">${fmtDateTime(n.created_at)}</p></div>
+    </div>`).join('');
+}
+
+function renderRecentActivity() {
+    var activity = logs.slice(0, 10);
+    document.getElementById('recentActivity').innerHTML = activity.length ? activity.map(l => `<div style="display:flex;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #f3f4f6">
+        <span style="font-size:1.1rem">${actionIcon(l.action)}</span>
+        <div><strong style="font-size:0.85rem">${actionText(l.action)}</strong>${l.entity_name?' - '+l.entity_name:''}<p style="font-size:0.75rem;color:var(--gray)">${fmtDateTime(l.created_at)}</p></div>
+    </div>`).join('') : '<p class="empty">Sin actividad reciente</p>';
+}
+
+// ========== SECTIONS ==========
+function showSection(name) {
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('sec' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+}
+
+// ========== TICKETS ==========
+async function viewTicket(id) {
+    selectedTicket = tickets.find(t => t.id === id);
+    if (!selectedTicket) return;
+    
+    document.getElementById('ticketTitle').textContent = selectedTicket.ticket_number + ' - ' + selectedTicket.subject;
+    document.getElementById('ticketInfo').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.85rem">
+        <div><strong>Usuario:</strong> ${selectedTicket.user_name||'N/A'}</div>
+        <div><strong>Email:</strong> ${selectedTicket.user_email}</div>
+        <div><strong>Empresa:</strong> ${selectedTicket.company_name||'N/A'}</div>
+        <div><strong>Categoría:</strong> ${selectedTicket.category}</div>
+    </div>`;
+    document.getElementById('ticketStatus').value = selectedTicket.status;
+    
+    var res = await db.from('support_messages').select('*').eq('ticket_id', id).order('created_at');
+    var messages = res.data || [];
+    document.getElementById('ticketChat').innerHTML = messages.map(m => `<div class="chat-msg ${m.sender_type}">
+        <div class="chat-bubble"><div class="chat-sender">${m.sender_name||m.sender_email}</div>${m.message}<div class="chat-time">${fmtDateTime(m.created_at)}</div></div>
+    </div>`).join('') || '<p class="empty">Sin mensajes</p>';
+    
+    openModal('modalTicket');
+}
+
+async function sendTicketReply() {
+    if (!selectedTicket) return;
+    var msg = document.getElementById('ticketReply').value.trim();
+    var status = document.getElementById('ticketStatus').value;
+    if (!msg) { alert('Escribe un mensaje'); return; }
+    
+    await db.from('support_messages').insert({ ticket_id: selectedTicket.id, sender_type: 'admin', sender_name: currentAdmin.name, admin_user_id: currentAdmin.id, message: msg });
+    await db.from('support_tickets').update({ status: status, updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
+    await logActivity('update', 'ticket', selectedTicket.id, selectedTicket.ticket_number);
+    
+    document.getElementById('ticketReply').value = '';
+    viewTicket(selectedTicket.id);
+    loadTickets();
+}
+
+function filterTickets(status) {
+    if (status === 'all') renderTickets(tickets);
+    else renderTickets(tickets.filter(t => t.status === status));
+}
+
+function searchTickets(q) {
+    q = q.toLowerCase();
+    renderTickets(tickets.filter(t => (t.ticket_number||'').toLowerCase().includes(q) || (t.subject||'').toLowerCase().includes(q) || (t.user_email||'').toLowerCase().includes(q)));
+}
+
+// ========== PASSWORD RESET ==========
+async function quickSearchUser() {
+    var email = document.getElementById('quickResetEmail').value.trim().toLowerCase();
+    if (!email) return;
+    
+    var result = document.getElementById('quickResetResult');
+    result.innerHTML = '<p>Buscando...</p>';
+    
+    // Search in team_users
+    var res1 = await db.from('team_users').select('*, companies(name)').eq('email', email).single();
+    if (res1.data) {
+        selectedResetUser = { type: 'team_user', ...res1.data, company_name: res1.data.companies?.name };
+        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
+            <p><strong>✅ Usuario encontrado</strong></p>
+            <p>👤 ${res1.data.name} (Team User)</p>
+            <p>🏢 ${res1.data.companies?.name || 'N/A'}</p>
+            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
+        </div>`;
+        return;
     }
-
-    function updateStats(list) {
-        var total = list.length;
-        var paid = list.filter(function(c){ return c.subscription_status === 'active' && c.plan && c.plan !== 'free'; }).length;
-        var free = list.filter(function(c){ return !c.plan || c.plan === 'free'; }).length;
-        var mrr = 0;
-        list.forEach(function(c) {
-            if (c.subscription_status === 'active') {
-                if (c.plan === 'profesional') mrr += 149.99;
-                if (c.plan === 'enterprise') mrr += 299;
-            }
-        });
-        
-        var totalEmps = 0;
-        Object.keys(employees).forEach(function(k) {
-            totalEmps += employees[k].length;
-        });
-        
-        document.getElementById('s1').textContent = total;
-        document.getElementById('s2').textContent = paid;
-        document.getElementById('s3').textContent = '$' + Math.round(mrr);
-        document.getElementById('s4').textContent = free;
-        document.getElementById('s5').textContent = totalEmps;
-    }
-
-    function initials(n) {
-        if (!n) return '?';
-        return n.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);
-    }
-
-    function fmtDate(d) {
-        if (!d) return '-';
-        return d.slice(0,10);
+    
+    // Search in technicians
+    var res2 = await db.from('technicians').select('*, companies(name)').eq('email', email).single();
+    if (res2.data) {
+        selectedResetUser = { type: 'technician', ...res2.data, company_name: res2.data.companies?.name };
+        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
+            <p><strong>✅ Técnico encontrado</strong></p>
+            <p>👤 ${res2.data.name}</p>
+            <p>🏢 ${res2.data.companies?.name || 'N/A'}</p>
+            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
+        </div>`;
+        return;
     }
     
-    function fmtDateTime(d) {
-        if (!d) return '-';
-        var dt = new Date(d);
-        return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+    // Search in companies (owner)
+    var res3 = await db.from('companies').select('*').eq('email', email).single();
+    if (res3.data) {
+        selectedResetUser = { type: 'company_owner', ...res3.data, company_name: res3.data.name };
+        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
+            <p><strong>✅ Dueño de empresa encontrado</strong></p>
+            <p>🏢 ${res3.data.name}</p>
+            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
+        </div>`;
+        return;
     }
+    
+    result.innerHTML = '<div style="padding:1rem;background:#fee2e2;border-radius:0.5rem"><p>❌ Usuario no encontrado</p></div>';
+}
 
-    function planClass(p) {
-        if (p === 'enterprise') return 'b-purple';
-        if (p === 'profesional') return 'b-yellow';
-        return 'b-gray';
+function openResetModal() {
+    if (!selectedResetUser) return;
+    document.getElementById('resetUserInfo').innerHTML = `<p><strong>👤 ${selectedResetUser.name||selectedResetUser.email}</strong></p><p>📧 ${selectedResetUser.email}</p><p>🏢 ${selectedResetUser.company_name||'N/A'}</p><p>Tipo: ${selectedResetUser.type}</p>`;
+    document.getElementById('newPassword').value = generatePass();
+    openModal('modalReset');
+}
+
+async function confirmResetPassword() {
+    if (!selectedResetUser) return;
+    var newPass = document.getElementById('newPassword').value;
+    if (newPass.length < 6) { alert('Mínimo 6 caracteres'); return; }
+    
+    var table = selectedResetUser.type === 'team_user' ? 'team_users' : selectedResetUser.type === 'technician' ? 'technicians' : 'companies';
+    var field = selectedResetUser.type === 'company_owner' ? 'password' : 'password';
+    
+    await db.from(table).update({ [field]: newPass }).eq('id', selectedResetUser.id);
+    await logActivity('update', 'password_reset', selectedResetUser.id, selectedResetUser.email);
+    
+    // Update reset request if exists
+    await db.from('password_reset_requests').update({ status: 'completed', completed_at: new Date().toISOString(), completed_by: currentAdmin.id }).eq('user_email', selectedResetUser.email).eq('status', 'pending');
+    
+    closeModal('modalReset');
+    alert('✅ Contraseña actualizada: ' + newPass);
+    loadResetRequests();
+}
+
+async function sendMagicLink() {
+    if (!selectedResetUser) return;
+    alert('📧 Magic link enviado a: ' + selectedResetUser.email + '\n(Función pendiente de configurar con Resend)');
+    closeModal('modalReset');
+}
+
+async function handleReset(id) {
+    var req = resetRequests.find(r => r.id === id);
+    if (!req) return;
+    selectedResetUser = { type: req.user_type, id: req.user_id, email: req.user_email, name: req.user_name, company_name: req.company_name };
+    openResetModal();
+}
+
+function openResetForCompany(companyId) {
+    var company = companies.find(c => c.id === companyId);
+    if (!company || !company.email) { alert('Empresa sin email'); return; }
+    selectedResetUser = { type: 'company_owner', id: company.id, email: company.email, name: company.name, company_name: company.name };
+    openResetModal();
+}
+
+// ========== PAYMENTS ==========
+function openAddPaymentModal() {
+    var sel = document.getElementById('payCompany');
+    sel.innerHTML = companies.map(c => `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`).join('');
+    document.getElementById('payAmount').value = '149.99';
+    openModal('modalAddPayment');
+}
+
+async function savePayment() {
+    var companyId = document.getElementById('payCompany').value;
+    var companyName = document.getElementById('payCompany').selectedOptions[0]?.dataset.name || '';
+    var amount = parseFloat(document.getElementById('payAmount').value) || 0;
+    var plan = document.getElementById('payPlan').value;
+    var method = document.getElementById('payMethod').value;
+    var notes = document.getElementById('payNotes').value;
+    
+    await db.from('payment_history').insert({ company_id: companyId, company_name: companyName, amount: amount, plan: plan, payment_method: method, status: 'completed', notes: notes });
+    await logActivity('create', 'payment', null, companyName + ' - $' + amount);
+    
+    closeModal('modalAddPayment');
+    loadPayments();
+    updateDashboard();
+    alert('✅ Pago registrado');
+}
+
+// ========== ADMINS ==========
+function openAddAdminModal() {
+    document.getElementById('newAdminName').value = '';
+    document.getElementById('newAdminEmail').value = '';
+    document.getElementById('newAdminPass').value = generatePass();
+    openModal('modalAddAdmin');
+}
+
+async function saveNewAdmin() {
+    var name = document.getElementById('newAdminName').value.trim();
+    var email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+    var pass = document.getElementById('newAdminPass').value;
+    var role = document.getElementById('newAdminRole').value;
+    if (!name || !email || !pass) { alert('Completa todos los campos'); return; }
+    
+    await db.from('admin_users').insert({ name: name, email: email, password_hash: pass, role: role, is_active: true, created_by: currentAdmin.id });
+    await logActivity('create', 'admin_user', null, name);
+    closeModal('modalAddAdmin');
+    loadAdmins();
+    alert('✅ Admin creado');
+}
+
+// ========== NOTIFICATIONS ==========
+function toggleNotifications() { document.getElementById('notifDropdown').classList.toggle('show'); }
+
+async function handleNotification(id, entityType, entityId) {
+    await db.from('admin_notifications').update({ is_read: true }).eq('id', id);
+    loadNotifications();
+    if (entityType === 'ticket') { showSection('tickets'); setTimeout(() => viewTicket(entityId), 100); }
+    else if (entityType === 'company') showSection('empresas');
+}
+
+async function markAllRead() {
+    if (!currentAdmin) return;
+    await db.from('admin_notifications').update({ is_read: true }).eq('admin_user_id', currentAdmin.id);
+    loadNotifications();
+}
+
+// ========== COMPANY ==========
+function viewCompany(id) {
+    var c = companies.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('modalTitle').textContent = c.name;
+    document.getElementById('companyDetails').innerHTML = `<div style="display:grid;gap:0.75rem">
+        <div><strong>📧 Email:</strong> ${c.email||'N/A'}</div>
+        <div><strong>📱 Teléfono:</strong> ${c.phone||'N/A'}</div>
+        <div><strong>📍 Dirección:</strong> ${c.address||'N/A'}</div>
+        <div><strong>💳 Plan:</strong> <span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></div>
+        <div><strong>📅 Registro:</strong> ${fmtDateTime(c.created_at)}</div>
+        <div><strong>🆔 ID:</strong> <code style="font-size:0.75rem;background:#f3f4f6;padding:2px 6px;border-radius:4px">${c.id}</code></div>
+    </div>`;
+    openModal('modalView');
+    logActivity('view', 'company', c.id, c.name);
+}
+
+function doSearch() {
+    var q = document.getElementById('q').value.toLowerCase();
+    renderCompanies(companies.filter(c => (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q)));
+}
+
+function filterCompanies(plan) {
+    if (plan === 'all') renderCompanies(companies);
+    else renderCompanies(companies.filter(c => (c.plan||'free') === plan));
+}
+
+// ========== DELETE ==========
+function openDelete(type, id, name) {
+    deleteTarget = { type, id };
+    document.getElementById('deleteName').textContent = name;
+    openModal('modalDelete');
+}
+
+async function confirmDelete() {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'company') {
+        await db.from('companies').delete().eq('id', deleteTarget.id);
+        await logActivity('delete', 'company', deleteTarget.id, document.getElementById('deleteName').textContent);
     }
+    closeModal('modalDelete');
+    deleteTarget = null;
+    refreshAll();
+}
 
-    function statusBadge(s) {
-        if (s === 'active') return '<span class="badge b-green">✓ Activo</span>';
-        if (s === 'trial') return '<span class="badge b-yellow">⏱ Trial</span>';
-        return '<span class="badge b-gray">-</span>';
-    }
+// ========== LOGS ==========
+async function logActivity(action, entityType, entityId, entityName, details) {
+    if (!currentAdmin) return;
+    await db.from('admin_activity_logs').insert({ admin_user_id: currentAdmin.id, admin_name: currentAdmin.name, action: action, entity_type: entityType, entity_id: entityId, entity_name: entityName, details: details });
+}
 
-    function doFilter(f, btn) {
-        document.querySelectorAll('.filter').forEach(function(b){b.classList.remove('on')});
-        btn.classList.add('on');
-        curFilter = f;
-        if (f === 'all') {
-            render(companies);
-        } else {
-            render(companies.filter(function(c){return (c.plan||'free') === f}));
-        }
-    }
+function filterLogs() {
+    var f = document.getElementById('logFilter').value;
+    if (f === 'all') renderLogs(logs);
+    else renderLogs(logs.filter(l => l.action === f));
+}
 
-    function doSearch() {
-        var q = document.getElementById('q').value.toLowerCase();
-        var filtered = companies.filter(function(c) {
-            return (c.name && c.name.toLowerCase().indexOf(q) >= 0) ||
-                   (c.email && c.email.toLowerCase().indexOf(q) >= 0) ||
-                   (c.phone && c.phone.indexOf(q) >= 0);
-        });
-        render(filtered);
-    }
+// ========== UTILITIES ==========
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function initials(n) { return n ? n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) : '?'; }
+function fmtDate(d) { return d ? d.slice(0,10) : '-'; }
+function fmtDateTime(d) { return d ? new Date(d).toLocaleString() : '-'; }
+function generatePass() { var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; var p=''; for(var i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)]; return p; }
+function generatePassword() { document.getElementById('newPassword').value = generatePass(); }
 
-    // View company details
-    window.viewCompany = function(id) {
-        selectedCompany = companies.find(function(x){return x.id === id});
-        if (!selectedCompany) return;
-        
-        document.getElementById('modalTitle').textContent = selectedCompany.name || 'Empresa';
-        
-        // Info tab
-        document.getElementById('companyInfo').innerHTML = 
-            '<div style="display:grid;gap:1rem">' +
-                '<div><strong>📧 Email:</strong> '+(selectedCompany.email||'N/A')+'</div>' +
-                '<div><strong>📱 Teléfono:</strong> '+(selectedCompany.phone||'N/A')+'</div>' +
-                '<div><strong>💳 Plan:</strong> <span class="badge '+planClass(selectedCompany.plan)+'">'+(selectedCompany.plan||'free')+'</span></div>' +
-                '<div><strong>📊 Estado:</strong> '+statusBadge(selectedCompany.subscription_status)+'</div>' +
-                '<div><strong>📅 Registro:</strong> '+fmtDateTime(selectedCompany.created_at)+'</div>' +
-                '<div><strong>🆔 ID:</strong> <code style="font-size:0.75rem;background:#f3f4f6;padding:2px 6px;border-radius:4px">'+selectedCompany.id+'</code></div>' +
-            '</div>';
-        
-        // Employees tab
-        var emps = employees[id] || [];
-        if (emps.length === 0) {
-            document.getElementById('employeesList').innerHTML = '<div class="empty">Sin empleados registrados</div>';
-        } else {
-            document.getElementById('employeesList').innerHTML = '<div class="emp-list">' +
-                emps.map(function(e) {
-                    var role = e.type === 'technician' ? '🔧 Técnico' : '👤 ' + (e.role || 'Usuario');
-                    return '<div class="emp-item">' +
-                        '<div class="avatar">'+initials(e.name)+'</div>' +
-                        '<div class="emp-info"><h4>'+(e.name||'Sin nombre')+'</h4><p>'+(e.email||e.phone||'-')+' • '+role+'</p></div>' +
-                    '</div>';
-                }).join('') +
-            '</div>';
-        }
-        
-        // Payments tab (placeholder - would need Stripe integration)
-        document.getElementById('paymentsList').innerHTML = 
-            '<div style="margin-bottom:1rem;padding:1rem;background:#fef3c7;border-radius:0.5rem;font-size:0.85rem">' +
-                '⚠️ Para ver pagos reales, necesitas conectar la API de Stripe.' +
-            '</div>' +
-            '<div class="pay-item"><div><strong>Ejemplo - Pro Plan</strong><div class="pay-date">Feb 10, 2026</div></div><div class="pay-amount">$149.99</div></div>' +
-            '<div class="pay-item"><div><strong>Ejemplo - Pro Plan</strong><div class="pay-date">Jan 10, 2026</div></div><div class="pay-amount">$149.99</div></div>';
-        
-        switchTab('info');
-        document.getElementById('modalView').classList.add('show');
-    };
-    
-    window.switchTab = function(tab) {
-        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-        document.querySelector('.tab[onclick*="'+tab+'"]').classList.add('active');
-        document.getElementById('tab-'+tab).classList.add('active');
-    };
+function planClass(p) { return p==='enterprise'?'b-purple':p==='profesional'?'b-yellow':'b-gray'; }
+function statusClass(s) { return s==='open'?'b-blue':s==='in_progress'?'b-yellow':s==='waiting_response'?'b-orange':s==='resolved'?'b-green':'b-gray'; }
+function statusText(s) { return {open:'Abierto',in_progress:'En Progreso',waiting_response:'Esperando',resolved:'Resuelto',closed:'Cerrado'}[s]||s; }
+function roleClass(r) { return r==='super_admin'?'role-super':r==='admin'?'role-admin':'role-support'; }
+function getRoleName(r) { return {super_admin:'👑 Super Admin',admin:'⚙️ Admin',support:'👁️ Soporte'}[r]||r; }
 
-    // Edit plan
-    window.editPlan = function(id) {
-        var c = companies.find(function(x){return x.id === id});
-        if (!c) return;
-        var np = prompt('Plan para "'+c.name+'":\n\nOpciones: free, profesional, enterprise\nActual: '+(c.plan||'free'), c.plan||'free');
-        if (np && ['free','profesional','enterprise'].indexOf(np) >= 0) {
-            db.from('companies').update({plan: np, subscription_status: np === 'free' ? 'trial' : 'active'}).eq('id', id).then(function(res){
-                if (res.error) {
-                    alert('❌ Error: ' + res.error.message);
-                } else {
-                    alert('✅ Plan actualizado a: ' + np);
-                    fetchData();
-                }
-            });
-        }
-    };
-    
-    // Email modal
-    window.openEmailModal = function(id) {
-        var c = companies.find(function(x){return x.id === id});
-        if (!c || !c.email) {
-            alert('Esta empresa no tiene email registrado');
-            return;
-        }
-        document.getElementById('emailTo').value = c.email;
-        document.getElementById('emailSubject').value = '';
-        document.getElementById('emailBody').value = '';
-        document.getElementById('modalEmail').classList.add('show');
-    };
-    
-    window.sendEmail = function() {
-        var to = document.getElementById('emailTo').value;
-        var subject = document.getElementById('emailSubject').value;
-        var body = document.getElementById('emailBody').value;
-        
-        if (!subject || !body) {
-            alert('Por favor completa el asunto y mensaje');
-            return;
-        }
-        
-        // Open default email client
-        var mailtoLink = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-        window.open(mailtoLink);
-        
-        closeModal('modalEmail');
-    };
-    
-    // Delete modal
-    window.openDeleteModal = function(id) {
-        var c = companies.find(function(x){return x.id === id});
-        if (!c) return;
-        deleteCompanyId = id;
-        document.getElementById('deleteCompanyName').textContent = c.name + ' (' + (c.email||'sin email') + ')';
-        document.getElementById('modalDelete').classList.add('show');
-    };
-    
-    window.confirmDelete = async function() {
-        if (!deleteCompanyId) return;
-        
-        var companyToDelete = deleteCompanyId;
-        
-        // Cerrar modal inmediatamente para evitar que se quede pegado
-        closeModal('modalDelete');
-        
-        try {
-            // Delete related data first (ignorar errores de tablas que no existen)
-            await Promise.allSettled([
-                db.from('technicians').delete().eq('company_id', companyToDelete),
-                db.from('team_users').delete().eq('company_id', companyToDelete),
-                db.from('clients').delete().eq('company_id', companyToDelete),
-                db.from('jobs').delete().eq('company_id', companyToDelete),
-                db.from('work_orders').delete().eq('company_id', companyToDelete),
-                db.from('leads').delete().eq('company_id', companyToDelete)
-            ]);
-            
-            // Delete company
-            var res = await db.from('companies').delete().eq('id', companyToDelete);
-            
-            if (res.error) {
-                alert('❌ Error al eliminar empresa: ' + res.error.message);
-            } else {
-                alert('✅ Empresa eliminada correctamente');
-                fetchData();
-            }
-        } catch (err) {
-            alert('❌ Error inesperado: ' + err.message);
-        }
-        
-        deleteCompanyId = null;
-    };
-    
-    window.closeModal = function(id) {
-        document.getElementById(id).classList.remove('show');
-    };
-    
-    // Password Reset functionality
-    var resetTarget = null; // {type: 'company'|'user', id, email, name}
-    
-    window.openResetModal = function(type, id, email, name) {
-        resetTarget = {type: type, id: id, email: email, name: name};
-        document.getElementById('resetUserInfo').innerHTML = 
-            '<div><strong>👤 Usuario:</strong> ' + name + '</div>' +
-            '<div><strong>📧 Email:</strong> ' + email + '</div>' +
-            '<div><strong>🏷️ Tipo:</strong> ' + (type === 'company' ? 'Dueño de Empresa' : 'Técnico/Empleado') + '</div>';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('modalReset').classList.add('show');
-    };
-    
-    window.generatePassword = function() {
-        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-        var password = '';
-        for (var i = 0; i < 10; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        document.getElementById('newPassword').value = password;
-    };
-    
-    window.confirmResetPassword = function() {
-        if (!resetTarget) return;
-        var newPass = document.getElementById('newPassword').value;
-        if (newPass.length < 6) {
-            alert('La contraseña debe tener al menos 6 caracteres');
-            return;
-        }
-        
-        // Note: Resetting password requires admin API or service_role key
-        // For now, we'll show instructions
-        alert('⚠️ Para resetear contraseñas necesitas:\n\n' +
-              '1. Ir a Supabase Dashboard\n' +
-              '2. Authentication → Users\n' +
-              '3. Buscar: ' + resetTarget.email + '\n' +
-              '4. Click en "..." → "Send password reset"\n\n' +
-              'O usa esta contraseña temporal y pídele al usuario que la cambie:\n' +
-              '🔑 ' + newPass + '\n\n' +
-              '(Copia esta contraseña antes de cerrar)');
-        
-        closeModal('modalReset');
-    };
-    
-    // View all users of a company
-    window.viewAllUsers = function(companyId) {
-        var c = companies.find(function(x){return x.id === companyId});
-        if (!c) return;
-        
-        var html = '';
-        
-        // Owner
-        html += '<div style="margin-bottom:1.5rem">' +
-            '<h4 style="margin-bottom:0.75rem;color:var(--primary)">👑 Dueño de la Empresa</h4>' +
-            '<div class="emp-item">' +
-                '<div class="avatar" style="background:var(--primary)">'+initials(c.name)+'</div>' +
-                '<div class="emp-info"><h4>'+(c.name||'Sin nombre')+'</h4><p>'+(c.email||'-')+'</p></div>' +
-                '<button class="btn-sm btn-success" onclick="openResetModal(\'company\',\''+c.id+'\',\''+c.email+'\',\''+c.name+'\')">🔑 Reset</button>' +
-            '</div>' +
-        '</div>';
-        
-        // Employees
-        var emps = employees[companyId] || [];
-        if (emps.length > 0) {
-            html += '<h4 style="margin-bottom:0.75rem;color:var(--primary)">👷 Técnicos y Empleados</h4>' +
-                '<div class="emp-list">';
-            emps.forEach(function(e) {
-                var role = e.type === 'technician' ? '🔧 Técnico' : '👤 ' + (e.role || 'Usuario');
-                html += '<div class="emp-item">' +
-                    '<div class="avatar">'+initials(e.name)+'</div>' +
-                    '<div class="emp-info"><h4>'+(e.name||'Sin nombre')+'</h4><p>'+(e.email||e.phone||'-')+' • '+role+'</p></div>' +
-                    (e.email ? '<button class="btn-sm btn-success" onclick="openResetModal(\'user\',\''+e.id+'\',\''+e.email+'\',\''+e.name+'\')">🔑 Reset</button>' : '<span class="badge b-gray">Sin email</span>') +
-                '</div>';
-            });
-            html += '</div>';
-        } else {
-            html += '<div class="empty">No hay empleados registrados</div>';
-        }
-        
-        document.getElementById('allUsersList').innerHTML = html;
-        document.getElementById('modalUsers').classList.add('show');
-    };
-
-    document.addEventListener('DOMContentLoaded', init);
-    
-    // Forgot Password
-    window.forgotPassword = function() {
-        var choice = confirm('¿Cómo quieres recuperar tu contraseña?\n\nOK = Por Email\nCancelar = Por Teléfono/WhatsApp');
-        
-        if (choice) {
-            // Email
-            var email = prompt('Ingresa tu email autorizado:');
-            if (email && VALID_EMAILS.indexOf(email.toLowerCase()) >= 0) {
-                alert('📧 Envía un email a:\ntrademastersusacrm@gmail.com\n\nAsunto: Reset Password Admin\n\nIncluye tu email: ' + email + '\n\nTe responderemos con tu nueva contraseña.');
-                window.open('mailto:trademastersusacrm@gmail.com?subject=Reset%20Password%20Admin&body=Email:%20' + encodeURIComponent(email));
-            } else if (email) {
-                alert('❌ Este email no está autorizado para el panel de admin.');
-            }
-        } else {
-            // Phone/WhatsApp
-            alert('📱 Contacta por WhatsApp:\n\n+1 (909) 639-0448\n\nEscribe: "Necesito resetear mi contraseña del Admin Panel"\n\nIncluye tu email autorizado.');
-            window.open('https://wa.me/19096390448?text=Necesito%20resetear%20mi%20contraseña%20del%20Admin%20Panel');
-        }
-    };
-})();
+function actionIcon(a) { return {login:'🔑',logout:'🚪',view:'👁',create:'➕',update:'✏️',delete:'🗑️'}[a]||'📋'; }
+function actionColor(a) { return {login:'#dcfce7',logout:'#f3f4f6',view:'#dbeafe',create:'#dcfce7',update:'#fef3c7',delete:'#fee2e2'}[a]||'#f3f4f6'; }
+function actionText(a) { return {login:'Login',logout:'Logout',view:'Vista',create:'Creación',update:'Edición',delete:'Eliminación'}[a]||a; }
+function notifIcon(t) { return {new_ticket:'🎫',new_message:'💬',new_company:'🏢',payment:'💳',password_reset:'🔑'}[t]||'🔔'; }
+function notifColor(t) { return {new_ticket:'#fee2e2',new_message:'#dbeafe',new_company:'#dcfce7',payment:'#f3e8ff',password_reset:'#fef3c7'}[t]||'#f3f4f6'; }
 </script>
 </body>
 </html>
