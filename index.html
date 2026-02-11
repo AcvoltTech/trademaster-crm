@@ -170,10 +170,41 @@
                 <label>Confirmar Contraseña <span style="color:#dc2626">*</span></label>
                 <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required minlength="6">
               </div>
+              
+              <!-- Terms and Conditions Checkbox -->
+              <div style="margin:16px 0;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e5e7eb;">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+                  <input type="checkbox" id="acceptTerms" required style="margin-top:3px;width:18px;height:18px;accent-color:#1e3a5f;">
+                  <span>
+                    I accept the <a href="terms.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Terms of Service</a>, 
+                    <a href="privacy.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Privacy Policy</a>,
+                    <a href="billing.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Billing Policy</a>, and
+                    <a href="nda.html" target="_blank" style="color:#dc2626;font-weight:600;">Non-Disclosure Agreement (NDA)</a>.
+                    <br><span style="font-size:11px;color:#6b7280;">Acepto los Términos, Privacidad, Facturación y Acuerdo de Confidencialidad (NDA).</span>
+                  </span>
+                </label>
+              </div>
+              
               <p style="font-size:11px;color:#6b7280;margin-bottom:12px;text-align:center;">Al registrarte aceptas recibir tu guía de onboarding y comunicaciones de soporte.</p>
               <button type="submit" class="btn-primary" id="registerBtn">Crear Cuenta Empresarial</button>
             </form>
             <p class="auth-link">¿Ya tienes cuenta? <a href="#" onclick="switchTab('login')">Inicia sesión</a></p>
+          </div>
+        </div>
+        
+        <!-- Legal Footer -->
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
+          <p style="font-size:10px;color:#9ca3af;margin:0 0 8px 0;">
+            Trade Master CRM™ is a product of <strong>ACVOLT Tech School Inc.</strong>
+          </p>
+          <p style="font-size:10px;color:#9ca3af;margin:0 0 8px 0;">
+            San Bernardino, California, USA | © 2026 All Rights Reserved
+          </p>
+          <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:10px;">
+            <a href="terms.html" target="_blank" style="color:#6b7280;text-decoration:none;">Terms</a>
+            <a href="privacy.html" target="_blank" style="color:#6b7280;text-decoration:none;">Privacy</a>
+            <a href="billing.html" target="_blank" style="color:#6b7280;text-decoration:none;">Billing</a>
+            <a href="nda.html" target="_blank" style="color:#6b7280;text-decoration:none;">NDA</a>
           </div>
         </div>
       </div>
@@ -4435,6 +4466,7 @@
         var company = document.getElementById('companyName').value.trim();
         var firstName = document.getElementById('firstName').value.trim();
         var lastName = document.getElementById('lastName').value.trim();
+        var acceptTerms = document.getElementById('acceptTerms');
         
         if (company.length < 3) {
           alert('❌ El nombre de la empresa debe tener al menos 3 caracteres');
@@ -4450,6 +4482,10 @@
         }
         if (phone.length < 10) {
           alert('❌ El teléfono debe tener al menos 10 dígitos\n\nNecesitamos tu número para poder contactarte y darte soporte.');
+          return false;
+        }
+        if (!acceptTerms || !acceptTerms.checked) {
+          alert('❌ Debes aceptar los Términos de Servicio y Política de Privacidad para continuar.\n\nYou must accept the Terms of Service and Privacy Policy to continue.');
           return false;
         }
         return true;
@@ -4621,4 +4657,108 @@
                     });
                 }
             } else {
-                alert('❌
+                alert('❌ Las contraseñas no coinciden');
+            }
+        }
+      }
+
+      // ========== CLIENT LIMITS SYSTEM ==========
+      // Plan limits
+      var PLAN_LIMITS = {
+        'free': 10,
+        'profesional': 50,
+        'enterprise': Infinity
+      };
+
+      // Check if user can add more clients
+      async function canAddClient() {
+        if (!currentCompany || !currentCompany.id) return true;
+        
+        var plan = currentCompany.plan || 'free';
+        var limit = PLAN_LIMITS[plan] || 10;
+        
+        // Count current clients
+        var res = await sbClient.from('customers').select('id', { count: 'exact' }).eq('company_id', currentCompany.id);
+        var currentCount = res.count || 0;
+        
+        return {
+          canAdd: currentCount < limit,
+          currentCount: currentCount,
+          limit: limit,
+          plan: plan
+        };
+      }
+
+      // Show upgrade modal when limit reached
+      function showUpgradeModal(currentCount, limit, plan) {
+        var nextPlan = plan === 'free' ? 'Professional ($149.99/mes)' : 'Enterprise ($299/mes)';
+        var nextPlanId = plan === 'free' ? 'profesional' : 'enterprise';
+        
+        var modal = document.createElement('div');
+        modal.id = 'upgradeModal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+        modal.innerHTML = `
+          <div style="background:white;border-radius:16px;padding:0;max-width:450px;width:100%;box-shadow:0 25px 50px rgba(0,0,0,0.3);overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#f97316,#ea580c);padding:24px;text-align:center;color:white;">
+              <div style="font-size:48px;margin-bottom:8px;">🚀</div>
+              <h2 style="margin:0;font-size:1.5rem;">¡Has alcanzado tu límite!</h2>
+              <p style="margin:8px 0 0 0;opacity:0.9;">You've reached your limit!</p>
+            </div>
+            <div style="padding:24px;">
+              <div style="background:#fef3c7;border-radius:8px;padding:16px;margin-bottom:20px;text-align:center;">
+                <p style="margin:0;font-size:2rem;font-weight:700;color:#92400e;">${currentCount} / ${limit}</p>
+                <p style="margin:4px 0 0 0;color:#92400e;font-size:0.9rem;">Clientes registrados</p>
+              </div>
+              <p style="text-align:center;color:#4b5563;margin-bottom:20px;">
+                Tu plan <strong>${plan.toUpperCase()}</strong> permite hasta <strong>${limit} clientes</strong>.<br>
+                Para agregar más clientes, actualiza a <strong>${nextPlan}</strong>.
+              </p>
+              <div style="display:flex;gap:12px;">
+                <button onclick="closeUpgradeModal()" style="flex:1;padding:14px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:1rem;">
+                  Cancelar
+                </button>
+                <button onclick="redirectToUpgrade('${nextPlanId}')" style="flex:1;padding:14px;background:linear-gradient(135deg,#1e3a5f,#0f172a);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:1rem;">
+                  ⬆️ Actualizar Plan
+                </button>
+              </div>
+              <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:#9ca3af;">
+                <a href="billing.html" target="_blank" style="color:#1e3a5f;">Ver política de facturación</a>
+              </p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+
+      function closeUpgradeModal() {
+        var modal = document.getElementById('upgradeModal');
+        if (modal) modal.remove();
+      }
+
+      function redirectToUpgrade(planId) {
+        closeUpgradeModal();
+        // Show settings section and subscription tab
+        if (typeof showSection === 'function') {
+          showSection('settings');
+        }
+        alert('📧 Para actualizar tu plan, contacta a soporte:\n\nsupport@acvolttech.com\n\nO llama a Technical Support.');
+      }
+
+      // Override client save function to check limits
+      var originalSaveClient = typeof saveClient === 'function' ? saveClient : null;
+      
+      window.checkClientLimitBeforeSave = async function() {
+        var result = await canAddClient();
+        if (!result.canAdd) {
+          showUpgradeModal(result.currentCount, result.limit, result.plan);
+          return false;
+        }
+        return true;
+      };
+
+      // Global function to check limit (can be called from script.js)
+      window.clientLimitCheck = canAddClient;
+      window.showClientUpgradeModal = showUpgradeModal;
+    </script>
+</body>
+</html>
