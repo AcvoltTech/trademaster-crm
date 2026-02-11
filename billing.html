@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Policy | Política de Facturación - Trade Master CRM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1f2937; line-height: 1.7; }
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); color: white; padding: 2rem; text-align: center; }
+        .header h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+        .header p { opacity: 0.8; font-size: 0.9rem; }
+        .lang-toggle { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
+        .lang-btn { padding: 0.5rem 1.5rem; border: 2px solid white; background: transparent; color: white; border-radius: 2rem; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+        .lang-btn.active, .lang-btn:hover { background: white; color: #1e3a5f; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .content { background: white; border-radius: 1rem; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .lang-content { display: none; }
+        .lang-content.active { display: block; }
+        h2 { color: #1e3a5f; font-size: 1.25rem; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; }
+        h3 { color: #374151; font-size: 1.1rem; margin: 1.5rem 0 0.75rem 0; }
+        p { margin-bottom: 1rem; color: #4b5563; }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; color: #4b5563; }
+        li { margin-bottom: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th { background: #1e3a5f; color: white; padding: 0.75rem; text-align: left; }
+        td { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+        tr:hover { background: #f9fafb; }
+        .highlight { background: #eff6ff; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; margin: 1rem 0; }
+        .warning { background: #fef3c7; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .danger { background: #fee2e2; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .success { background: #dcfce7; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #22c55e; margin: 1rem 0; }
+        .footer { text-align: center; padding: 2rem; color: #6b7280; font-size: 0.85rem; }
+        .back-btn { display: inline-block; margin-bottom: 1rem; color: #1e3a5f; text-decoration: none; font-weight: 500; }
+        .back-btn:hover { text-decoration: underline; }
+        .effective-date { background: #eff6ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; font-size: 0.9rem; }
+        .timeline { display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0; }
+        .timeline-item { display: flex; gap: 1rem; align-items: flex-start; }
+        .timeline-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; flex-shrink: 0; }
+        .timeline-content { flex: 1; }
+        .timeline-content h4 { margin-bottom: 0.25rem; }
+        .timeline-content p { margin: 0; font-size: 0.9rem; }
+        @media (max-width: 768px) { .container { padding: 1rem; } .content { padding: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💳 Billing Policy | Política de Facturación</h1>
+        <p>Trade Master CRM by ACVOLT Tech School Inc.</p>
+        <div class="lang-toggle">
+            <button class="lang-btn active" onclick="showLang('en')">🇺🇸 English</button>
+            <button class="lang-btn" onclick="showLang('es')">🇲🇽 Español</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="index.html" class="back-btn">← Back to Trade Master CRM</a>
+        
+        <div class="content">
+            <!-- ENGLISH VERSION -->
+            <div id="content-en" class="lang-content active">
+                <div class="effective-date">
+                    <strong>Effective Date:</strong> February 11, 2026 | <strong>Last Updated:</strong> February 11, 2026
+                </div>
+
+                <h2>1. Overview</h2>
+                <p>This Billing Policy explains the payment terms, subscription management, and account status procedures for Trade Master CRM, operated by <strong>ACVOLT Tech School Inc.</strong>, in compliance with California state regulations.</p>
+
+                <h2>2. Subscription Plans</h2>
+                <table>
+                    <tr><th>Plan</th><th>Monthly Fee</th><th>Client Limit</th><th>Features</th></tr>
+                    <tr><td>Free</td><td>$0</td><td><strong>10 clients</strong></td><td>Basic features, limited users</td></tr>
+                    <tr><td>Professional</td><td>$149.99/month</td><td><strong>50 clients</strong></td><td>Full features, up to 10 users</td></tr>
+                    <tr><td>Enterprise</td><td>$299.00/month</td><td><strong>Unlimited</strong></td><td>Unlimited users, priority support</td></tr>
+                </table>
+
+                <div class="warning">
+                    <h3>⚠️ Client Limits</h3>
+                    <p><strong>Free Plan:</strong> Once you reach 10 clients, you must upgrade to Professional to add more clients.</p>
+                    <p><strong>Professional Plan:</strong> Once you reach 50 clients, you must upgrade to Enterprise to add more clients.</p>
+                    <p><strong>Enterprise Plan:</strong> Unlimited clients.</p>
+                </div>
+
+                <h2>3. Payment Terms</h2>
+                <ul>
+                    <li>All fees are charged in U.S. Dollars (USD)</li>
+                    <li>Subscriptions are billed <strong>monthly in advance</strong></li>
+                    <li>Payment is processed automatically on your billing date</li>
+                    <li>We accept major credit cards (Visa, Mastercard, American Express, Discover)</li>
+                    <li>Payments are processed securely through Stripe</li>
+                </ul>
+
+                <h2>4. Automatic Renewal</h2>
+                <p>Your subscription will automatically renew each month unless you cancel before your next billing date. You will receive an email reminder 7 days before each renewal.</p>
+
+                <div class="success">
+                    <h3>✅ NO LATE FEES</h3>
+                    <p><strong>We do NOT charge any late payment fees.</strong> If your payment fails, you will have a grace period to update your payment information without any additional charges.</p>
+                </div>
+
+                <h2>5. Payment Failure Process</h2>
+                <p>If your automatic payment fails (declined card, insufficient funds, expired card), the following process applies:</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#22c55e">1</div>
+                        <div class="timeline-content">
+                            <h4>Day 0 - Payment Fails</h4>
+                            <p>We attempt to process your payment. If it fails, you receive an email notification with instructions to update your payment method.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#f59e0b">2</div>
+                        <div class="timeline-content">
+                            <h4>Day 1-3 - Grace Period</h4>
+                            <p><strong>You have 3 days of full access</strong> to update your payment information. No late fees are charged. We will send daily reminder emails.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#ef4444">3</div>
+                        <div class="timeline-content">
+                            <h4>Day 4 - Account Locked</h4>
+                            <p><strong>After 3 days, your account will be locked.</strong> You will not be able to access the CRM until the payment issue is resolved.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger">
+                    <h3>🔒 Account Locked Notice</h3>
+                    <p>If your account is locked due to payment failure, you will see a message when trying to log in:</p>
+                    <p style="background:#1f2937;color:white;padding:1rem;border-radius:0.5rem;margin-top:0.5rem;text-align:center;">
+                        <strong>"Your account has been suspended due to payment issues.<br>Please call Technical Support to restore access."</strong>
+                    </p>
+                </div>
+
+                <h2>6. How to Restore Your Account</h2>
+                <p>To restore a locked account, you must:</p>
+                <ol>
+                    <li><strong>Call Technical Support</strong> at the number provided in your suspension email</li>
+                    <li>Verify your account information</li>
+                    <li>Update your payment method with a valid card</li>
+                    <li>Pay the outstanding balance</li>
+                    <li>Your account will be restored immediately after successful payment</li>
+                </ol>
+
+                <div class="highlight">
+                    <p><strong>📞 Technical Support:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="463533363629343206272530292a323223252e6825292b">[email&#160;protected]</a></p>
+                    <p>Support hours: Monday - Friday, 8:00 AM - 6:00 PM PST</p>
+                </div>
+
+                <h2>7. Cancellation Policy</h2>
+                <h3>7.1 How to Cancel</h3>
+                <p>You may cancel your subscription at any time by:</p>
+                <ul>
+                    <li>Going to Account Settings → Subscription → Cancel</li>
+                    <li>Emailing <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="473432373728353307262431282b333322242f6924282a">[email&#160;protected]</a></li>
+                    <li>Calling Technical Support</li>
+                </ul>
+
+                <h3>7.2 Effect of Cancellation</h3>
+                <ul>
+                    <li>Access continues until the end of your current billing period</li>
+                    <li>No further charges will be made</li>
+                    <li>You can export your data before the end of your subscription</li>
+                    <li>After cancellation, data is retained for 30 days then deleted</li>
+                </ul>
+
+                <h2>8. Refund Policy</h2>
+                <table>
+                    <tr><th>Situation</th><th>Refund</th></tr>
+                    <tr><td>Monthly subscription (partial month)</td><td>No refund</td></tr>
+                    <tr><td>Billing error (verified)</td><td>Full refund within 30 days</td></tr>
+                    <tr><td>Duplicate charge</td><td>Full refund of duplicate</td></tr>
+                    <tr><td>Service unavailable >24 hours</td><td>Pro-rata credit</td></tr>
+                    <tr><td>First 7 days dissatisfaction</td><td>Full refund upon request</td></tr>
+                </table>
+
+                <h2>9. Price Changes</h2>
+                <p>We may change subscription prices with <strong>30 days advance notice</strong>. You will receive an email notification before any price change takes effect. If you do not agree with the new pricing, you may cancel before the change.</p>
+
+                <h2>10. California Consumer Rights</h2>
+                <p>As a California consumer, you are protected by:</p>
+                <ul>
+                    <li><strong>California Consumer Privacy Act (CCPA)</strong> - Right to know, delete, and opt-out</li>
+                    <li><strong>Automatic Renewal Law</strong> - Clear disclosure of renewal terms</li>
+                    <li><strong>Consumer Legal Remedies Act</strong> - Protection against unfair practices</li>
+                </ul>
+
+                <h2>11. Contact Information</h2>
+                <p>For billing questions or payment issues:</p>
+                <p><strong>ACVOLT Tech School Inc.</strong><br>
+                Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8ffcfaffffe0fdfbcfeeecf9e0e3fbfbeaece7a1ece0e2">[email&#160;protected]</a><br>
+                Website: <a href="https://acvolttech.com">https://acvolttech.com</a><br>
+                Location: San Bernardino, California, USA</p>
+
+                <p style="text-align:center;margin-top:2rem;color:#6b7280;">© 2026 ACVOLT Tech School Inc. All rights reserved.</p>
+            </div>
+
+            <!-- SPANISH VERSION -->
+            <div id="content-es" class="lang-content">
+                <div class="effective-date">
+                    <strong>Fecha de Vigencia:</strong> 11 de febrero de 2026 | <strong>Última Actualización:</strong> 11 de febrero de 2026
+                </div>
+
+                <h2>1. Resumen</h2>
+                <p>Esta Política de Facturación explica los términos de pago, gestión de suscripciones y procedimientos de estado de cuenta para Trade Master CRM, operado por <strong>ACVOLT Tech School Inc.</strong>, en cumplimiento con las regulaciones del estado de California.</p>
+
+                <h2>2. Planes de Suscripción</h2>
+                <table>
+                    <tr><th>Plan</th><th>Tarifa Mensual</th><th>Límite de Clientes</th><th>Características</th></tr>
+                    <tr><td>Gratis</td><td>$0</td><td><strong>10 clientes</strong></td><td>Funciones básicas, usuarios limitados</td></tr>
+                    <tr><td>Profesional</td><td>$149.99/mes</td><td><strong>50 clientes</strong></td><td>Funciones completas, hasta 10 usuarios</td></tr>
+                    <tr><td>Enterprise</td><td>$299.00/mes</td><td><strong>Ilimitado</strong></td><td>Usuarios ilimitados, soporte prioritario</td></tr>
+                </table>
+
+                <div class="warning">
+                    <h3>⚠️ Límites de Clientes</h3>
+                    <p><strong>Plan Gratis:</strong> Una vez que llegue a 10 clientes, debe actualizar a Profesional para agregar más clientes.</p>
+                    <p><strong>Plan Profesional:</strong> Una vez que llegue a 50 clientes, debe actualizar a Enterprise para agregar más clientes.</p>
+                    <p><strong>Plan Enterprise:</strong> Clientes ilimitados.</p>
+                </div>
+
+                <h2>3. Términos de Pago</h2>
+                <ul>
+                    <li>Todas las tarifas se cobran en Dólares Estadounidenses (USD)</li>
+                    <li>Las suscripciones se facturan <strong>mensualmente por adelantado</strong></li>
+                    <li>El pago se procesa automáticamente en su fecha de facturación</li>
+                    <li>Aceptamos tarjetas de crédito principales (Visa, Mastercard, American Express, Discover)</li>
+                    <li>Los pagos se procesan de forma segura a través de Stripe</li>
+                </ul>
+
+                <h2>4. Renovación Automática</h2>
+                <p>Su suscripción se renovará automáticamente cada mes a menos que cancele antes de su próxima fecha de facturación. Recibirá un correo de recordatorio 7 días antes de cada renovación.</p>
+
+                <div class="success">
+                    <h3>✅ SIN CARGOS POR PAGO TARDÍO</h3>
+                    <p><strong>NO cobramos cargos por pago tardío (late fees).</strong> Si su pago falla, tendrá un período de gracia para actualizar su información de pago sin cargos adicionales.</p>
+                </div>
+
+                <h2>5. Proceso de Falla de Pago</h2>
+                <p>Si su pago automático falla (tarjeta rechazada, fondos insuficientes, tarjeta vencida), se aplica el siguiente proceso:</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#22c55e">1</div>
+                        <div class="timeline-content">
+                            <h4>Día 0 - Falla el Pago</h4>
+                            <p>Intentamos procesar su pago. Si falla, recibe un correo con instrucciones para actualizar su método de pago.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#f59e0b">2</div>
+                        <div class="timeline-content">
+                            <h4>Día 1-3 - Período de Gracia</h4>
+                            <p><strong>Tiene 3 días con acceso completo</strong> para actualizar su información de pago. No se cobran cargos tardíos. Enviaremos correos de recordatorio diarios.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:#ef4444">3</div>
+                        <div class="timeline-content">
+                            <h4>Día 4 - Cuenta Bloqueada</h4>
+                            <p><strong>Después de 3 días, su cuenta será bloqueada.</strong> No podrá acceder al CRM hasta que se resuelva el problema de pago.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger">
+                    <h3>🔒 Aviso de Cuenta Bloqueada</h3>
+                    <p>Si su cuenta está bloqueada por falla de pago, verá un mensaje al intentar iniciar sesión:</p>
+                    <p style="background:#1f2937;color:white;padding:1rem;border-radius:0.5rem;margin-top:0.5rem;text-align:center;">
+                        <strong>"Su cuenta ha sido suspendida por problemas de pago.<br>Por favor llame a Soporte Técnico para restaurar el acceso."</strong>
+                    </p>
+                </div>
+
+                <h2>6. Cómo Restaurar Su Cuenta</h2>
+                <p>Para restaurar una cuenta bloqueada, debe:</p>
+                <ol>
+                    <li><strong>Llamar a Soporte Técnico</strong> al número proporcionado en su correo de suspensión</li>
+                    <li>Verificar la información de su cuenta</li>
+                    <li>Actualizar su método de pago con una tarjeta válida</li>
+                    <li>Pagar el saldo pendiente</li>
+                    <li>Su cuenta se restaurará inmediatamente después del pago exitoso</li>
+                </ol>
+
+                <div class="highlight">
+                    <p><strong>📞 Soporte Técnico:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8ffcfaffffe0fdfbcfeeecf9e0e3fbfbeaece7a1ece0e2">[email&#160;protected]</a></p>
+                    <p>Horario de soporte: Lunes - Viernes, 8:00 AM - 6:00 PM PST</p>
+                </div>
+
+                <h2>7. Política de Cancelación</h2>
+                <h3>7.1 Cómo Cancelar</h3>
+                <p>Puede cancelar su suscripción en cualquier momento:</p>
+                <ul>
+                    <li>Yendo a Configuración de Cuenta → Suscripción → Cancelar</li>
+                    <li>Enviando correo a <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="86f5f3f6f6e9f4f2c6e7e5f0e9eaf2f2e3e5eea8e5e9eb">[email&#160;protected]</a></li>
+                    <li>Llamando a Soporte Técnico</li>
+                </ul>
+
+                <h3>7.2 Efecto de la Cancelación</h3>
+                <ul>
+                    <li>El acceso continúa hasta el final de su período de facturación actual</li>
+                    <li>No se realizarán más cargos</li>
+                    <li>Puede exportar sus datos antes del final de su suscripción</li>
+                    <li>Después de la cancelación, los datos se retienen por 30 días y luego se eliminan</li>
+                </ul>
+
+                <h2>8. Política de Reembolso</h2>
+                <table>
+                    <tr><th>Situación</th><th>Reembolso</th></tr>
+                    <tr><td>Suscripción mensual (mes parcial)</td><td>Sin reembolso</td></tr>
+                    <tr><td>Error de facturación (verificado)</td><td>Reembolso completo dentro de 30 días</td></tr>
+                    <tr><td>Cargo duplicado</td><td>Reembolso completo del duplicado</td></tr>
+                    <tr><td>Servicio no disponible >24 horas</td><td>Crédito prorrateado</td></tr>
+                    <tr><td>Primeros 7 días insatisfacción</td><td>Reembolso completo bajo solicitud</td></tr>
+                </table>
+
+                <h2>9. Cambios de Precio</h2>
+                <p>Podemos cambiar los precios de suscripción con <strong>30 días de aviso anticipado</strong>. Recibirá una notificación por correo antes de que cualquier cambio de precio entre en efecto. Si no está de acuerdo con el nuevo precio, puede cancelar antes del cambio.</p>
+
+                <h2>10. Derechos del Consumidor de California</h2>
+                <p>Como consumidor de California, está protegido por:</p>
+                <ul>
+                    <li><strong>Ley de Privacidad del Consumidor de California (CCPA)</strong> - Derecho a saber, eliminar y optar por no participar</li>
+                    <li><strong>Ley de Renovación Automática</strong> - Divulgación clara de términos de renovación</li>
+                    <li><strong>Ley de Remedios Legales del Consumidor</strong> - Protección contra prácticas injustas</li>
+                </ul>
+
+                <h2>11. Información de Contacto</h2>
+                <p>Para preguntas de facturación o problemas de pago:</p>
+                <p><strong>ACVOLT Tech School Inc.</strong><br>
+                Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1a696f6a6a75686e5a7b796c75766e6e7f797234797577">[email&#160;protected]</a><br>
+                Sitio Web: <a href="https://acvolttech.com">https://acvolttech.com</a><br>
+                Ubicación: 
