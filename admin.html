@@ -250,7 +250,7 @@
                         <button class="btn-sm btn-refresh" onclick="filterCompanies('profesional')">Pro</button>
                         <button class="btn-sm btn-refresh" onclick="filterCompanies('enterprise')">Enterprise</button>
                     </div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Acciones</th></tr></thead><tbody id="tbody"></tbody></table></div>
+                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Empleados</th><th>Acciones</th></tr></thead><tbody id="tbody"></tbody></table></div>
                 </div>
             </div>
         </div>
@@ -493,8 +493,31 @@ async function refreshAll() {
 async function loadCompanies() {
     var res = await db.from('companies').select('*').order('created_at', {ascending:false});
     companies = res.data || [];
+    await loadEmployeeCounts();
     renderCompanies(companies);
     renderRecentCompanies();
+}
+
+var employeeCounts = {};
+
+async function loadEmployeeCounts() {
+    employeeCounts = {};
+    
+    // Cargar técnicos
+    var res1 = await db.from('technicians').select('company_id');
+    if (res1.data) {
+        res1.data.forEach(t => {
+            if (t.company_id) employeeCounts[t.company_id] = (employeeCounts[t.company_id] || 0) + 1;
+        });
+    }
+    
+    // Cargar team_users
+    var res2 = await db.from('team_users').select('company_id');
+    if (res2.data) {
+        res2.data.forEach(u => {
+            if (u.company_id) employeeCounts[u.company_id] = (employeeCounts[u.company_id] || 0) + 1;
+        });
+    }
 }
 
 async function loadTickets() {
@@ -563,18 +586,22 @@ function updateDashboard() {
 
 function renderCompanies(list) {
     var tb = document.getElementById('tbody');
-    if (!list.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">No hay empresas</td></tr>'; return; }
-    tb.innerHTML = list.map(c => `<tr>
+    if (!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay empresas</td></tr>'; return; }
+    tb.innerHTML = list.map(c => {
+        var empCount = employeeCounts[c.id] || 0;
+        return `<tr>
         <td><div class="user-card"><div class="avatar">${initials(c.name)}</div><div><h4>${c.name||'Sin nombre'}</h4><small>${c.email||''}</small></div></div></td>
         <td>${c.phone||'-'}</td>
         <td>${fmtDate(c.created_at)}</td>
         <td><span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></td>
+        <td><span class="badge b-blue">👷 ${empCount}</span></td>
         <td><div class="actions">
             <button class="act" onclick="viewCompany('${c.id}')" title="Ver">👁</button>
             <button class="act" onclick="openResetForCompany('${c.id}')" title="Reset Pass">🔑</button>
             <button class="act danger" onclick="openDelete('company','${c.id}','${c.name}')" title="Eliminar">🗑️</button>
         </div></td>
-    </tr>`).join('');
+    </tr>`;
+    }).join('');
 }
 
 function renderRecentCompanies() {
@@ -868,6 +895,76 @@ async function saveNewAdmin() {
     closeModal('modalAddAdmin');
     loadAdmins();
     alert('✅ Admin creado');
+}
+
+var editingAdminId = null;
+
+function editAdmin(id) {
+    var admin = adminUsers.find(a => a.id === id);
+    if (!admin) return;
+    editingAdminId = id;
+    
+    var modal = document.createElement('div');
+    modal.className = 'modal-bg show';
+    modal.id = 'modalEditAdmin';
+    modal.innerHTML = `
+        <div class="modal" style="max-width:500px">
+            <div class="modal-head"><h3>✏️ Editar Admin</h3><button class="modal-close" onclick="closeModal('modalEditAdmin')">×</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Nombre</label><input type="text" id="editAdminName" value="${admin.name}"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="editAdminEmail" value="${admin.email}"></div>
+                <div class="form-group"><label>Nueva Contraseña (dejar vacío para no cambiar)</label><input type="text" id="editAdminPass" placeholder="Nueva contraseña"></div>
+                <div class="form-group"><label>Rol</label>
+                    <select id="editAdminRole">
+                        <option value="support" ${admin.role==='support'?'selected':''}>👁️ Soporte</option>
+                        <option value="admin" ${admin.role==='admin'?'selected':''}>⚙️ Admin</option>
+                        <option value="super_admin" ${admin.role==='super_admin'?'selected':''}>👑 Super Admin</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Estado</label>
+                    <select id="editAdminStatus">
+                        <option value="true" ${admin.is_active?'selected':''}>✅ Activo</option>
+                        <option value="false" ${!admin.is_active?'selected':''}>⛔ Inactivo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalEditAdmin')">Cancelar</button>
+                <button class="btn btn-sm btn-success" onclick="saveEditAdmin()">💾 Guardar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function saveEditAdmin() {
+    if (!editingAdminId) return;
+    var name = document.getElementById('editAdminName').value.trim();
+    var email = document.getElementById('editAdminEmail').value.trim().toLowerCase();
+    var pass = document.getElementById('editAdminPass').value;
+    var role = document.getElementById('editAdminRole').value;
+    var isActive = document.getElementById('editAdminStatus').value === 'true';
+    
+    var updateData = { name: name, email: email, role: role, is_active: isActive };
+    if (pass && pass.length >= 4) updateData.password_hash = pass;
+    
+    await db.from('admin_users').update(updateData).eq('id', editingAdminId);
+    await logActivity('update', 'admin_user', editingAdminId, name);
+    
+    closeModal('modalEditAdmin');
+    document.getElementById('modalEditAdmin').remove();
+    editingAdminId = null;
+    loadAdmins();
+    
+    // Si editó su propia cuenta, actualizar header
+    if (currentAdmin && currentAdmin.id === editingAdminId) {
+        currentAdmin.name = name;
+        currentAdmin.role = role;
+        document.getElementById('currentUserName').textContent = name;
+        document.getElementById('currentUserRole').textContent = getRoleName(role);
+    }
+    
+    alert('✅ Admin actualizado');
 }
 
 // ========== NOTIFICATIONS ==========
