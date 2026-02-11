@@ -252,6 +252,7 @@
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_system">Sistema</span>
             <a href="#" onclick="showSection('team')" class="nav-link"><span>👥</span> Usuarios y Equipo</a>
+            <a href="#" onclick="showSection('hr')" class="nav-link"><span>🛡️</span> Recursos Humanos</a>
             <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> <span data-i18n="nav_settings">Configuración</span></a>
           </div>
         </nav>
@@ -2722,6 +2723,11 @@
             </div>
           </div>
 
+          <!-- ===== RECURSOS HUMANOS / HR ===== -->
+          <div id="hr-section" class="section">
+            <div id="hrMainContent"></div>
+          </div>
+
           <div id="settings-section" class="section">
             <div class="card">
               <h3>Configuración de la Empresa</h3>
@@ -4250,11 +4256,11 @@
           </div>
         </a>
         
-        <a href="mailto:trademastersusacrm@gmail.com?subject=Soporte%20Trade%20Master%20CRM" class="support-option">
+        <a href="/cdn-cgi/l/email-protection#5f2b2d3e3b3a323e2c2b3a2d2c2a2c3e3c2d321f38323e3633713c3032602c2a3d353a3c2b620c302f302d2b3a7a6d6f0b2d3e3b3a7a6d6f123e2c2b3a2d7a6d6f1c0d12" class="support-option">
           <span class="support-option-icon" style="background:#dbeafe;color:#1d4ed8;">📧</span>
           <div>
             <strong>Enviar Email</strong>
-            <small>trademastersusacrm@gmail.com</small>
+            <small><span class="__cf_email__" data-cfemail="c1b5b3a0a5a4aca0b2b5a4b3b2b4b2a0a2b3ac81a6aca0a8adefa2aeac">[email&#160;protected]</span></small>
           </div>
         </a>
         
@@ -4412,7 +4418,7 @@
       }
     </style>
 
-    <script src="script.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="script.js"></script>
     <script>
       // Format phone number as user types
       function formatPhone(input) {
@@ -4537,14 +4543,4 @@
                     });
                 }
             } else {
-                alert('❌ Las contraseñas no coinciden. Intenta de nuevo.');
-                showResetPasswordForm();
-            }
-        } else if (newPass) {
-            alert('❌ La contraseña debe tener al menos 6 caracteres.');
-            showResetPasswordForm();
-        }
-      }
-    </script>
-  </body>
-</html>
+                alert('❌
