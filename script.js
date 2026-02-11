@@ -3,65 +3,25 @@ var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
 var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== ONBOARDING EMAIL FUNCTION (RESEND API) =====
+// ===== ONBOARDING EMAIL FUNCTION (VIA SUPABASE EDGE FUNCTION) =====
 async function sendOnboardingEmail(companyData) {
-  var RESEND_API_KEY = 're_8Z57LwfK_HkLnQb9bsP8w5irqepdHvQMb';
-  var PDF_URL = 'https://acvolttech.github.io/trademaster-crm/TradeMaster_Manual_Onboarding.pdf';
-  
-  var firstName = (companyData.owner_name || companyData.name || 'Empresario').split(' ')[0];
-  
-  var htmlContent = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>' +
-    '<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">' +
-    '<div style="max-width:600px;margin:0 auto;background:#ffffff;">' +
-    '<div style="background:linear-gradient(135deg,#1e3a5f 0%,#2d4a6f 100%);padding:40px 30px;text-align:center;">' +
-    '<h1 style="color:#ffffff;margin:0;font-size:28px;">🏠 Trade Master CRM</h1>' +
-    '<p style="color:#94a3b8;margin:10px 0 0 0;font-size:14px;">El CRM diseñado para contratistas de HVAC</p></div>' +
-    '<div style="padding:40px 30px;">' +
-    '<h2 style="color:#1e3a5f;margin:0 0 20px 0;font-size:24px;">¡Bienvenido a la familia, ' + firstName + '! 🎉</h2>' +
-    '<p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px 0;">Nos da mucho gusto que <strong>' + companyData.name + '</strong> haya decidido confiar en Trade Master CRM para llevar su negocio al siguiente nivel.</p>' +
-    '<p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px 0;">Tu cuenta ya está activa y lista para usar. Para ayudarte a comenzar, te hemos preparado un <strong>Manual Completo de Onboarding</strong> con todo lo que necesitas saber.</p>' +
-    '<div style="text-align:center;margin:35px 0;"><a href="' + PDF_URL + '" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:8px;font-weight:bold;font-size:16px;">📄 Descargar Manual de Onboarding</a></div>' +
-    '<p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px 0;">Este manual incluye:</p>' +
-    '<ul style="color:#374151;font-size:15px;line-height:1.8;margin:0 0 25px 0;padding-left:20px;">' +
-    '<li>✅ Guía paso a paso para comenzar</li>' +
-    '<li>✅ Explicación de los 23 módulos del sistema</li>' +
-    '<li>✅ Cómo agregar clientes y técnicos</li>' +
-    '<li>✅ Uso del GPS y despacho</li>' +
-    '<li>✅ Crear estimados y facturas</li>' +
-    '<li>✅ Configuración de tu empresa</li>' +
-    '<li>✅ Y mucho más...</li></ul>' +
-    '<div style="background:#eff6ff;border-radius:12px;padding:25px;margin:30px 0;text-align:center;">' +
-    '<p style="color:#1e3a5f;font-size:16px;margin:0 0 15px 0;font-weight:bold;">¿Listo para comenzar?</p>' +
-    '<a href="https://trademastersusa.org" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 35px;border-radius:8px;font-weight:bold;font-size:15px;">🚀 Acceder a Trade Master CRM</a></div>' +
-    '<div style="background:#fef3c7;border-left:4px solid #f97316;padding:20px;margin:25px 0;border-radius:0 8px 8px 0;">' +
-    '<p style="color:#92400e;font-size:15px;margin:0;font-weight:bold;">💬 ¿Necesitas ayuda?</p>' +
-    '<p style="color:#92400e;font-size:14px;margin:10px 0 0 0;line-height:1.6;">Estamos aquí para ti. Contáctanos en cualquier momento:<br>📧 trademastersusacrm@gmail.com<br>📞 (909) 639-0448<br>💬 WhatsApp: +1 909 639 0448</p></div>' +
-    '<p style="color:#374151;font-size:16px;line-height:1.6;margin:25px 0 0 0;">Gracias por confiar en nosotros. ¡Estamos emocionados de ser parte de tu éxito!</p>' +
-    '<p style="color:#1e3a5f;font-size:16px;margin:25px 0 0 0;"><strong>Mario Flores Corona</strong><br>' +
-    '<span style="color:#64748b;font-size:14px;">Fundador, Trade Master CRM</span><br>' +
-    '<span style="color:#64748b;font-size:14px;">Master Instructor | ACVOLT Tech School</span></p></div>' +
-    '<div style="background:#f8fafc;padding:25px 30px;text-align:center;border-top:1px solid #e5e7eb;">' +
-    '<p style="color:#64748b;font-size:13px;margin:0 0 10px 0;">© 2026 Trade Masters USA | <a href="https://trademastersusa.org" style="color:#f97316;text-decoration:none;">trademastersusa.org</a></p>' +
-    '<p style="color:#94a3b8;font-size:12px;margin:0;">Hecho con ❤️ para la comunidad HVAC hispana</p></div></div></body></html>';
-
   try {
-    var response = await fetch('https://api.resend.com/emails', {
+    var response = await fetch('https://ucowlcrddzukykbaitzt.supabase.co/functions/v1/send-onboarding-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + RESEND_API_KEY
+        'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify({
-        from: 'Trade Master CRM <onboarding@trademastersusa.org>',
-        to: [companyData.email],
-        subject: '🎉 ¡Bienvenido a Trade Master CRM, ' + firstName + '! - Tu Manual de Onboarding',
-        html: htmlContent
+        name: companyData.name,
+        email: companyData.email,
+        owner_name: companyData.owner_name
       })
     });
     
     var result = await response.json();
     
-    if (response.ok) {
+    if (result.success) {
       console.log('✅ Email de onboarding enviado a:', companyData.email);
       return true;
     } else {
