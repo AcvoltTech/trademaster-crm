@@ -102,6 +102,21 @@
                 <label>Contraseña</label>
                 <input type="password" id="loginPassword" placeholder="Contraseña" required>
               </div>
+              
+              <!-- Terms Checkbox for Login -->
+              <div style="margin:16px 0;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e5e7eb;">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:#374151;">
+                  <input type="checkbox" id="acceptTermsLogin" required style="margin-top:2px;width:18px;height:18px;accent-color:#1e3a5f;">
+                  <span>
+                    I accept the <a href="terms.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Terms</a>, 
+                    <a href="privacy.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Privacy</a>,
+                    <a href="billing.html" target="_blank" style="color:#1e3a5f;font-weight:600;">Billing</a> & 
+                    <a href="nda.html" target="_blank" style="color:#dc2626;font-weight:600;">NDA</a>.
+                    <br><span style="font-size:10px;color:#6b7280;">Acepto Términos, Privacidad, Facturación y NDA.</span>
+                  </span>
+                </label>
+              </div>
+              
               <button type="submit" class="btn-primary" id="loginBtn">Iniciar Sesión</button>
             </form>
             <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
@@ -4491,8 +4506,19 @@
         return true;
       }
       
+      // Validate login terms acceptance
+      function validateLoginTerms() {
+        var acceptTermsLogin = document.getElementById('acceptTermsLogin');
+        if (!acceptTermsLogin || !acceptTermsLogin.checked) {
+          alert('❌ Debes aceptar los Términos de Servicio, Política de Privacidad, Facturación y NDA para iniciar sesión.\n\nYou must accept the Terms of Service, Privacy Policy, Billing Policy and NDA to login.');
+          return false;
+        }
+        return true;
+      }
+      
       // Override form submission to add validation
       document.addEventListener('DOMContentLoaded', function() {
+        // Register form validation
         var form = document.getElementById('registerFormEl');
         if (form) {
           var originalSubmit = form.onsubmit;
@@ -4502,6 +4528,19 @@
               return false;
             }
             if (originalSubmit) return originalSubmit(e);
+          };
+        }
+        
+        // Login form validation - intercept login to check terms
+        var loginForm = document.querySelector('#loginForm form');
+        if (loginForm) {
+          var originalLoginSubmit = loginForm.onsubmit;
+          loginForm.onsubmit = function(e) {
+            if (!validateLoginTerms()) {
+              e.preventDefault();
+              return false;
+            }
+            if (originalLoginSubmit) return originalLoginSubmit(e);
           };
         }
       });
@@ -4759,6 +4798,152 @@
       // Global function to check limit (can be called from script.js)
       window.clientLimitCheck = canAddClient;
       window.showClientUpgradeModal = showUpgradeModal;
+
+      // ============================================================
+      // CLIENT LIMITS SYSTEM - COMPLETE INTEGRATION
+      // ============================================================
+
+      // Plan client limits configuration
+      var CLIENT_LIMITS = {
+        'free': 10,
+        'profesional': 50,
+        'enterprise': Infinity
+      };
+
+      // Check if current company can add more clients
+      async function checkClientLimit() {
+        try {
+          var companyId = localStorage.getItem('companyId') || (typeof currentCompany !== 'undefined' ? currentCompany?.id : null);
+          if (!companyId) return { canAdd: true, currentCount: 0, limit: 10, plan: 'free' };
+          
+          var companyRes = await sbClient.from('companies').select('plan').eq('id', companyId).single();
+          var plan = companyRes.data?.plan || 'free';
+          var limit = CLIENT_LIMITS[plan] || 10;
+          
+          var countRes = await sbClient.from('customers').select('id', { count: 'exact', head: true }).eq('company_id', companyId);
+          var currentCount = countRes.count || 0;
+          
+          return {
+            canAdd: currentCount < limit,
+            currentCount: currentCount,
+            limit: limit,
+            plan: plan,
+            remaining: Math.max(0, limit - currentCount)
+          };
+        } catch (error) {
+          console.error('Error checking client limit:', error);
+          return { canAdd: true, currentCount: 0, limit: 10, plan: 'free' };
+        }
+      }
+
+      // Show upgrade modal when limit is reached (enhanced version)
+      function showUpgradePlanModal(info) {
+        var currentCount = info.currentCount;
+        var limit = info.limit;
+        var plan = info.plan;
+        var nextPlan = plan === 'free' ? 'Professional' : 'Enterprise';
+        var nextPrice = plan === 'free' ? '$149.99/mes' : '$299/mes';
+        var nextLimit = plan === 'free' ? '50 clientes' : 'Ilimitados';
+        
+        var existingModal = document.getElementById('clientLimitModal');
+        if (existingModal) existingModal.remove();
+        
+        var modal = document.createElement('div');
+        modal.id = 'clientLimitModal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
+        
+        modal.innerHTML = `
+          <div style="background:white;border-radius:20px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+            <div style="background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:30px;text-align:center;color:white;">
+              <div style="font-size:60px;margin-bottom:10px;">🚀</div>
+              <h2 style="margin:0;font-size:1.6rem;font-weight:700;">¡Límite de Clientes Alcanzado!</h2>
+              <p style="margin:8px 0 0 0;opacity:0.9;font-size:0.95rem;">Client Limit Reached!</p>
+            </div>
+            <div style="padding:30px;">
+              <div style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;border:2px solid #f59e0b;">
+                <div style="font-size:3rem;font-weight:800;color:#92400e;">${currentCount} / ${limit}</div>
+                <div style="color:#b45309;font-weight:600;margin-top:4px;">Clientes Registrados</div>
+              </div>
+              <div style="text-align:center;margin-bottom:24px;">
+                <p style="color:#4b5563;font-size:1rem;line-height:1.6;margin:0;">
+                  Tu plan <strong style="color:#1e3a5f;text-transform:uppercase;">${plan}</strong> permite hasta 
+                  <strong style="color:#ea580c;">${limit} clientes</strong>.
+                </p>
+                <p style="color:#6b7280;font-size:0.9rem;margin-top:12px;">
+                  Actualiza a <strong style="color:#1e3a5f;">${nextPlan}</strong> para agregar hasta 
+                  <strong>${nextLimit}</strong>.
+                </p>
+              </div>
+              <div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e2e8f0;">
+                  <span style="color:#64748b;">Plan ${nextPlan}</span>
+                  <span style="font-weight:700;color:#1e3a5f;">${nextPrice}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                  <span style="color:#64748b;">Límite de clientes</span>
+                  <span style="font-weight:700;color:#22c55e;">${nextLimit}</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;">
+                <button onclick="closeClientLimitModal()" style="flex:1;padding:16px;background:#f1f5f9;color:#475569;border:none;border-radius:12px;font-weight:600;font-size:1rem;cursor:pointer;">
+                  Cancelar
+                </button>
+                <button onclick="contactForUpgrade()" style="flex:1;padding:16px;background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);color:white;border:none;border-radius:12px;font-weight:600;font-size:1rem;cursor:pointer;">
+                  ⬆️ Actualizar Plan
+                </button>
+              </div>
+              <p style="text-align:center;margin-top:20px;font-size:0.8rem;">
+                <a href="billing.html" target="_blank" style="color:#6b7280;text-decoration:none;">📄 Ver Política de Facturación</a>
+              </p>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) closeClientLimitModal();
+        });
+      }
+
+      function closeClientLimitModal() {
+        var modal = document.getElementById('clientLimitModal');
+        if (modal) modal.remove();
+      }
+
+      function contactForUpgrade() {
+        closeClientLimitModal();
+        alert('📞 Para actualizar tu plan, contacta a Soporte Técnico:\n\n📧 Email: support@acvolttech.com\n\n🌐 Website: acvolttech.com\n\nNuestro equipo te ayudará a actualizar tu plan inmediatamente.');
+      }
+
+      // Show remaining clients status in dashboard
+      async function showClientLimitStatus() {
+        var info = await checkClientLimit();
+        var statusHtml = '<div id="clientLimitStatus" style="background:' + (info.remaining <= 2 ? '#fef3c7' : '#dcfce7') + ';border:1px solid ' + (info.remaining <= 2 ? '#f59e0b' : '#22c55e') + ';border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+          '<div><span style="font-weight:600;color:#374151;">Clientes:</span> ' +
+          '<span style="color:' + (info.remaining <= 2 ? '#b45309' : '#166534') + ';font-weight:700;">' + info.currentCount + ' / ' + (info.limit === Infinity ? '∞' : info.limit) + '</span></div>' +
+          (info.remaining <= 5 && info.limit !== Infinity ? '<span style="font-size:0.8rem;color:#b45309;">⚠️ ' + info.remaining + ' restantes</span>' : '') +
+          '</div>';
+        
+        var existingStatus = document.getElementById('clientLimitStatus');
+        if (existingStatus) existingStatus.remove();
+        
+        var clientsSection = document.getElementById('clientsSection');
+        if (clientsSection) {
+          var header = clientsSection.querySelector('.section-header, h2');
+          if (header) {
+            header.insertAdjacentHTML('afterend', statusHtml);
+          }
+        }
+      }
+
+      // Export functions for global access
+      window.checkClientLimit = checkClientLimit;
+      window.showUpgradePlanModal = showUpgradePlanModal;
+      window.closeClientLimitModal = closeClientLimitModal;
+      window.showClientLimitStatus = showClientLimitStatus;
+      window.contactForUpgrade = contactForUpgrade;
+
+      console.log('✅ Trade Master CRM - Client Limits System loaded');
     </script>
 </body>
 </html>
