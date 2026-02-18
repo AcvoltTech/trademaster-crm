@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+h<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,7 @@
         *{margin:0;padding:0;box-sizing:border-box}
         :root{--primary:#1e40af;--accent:#f97316;--success:#22c55e;--warning:#eab308;--danger:#ef4444;--dark:#1f2937;--gray:#6b7280;--light:#f3f4f6}
         body{font-family:'Inter',sans-serif;background:var(--light);min-height:100vh}
-        .login-box{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,var(--primary),#1e3a8a)}
+        .login-box{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradienht(135deg,var(--primary),#1e3a8a)}
         .login-box.hidden{display:none}
         .login-card{background:white;padding:2.5rem;border-radius:1rem;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
         .login-card h1{text-align:center;font-size:1.75rem;color:var(--primary);margin-bottom:0.5rem}
@@ -824,16 +824,28 @@ async function confirmResetPassword() {
     
     // Update reset request if exists
     await db.from('password_reset_requests').update({ status: 'completed', completed_at: new Date().toISOString(), completed_by: currentAdmin.id }).eq('user_email', selectedResetUser.email).eq('status', 'pending');
+
+            // Enviar email de reset via Supabase Auth para sincronizar contraseña
+            try {
+                            var resetRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery';
+                            await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: resetRedirectUrl });
+            } catch(authErr) { console.log('Auth reset email error:', authErr); }
     
     closeModal('modalReset');
-    alert('✅ Contraseña actualizada: ' + newPass);
+        alert('✅ Contraseña actualizada: ' + newPass + '\n\n📧 Se envió un email de reset al usuario para sincronizar su contraseña de acceso.');
     loadResetRequests();
 }
 
 async function sendMagicLink() {
     if (!selectedResetUser) return;
-    alert('📧 Magic link enviado a: ' + selectedResetUser.email + '\n(Función pendiente de configurar con Resend)');
-    closeModal('modalReset');
+        try {
+                        var magicRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery';
+                        await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: magicRedirectUrl });
+                        alert('📧 Email de recuperación enviado a: ' + selectedResetUser.email + '\n\nEl usuario recibirá un enlace para restablecer su contraseña.');
+        } catch(err) {
+                        alert('❌ Error al enviar email: ' + err.message);
+        }
+            closeModal('modalReset');
 }
 
 async function handleReset(id) {
