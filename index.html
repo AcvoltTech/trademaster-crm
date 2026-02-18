@@ -4675,9 +4675,13 @@
             alert('❌ Error al enviar solicitud. Intenta de nuevo.');
             return;
           }
-          
+
+                      // Enviar email de reset via Supabase Auth
+
+                      var redirectUrl = window.location.origin + window.location.pathname + '#type-recovery';
+                      await sbClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
           closeForgotModal();
-          alert('✅ ¡Solicitud enviada!\n\nNuestro equipo de soporte revisará tu solicitud y te contactará pronto.\n\n📧 Revisa tu email en las próximas horas.');
+                      alert('✅ ¡Email enviado!\n\nTe hemos enviado un enlace para restablecer tu contraseña.\n\n📧 Revisa tu bandeja de entrada y sigue el enlace.');
           
         } catch (err) {
           console.error('Error:', err);
