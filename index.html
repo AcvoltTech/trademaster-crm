@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
         <meta name="description" content="Trade Master CRM - Sistema de gestión profesional para técnicos y empresas de HVAC, refrigeración y aire acondicionado. Administra clientes, estimados, facturas e inventario con asistente AI integrado.">
-        <meta name="keywords" content="CRM HVAC, Trade Master, gestión HVAC, técnicos aire acondicionado, refrigeración, estimados HVAC, facturación HVAC, CRM refrigeración">
+        <meta name="keywords" content="CRM HVAC, Trade Master, gestión HVAC, técnicos aire acondicionado, refrihgeración, estimados HVAC, facturación HVAC, CRM refrigeración">
         <meta name="author" content="AcvoltTech">
         <meta name="robots" content="index, follow">
         <link rel="canonical" href="https://acvolttech.github.io/trademaster-crm/">
@@ -4678,7 +4678,7 @@
 
                       // Enviar email de reset via Supabase Auth
 
-                      var redirectUrl = window.location.origin + window.location.pathname + '#type=recovery';
+                      var redirectUrl = window.location.origin + window.location.pathname;
                       await sbClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
           closeForgotModal();
                       alert('✅ ¡Email enviado!\n\nTe hemos enviado un enlace para restablecer tu contraseña.\n\n📧 Revisa tu bandeja de entrada y sigue el enlace.');
