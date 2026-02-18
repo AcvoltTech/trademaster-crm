@@ -171,7 +171,7 @@ h<!DOCTYPE html>
                 <input type="password" id="pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
             </div>
             <button class="btn" onclick="doLogin()">Entrar →</button>
-            <p style="text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem">Solo acceso autorizado</p>
+            <p style="text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem"><a href="#" onclick="showAdminForgotPassword();return false" style="color:var(--accent);text-decoration:none;font-size:0.85rem">🔑 ¿Olvidaste tu contraseña?</a></p>
         </div>
     </div>
 
@@ -481,6 +481,21 @@ async function doLogin() {
     startNotificationPolling();
 }
 
+        function showAdminForgotPassword() {
+                    var email = document.getElementById('em').value.trim();
+                    var html = '<div class="modal-bg" id="modalAdminForgot" style="display:flex"><div class="modal" style="max-width:450px"><div class="modal-head"><h3>🔑 Recuperar Contraseña</h3><button class="modal-close" onclick="document.getElementById(\'modalAdminForgot\').remove()">×</button></div><div class="modal-body"><p style="color:var(--gray);margin-bottom:1rem">Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p><div class="form-group"><label>📧 Email</label><input type="email" id="adminForgotEmail" value="' + email + '" placeholder="tu@email.com"></div><div style="display:flex;gap:0.5rem;margin-top:1rem"><button class="btn-sm" style="flex:1;background:var(--gray);color:white" onclick="document.getElementById(\'modalAdminForgot\').remove()">Cancelar</button><button class="btn-sm btn-primary" style="flex:1" onclick="submitAdminForgotPassword()">📧 Enviar Enlace</button></div></div></div></div>';
+                    document.body.insertAdjacentHTML('beforeend', html);
+        }
+        async function submitAdminForgotPassword() {
+                    var email = document.getElementById('adminForgotEmail').value.trim().toLowerCase();
+                    if (!email) { alert('Ingresa tu email'); return; }
+                    try {
+                                    await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery' });
+                                    document.getElementById('modalAdminForgot').remove();
+                                    alert('✅ ¡Email enviado!\n\n📧 Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.');
+                    } catch(err) { alert('❌ Error: ' + err.message); }
+        }
+    
 function showError(msg) { var e=document.getElementById('err'); e.textContent=msg; e.classList.add('show'); setTimeout(function(){e.classList.remove('show')},3000); }
 function doLogout() { logActivity('logout'); currentAdmin=null; document.getElementById('login').classList.remove('hidden'); document.getElementById('dash').classList.remove('active'); }
 
