@@ -1,4 +1,4 @@
-h<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -490,7 +490,7 @@ async function doLogin() {
                     var email = document.getElementById('adminForgotEmail').value.trim().toLowerCase();
                     if (!email) { alert('Ingresa tu email'); return; }
                     try {
-                                    await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery' });
+                                    await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname.replace('admin.html', '') });
                                     document.getElementById('modalAdminForgot').remove();
                                     alert('✅ ¡Email enviado!\n\n📧 Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.');
                     } catch(err) { alert('❌ Error: ' + err.message); }
@@ -842,7 +842,7 @@ async function confirmResetPassword() {
 
             // Enviar email de reset via Supabase Auth para sincronizar contraseña
             try {
-                            var resetRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery';
+                            var resetRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
                             await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: resetRedirectUrl });
             } catch(authErr) { console.log('Auth reset email error:', authErr); }
     
@@ -854,7 +854,7 @@ async function confirmResetPassword() {
 async function sendMagicLink() {
     if (!selectedResetUser) return;
         try {
-                        var magicRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '') + '#type=recovery';
+                        var magicRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
                         await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: magicRedirectUrl });
                         alert('📧 Email de recuperación enviado a: ' + selectedResetUser.email + '\n\nEl usuario recibirá un enlace para restablecer su contraseña.');
         } catch(err) {
