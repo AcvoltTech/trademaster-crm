@@ -4678,7 +4678,7 @@
 
                       // Enviar email de reset via Supabase Auth
 
-                      var redirectUrl = window.location.origin + window.location.pathname + '#type-recovery';
+                      var redirectUrl = window.location.origin + window.location.pathname + '#type=recovery';
                       await sbClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
           closeForgotModal();
                       alert('✅ ¡Email enviado!\n\nTe hemos enviado un enlace para restablecer tu contraseña.\n\n📧 Revisa tu bandeja de entrada y sigue el enlace.');
@@ -4704,7 +4704,7 @@
         if (newPass && newPass.length >= 6) {
             var confirmPass = prompt('Confirma tu nueva contraseña:');
             if (newPass === confirmPass) {
-                if (typeof sbClient !== 'undefined') {
+                if (typeof sbClient !== 'undefined') { var h = window.location.hash; if (h && h.includes('access_token')) { var params = new URLSearchParams(h.replace(/#/g, '&').substring(1)); var at = params.get('access_token'); var rt = params.get('refresh_token'); if (at && rt) { sbClient.auth.setSession({ access_token: at, refresh_token: rt }); } }
                     sbClient.auth.updateUser({ password: newPass }).then(function(result) {
                         if (result.error) {
                             alert('❌ Error: ' + result.error.message);
