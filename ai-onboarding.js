@@ -583,6 +583,7 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   }
 
   function doWalk(key) {
+    clearHL();
     const s = S[key];
     if (walkIdx >= s.walk.length) {
       walkIdx = -1;
@@ -602,7 +603,7 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
         { l: num < total ? '👉 Siguiente paso' : '✅ Listo', a:'wn_'+key }
       ]);
       speak(step.say);
-      if (step.hl) setTimeout(() => highlight(step.hl, 5500), 400);
+      if (step.hl) setTimeout(() => highlight(step.hl, 999999), 400);
     }, 900);
   }
 
