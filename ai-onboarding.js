@@ -7,6 +7,15 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
 (function() {
   'use strict';
 
+  function safeShowSection(key) {
+    try {
+      safeShowSection(key);
+    } catch(e) {
+      console.warn('AI Tour: showSection error for ' + key + ':', e.message);
+    }
+  }
+
+
   // ===== TRADE MASTER LOGO SVG (inline) =====
   const LOGO_SVG_36 = '<svg viewBox="0 0 120 120" width="36" height="36"><defs><clipPath id="aiL"><rect x="0" y="0" width="60" height="120"/></clipPath><clipPath id="aiR"><rect x="60" y="0" width="60" height="120"/></clipPath></defs><path d="M60 4 A56 56 0 0 0 60 116 Z" fill="#1e3a5f"/><path d="M60 4 A56 56 0 0 1 60 116 Z" fill="#7f1d1d"/><g clip-path="url(#aiL)"><line x1="38" y1="28" x2="38" y2="92" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="60" x2="58" y2="60" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="38" x2="54" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><line x1="54" y1="38" x2="22" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="45" r="2" fill="#93c5fd"/><circle cx="26" cy="75" r="2" fill="#93c5fd"/><circle cx="48" cy="45" r="2" fill="#93c5fd"/><circle cx="48" cy="75" r="2" fill="#93c5fd"/></g><g clip-path="url(#aiR)"><path d="M82 88 C82 88 68 72 68 58 C68 44 76 38 80 30 C80 30 82 44 88 48 C90 38 94 34 94 34 C94 34 100 50 100 62 C100 76 92 88 82 88 Z" fill="#f97316" opacity="0.9"/><path d="M82 88 C82 88 74 78 74 68 C74 58 78 52 82 46 C82 46 84 56 88 58 C88 52 92 48 92 48 C92 48 96 58 96 66 C96 78 88 88 82 88 Z" fill="#fbbf24" opacity="0.9"/><path d="M82 88 C82 88 78 82 78 76 C78 70 80 66 82 60 C84 66 86 70 86 76 C86 82 82 88 82 88 Z" fill="#fef3c7"/></g><line x1="60" y1="8" x2="60" y2="112" stroke="white" stroke-width="2" opacity="0.3"/><circle cx="60" cy="60" r="56" fill="none" stroke="white" stroke-width="1.5" opacity="0.15"/></svg>';
   const LOGO_SVG_32 = LOGO_SVG_36.replace(/width="36"/g,'width="32"').replace(/height="36"/g,'height="32"');
