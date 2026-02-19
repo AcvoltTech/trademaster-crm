@@ -3,18 +3,19 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
 
 /* ==================== AI ONBOARDING - TRADE MASTER CRM ==================== */
 /* Voice-guided, interactive tour with real highlights and conversational tone */
+/* v3 - Full Bilingual ES/EN with walk translations                          */
 
 (function() {
   'use strict';
 
+  // Fixed: was calling itself recursively, now correctly calls window.showSection
   function safeShowSection(key) {
     try {
-      safeShowSection(key);
+      if (typeof window.showSection === 'function') window.showSection(key);
     } catch(e) {
       console.warn('AI Tour: showSection error for ' + key + ':', e.message);
     }
   }
-
 
   // ===== TRADE MASTER LOGO SVG (inline) =====
   const LOGO_SVG_36 = '<svg viewBox="0 0 120 120" width="36" height="36"><defs><clipPath id="aiL"><rect x="0" y="0" width="60" height="120"/></clipPath><clipPath id="aiR"><rect x="60" y="0" width="60" height="120"/></clipPath></defs><path d="M60 4 A56 56 0 0 0 60 116 Z" fill="#1e3a5f"/><path d="M60 4 A56 56 0 0 1 60 116 Z" fill="#7f1d1d"/><g clip-path="url(#aiL)"><line x1="38" y1="28" x2="38" y2="92" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="60" x2="58" y2="60" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="38" x2="54" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><line x1="54" y1="38" x2="22" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="45" r="2" fill="#93c5fd"/><circle cx="26" cy="75" r="2" fill="#93c5fd"/><circle cx="48" cy="45" r="2" fill="#93c5fd"/><circle cx="48" cy="75" r="2" fill="#93c5fd"/></g><g clip-path="url(#aiR)"><path d="M82 88 C82 88 68 72 68 58 C68 44 76 38 80 30 C80 30 82 44 88 48 C90 38 94 34 94 34 C94 34 100 50 100 62 C100 76 92 88 82 88 Z" fill="#f97316" opacity="0.9"/><path d="M82 88 C82 88 74 78 74 68 C74 58 78 52 82 46 C82 46 84 56 88 58 C88 52 92 48 92 48 C92 48 96 58 96 66 C96 78 88 88 82 88 Z" fill="#fbbf24" opacity="0.9"/><path d="M82 88 C82 88 78 82 78 76 C78 70 80 66 82 60 C84 66 86 70 86 76 C86 82 82 88 82 88 Z" fill="#fef3c7"/></g><line x1="60" y1="8" x2="60" y2="112" stroke="white" stroke-width="2" opacity="0.3"/><circle cx="60" cy="60" r="56" fill="none" stroke="white" stroke-width="1.5" opacity="0.15"/></svg>';
@@ -136,7 +137,7 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     if (hlPointer) hlPointer.style.opacity = '0';
   }
 
-  // ===== SECTION KNOWLEDGE =====
+  // ===== SECTION KNOWLEDGE (SPANISH - master copy with hl selectors) =====
   const S = {
     dashboard: {
       icon:'📊', title:'Tablero',
@@ -332,36 +333,212 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     }
   };
 
-  // ===== ENGLISH TRANSLATIONS =====
+  // ===== ENGLISH TRANSLATIONS (with titles + walk steps) =====
   const EN = {
-    dashboard: { hi:'Good morning! Welcome to the Dashboard, your Command Center.', explain:'From here you can see your entire business in real time. You have cards showing jobs won, active service calls, salespeople and technicians in the field. Below there is a live operations map, the employee clock in and out system, and your estimates pipeline.' },
-    leads: { hi:'Now let\'s go to Leads!', explain:'Here you register people who call asking for service or a quote but are not confirmed clients yet. The goal is to follow up and convert them into won jobs. Each lead is potential money.' },
-    servicecalls: { hi:'Now Service Calls!', explain:'Here you control all emergency and service calls. Each call is tracked from when it comes in until it is completed. You can assign a technician, set the urgency, and follow up.' },
-    dispatch: { hi:'Now Dispatch!', explain:'This is your coordination center. Here you see where all your technicians are on the map, assign them jobs, and set up your Dispatch Coordinator.' },
-    jobs: { hi:'This section is super important! Here you create professional estimates.', explain:'The system guides you in 5 steps to create an estimate. It has over 150 HVAC parts with prices. You select the equipment, service call, components, and it generates a professional PDF for the client.' },
-    technicians: { hi:'Now Technicians!', explain:'Here you manage your entire team. Each technician has a complete profile with photo, specialty, rate, certifications like EPA 608 and NATE, vehicle documents, and you can even generate a professional ID card.' },
-    advisors: { hi:'Now Home Advisors, your sales team!', explain:'Here you manage the salespeople who close new installation sales. The system has tiered commissions: 20 percent for profits over 10 thousand, 15 for 7 to 10, 10 for 5 to 7, and 5 percent for under 5 thousand.' },
-    clients: { hi:'The Clients database!', explain:'Each client has a complete file. Job history, estimates, invoices, internal notes, attachments, and communication records. Everything you need to know about each client in one place.' },
-    invoices: { hi:'Now Invoices!', explain:'Create professional invoices from a job or manually. The system calculates subtotal, discount, tax and total. You can filter by status and follow up on collection.' },
-    collections: { hi:'Collections! Here you make sure money comes in.', explain:'You see all invoices pending collection, overdue ones, and you can record payments. Check it every day so no collection slips through.' },
-    receipts: { hi:'Now Purchase Receipts!', explain:'Record every material receipt with photo, supplier, category and amount. You have pre-configured suppliers like Johnstone, Ferguson, Home Depot and more. At the end of the month export everything to CSV for your accountant.' },
-    expenses: { hi:'Business Expenses!', explain:'Here you record all fixed expenses: rent, insurance, licenses, vehicles, software. It tells you exactly how much it costs to operate your business each month. Key to knowing how much to charge.' },
-    mymoney: { hi:'My Money! This section is only for you as the owner.', explain:'Nobody else on your team can see this. Here you see your income, expenses, net profit and accounts receivable. Check it every week.' },
-    payroll: { hi:'Payroll!', explain:'Record hours worked, overtime, bonuses and deductions for each employee. In California overtime is after 8 hours per day, not 40 per week. The system calculates automatically.' },
-    mailbox: { hi:'Business Mail!', explain:'Record all important correspondence: insurance letters, government, suppliers, banks. Upload photo or PDF and never lose an important document.' },
-    marketing: { hi:'Marketing! Your marketing center.', explain:'You have direct access to all platforms: Facebook, Google, Yelp, Angi, HomeAdvisor, Thumbtack. You can also create campaigns and request reviews from satisfied clients. Reviews are gold for your business.' },
-    pricebook: { hi:'The Price Book!', explain:'Your catalog of over 150 HVAC components with prices. Also direct links to distributors like Ferguson, Johnstone, and US Air to compare prices and order parts.' },
-    reports: { hi:'Reports!', explain:'Generate reports on income, expenses, completed jobs and technician performance. Review them monthly to make better data-driven decisions.' },
-    team: { hi:'Users and Team!', explain:'Control who can access the CRM. 5 roles: Owner sees everything, Accounting sees finances, Coordinator sees operations, Technician only sees their jobs, and View Only just looks.' },
-    settings: { hi:'Finally, Settings!', explain:'Upload your logo, fill in company data, insurance and license documents, and customize legal clauses. Everything you put here appears on documents you send to clients.' }
+    dashboard: {
+      title:'Dashboard',
+      hi:'Good morning! Welcome to the Dashboard, your Command Center.',
+      explain:'From here you can see your entire business in real time. You have cards showing jobs won, active service calls, salespeople and technicians in the field. Below there is a live operations map, the employee clock in and out system, and your estimates pipeline.',
+      walk: [
+        { say:'Look at these cards at the top. Each one gives you a quick summary. You can click any of them to go directly to that section. And with the plus button you can create a new job super fast.' },
+        { say:'This is the Real-Time Operations Map. Green dots are available technicians, yellow ones are busy, purple are salespeople, and red are new jobs.' },
+        { say:'Here you have the clock in and out system. Select the technician, set their hourly rate, and when they arrive at the job hit Clock In. The system calculates how much they are earning throughout the day.' },
+        { say:'And this is the Estimates Pipeline. It shows you how many estimates you have open, approved, invoiced and collected. So you can see how much money is on the way.' },
+        { say:'Lastly, here you can create Service Plans, which are maintenance memberships for your clients. This generates recurring income every month.' }
+      ]
+    },
+    leads: {
+      title:'Leads',
+      hi:'Now let\'s go to Leads!',
+      explain:'Here you register people who call asking for service or a quote but are not confirmed clients yet. The goal is to follow up and convert them into won jobs. Each lead is potential money.',
+      walk: [
+        { say:'To add a new lead, click New Lead. It asks for the name, phone, email, what service they need, property type and address.' },
+        { say:'Here you see the list of all your leads. You can filter them by status: New, Contacted, Quoted, Won or Lost.' },
+        { say:'And this map shows you where all your leads are located. Super useful for planning your routes and grouping visits by area.' }
+      ]
+    },
+    servicecalls: {
+      title:'Service Calls',
+      hi:'Now Service Calls!',
+      explain:'Here you control all emergency and service calls. Each call is tracked from when it comes in until it is completed. You can assign a technician, set the urgency, and follow up.',
+      walk: [
+        { say:'These counters tell you at a glance how many calls you have that are New, Assigned, En Route and Completed today.' },
+        { say:'To register a new call, click New Call. Fill in the client name, phone, address and describe the problem. If it is an emergency set the urgency to red.' },
+        { say:'Calls appear as cards here. Each one shows the client, problem, urgency and assigned technician.' },
+        { say:'And below, the map shows calls by color: red is new, yellow is assigned, blue is en route, and green is completed.' }
+      ]
+    },
+    dispatch: {
+      title:'Dispatch',
+      hi:'Now Dispatch!',
+      explain:'This is your coordination center. Here you see where all your technicians are on the map, assign them jobs, and set up your Dispatch Coordinator.',
+      walk: [
+        { say:'Up here you configure the Coordinator. Add their name, photo, phone, email, license and shift. Click Edit to fill in their details.' },
+        { say:'And down here is the tracking link. Share it with your technicians so they can report their location from their phone.' }
+      ]
+    },
+    jobs: {
+      title:'Jobs & Estimates',
+      hi:'This section is super important! Here you create professional estimates.',
+      explain:'The system guides you in 5 steps to create an estimate. It has over 150 HVAC parts with prices. You select the equipment, service call, components, and it generates a professional PDF for the client.',
+      walk: [
+        { say:'Step 1: Select the job up here.' },
+        { say:'Step 2: Choose the equipment type. AC, Heat Pump, 80 or 90 percent Furnace, Mini Split, or Package Unit. Fill in the model, serial and brand.' },
+        { say:'Step 3: Select the Service Call based on distance: 70 dollars up to 10 miles, 120 up to 20 miles, 200 for farther, or a custom amount.' },
+        { say:'If the equipment is over 15 years old, the system suggests referring to the Home Advisor for a new installation. That could be a 10 to 20 thousand dollar sale.' },
+        { say:'At the end you have the summary with discount, tax and total. Generate the PDF and present it to the client.' }
+      ]
+    },
+    technicians: {
+      title:'Technicians',
+      hi:'Now Technicians!',
+      explain:'Here you manage your entire team. Each technician has a complete profile with photo, specialty, rate, certifications like EPA 608 and NATE, vehicle documents, and you can even generate a professional ID card.',
+      walk: [
+        { say:'Here you see all your technicians with their name, specialty and status.' },
+        { say:'In Credentials you upload each technician\'s certifications: driver\'s license, EPA 608, NATE, OSHA, HVAC Excellence and more. With expiration dates so nothing slips by.' },
+        { say:'You can generate a professional ID Card for each technician. That gives your company a great professional image.' }
+      ]
+    },
+    advisors: {
+      title:'Home Advisors',
+      hi:'Now Home Advisors, your sales team!',
+      explain:'Here you manage the salespeople who close new installation sales. The system has tiered commissions: 20 percent for profits over 10 thousand, 15 for 7 to 10, 10 for 5 to 7, and 5 percent for under 5 thousand.',
+      walk: [
+        { say:'You have 4 tabs. Sales Team shows your people. Assigned Leads are the prospects they have. Sales and Commissions is where you record closed sales. And Receipts is for reconciliation.' },
+        { say:'When you record a sale, the system automatically calculates the salesperson\'s commission based on net profit. Everything is transparent.' }
+      ]
+    },
+    clients: {
+      title:'Clients',
+      hi:'The Clients database!',
+      explain:'Each client has a complete file. Job history, estimates, invoices, internal notes, attachments, and communication records. Everything you need to know about each client in one place.',
+      walk: [
+        { say:'Here is the list of all your clients. You can search by name or phone. Click any of them to see their full profile.' },
+        { say:'Inside the profile you have tabs: General Info, Jobs, Estimates, Invoices, Notes, Files and Communications. It is like the complete client file.' }
+      ]
+    },
+    invoices: {
+      title:'Invoices',
+      hi:'Now Invoices!',
+      explain:'Create professional invoices from a job or manually. The system calculates subtotal, discount, tax and total. You can filter by status and follow up on collection.',
+      walk: [
+        { say:'The indicators at the top show you total invoiced, paid, pending and overdue.' },
+        { say:'To create a new invoice, click New Invoice. You can load data from a job or fill it in manually. Add line items, service call, discount and tax.' }
+      ]
+    },
+    collections: {
+      title:'Collections',
+      hi:'Collections! Here you make sure money comes in.',
+      explain:'You see all invoices pending collection, overdue ones, and you can record payments. Check it every day so no collection slips through.',
+      walk: [
+        { say:'Filter by overdue to prioritize the most urgent collections. Record each payment you receive to keep balances up to date.' }
+      ]
+    },
+    receipts: {
+      title:'Receipts',
+      hi:'Now Purchase Receipts!',
+      explain:'Record every material receipt with photo, supplier, category and amount. You have pre-configured suppliers like Johnstone, Ferguson, Home Depot and more. At the end of the month export everything to CSV for your accountant.',
+      walk: [
+        { say:'Take a photo of the receipt right away. Thermal receipts fade over time. Categorize properly so your accountant can deduct the expenses.' }
+      ]
+    },
+    expenses: {
+      title:'Business Expenses',
+      hi:'Business Expenses!',
+      explain:'Here you record all fixed expenses: rent, insurance, licenses, vehicles, software. It tells you exactly how much it costs to operate your business each month. Key to knowing how much to charge.',
+      walk: [
+        { say:'Categories are organized by type. Select the category, vendor, amount, payment frequency, and whether it is a fixed or variable expense.' }
+      ]
+    },
+    mymoney: {
+      title:'My Money',
+      hi:'My Money! This section is only for you as the owner.',
+      explain:'Nobody else on your team can see this. Here you see your income, expenses, net profit and accounts receivable. Check it every week.',
+      walk: [
+        { say:'The 4 indicators are Income, Expenses, Net Profit and Accounts Receivable. If expenses are higher than income, something needs to change fast.' }
+      ]
+    },
+    payroll: {
+      title:'Payroll',
+      hi:'Payroll!',
+      explain:'Record hours worked, overtime, bonuses and deductions for each employee. In California overtime is after 8 hours per day, not 40 per week. The system calculates automatically.',
+      walk: []
+    },
+    mailbox: {
+      title:'Business Mail',
+      hi:'Business Mail!',
+      explain:'Record all important correspondence: insurance letters, government, suppliers, banks. Upload photo or PDF and never lose an important document.',
+      walk: []
+    },
+    marketing: {
+      title:'Marketing',
+      hi:'Marketing! Your marketing center.',
+      explain:'You have direct access to all platforms: Facebook, Google, Yelp, Angi, HomeAdvisor, Thumbtack. You can also create campaigns and request reviews from satisfied clients. Reviews are gold for your business.',
+      walk: [
+        { say:'Click any platform to open it directly. You can also request reviews from clients on Google, Yelp, Facebook or Nextdoor.' }
+      ]
+    },
+    pricebook: {
+      title:'Price Book',
+      hi:'The Price Book!',
+      explain:'Your catalog of over 150 HVAC components with prices. Also direct links to distributors like Ferguson, Johnstone, and US Air to compare prices and order parts.',
+      walk: []
+    },
+    reports: {
+      title:'Reports',
+      hi:'Reports!',
+      explain:'Generate reports on income, expenses, completed jobs and technician performance. Review them monthly to make better data-driven decisions.',
+      walk: []
+    },
+    team: {
+      title:'Users & Team',
+      hi:'Users and Team!',
+      explain:'Control who can access the CRM. 5 roles: Owner sees everything, Accounting sees finances, Coordinator sees operations, Technician only sees their jobs, and View Only just looks.',
+      walk: [
+        { say:'The technician only sees their assigned jobs. They cannot see invoices or how much you earn. Accounting can see payroll but not the owner\'s My Money section.' }
+      ]
+    },
+    settings: {
+      title:'Settings',
+      hi:'Finally, Settings!',
+      explain:'Upload your logo, fill in company data, insurance and license documents, and customize legal clauses. Everything you put here appears on documents you send to clients.',
+      walk: [
+        { say:'The first thing you should do is upload your logo and fill in your company details. This appears on all estimates and invoices.' },
+        { say:'Upload Workers Comp, General Liability, W-9 and Bond. Many commercial companies require these before hiring you.' }
+      ]
+    }
   };
 
-  // Get text in current language
+  // ===== BILINGUAL HELPERS =====
+
+  /** Get hi/explain text in current language */
   function getContent(sectionKey, field) {
     if (currentLang === 'en' && EN[sectionKey] && EN[sectionKey][field]) {
       return EN[sectionKey][field];
     }
     return S[sectionKey][field];
+  }
+
+  /** Get title in current language */
+  function getTitle(sectionKey) {
+    if (currentLang === 'en' && EN[sectionKey] && EN[sectionKey].title) {
+      return EN[sectionKey].title;
+    }
+    return S[sectionKey].title;
+  }
+
+  /** Get walk steps: uses EN say text when available, always uses S hl selectors */
+  function getWalk(sectionKey) {
+    const sWalk = S[sectionKey].walk || [];
+    if (currentLang === 'en' && EN[sectionKey] && EN[sectionKey].walk && EN[sectionKey].walk.length) {
+      return sWalk.map(function(step, i) {
+        return {
+          say: (EN[sectionKey].walk[i] && EN[sectionKey].walk[i].say) ? EN[sectionKey].walk[i].say : step.say,
+          hl: step.hl
+        };
+      });
+    }
+    return sWalk;
   }
 
   const TOUR = ['dashboard','leads','servicecalls','dispatch','jobs','technicians','advisors','clients','invoices','collections','receipts','expenses','mymoney','payroll','mailbox','marketing','pricebook','reports','team','settings'];
@@ -375,25 +552,24 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   // ===== INIT =====
   function init() {
     createOverlays();
-    // CSS for highlight animation
-    const st = document.createElement('style');
+    var st = document.createElement('style');
     st.textContent = '@keyframes aiPulseHL{0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.5),0 0 20px 4px rgba(244,118,33,0.5)}50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.5),0 0 32px 8px rgba(244,118,33,0.9)}}';
     document.head.appendChild(st);
     createBtn();
     createPanel();
     initVoice();
-    console.log('✅ AI Tour Guide v2 — Voice + Highlight loaded');
+    console.log('✅ AI Tour Guide v3 — Full Bilingual ES/EN loaded');
   }
 
   function createBtn() {
-    const b = document.createElement('button');
+    var b = document.createElement('button');
     b.className = 'ai-float-btn';
     b.id = 'aiFloatBtn';
     b.innerHTML = LOGO_SVG_36;
     b.title = 'Asistente AI';
     b.onclick = toggle;
     if (!localStorage.getItem('tm_ai_v2')) {
-      const dot = document.createElement('div');
+      var dot = document.createElement('div');
       dot.className = 'ai-new-badge';
       b.appendChild(dot);
     }
@@ -401,41 +577,40 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   }
 
   function createPanel() {
-    const p = document.createElement('div');
+    var p = document.createElement('div');
     p.className = 'ai-chat-panel';
     p.id = 'aiChatPanel';
-    p.innerHTML = `
-      <div class="ai-chat-header">
-        <div class="ai-chat-header-left">
-          <div class="ai-chat-avatar">${LOGO_SVG_32}</div>
-          <div><h3>Trade Master AI</h3><small>Tu guía personal</small></div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button class="ai-voice-toggle" id="aiLangBtn" onclick="window._ai.switchLang()" title="Español / English">🇲🇽</button>
-          <button class="ai-voice-toggle" id="aiVoiceBtn" onclick="window._ai.toggleVoice()" title="Voz">🔊</button>
-          <button class="ai-chat-close" onclick="window._ai.toggle()">✕</button>
-        </div>
-      </div>
-      <div id="aiProgress" class="ai-tour-progress" style="display:none;">
-        <div class="ai-tour-progress-bar"><div class="ai-tour-progress-fill" id="aiFill" style="width:0%"></div></div>
-        <span class="ai-tour-progress-text" id="aiPText">0/${TOUR.length}</span>
-      </div>
-      <div class="ai-chat-messages" id="aiMsgs"></div>
-      <div class="ai-chat-input-area">
-        <input class="ai-chat-input" id="aiIn" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')window._ai.send()">
-        <button class="ai-chat-send" onclick="window._ai.send()">➤</button>
-      </div>`;
+    p.innerHTML = '<div class="ai-chat-header">' +
+      '<div class="ai-chat-header-left">' +
+        '<div class="ai-chat-avatar">' + LOGO_SVG_32 + '</div>' +
+        '<div><h3>Trade Master AI</h3><small>Tu gu\u00eda personal</small></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;align-items:center;">' +
+        '<button class="ai-voice-toggle" id="aiLangBtn" onclick="window._ai.switchLang()" title="Espa\u00f1ol / English">\ud83c\uddf2\ud83c\uddfd</button>' +
+        '<button class="ai-voice-toggle" id="aiVoiceBtn" onclick="window._ai.toggleVoice()" title="Voz">\ud83d\udd0a</button>' +
+        '<button class="ai-chat-close" onclick="window._ai.toggle()">\u2715</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="aiProgress" class="ai-tour-progress" style="display:none;">' +
+      '<div class="ai-tour-progress-bar"><div class="ai-tour-progress-fill" id="aiFill" style="width:0%"></div></div>' +
+      '<span class="ai-tour-progress-text" id="aiPText">0/' + TOUR.length + '</span>' +
+    '</div>' +
+    '<div class="ai-chat-messages" id="aiMsgs"></div>' +
+    '<div class="ai-chat-input-area">' +
+      '<input class="ai-chat-input" id="aiIn" placeholder="Escribe tu pregunta..." onkeydown="if(event.key===\'Enter\')window._ai.send()">' +
+      '<button class="ai-chat-send" onclick="window._ai.send()">\u27A4</button>' +
+    '</div>';
     document.body.appendChild(p);
   }
 
   // ===== TOGGLE =====
   function toggle() {
     isOpen = !isOpen;
-    const p = document.getElementById('aiChatPanel');
+    var p = document.getElementById('aiChatPanel');
     if (isOpen) {
       p.classList.add('open');
       localStorage.setItem('tm_ai_v2','1');
-      const dot = document.querySelector('.ai-new-badge');
+      var dot = document.querySelector('.ai-new-badge');
       if (dot) dot.remove();
       if (!document.getElementById('aiMsgs').children.length) welcome();
     } else {
@@ -444,28 +619,29 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     }
   }
 
-  // ===== WELCOME =====
+  // ===== WELCOME (bilingual) =====
   function welcome() {
-    const t = currentLang === 'en'
+    var isEN = currentLang === 'en';
+    var t = isEN
       ? 'Hi there! I am your Trade Master assistant. I am here to teach you every part of the CRM step by step. I will explain each section, show you where things are, and give you professional tips. What would you like to do?'
-      : '¡Hola, buen día! Soy tu asistente de Trade Master. Estoy aquí para enseñarte todo el CRM paso a paso. Te explico cada sección, te muestro dónde están las cosas, y te doy tips de profesional. ¿Qué hacemos?';
+      : '\u00a1Hola, buen d\u00eda! Soy tu asistente de Trade Master. Estoy aqu\u00ed para ense\u00f1arte todo el CRM paso a paso. Te explico cada secci\u00f3n, te muestro d\u00f3nde est\u00e1n las cosas, y te doy tips de profesional. \u00bfQu\u00e9 hacemos?';
     botMsg(t, [
-      { l: currentLang === 'en' ? '🎓 Full CRM Tour' : '🎓 Tour Completo del CRM', a:'startTour' },
-      { l: currentLang === 'en' ? '❓ Explain where I am' : '❓ Explícame dónde estoy', a:'explainHere' },
-      { l: currentLang === 'en' ? '📋 See all sections' : '📋 Ver todas las secciones', a:'categories' }
+      { l: isEN ? '\ud83c\udf93 Full CRM Tour' : '\ud83c\udf93 Tour Completo del CRM', a:'startTour' },
+      { l: isEN ? '\u2753 Explain where I am' : '\u2753 Expl\u00edcame d\u00f3nde estoy', a:'explainHere' },
+      { l: isEN ? '\ud83d\udccb See all sections' : '\ud83d\udccb Ver todas las secciones', a:'categories' }
     ]);
     speak(t);
   }
 
   // ===== MESSAGES =====
   function botMsg(text, btns) {
-    const c = document.getElementById('aiMsgs');
-    const d = document.createElement('div');
+    var c = document.getElementById('aiMsgs');
+    var d = document.createElement('div');
     d.className = 'ai-msg bot';
-    let h = text;
+    var h = text;
     if (btns && btns.length) {
       h += '<div class="ai-quick-actions">';
-      btns.forEach(b => { h += `<button class="ai-quick-btn" onclick="window._ai.act('${b.a}')">${b.l}</button>`; });
+      btns.forEach(function(b) { h += '<button class="ai-quick-btn" onclick="window._ai.act(\'' + b.a + '\')">' + b.l + '</button>'; });
       h += '</div>';
     }
     d.innerHTML = h;
@@ -474,8 +650,8 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   }
 
   function userMsg(text) {
-    const c = document.getElementById('aiMsgs');
-    const d = document.createElement('div');
+    var c = document.getElementById('aiMsgs');
+    var d = document.createElement('div');
     d.className = 'ai-msg user';
     d.textContent = text;
     c.appendChild(d);
@@ -483,99 +659,123 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   }
 
   function typing() {
-    const c = document.getElementById('aiMsgs');
-    const d = document.createElement('div');
+    var c = document.getElementById('aiMsgs');
+    var d = document.createElement('div');
     d.className = 'ai-typing';
     d.id = 'aiTyp';
     d.innerHTML = '<div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div>';
     c.appendChild(d);
     sb();
   }
-  function untyping() { const e = document.getElementById('aiTyp'); if(e) e.remove(); }
-  function sb() { const m = document.getElementById('aiMsgs'); setTimeout(() => m.scrollTop = m.scrollHeight, 100); }
+  function untyping() { var e = document.getElementById('aiTyp'); if(e) e.remove(); }
+  function sb() { var m = document.getElementById('aiMsgs'); setTimeout(function() { m.scrollTop = m.scrollHeight; }, 100); }
 
   // ===== SEND =====
   function send() {
-    const i = document.getElementById('aiIn');
-    const t = i.value.trim();
+    var i = document.getElementById('aiIn');
+    var t = i.value.trim();
     if (!t) return;
     i.value = '';
     userMsg(t);
     proc(t);
   }
 
+  // ===== PROCESS INPUT (bilingual) =====
   function proc(text) {
-    const q = text.toLowerCase();
-    if (q.match(/tour|recorrido|enseña|muestra todo|enséñame/)) { act('startTour'); return; }
-    if (q.match(/^(sí|si|yes|dale|va|órale|orale|siguiente|next|continuar|vamos|ándale)$/i) || q.match(/siguiente|next|continuar/)) {
+    var q = text.toLowerCase();
+    if (q.match(/tour|recorrido|ense\u00f1a|muestra todo|ens\u00e9\u00f1ame|show me everything|teach me/)) { act('startTour'); return; }
+    if (q.match(/^(s\u00ed|si|yes|dale|va|\u00f3rale|orale|siguiente|next|continuar|continue|vamos|\u00e1ndale|let's go|go ahead|keep going)$/i) || q.match(/siguiente|next|continuar|continue/)) {
       if (inTour) { tourNext(); return; }
-      if (walkIdx >= 0) return; // walkthrough in progress
+      if (walkIdx >= 0) return;
     }
-    if (q.match(/dónde estoy|donde estoy|qué es esto|que es esto|explica/)) { act('explainHere'); return; }
-    const found = findSec(q);
+    if (q.match(/d\u00f3nde estoy|donde estoy|qu\u00e9 es esto|que es esto|explica|where am i|what is this|explain this/)) { act('explainHere'); return; }
+    var found = findSec(q);
     if (found) { goExplain(found); return; }
-    const t = 'Claro, dime qué sección te interesa o puedo hacerte el tour completo.';
+    var isEN = currentLang === 'en';
+    var t = isEN
+      ? 'Sure, tell me which section interests you or I can give you the full tour.'
+      : 'Claro, dime qu\u00e9 secci\u00f3n te interesa o puedo hacerte el tour completo.';
     botMsg(t, [
-      { l:'🎓 Tour Completo', a:'startTour' },
-      { l:'❓ Dónde estoy', a:'explainHere' },
-      { l:'📋 Secciones', a:'categories' }
+      { l: isEN ? '\ud83c\udf93 Full Tour' : '\ud83c\udf93 Tour Completo', a:'startTour' },
+      { l: isEN ? '\u2753 Where am I' : '\u2753 D\u00f3nde estoy', a:'explainHere' },
+      { l: isEN ? '\ud83d\udccb Sections' : '\ud83d\udccb Secciones', a:'categories' }
     ]);
     speak(t);
   }
 
+  // ===== FIND SECTION (bilingual keywords) =====
   function findSec(q) {
-    const map = {
-      dashboard:['tablero','dashboard','centro','inicio'], leads:['lead','prospecto'],
-      servicecalls:['llamada','service call','emergencia'], dispatch:['despacho','dispatch','coordinador'],
-      jobs:['trabajo','estimado','cotización','presupuesto'], technicians:['técnico','tecnico','certificación','epa'],
-      advisors:['advisor','vendedor','comisión','asesor'], clients:['cliente','customer'],
-      invoices:['factura','invoice'], collections:['cobranza','cobro'],
-      receipts:['recibo','receipt'], expenses:['gasto','expense','costo'],
-      mymoney:['mi dinero','money','ganancia'], payroll:['nómina','nomina','payroll','sueldo'],
-      mailbox:['correo','mail','buzón'], marketing:['marketing','mercadotecnia','publicidad','reseña'],
-      pricebook:['precio','price','catálogo','proveedor'], reports:['reporte','report'],
-      team:['usuario','equipo','rol','permiso'], settings:['configuración','config','setting','logo']
+    var map = {
+      dashboard:['tablero','dashboard','centro','inicio','command','home'],
+      leads:['lead','prospecto','prospect'],
+      servicecalls:['llamada','service call','emergencia','emergency'],
+      dispatch:['despacho','dispatch','coordinador','coordinator'],
+      jobs:['trabajo','estimado','cotizaci\u00f3n','presupuesto','estimate','quote','job'],
+      technicians:['t\u00e9cnico','tecnico','certificaci\u00f3n','epa','technician','certification'],
+      advisors:['advisor','vendedor','comisi\u00f3n','asesor','salesperson','commission','sales team'],
+      clients:['cliente','customer','client'],
+      invoices:['factura','invoice','bill'],
+      collections:['cobranza','cobro','collection','payment'],
+      receipts:['recibo','receipt','purchase'],
+      expenses:['gasto','expense','costo','cost','overhead'],
+      mymoney:['mi dinero','money','ganancia','profit','my money'],
+      payroll:['n\u00f3mina','nomina','payroll','sueldo','salary','wage'],
+      mailbox:['correo','mail','buz\u00f3n','mailbox','correspondence'],
+      marketing:['marketing','mercadotecnia','publicidad','rese\u00f1a','review','advertising'],
+      pricebook:['precio','price','cat\u00e1logo','proveedor','catalog','supplier'],
+      reports:['reporte','report','analytics'],
+      team:['usuario','equipo','rol','permiso','user','role','permission','access'],
+      settings:['configuraci\u00f3n','config','setting','logo','setup']
     };
-    for (const [k, ws] of Object.entries(map)) {
-      if (ws.some(w => q.includes(w))) return k;
+    for (var k in map) {
+      if (map[k].some(function(w) { return q.includes(w); })) return k;
     }
     return null;
   }
 
-  // ===== GO + EXPLAIN =====
+  // ===== GO + EXPLAIN (bilingual) =====
   function goExplain(key) {
-    const s = S[key];
+    var s = S[key];
     if (!s) return;
-    try{if(typeof window.showSection==='function')window.showSection(key)}catch(e){console.warn('AI:'+e)};
+    safeShowSection(key);
     typing();
-    setTimeout(() => {
+    setTimeout(function() {
       untyping();
-      const hi = getContent(key, 'hi');
-      const explain = getContent(key, 'explain');
-      const msg = hi + ' ' + explain;
-      const btns = [];
-      if (s.walk && s.walk.length) btns.push({ l: currentLang === 'en' ? '👀 Show me step by step' : '👀 Muéstrame paso a paso', a:'walk_'+key });
+      var hi = getContent(key, 'hi');
+      var explain = getContent(key, 'explain');
+      var msg = hi + ' ' + explain;
+      var walkSteps = getWalk(key);
+      var isEN = currentLang === 'en';
+      var btns = [];
+      if (walkSteps && walkSteps.length) {
+        btns.push({ l: isEN ? '\ud83d\udc40 Show me step by step' : '\ud83d\udc40 Mu\u00e9strame paso a paso', a:'walk_'+key });
+      }
       if (inTour) {
-        btns.push({ l: currentLang === 'en' ? '⏭️ Next section' : '⏭️ Siguiente sección', a:'tourNext' });
-        btns.push({ l: currentLang === 'en' ? '🛑 Stop tour' : '🛑 Parar tour', a:'endTour' });
+        btns.push({ l: isEN ? '\u23ed\ufe0f Next section' : '\u23ed\ufe0f Siguiente secci\u00f3n', a:'tourNext' });
+        btns.push({ l: isEN ? '\ud83d\uded1 Stop tour' : '\ud83d\uded1 Parar tour', a:'endTour' });
       } else {
-        if (s.next) btns.push({ l:'⏭️ ' + (S[s.next]?.title||''), a:'go_'+s.next });
-        btns.push({ l: currentLang === 'en' ? '📋 Sections' : '📋 Ver secciones', a:'categories' });
+        if (s.next) btns.push({ l:'\u23ed\ufe0f ' + getTitle(s.next), a:'go_'+s.next });
+        btns.push({ l: isEN ? '\ud83d\udccb Sections' : '\ud83d\udccb Ver secciones', a:'categories' });
       }
       botMsg(msg, btns);
       speak(msg);
-      setTimeout(() => {
-        const el = document.getElementById(key+'-section');
+      setTimeout(function() {
+        var el = document.getElementById(key+'-section');
         if (el) highlight(el, 3000);
       }, 500);
     }, 700);
   }
 
-  // ===== WALKTHROUGH =====
+  // ===== WALKTHROUGH (bilingual) =====
   function startWalk(key) {
-    const s = S[key];
-    if (!s || !s.walk || !s.walk.length) {
-      botMsg('Esta sección no tiene pasos detallados, pero ya te expliqué lo principal. ¿Seguimos?', postWalkBtns(key));
+    var walkSteps = getWalk(key);
+    if (!walkSteps || !walkSteps.length) {
+      var isEN = currentLang === 'en';
+      var t = isEN
+        ? 'This section doesn\'t have detailed steps, but I already explained the main points. Shall we continue?'
+        : 'Esta secci\u00f3n no tiene pasos detallados, pero ya te expliqu\u00e9 lo principal. \u00bfSeguimos?';
+      botMsg(t, postWalkBtns(key));
+      speak(t);
       return;
     }
     walkIdx = 0;
@@ -584,52 +784,65 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
 
   function doWalk(key) {
     clearHL();
-    const s = S[key];
-    if (walkIdx >= s.walk.length) {
+    var walkSteps = getWalk(key);
+    var isEN = currentLang === 'en';
+    if (walkIdx >= walkSteps.length) {
       walkIdx = -1;
       clearHL();
-      const t = '¡Listo! Ya te mostré todo lo de ' + s.title + '. ¿Qué hacemos ahora?';
+      var title = getTitle(key);
+      var t = isEN
+        ? 'Done! I showed you everything about ' + title + '. What shall we do now?'
+        : '\u00a1Listo! Ya te mostr\u00e9 todo lo de ' + title + '. \u00bfQu\u00e9 hacemos ahora?';
       botMsg(t, postWalkBtns(key));
       speak(t);
       return;
     }
-    const step = s.walk[walkIdx];
+    var step = walkSteps[walkIdx];
     typing();
-    setTimeout(() => {
+    setTimeout(function() {
       untyping();
-      const num = walkIdx + 1;
-      const total = s.walk.length;
-      botMsg(`<strong>👆 Paso ${num} de ${total}:</strong> ${step.say}`, [
-        { l: num < total ? '👉 Siguiente paso' : '✅ Listo', a:'wn_'+key }
+      var num = walkIdx + 1;
+      var total = walkSteps.length;
+      var stepLabel = isEN ? 'Step' : 'Paso';
+      var ofLabel = isEN ? 'of' : 'de';
+      var nextLabel = num < total
+        ? (isEN ? '\ud83d\udc49 Next step' : '\ud83d\udc49 Siguiente paso')
+        : (isEN ? '\u2705 Done' : '\u2705 Listo');
+      botMsg('<strong>\ud83d\udc46 ' + stepLabel + ' ' + num + ' ' + ofLabel + ' ' + total + ':</strong> ' + step.say, [
+        { l: nextLabel, a:'wn_'+key }
       ]);
       speak(step.say);
-      if (step.hl) setTimeout(() => highlight(step.hl, 999999), 400);
+      if (step.hl) setTimeout(function() { highlight(step.hl, 999999); }, 400);
     }, 900);
   }
 
   function postWalkBtns(key) {
-    const s = S[key];
-    const b = [];
+    var s = S[key];
+    var isEN = currentLang === 'en';
+    var b = [];
     if (inTour) {
-      if (s.next) b.push({ l:'⏭️ Siguiente sección', a:'tourNext' });
-      b.push({ l:'🛑 Parar tour', a:'endTour' });
+      if (s.next) b.push({ l: isEN ? '\u23ed\ufe0f Next section' : '\u23ed\ufe0f Siguiente secci\u00f3n', a:'tourNext' });
+      b.push({ l: isEN ? '\ud83d\uded1 Stop tour' : '\ud83d\uded1 Parar tour', a:'endTour' });
     } else {
-      if (s.next) b.push({ l:'⏭️ '+S[s.next]?.title, a:'go_'+s.next });
-      b.push({ l:'📋 Secciones', a:'categories' });
+      if (s.next) b.push({ l:'\u23ed\ufe0f ' + getTitle(s.next), a:'go_'+s.next });
+      b.push({ l: isEN ? '\ud83d\udccb Sections' : '\ud83d\udccb Secciones', a:'categories' });
     }
     return b;
   }
 
-  // ===== TOUR =====
+  // ===== TOUR (bilingual) =====
   function startTour() {
     tourIdx = 0;
     inTour = true;
     document.getElementById('aiProgress').style.display = 'flex';
     upProg();
-    const t = '¡Perfecto, vamos con el tour completo! Te voy a llevar por las ' + TOUR.length + ' secciones del CRM. En cada una te explico qué es y cómo se usa. ¡Empecemos!';
+    var isEN = currentLang === 'en';
+    var t = isEN
+      ? 'Perfect, let\'s start the full tour! I will walk you through all ' + TOUR.length + ' sections of the CRM. For each one I will explain what it is and how to use it. Let\'s go!'
+      : '\u00a1Perfecto, vamos con el tour completo! Te voy a llevar por las ' + TOUR.length + ' secciones del CRM. En cada una te explico qu\u00e9 es y c\u00f3mo se usa. \u00a1Empecemos!';
     botMsg(t);
     speak(t);
-    setTimeout(() => goExplain(TOUR[0]), 4000);
+    setTimeout(function() { goExplain(TOUR[0]); }, 4000);
   }
 
   function tourNext() {
@@ -644,8 +857,14 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     inTour = false; tourIdx = -1;
     document.getElementById('aiProgress').style.display = 'none';
     clearHL();
-    const t = '🎉 ¡Felicidades! Ya terminaste el tour completo. Ahora conoces todas las secciones de Trade Master CRM. ¡A trabajar!';
-    botMsg(t, [{ l:'🔄 Repetir', a:'startTour' }, { l:'📋 Secciones', a:'categories' }]);
+    var isEN = currentLang === 'en';
+    var t = isEN
+      ? '\ud83c\udf89 Congratulations! You have completed the full tour. Now you know every section of Trade Master CRM. Time to get to work!'
+      : '\ud83c\udf89 \u00a1Felicidades! Ya terminaste el tour completo. Ahora conoces todas las secciones de Trade Master CRM. \u00a1A trabajar!';
+    botMsg(t, [
+      { l: isEN ? '\ud83d\udd04 Repeat' : '\ud83d\udd04 Repetir', a:'startTour' },
+      { l: isEN ? '\ud83d\udccb Sections' : '\ud83d\udccb Secciones', a:'categories' }
+    ]);
     speak(t);
   }
 
@@ -653,40 +872,59 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     inTour = false; tourIdx = -1;
     document.getElementById('aiProgress').style.display = 'none';
     clearHL(); stopSpeaking();
-    botMsg('Tour pausado. ¿En qué te ayudo?', [{ l:'🔄 Continuar tour', a:'startTour' }, { l:'📋 Secciones', a:'categories' }]);
+    var isEN = currentLang === 'en';
+    var t = isEN ? 'Tour paused. How can I help you?' : 'Tour pausado. \u00bfEn qu\u00e9 te ayudo?';
+    botMsg(t, [
+      { l: isEN ? '\ud83d\udd04 Continue tour' : '\ud83d\udd04 Continuar tour', a:'startTour' },
+      { l: isEN ? '\ud83d\udccb Sections' : '\ud83d\udccb Secciones', a:'categories' }
+    ]);
   }
 
   function upProg() {
-    const f = document.getElementById('aiFill');
-    const t = document.getElementById('aiPText');
+    var f = document.getElementById('aiFill');
+    var t = document.getElementById('aiPText');
     if (!f) return;
     f.style.width = ((tourIdx+1)/TOUR.length*100)+'%';
     t.textContent = (tourIdx+1)+'/'+TOUR.length;
   }
 
-  // ===== CATEGORIES =====
+  // ===== CATEGORIES (bilingual) =====
   function categories() {
-    const cats = {
-      '🔧 Operaciones':['dashboard','leads','servicecalls','dispatch','jobs','technicians','advisors'],
-      '💰 Finanzas':['invoices','collections','receipts','expenses','mymoney','payroll'],
-      '📬 Comunicación':['mailbox'],
-      '📈 Crecimiento':['marketing','pricebook','reports'],
-      '⚙️ Sistema':['team','settings']
+    var isEN = currentLang === 'en';
+    var cats = isEN ? {
+      '\ud83d\udd27 Operations':['dashboard','leads','servicecalls','dispatch','jobs','technicians','advisors'],
+      '\ud83d\udcb0 Finance':['invoices','collections','receipts','expenses','mymoney','payroll'],
+      '\ud83d\udcec Communication':['mailbox'],
+      '\ud83d\udcc8 Growth':['marketing','pricebook','reports'],
+      '\u2699\ufe0f System':['team','settings']
+    } : {
+      '\ud83d\udd27 Operaciones':['dashboard','leads','servicecalls','dispatch','jobs','technicians','advisors'],
+      '\ud83d\udcb0 Finanzas':['invoices','collections','receipts','expenses','mymoney','payroll'],
+      '\ud83d\udcec Comunicaci\u00f3n':['mailbox'],
+      '\ud83d\udcc8 Crecimiento':['marketing','pricebook','reports'],
+      '\u2699\ufe0f Sistema':['team','settings']
     };
-    let h = '<strong>📋 Todas las secciones:</strong><br><br>';
-    for (const [cat,keys] of Object.entries(cats)) {
-      h += `<strong>${cat}</strong><div class="ai-quick-actions" style="margin-bottom:8px;">`;
-      keys.forEach(k => { const s = S[k]; if(s) h += `<button class="ai-quick-btn" onclick="window._ai.act('go_${k}')">${s.icon} ${s.title}</button>`; });
+    var h = '<strong>' + (isEN ? '\ud83d\udccb All sections:' : '\ud83d\udccb Todas las secciones:') + '</strong><br><br>';
+    for (var cat in cats) {
+      h += '<strong>' + cat + '</strong><div class="ai-quick-actions" style="margin-bottom:8px;">';
+      cats[cat].forEach(function(k) {
+        var icon = S[k] ? S[k].icon : '';
+        var title = getTitle(k);
+        h += '<button class="ai-quick-btn" onclick="window._ai.act(\'go_' + k + '\')">' + icon + ' ' + title + '</button>';
+      });
       h += '</div>';
     }
     botMsg(h);
-    speak('Aquí tienes todas las secciones organizadas por categoría. Haz clic en la que quieras explorar.');
+    var spk = isEN
+      ? 'Here are all sections organized by category. Click the one you want to explore.'
+      : 'Aqu\u00ed tienes todas las secciones organizadas por categor\u00eda. Haz clic en la que quieras explorar.';
+    speak(spk);
   }
 
   // ===== EXPLAIN HERE =====
   function explainHere() {
-    const a = document.querySelector('.section.active') || document.querySelector('.section[style*="display: block"]') || document.querySelector('.section[style*="display:block"]');
-    let id = 'dashboard';
+    var a = document.querySelector('.section.active') || document.querySelector('.section[style*="display: block"]') || document.querySelector('.section[style*="display:block"]');
+    var id = 'dashboard';
     if (a) id = a.id.replace('-section','');
     if (S[id]) goExplain(id);
     else goExplain('dashboard');
@@ -695,7 +933,7 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   // ===== TOGGLE VOICE =====
   function toggleVoice() {
     voiceEnabled = !voiceEnabled;
-    document.getElementById('aiVoiceBtn').textContent = voiceEnabled ? '🔊' : '🔇';
+    document.getElementById('aiVoiceBtn').textContent = voiceEnabled ? '\ud83d\udd0a' : '\ud83d\udd07';
     if (!voiceEnabled) stopSpeaking();
   }
 
@@ -709,12 +947,26 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     if (a === 'tourNext') { tourNext(); return; }
     if (a === 'endTour') { endTour(); return; }
     if (a.startsWith('go_')) { goExplain(a.slice(3)); return; }
-    if (a.startsWith('walk_')) { const k = a.slice(5); try{if(typeof window.showSection==='function')window.showSection(k)}catch(e){console.warn('AI:'+e)}; startWalk(k); return; }
-    if (a.startsWith('wn_')) { const k = a.slice(3); walkIdx++; doWalk(k); return; }
+    if (a.startsWith('walk_')) { var k = a.slice(5); safeShowSection(k); startWalk(k); return; }
+    if (a.startsWith('wn_')) { var k2 = a.slice(3); walkIdx++; doWalk(k2); return; }
   }
 
   // ===== EXPOSE =====
-  window._ai = { toggle, send, act, toggleVoice, switchLang: function() { const newLang = currentLang === 'es' ? 'en' : 'es'; switchLang(newLang); const msg = newLang === 'en' ? 'Switched to English! I will guide you in English now.' : '¡Cambiado a Español! Ahora te guío en español.'; botMsg(msg); speak(msg); } };
+  window._ai = {
+    toggle: toggle,
+    send: send,
+    act: act,
+    toggleVoice: toggleVoice,
+    switchLang: function() {
+      var newLang = currentLang === 'es' ? 'en' : 'es';
+      switchLang(newLang);
+      var msg = newLang === 'en'
+        ? 'Switched to English! I will guide you in English now.'
+        : '\u00a1Cambiado a Espa\u00f1ol! Ahora te gu\u00edo en espa\u00f1ol.';
+      botMsg(msg);
+      speak(msg);
+    }
+  };
 
   // ===== BOOT =====
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
