@@ -20,34 +20,16 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   const LOGO_SVG_36 = '<svg viewBox="0 0 120 120" width="36" height="36"><defs><clipPath id="aiL"><rect x="0" y="0" width="60" height="120"/></clipPath><clipPath id="aiR"><rect x="60" y="0" width="60" height="120"/></clipPath></defs><path d="M60 4 A56 56 0 0 0 60 116 Z" fill="#1e3a5f"/><path d="M60 4 A56 56 0 0 1 60 116 Z" fill="#7f1d1d"/><g clip-path="url(#aiL)"><line x1="38" y1="28" x2="38" y2="92" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="60" x2="58" y2="60" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="38" x2="54" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><line x1="54" y1="38" x2="22" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="45" r="2" fill="#93c5fd"/><circle cx="26" cy="75" r="2" fill="#93c5fd"/><circle cx="48" cy="45" r="2" fill="#93c5fd"/><circle cx="48" cy="75" r="2" fill="#93c5fd"/></g><g clip-path="url(#aiR)"><path d="M82 88 C82 88 68 72 68 58 C68 44 76 38 80 30 C80 30 82 44 88 48 C90 38 94 34 94 34 C94 34 100 50 100 62 C100 76 92 88 82 88 Z" fill="#f97316" opacity="0.9"/><path d="M82 88 C82 88 74 78 74 68 C74 58 78 52 82 46 C82 46 84 56 88 58 C88 52 92 48 92 48 C92 48 96 58 96 66 C96 78 88 88 82 88 Z" fill="#fbbf24" opacity="0.9"/><path d="M82 88 C82 88 78 82 78 76 C78 70 80 66 82 60 C84 66 86 70 86 76 C86 82 82 88 82 88 Z" fill="#fef3c7"/></g><line x1="60" y1="8" x2="60" y2="112" stroke="white" stroke-width="2" opacity="0.3"/><circle cx="60" cy="60" r="56" fill="none" stroke="white" stroke-width="1.5" opacity="0.15"/></svg>';
   const LOGO_SVG_32 = LOGO_SVG_36.replace(/width="36"/g,'width="32"').replace(/height="36"/g,'height="32"');
 
-  // ===== VOICE SYSTEM (Bilingual Female) =====
+  // ===== VOICE SYSTEM (ElevenLabs - Brenda) =====
   let voiceEnabled = true;
-  let currentLang = 'es'; // 'es' or 'en' — auto-detected from CRM
-  let femaleVoiceES = null;
-  let femaleVoiceEN = null;
+  let currentLang = 'es';
+  let currentAudio = null;
+  const XI_KEY = 'sk_8e80353deeb8fe03cc064e016d771560111e4777e0eb2df3';
+  const VOICE_ES = 'xNBKYX8bgbeq8SQujlNN';
+  const VOICE_EN = 'QhsNwX2LUJNG0LGpS0pi';
 
   function initVoice() {
-    const load = () => {
-      const v = speechSynthesis.getVoices();
-      // Spanish female (México/US): Google español de Estados Unidos is female & natural
-      femaleVoiceES = v.find(x => x.name === 'Google español de Estados Unidos') ||
-                      v.find(x => x.name === 'Google español') ||
-                      v.find(x => x.lang === 'es-MX') ||
-                      v.find(x => x.lang === 'es-US') ||
-                      v.find(x => x.lang.startsWith('es')) || null;
-      // English female (USA): Google US English is female & clear
-      femaleVoiceEN = v.find(x => x.name === 'Google US English') ||
-                      v.find(x => x.name === 'Microsoft Zira - English (United States)') ||
-                      v.find(x => x.name === 'Google UK English Female') ||
-                      v.find(x => x.lang === 'en-US') || null;
-    };
-    speechSynthesis.onvoiceschanged = load;
-    load();
-    setTimeout(load, 500);
-    setTimeout(load, 1500);
-    // Auto-detect CRM language
     detectCRMLang();
-    // Watch for CRM language changes
     setInterval(detectCRMLang, 2000);
   }
 
@@ -59,42 +41,51 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
       if (newLang !== currentLang) {
         currentLang = newLang;
         const aiLangBtn = document.getElementById('aiLangBtn');
-        if (aiLangBtn) aiLangBtn.textContent = currentLang === 'en' ? '🇺🇸' : '🇲🇽';
+        if (aiLangBtn) aiLangBtn.textContent = currentLang === 'en' ? '\u{1F1FA}\u{1F1F8}' : '\u{1F1F2}\u{1F1FD}';
       }
     }
   }
 
   function speak(text) {
-    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    if (!voiceEnabled) return;
     stopSpeaking();
     const clean = text.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
     if (!clean) return;
-    const utter = new SpeechSynthesisUtterance(clean);
-    if (currentLang === 'en') {
-      utter.lang = 'en-US';
-      utter.rate = 0.93;
-      utter.pitch = 1.08;
-      if (femaleVoiceEN) utter.voice = femaleVoiceEN;
-    } else {
-      utter.lang = 'es-US';
-      utter.rate = 0.93;
-      utter.pitch = 1.08;
-      if (femaleVoiceES) utter.voice = femaleVoiceES;
-    }
-    utter.volume = 1;
-    speechSynthesis.speak(utter);
+    const voiceId = currentLang === 'en' ? VOICE_EN : VOICE_ES;
+    fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+      method: 'POST',
+      headers: { 'xi-api-key': XI_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: clean,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3 }
+      })
+    }).then(r => { if (r.ok) return r.blob(); throw new Error('TTS fail'); })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      currentAudio = new Audio(url);
+      currentAudio.play();
+      currentAudio.onended = () => { URL.revokeObjectURL(url); currentAudio = null; };
+    }).catch(() => {
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = currentLang === 'en' ? 'en-US' : 'es-US';
+        u.rate = 0.93; u.pitch = 1.08;
+        speechSynthesis.speak(u);
+      }
+    });
   }
 
   function stopSpeaking() {
-    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+    if ('speechSynthesis' in window && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
   }
 
   function switchLang(lang) {
     currentLang = lang;
     stopSpeaking();
     const btn = document.getElementById('aiLangBtn');
-    if (btn) btn.textContent = lang === 'en' ? '🇺🇸' : '🇲🇽';
-    // Also toggle CRM language to match
+    if (btn) btn.textContent = lang === 'en' ? '\u{1F1FA}\u{1F1F8}' : '\u{1F1F2}\u{1F1FD}';
     const crmBtn = document.querySelector('button[onclick="toggleLanguage()"]');
     if (crmBtn) {
       const crmTxt = crmBtn.textContent.trim().toUpperCase();
