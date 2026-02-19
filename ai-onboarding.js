@@ -52,13 +52,13 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
     const clean = text.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
     if (!clean) return;
     const voiceId = currentLang === 'en' ? VOICE_EN : VOICE_ES;
-    fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+    fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId + '/stream', {
       method: 'POST',
       headers: { 'xi-api-key': XI_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: clean,
         model_id: 'eleven_multilingual_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3 }
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0, use_speaker_boost: true, speed: 1 }
       })
     }).then(r => { if (r.ok) return r.blob(); throw new Error('TTS fail'); })
     .then(blob => {
