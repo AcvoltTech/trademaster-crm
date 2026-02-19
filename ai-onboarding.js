@@ -1,3 +1,6 @@
+// Polyfills
+if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseFloat(a)||0;return '$'+n.toFixed(2).replace(/\B(?=(?:\d{3})+(?!\d))/g,',');}}
+
 /* ==================== AI ONBOARDING - TRADE MASTER CRM ==================== */
 /* Voice-guided, interactive tour with real highlights and conversational tone */
 
@@ -543,7 +546,7 @@
   function goExplain(key) {
     const s = S[key];
     if (!s) return;
-    if (typeof window.showSection === 'function') window.showSection(key);
+    try{if(typeof window.showSection==='function')window.showSection(key)}catch(e){console.warn('AI:'+e)};
     typing();
     setTimeout(() => {
       untyping();
@@ -705,7 +708,7 @@
     if (a === 'tourNext') { tourNext(); return; }
     if (a === 'endTour') { endTour(); return; }
     if (a.startsWith('go_')) { goExplain(a.slice(3)); return; }
-    if (a.startsWith('walk_')) { const k = a.slice(5); if(typeof window.showSection==='function') window.showSection(k); startWalk(k); return; }
+    if (a.startsWith('walk_')) { const k = a.slice(5); try{if(typeof window.showSection==='function')window.showSection(k)}catch(e){console.warn('AI:'+e)}; startWalk(k); return; }
     if (a.startsWith('wn_')) { const k = a.slice(3); walkIdx++; doWalk(k); return; }
   }
 
