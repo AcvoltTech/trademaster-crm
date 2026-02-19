@@ -8,18 +8,48 @@
   const LOGO_SVG_36 = '<svg viewBox="0 0 120 120" width="36" height="36"><defs><clipPath id="aiL"><rect x="0" y="0" width="60" height="120"/></clipPath><clipPath id="aiR"><rect x="60" y="0" width="60" height="120"/></clipPath></defs><path d="M60 4 A56 56 0 0 0 60 116 Z" fill="#1e3a5f"/><path d="M60 4 A56 56 0 0 1 60 116 Z" fill="#7f1d1d"/><g clip-path="url(#aiL)"><line x1="38" y1="28" x2="38" y2="92" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="60" x2="58" y2="60" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/><line x1="22" y1="38" x2="54" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><line x1="54" y1="38" x2="22" y2="82" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="45" r="2" fill="#93c5fd"/><circle cx="26" cy="75" r="2" fill="#93c5fd"/><circle cx="48" cy="45" r="2" fill="#93c5fd"/><circle cx="48" cy="75" r="2" fill="#93c5fd"/></g><g clip-path="url(#aiR)"><path d="M82 88 C82 88 68 72 68 58 C68 44 76 38 80 30 C80 30 82 44 88 48 C90 38 94 34 94 34 C94 34 100 50 100 62 C100 76 92 88 82 88 Z" fill="#f97316" opacity="0.9"/><path d="M82 88 C82 88 74 78 74 68 C74 58 78 52 82 46 C82 46 84 56 88 58 C88 52 92 48 92 48 C92 48 96 58 96 66 C96 78 88 88 82 88 Z" fill="#fbbf24" opacity="0.9"/><path d="M82 88 C82 88 78 82 78 76 C78 70 80 66 82 60 C84 66 86 70 86 76 C86 82 82 88 82 88 Z" fill="#fef3c7"/></g><line x1="60" y1="8" x2="60" y2="112" stroke="white" stroke-width="2" opacity="0.3"/><circle cx="60" cy="60" r="56" fill="none" stroke="white" stroke-width="1.5" opacity="0.15"/></svg>';
   const LOGO_SVG_32 = LOGO_SVG_36.replace(/width="36"/g,'width="32"').replace(/height="36"/g,'height="32"');
 
-  // ===== VOICE =====
+  // ===== VOICE SYSTEM (Bilingual Female) =====
   let voiceEnabled = true;
-  let spanishVoice = null;
+  let currentLang = 'es'; // 'es' or 'en' — auto-detected from CRM
+  let femaleVoiceES = null;
+  let femaleVoiceEN = null;
 
   function initVoice() {
     const load = () => {
       const v = speechSynthesis.getVoices();
-      spanishVoice = v.find(x => x.lang === 'es-US') || v.find(x => x.lang === 'es-MX') || v.find(x => x.lang.startsWith('es')) || null;
+      // Spanish female (México/US): Google español de Estados Unidos is female & natural
+      femaleVoiceES = v.find(x => x.name === 'Google español de Estados Unidos') ||
+                      v.find(x => x.name === 'Google español') ||
+                      v.find(x => x.lang === 'es-MX') ||
+                      v.find(x => x.lang === 'es-US') ||
+                      v.find(x => x.lang.startsWith('es')) || null;
+      // English female (USA): Google US English is female & clear
+      femaleVoiceEN = v.find(x => x.name === 'Google US English') ||
+                      v.find(x => x.name === 'Microsoft Zira - English (United States)') ||
+                      v.find(x => x.name === 'Google UK English Female') ||
+                      v.find(x => x.lang === 'en-US') || null;
     };
     speechSynthesis.onvoiceschanged = load;
     load();
     setTimeout(load, 500);
+    setTimeout(load, 1500);
+    // Auto-detect CRM language
+    detectCRMLang();
+    // Watch for CRM language changes
+    setInterval(detectCRMLang, 2000);
+  }
+
+  function detectCRMLang() {
+    const langBtn = document.querySelector('button[onclick="toggleLanguage()"]');
+    if (langBtn) {
+      const txt = langBtn.textContent.trim().toUpperCase();
+      const newLang = txt.includes('EN') ? 'en' : 'es';
+      if (newLang !== currentLang) {
+        currentLang = newLang;
+        const aiLangBtn = document.getElementById('aiLangBtn');
+        if (aiLangBtn) aiLangBtn.textContent = currentLang === 'en' ? '🇺🇸' : '🇲🇽';
+      }
+    }
   }
 
   function speak(text) {
@@ -28,15 +58,39 @@
     const clean = text.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
     if (!clean) return;
     const utter = new SpeechSynthesisUtterance(clean);
-    utter.lang = 'es-US';
-    utter.rate = 0.95;
-    utter.pitch = 1.05;
-    if (spanishVoice) utter.voice = spanishVoice;
+    if (currentLang === 'en') {
+      utter.lang = 'en-US';
+      utter.rate = 0.93;
+      utter.pitch = 1.08;
+      if (femaleVoiceEN) utter.voice = femaleVoiceEN;
+    } else {
+      utter.lang = 'es-US';
+      utter.rate = 0.93;
+      utter.pitch = 1.08;
+      if (femaleVoiceES) utter.voice = femaleVoiceES;
+    }
+    utter.volume = 1;
     speechSynthesis.speak(utter);
   }
 
   function stopSpeaking() {
     if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  }
+
+  function switchLang(lang) {
+    currentLang = lang;
+    stopSpeaking();
+    const btn = document.getElementById('aiLangBtn');
+    if (btn) btn.textContent = lang === 'en' ? '🇺🇸' : '🇲🇽';
+    // Also toggle CRM language to match
+    const crmBtn = document.querySelector('button[onclick="toggleLanguage()"]');
+    if (crmBtn) {
+      const crmTxt = crmBtn.textContent.trim().toUpperCase();
+      const crmIsEN = crmTxt.includes('EN');
+      if ((lang === 'en' && !crmIsEN) || (lang === 'es' && crmIsEN)) {
+        if (typeof toggleLanguage === 'function') toggleLanguage();
+      }
+    }
   }
 
   // ===== HIGHLIGHT =====
@@ -275,6 +329,38 @@
     }
   };
 
+  // ===== ENGLISH TRANSLATIONS =====
+  const EN = {
+    dashboard: { hi:'Good morning! Welcome to the Dashboard, your Command Center.', explain:'From here you can see your entire business in real time. You have cards showing jobs won, active service calls, salespeople and technicians in the field. Below there is a live operations map, the employee clock in and out system, and your estimates pipeline.' },
+    leads: { hi:'Now let\'s go to Leads!', explain:'Here you register people who call asking for service or a quote but are not confirmed clients yet. The goal is to follow up and convert them into won jobs. Each lead is potential money.' },
+    servicecalls: { hi:'Now Service Calls!', explain:'Here you control all emergency and service calls. Each call is tracked from when it comes in until it is completed. You can assign a technician, set the urgency, and follow up.' },
+    dispatch: { hi:'Now Dispatch!', explain:'This is your coordination center. Here you see where all your technicians are on the map, assign them jobs, and set up your Dispatch Coordinator.' },
+    jobs: { hi:'This section is super important! Here you create professional estimates.', explain:'The system guides you in 5 steps to create an estimate. It has over 150 HVAC parts with prices. You select the equipment, service call, components, and it generates a professional PDF for the client.' },
+    technicians: { hi:'Now Technicians!', explain:'Here you manage your entire team. Each technician has a complete profile with photo, specialty, rate, certifications like EPA 608 and NATE, vehicle documents, and you can even generate a professional ID card.' },
+    advisors: { hi:'Now Home Advisors, your sales team!', explain:'Here you manage the salespeople who close new installation sales. The system has tiered commissions: 20 percent for profits over 10 thousand, 15 for 7 to 10, 10 for 5 to 7, and 5 percent for under 5 thousand.' },
+    clients: { hi:'The Clients database!', explain:'Each client has a complete file. Job history, estimates, invoices, internal notes, attachments, and communication records. Everything you need to know about each client in one place.' },
+    invoices: { hi:'Now Invoices!', explain:'Create professional invoices from a job or manually. The system calculates subtotal, discount, tax and total. You can filter by status and follow up on collection.' },
+    collections: { hi:'Collections! Here you make sure money comes in.', explain:'You see all invoices pending collection, overdue ones, and you can record payments. Check it every day so no collection slips through.' },
+    receipts: { hi:'Now Purchase Receipts!', explain:'Record every material receipt with photo, supplier, category and amount. You have pre-configured suppliers like Johnstone, Ferguson, Home Depot and more. At the end of the month export everything to CSV for your accountant.' },
+    expenses: { hi:'Business Expenses!', explain:'Here you record all fixed expenses: rent, insurance, licenses, vehicles, software. It tells you exactly how much it costs to operate your business each month. Key to knowing how much to charge.' },
+    mymoney: { hi:'My Money! This section is only for you as the owner.', explain:'Nobody else on your team can see this. Here you see your income, expenses, net profit and accounts receivable. Check it every week.' },
+    payroll: { hi:'Payroll!', explain:'Record hours worked, overtime, bonuses and deductions for each employee. In California overtime is after 8 hours per day, not 40 per week. The system calculates automatically.' },
+    mailbox: { hi:'Business Mail!', explain:'Record all important correspondence: insurance letters, government, suppliers, banks. Upload photo or PDF and never lose an important document.' },
+    marketing: { hi:'Marketing! Your marketing center.', explain:'You have direct access to all platforms: Facebook, Google, Yelp, Angi, HomeAdvisor, Thumbtack. You can also create campaigns and request reviews from satisfied clients. Reviews are gold for your business.' },
+    pricebook: { hi:'The Price Book!', explain:'Your catalog of over 150 HVAC components with prices. Also direct links to distributors like Ferguson, Johnstone, and US Air to compare prices and order parts.' },
+    reports: { hi:'Reports!', explain:'Generate reports on income, expenses, completed jobs and technician performance. Review them monthly to make better data-driven decisions.' },
+    team: { hi:'Users and Team!', explain:'Control who can access the CRM. 5 roles: Owner sees everything, Accounting sees finances, Coordinator sees operations, Technician only sees their jobs, and View Only just looks.' },
+    settings: { hi:'Finally, Settings!', explain:'Upload your logo, fill in company data, insurance and license documents, and customize legal clauses. Everything you put here appears on documents you send to clients.' }
+  };
+
+  // Get text in current language
+  function getContent(sectionKey, field) {
+    if (currentLang === 'en' && EN[sectionKey] && EN[sectionKey][field]) {
+      return EN[sectionKey][field];
+    }
+    return S[sectionKey][field];
+  }
+
   const TOUR = ['dashboard','leads','servicecalls','dispatch','jobs','technicians','advisors','clients','invoices','collections','receipts','expenses','mymoney','payroll','mailbox','marketing','pricebook','reports','team','settings'];
 
   // ===== STATE =====
@@ -322,6 +408,7 @@
           <div><h3>Trade Master AI</h3><small>Tu guía personal</small></div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
+          <button class="ai-voice-toggle" id="aiLangBtn" onclick="window._ai.switchLang()" title="Español / English">🇲🇽</button>
           <button class="ai-voice-toggle" id="aiVoiceBtn" onclick="window._ai.toggleVoice()" title="Voz">🔊</button>
           <button class="ai-chat-close" onclick="window._ai.toggle()">✕</button>
         </div>
@@ -356,11 +443,13 @@
 
   // ===== WELCOME =====
   function welcome() {
-    const t = '¡Hola, buen día! Soy tu asistente de Trade Master. Estoy aquí para enseñarte todo el CRM paso a paso. Te explico cada sección, te muestro dónde están las cosas, y te doy tips de profesional. ¿Qué hacemos?';
+    const t = currentLang === 'en'
+      ? 'Hi there! I am your Trade Master assistant. I am here to teach you every part of the CRM step by step. I will explain each section, show you where things are, and give you professional tips. What would you like to do?'
+      : '¡Hola, buen día! Soy tu asistente de Trade Master. Estoy aquí para enseñarte todo el CRM paso a paso. Te explico cada sección, te muestro dónde están las cosas, y te doy tips de profesional. ¿Qué hacemos?';
     botMsg(t, [
-      { l:'🎓 Tour Completo del CRM', a:'startTour' },
-      { l:'❓ Explícame dónde estoy', a:'explainHere' },
-      { l:'📋 Ver todas las secciones', a:'categories' }
+      { l: currentLang === 'en' ? '🎓 Full CRM Tour' : '🎓 Tour Completo del CRM', a:'startTour' },
+      { l: currentLang === 'en' ? '❓ Explain where I am' : '❓ Explícame dónde estoy', a:'explainHere' },
+      { l: currentLang === 'en' ? '📋 See all sections' : '📋 Ver todas las secciones', a:'categories' }
     ]);
     speak(t);
   }
@@ -458,19 +547,20 @@
     typing();
     setTimeout(() => {
       untyping();
-      const msg = s.hi + ' ' + s.explain;
+      const hi = getContent(key, 'hi');
+      const explain = getContent(key, 'explain');
+      const msg = hi + ' ' + explain;
       const btns = [];
-      if (s.walk && s.walk.length) btns.push({ l:'👀 Muéstrame paso a paso', a:'walk_'+key });
+      if (s.walk && s.walk.length) btns.push({ l: currentLang === 'en' ? '👀 Show me step by step' : '👀 Muéstrame paso a paso', a:'walk_'+key });
       if (inTour) {
-        btns.push({ l:'⏭️ Siguiente sección', a:'tourNext' });
-        btns.push({ l:'🛑 Parar tour', a:'endTour' });
+        btns.push({ l: currentLang === 'en' ? '⏭️ Next section' : '⏭️ Siguiente sección', a:'tourNext' });
+        btns.push({ l: currentLang === 'en' ? '🛑 Stop tour' : '🛑 Parar tour', a:'endTour' });
       } else {
-        if (s.next) btns.push({ l:'⏭️ Ir a ' + (S[s.next]?.title||'siguiente'), a:'go_'+s.next });
-        btns.push({ l:'📋 Ver secciones', a:'categories' });
+        if (s.next) btns.push({ l:'⏭️ ' + (S[s.next]?.title||''), a:'go_'+s.next });
+        btns.push({ l: currentLang === 'en' ? '📋 Sections' : '📋 Ver secciones', a:'categories' });
       }
       botMsg(msg, btns);
       speak(msg);
-      // Highlight the main section area
       setTimeout(() => {
         const el = document.getElementById(key+'-section');
         if (el) highlight(el, 3000);
@@ -620,7 +710,7 @@
   }
 
   // ===== EXPOSE =====
-  window._ai = { toggle, send, act, toggleVoice };
+  window._ai = { toggle, send, act, toggleVoice, switchLang: function() { const newLang = currentLang === 'es' ? 'en' : 'es'; switchLang(newLang); const msg = newLang === 'en' ? 'Switched to English! I will guide you in English now.' : '¡Cambiado a Español! Ahora te guío en español.'; botMsg(msg); speak(msg); } };
 
   // ===== BOOT =====
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
