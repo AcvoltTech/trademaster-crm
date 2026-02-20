@@ -2702,59 +2702,123 @@
 
           <!-- ===== PROGRAMA EMBAJADORES ===== -->
           <div id="ambassadors-section" class="section">
-            <div class="card" style="margin-bottom:16px;border:2px solid #f97316;background:linear-gradient(135deg,#fff7ed,#fff);">
-              <div class="card-top">
-                <h3>🌟 Programa de Embajadores Trade Master</h3>
-              </div>
-              <p style="font-size:13px;color:#92400e;margin-bottom:16px;font-weight:500">
-                ¡Gana dinero refiriendo negocios a Trade Master CRM! Comparte tu código único y gana <strong>comisión por cada negocio que se registre y active su plan.</strong>
-              </p>
-              <!-- Referral Code Box -->
-              <div style="background:linear-gradient(135deg,#f97316,#ea580c);border-radius:12px;padding:24px;color:#fff;text-align:center;margin-bottom:20px">
-                <p style="font-size:12px;opacity:0.8;margin-bottom:6px">Tu Código de Embajador</p>
-                <div style="font-size:28px;font-weight:900;font-family:monospace;letter-spacing:4px;margin-bottom:12px" id="ambassadorCode">TM-0000</div>
-                <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:8px;font-size:12px;margin-bottom:16px;word-break:break-all" id="ambassadorLink">https://trademaster-crm.com/?ref=TM-0000</div>
-                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-                  <button onclick="copyRefLink()" style="background:#fff;color:#ea580c;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📋 Copiar Link</button>
-                  <button onclick="shareRefWhatsApp()" style="background:#25d366;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">💬 WhatsApp</button>
-                  <button onclick="shareRefEmail()" style="background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📧 Email</button>
-                  <button onclick="shareRefFacebook()" style="background:#1877f2;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📘 Facebook</button>
+            <style>
+              @keyframes ambPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+              @keyframes ambGlow{0%,100%{box-shadow:0 0 20px rgba(249,115,22,.3)}50%{box-shadow:0 0 40px rgba(249,115,22,.6),0 0 80px rgba(249,115,22,.2)}}
+              @keyframes ambShine{0%{background-position:-200% center}100%{background-position:200% center}}
+              @keyframes ambFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+              @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100px) rotate(720deg);opacity:0}}
+              .amb-hero{background:linear-gradient(135deg,#f97316 0%,#ea580c 30%,#dc2626 60%,#f97316 100%);background-size:200% 200%;animation:ambShine 4s ease infinite;border-radius:20px;padding:32px;color:#fff;text-align:center;position:relative;overflow:hidden;margin-bottom:20px}
+              .amb-hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 60%);animation:ambFloat 6s ease-in-out infinite}
+              .amb-code-box{animation:ambGlow 3s ease-in-out infinite;background:rgba(0,0,0,.2);backdrop-filter:blur(10px);border-radius:16px;padding:20px;margin:16px auto;max-width:400px;border:2px solid rgba(255,255,255,.3)}
+              .amb-code{font-size:36px;font-weight:900;font-family:'Courier New',monospace;letter-spacing:6px;text-shadow:0 2px 10px rgba(0,0,0,.3)}
+              .amb-money{font-size:64px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24);background-size:200%;animation:ambShine 2s ease infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;line-height:1}
+              .amb-share-btn{border:none;padding:12px 20px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+              .amb-share-btn:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,.2)}
+              .amb-stat-card{background:#fff;border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,.05);border:1px solid #f3f4f6;transition:all .2s}
+              .amb-stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.1)}
+              .amb-step{background:#fff;border-radius:14px;padding:20px;text-align:center;border:2px solid #fed7aa;transition:all .2s}
+              .amb-step:hover{border-color:#f97316;transform:translateY(-2px)}
+              .amb-qr-card{background:#fff;border:3px dashed #f97316;border-radius:16px;padding:24px;text-align:center}
+              .amb-w9-upload{background:linear-gradient(135deg,#f8fafc,#fff);border:2px dashed #cbd5e1;border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
+              .amb-w9-upload:hover{border-color:#f97316;background:#fff7ed}
+            </style>
+
+            <!-- HERO SECTION -->
+            <div class="amb-hero">
+              <div style="position:relative;z-index:1">
+                <div style="font-size:48px;margin-bottom:8px">🌟</div>
+                <h2 style="font-size:28px;font-weight:900;margin-bottom:4px;text-shadow:0 2px 10px rgba(0,0,0,.2)">PROGRAMA DE EMBAJADORES</h2>
+                <p style="font-size:15px;opacity:0.9;margin-bottom:16px">Gana dinero real refiriendo negocios a Trade Master CRM</p>
+                <div class="amb-money">$50</div>
+                <p style="font-size:18px;font-weight:700;margin-top:4px">POR CADA REFERIDO QUE SE ACTIVE 🔥</p>
+                <p style="font-size:13px;opacity:0.8;margin-top:8px">Sin límites — mientras más refieras, más ganas 💰</p>
+
+                <!-- Code Box -->
+                <div class="amb-code-box">
+                  <p style="font-size:11px;opacity:0.7;margin-bottom:4px;text-transform:uppercase;letter-spacing:2px">Tu Código Único de Embajador</p>
+                  <div class="amb-code" id="ambassadorCode">TM-0000</div>
+                  <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:8px;font-size:11px;margin-top:10px;word-break:break-all" id="ambassadorLink">https://acvolttech.github.io/trademaster-crm/?ref=TM-0000</div>
+                </div>
+
+                <!-- Share Buttons -->
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+                  <button onclick="copyRefLink()" class="amb-share-btn" style="background:#fff;color:#ea580c">📋 Copiar Link</button>
+                  <button onclick="shareRefWhatsApp()" class="amb-share-btn" style="background:#25d366;color:#fff">💬 WhatsApp</button>
+                  <button onclick="shareRefSMS()" class="amb-share-btn" style="background:#34d399;color:#fff">📱 Texto</button>
+                  <button onclick="shareRefEmail()" class="amb-share-btn" style="background:#3b82f6;color:#fff">📧 Email</button>
+                  <button onclick="shareRefFacebook()" class="amb-share-btn" style="background:#1877f2;color:#fff">📘 Facebook</button>
+                  <button onclick="shareRefInstagram()" class="amb-share-btn" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff">📸 Instagram</button>
+                  <button onclick="shareRefTwitter()" class="amb-share-btn" style="background:#000;color:#fff">𝕏 Twitter</button>
                 </div>
               </div>
-              <!-- Ambassador Stats -->
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">
-                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f97316" id="ambReferred">0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Referidos</div></div>
-                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e" id="ambConverted">0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Convertidos</div></div>
-                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#8b5cf6" id="ambEarned">$0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Ganado</div></div>
-                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#3b82f6" id="ambPending">$0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Pendiente</div></div>
-              </div>
-              <!-- How it Works -->
-              <div style="background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin-bottom:20px">
-                <h4 style="font-size:14px;margin-bottom:12px">🎯 ¿Cómo funciona?</h4>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:12px">
-                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">1️⃣</span><div><strong>Comparte tu código</strong><br>Envía tu link a negocios que necesiten un CRM</div></div>
-                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">2️⃣</span><div><strong>Se registran</strong><br>El negocio crea su cuenta con tu código</div></div>
-                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">3️⃣</span><div><strong>Activan plan</strong><br>Cuando pagan su primer mes, tú ganas</div></div>
-                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">4️⃣</span><div><strong>¡Cobra!</strong><br>Recibe tu comisión cada mes</div></div>
+            </div>
+
+            <!-- STATS -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">
+              <div class="amb-stat-card"><div style="font-size:32px;font-weight:900;color:#f97316" id="ambReferred">0</div><div style="font-size:12px;color:#6b7280;font-weight:700">👥 Referidos</div></div>
+              <div class="amb-stat-card"><div style="font-size:32px;font-weight:900;color:#22c55e" id="ambConverted">0</div><div style="font-size:12px;color:#6b7280;font-weight:700">✅ Activados</div></div>
+              <div class="amb-stat-card"><div style="font-size:32px;font-weight:900;color:#8b5cf6" id="ambEarned">$0</div><div style="font-size:12px;color:#6b7280;font-weight:700">💰 Ganado</div></div>
+              <div class="amb-stat-card"><div style="font-size:32px;font-weight:900;color:#3b82f6" id="ambPending">$0</div><div style="font-size:12px;color:#6b7280;font-weight:700">⏳ Pendiente</div></div>
+            </div>
+
+            <!-- QR CODE + CARD -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+              <div class="amb-qr-card">
+                <h4 style="font-size:15px;margin-bottom:12px">📱 Tu Código QR</h4>
+                <div id="ambassadorQR" style="margin:0 auto 12px;width:200px;height:200px;background:#f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#9ca3af">Generando QR...</div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                  <button onclick="downloadQR()" style="background:#f97316;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">⬇️ Descargar QR</button>
+                  <button onclick="printAmbCard()" style="background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">🖨️ Imprimir Tarjeta</button>
                 </div>
               </div>
-              <!-- Commission Table -->
-              <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:20px">
-                <h4 style="font-size:14px;margin-bottom:12px">💰 Tabla de Comisiones</h4>
-                <table style="width:100%;font-size:12px;border-collapse:collapse">
-                  <thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Plan Referido</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Precio</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Tu Comisión</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Recurrente</th></tr></thead>
-                  <tbody>
-                    <tr><td style="padding:8px">🔵 Profesional</td><td style="padding:8px;text-align:center">$149.99/mes</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$25/mes</td><td style="padding:8px;text-align:center">✅ Cada mes</td></tr>
-                    <tr style="background:#f8fafc"><td style="padding:8px">🟣 Enterprise</td><td style="padding:8px;text-align:center">$299/mes</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$50/mes</td><td style="padding:8px;text-align:center">✅ Cada mes</td></tr>
-                  </tbody>
-                </table>
+              <!-- W9 Upload -->
+              <div>
+                <div class="amb-w9-upload" onclick="document.getElementById('w9FileInput').click()">
+                  <div style="font-size:40px;margin-bottom:8px" id="w9Icon">📄</div>
+                  <h4 style="font-size:14px;margin-bottom:4px" id="w9Title">Sube tu W-9</h4>
+                  <p style="font-size:12px;color:#6b7280" id="w9Desc">Necesitamos tu W-9 para poder pagarte tus comisiones. Click aquí para subir.</p>
+                  <input type="file" id="w9FileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadW9(this)" style="display:none">
+                  <div id="w9Status" style="margin-top:12px"></div>
+                </div>
+                <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-top:12px;font-size:11px;color:#92400e">
+                  <strong>⚠️ ¿Por qué necesitamos tu W-9?</strong><br>
+                  Es requerido por el IRS para pagos mayores a $600/año. Tu información es 100% segura y confidencial.
+                </div>
               </div>
-              <!-- Referrals List -->
-              <h4 style="font-size:14px;margin-bottom:12px">📋 Mis Referidos</h4>
-              <div id="ambassadorReferrals" style="max-height:400px;overflow-y:auto"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Aún no tienes referidos — ¡comparte tu código!</p></div>
-              <!-- Payout History -->
-              <h4 style="font-size:14px;margin:20px 0 12px">💸 Historial de Pagos</h4>
-              <div id="ambassadorPayouts" style="max-height:300px;overflow-y:auto"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Sin pagos aún</p></div>
+            </div>
+
+            <!-- HOW IT WORKS -->
+            <div style="margin-bottom:20px">
+              <h3 style="font-size:16px;font-weight:800;text-align:center;margin-bottom:16px">🎯 ¿Cómo Funciona?</h3>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                <div class="amb-step"><div style="font-size:36px;margin-bottom:8px">📤</div><h4 style="font-size:13px;font-weight:800">1. Comparte</h4><p style="font-size:11px;color:#6b7280">Envía tu código o QR a dueños de negocios de HVAC</p></div>
+                <div class="amb-step"><div style="font-size:36px;margin-bottom:8px">📝</div><h4 style="font-size:13px;font-weight:800">2. Se Registran</h4><p style="font-size:11px;color:#6b7280">Ellos crean su cuenta usando tu código de referido</p></div>
+                <div class="amb-step"><div style="font-size:36px;margin-bottom:8px">✅</div><h4 style="font-size:13px;font-weight:800">3. Se Activan</h4><p style="font-size:11px;color:#6b7280">Cuando pagan su primer mes, ¡tú ganas!</p></div>
+                <div class="amb-step"><div style="font-size:36px;margin-bottom:8px">💰</div><h4 style="font-size:13px;font-weight:800">4. Cobra $50</h4><p style="font-size:11px;color:#6b7280">Recibe $50 por cada negocio que active su plan</p></div>
+              </div>
+            </div>
+
+            <!-- EPIC MESSAGE PREVIEW -->
+            <div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:20px;margin-bottom:20px;color:#fff">
+              <h4 style="font-size:14px;margin-bottom:12px">✍️ Mensaje Listo Para Enviar</h4>
+              <div id="epicMessage" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px;font-size:12px;line-height:1.6;white-space:pre-wrap;margin-bottom:12px;color:#e2e8f0">Cargando...</div>
+              <div style="display:flex;gap:8px">
+                <button onclick="copyEpicMessage()" style="background:#f97316;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📋 Copiar Mensaje</button>
+                <button onclick="refreshEpicMessage()" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">🔄 Otro Mensaje</button>
+              </div>
+            </div>
+
+            <!-- REFERRALS LIST -->
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-top"><h3>📋 Mis Referidos</h3></div>
+              <div id="ambassadorReferrals" style="max-height:400px;overflow-y:auto;padding:16px"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">🚀 Aún no tienes referidos — ¡comparte tu código y empieza a ganar $50 por cada uno!</p></div>
+            </div>
+
+            <!-- PAYOUT HISTORY -->
+            <div class="card">
+              <div class="card-top"><h3>💸 Historial de Pagos</h3></div>
+              <div id="ambassadorPayouts" style="max-height:300px;overflow-y:auto;padding:16px"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Sin pagos aún — genera referidos para empezar a ganar</p></div>
             </div>
           </div>
 
