@@ -3,1090 +3,1532 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Master Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Trade Master Admin CRM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        :root{--primary:#1e40af;--accent:#f97316;--success:#22c55e;--warning:#eab308;--danger:#ef4444;--dark:#1f2937;--gray:#6b7280;--light:#f3f4f6}
+        :root{--primary:#1e40af;--accent:#f97316;--success:#22c55e;--warning:#eab308;--danger:#ef4444;--dark:#1f2937;--gray:#6b7280;--light:#f3f4f6;--sidebar-w:240px}
         body{font-family:'Inter',sans-serif;background:var(--light);min-height:100vh}
-        .login-box{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradienht(135deg,var(--primary),#1e3a8a)}
+        
+        /* LOGIN */
+        .login-box{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#0f172a,#1e3a8a)}
         .login-box.hidden{display:none}
         .login-card{background:white;padding:2.5rem;border-radius:1rem;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
         .login-card h1{text-align:center;font-size:1.75rem;color:var(--primary);margin-bottom:0.5rem}
         .login-card h1 span{color:var(--accent)}
         .login-card>p{text-align:center;color:var(--gray);margin-bottom:2rem}
         .form-group{margin-bottom:1.25rem}
-        .form-group label{display:block;margin-bottom:0.5rem;font-weight:500}
-        .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem;font-family:inherit}
+        .form-group label{display:block;margin-bottom:0.5rem;font-weight:500;font-size:0.9rem}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:1rem;font-family:inherit;transition:border .2s}
         .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary)}
         .btn{display:block;width:100%;padding:0.875rem;border:none;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--primary);color:white;transition:all 0.2s}
-        .btn:hover{background:#1e3a8a}
-        .error{background:#fee2e2;color:#dc2626;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;display:none}
+        .btn:hover{background:#1e3a8a;transform:translateY(-1px)}
+        .error{background:#fee2e2;color:#dc2626;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;display:none;font-size:0.9rem}
         .error.show{display:block}
+        
+        /* LAYOUT */
         .dashboard{display:none}
-        .dashboard.active{display:block}
-        .header{background:white;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-wrap:wrap;gap:1rem}
-        .header h1{font-size:1.5rem;color:var(--primary)}
-        .header h1 span{color:var(--accent)}
-        .header-right{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-        .avatar{width:36px;height:36px;background:var(--primary);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600}
-        .btn-sm{padding:0.5rem 1rem;font-size:0.875rem;border-radius:0.5rem;border:none;cursor:pointer;transition:all 0.2s}
-        .btn-refresh{background:var(--light)}
-        .btn-danger{background:var(--danger);color:white}
-        .btn-success{background:var(--success);color:white}
-        .btn-primary{background:var(--primary);color:white}
-        .btn-warning{background:var(--warning);color:white}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;padding:1.5rem 2rem}
-        .stat{background:white;padding:1.25rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);cursor:pointer;transition:transform 0.2s}
-        .stat:hover{transform:translateY(-2px)}
-        .stat-icon{width:44px;height:44px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:0.5rem}
-        .stat h3{font-size:1.75rem;color:var(--dark)}
-        .stat p{color:var(--gray);font-size:0.8rem}
-        .content{padding:0 2rem 2rem}
-        .card{background:white;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:1.5rem}
-        .card-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-        .card-head h2{font-size:1.1rem}
-        .search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--light);border-radius:0.5rem}
-        .search input{border:none;background:none;outline:none;width:180px}
+        .dashboard.active{display:flex;min-height:100vh}
+        
+        /* SIDEBAR */
+        .sidebar{width:var(--sidebar-w);background:#0f172a;color:#94a3b8;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .3s}
+        .sidebar-brand{padding:1.25rem;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px}
+        .sidebar-brand h2{font-size:1.1rem;color:#fff;font-weight:700}
+        .sidebar-brand h2 span{color:var(--accent)}
+        .sidebar-nav{flex:1;padding:0.75rem 0;overflow-y:auto}
+        .nav-group{padding:0.5rem 1rem;font-size:0.65rem;text-transform:uppercase;font-weight:700;letter-spacing:1px;color:#475569;margin-top:0.5rem}
+        .nav-item{display:flex;align-items:center;gap:10px;padding:0.7rem 1.25rem;color:#94a3b8;text-decoration:none;font-size:0.85rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+        .nav-item:hover{background:#1e293b;color:#e2e8f0}
+        .nav-item.active{background:#1e293b;color:#fff;border-left-color:var(--accent)}
+        .nav-item .nav-badge{background:var(--danger);color:#fff;font-size:0.6rem;padding:2px 6px;border-radius:10px;margin-left:auto}
+        .sidebar-footer{padding:1rem;border-top:1px solid #1e293b;font-size:0.75rem}
+        
+        /* MAIN */
+        .main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column}
+        .topbar{background:#fff;padding:0.75rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:50}
+        .topbar-left{display:flex;align-items:center;gap:1rem}
+        .topbar-left h1{font-size:1.1rem;color:var(--dark)}
+        .topbar-right{display:flex;align-items:center;gap:0.75rem}
+        .main-content{flex:1;padding:1.5rem;overflow-y:auto}
+        
+        /* STATS */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+        .stat-card{background:#fff;padding:1.25rem;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;align-items:center;gap:1rem;cursor:pointer;transition:all .2s;border:1px solid #e5e7eb}
+        .stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+        .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+        .stat-info h3{font-size:1.5rem;color:var(--dark);font-weight:800;line-height:1}
+        .stat-info p{color:var(--gray);font-size:0.75rem;margin-top:2px}
+        .stat-info small{font-size:0.7rem;font-weight:600}
+        .stat-up{color:var(--success)}
+        .stat-down{color:var(--danger)}
+        
+        /* CARDS */
+        .card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #e5e7eb;margin-bottom:1.5rem;overflow:hidden}
+        .card-head{padding:1rem 1.25rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem}
+        .card-head h2{font-size:1rem;display:flex;align-items:center;gap:0.5rem}
+        .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem}
+        
+        /* TABLE */
+        .wrap{overflow-x:auto}
         .tbl{width:100%;border-collapse:collapse}
-        .tbl th{text-align:left;padding:0.875rem 1.25rem;background:var(--light);font-size:0.7rem;text-transform:uppercase;font-weight:600}
-        .tbl td{padding:0.875rem 1.25rem;border-bottom:1px solid #e5e7eb;font-size:0.9rem}
-        .tbl tr:hover{background:#f9fafb}
-        .badge{display:inline-block;padding:0.3rem 0.6rem;border-radius:2rem;font-size:0.7rem;font-weight:600}
-        .b-green{background:#dcfce7;color:#16a34a}
-        .b-yellow{background:#fef3c7;color:#d97706}
-        .b-gray{background:#f3f4f6;color:#6b7280}
-        .b-purple{background:#f3e8ff;color:#9333ea}
-        .b-blue{background:#dbeafe;color:#1d4ed8}
-        .b-red{background:#fee2e2;color:#dc2626}
-        .b-orange{background:#ffedd5;color:#ea580c}
-        .actions{display:flex;gap:0.4rem}
-        .act{width:30px;height:30px;border:none;background:var(--light);border-radius:0.375rem;cursor:pointer;font-size:0.85rem}
+        .tbl th{text-align:left;padding:0.75rem 1rem;background:var(--light);font-size:0.7rem;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;color:var(--gray)}
+        .tbl td{padding:0.75rem 1rem;border-bottom:1px solid #f3f4f6;font-size:0.85rem}
+        .tbl tr:hover{background:#fafbfc}
+        .tbl tr{cursor:pointer}
+        
+        /* BADGES */
+        .badge{display:inline-flex;align-items:center;gap:4px;padding:0.25rem 0.6rem;border-radius:2rem;font-size:0.7rem;font-weight:600}
+        .b-green{background:#dcfce7;color:#16a34a}.b-yellow{background:#fef3c7;color:#d97706}.b-gray{background:#f3f4f6;color:#6b7280}
+        .b-purple{background:#f3e8ff;color:#9333ea}.b-blue{background:#dbeafe;color:#1d4ed8}.b-red{background:#fee2e2;color:#dc2626}
+        .b-orange{background:#ffedd5;color:#ea580c}.b-teal{background:#ccfbf1;color:#0d9488}.b-pink{background:#fce7f3;color:#db2777}
+        
+        /* BUTTONS */
+        .btn-sm{padding:0.4rem 0.85rem;font-size:0.8rem;border-radius:0.5rem;border:none;cursor:pointer;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+        .btn-sm:hover{opacity:0.9;transform:translateY(-1px)}
+        .btn-primary{background:var(--primary);color:white}
+        .btn-success{background:var(--success);color:white}
+        .btn-danger{background:var(--danger);color:white}
+        .btn-warning{background:var(--warning);color:white}
+        .btn-ghost{background:transparent;color:var(--gray);border:1px solid #e5e7eb}
+        .btn-ghost:hover{background:var(--light)}
+        .btn-accent{background:var(--accent);color:white}
+        
+        .actions{display:flex;gap:4px}
+        .act{width:32px;height:32px;border:none;background:var(--light);border-radius:8px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
         .act:hover{background:var(--primary);color:white}
         .act.danger:hover{background:var(--danger)}
-        .empty{text-align:center;padding:2rem;color:var(--gray)}
-        .wrap{overflow-x:auto}
         
-        /* Main Tabs */
-        .main-tabs{display:flex;gap:0;background:white;border-bottom:1px solid #e5e7eb;padding:0 1rem;overflow-x:auto}
-        .main-tab{padding:1rem 1.25rem;border:none;background:none;font-size:0.85rem;font-weight:500;cursor:pointer;color:var(--gray);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:0.5rem}
-        .main-tab:hover{color:var(--primary)}
-        .main-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
-        .main-tab .tab-badge{background:var(--danger);color:white;font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:1rem}
-        .section{display:none}
-        .section.active{display:block}
+        /* SEARCH */
+        .search-box{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--light);border-radius:8px;border:1px solid #e5e7eb}
+        .search-box input{border:none;background:none;outline:none;width:200px;font-size:0.85rem}
         
-        /* Notifications */
-        .notif-wrap{position:relative}
-        .notif-btn{background:var(--light);border:none;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;position:relative}
-        .notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:white;font-size:0.6rem;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
-        .notif-badge.hidden{display:none}
-        .notif-dropdown{position:absolute;top:50px;right:0;background:white;border-radius:0.75rem;box-shadow:0 10px 40px rgba(0,0,0,0.15);width:350px;max-height:450px;overflow:auto;display:none;z-index:100}
-        .notif-dropdown.show{display:block}
-        .notif-header{padding:1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
-        .notif-header h4{font-size:0.95rem}
-        .notif-item{padding:0.875rem 1rem;border-bottom:1px solid #e5e7eb;cursor:pointer;display:flex;gap:0.75rem}
-        .notif-item:hover{background:#f9fafb}
-        .notif-item.unread{background:#eff6ff}
-        .notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-        .notif-content h5{font-size:0.85rem;margin-bottom:0.2rem}
-        .notif-content p{font-size:0.75rem;color:var(--gray)}
-        .notif-empty{padding:2rem;text-align:center;color:var(--gray)}
+        /* FILTER PILLS */
+        .filter-bar{display:flex;gap:0.4rem;flex-wrap:wrap;padding:0.75rem 1.25rem;border-bottom:1px solid #e5e7eb}
+        .pill{padding:0.35rem 0.85rem;border-radius:2rem;font-size:0.75rem;font-weight:600;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:var(--gray);transition:all .15s}
+        .pill:hover{border-color:var(--primary);color:var(--primary)}
+        .pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
         
-        /* Modal */
-        .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+        /* USER CARD */
+        .user-card{display:flex;align-items:center;gap:0.75rem}
+        .avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;color:#fff;background:var(--primary)}
+        .user-card h4{font-weight:600;font-size:0.85rem}
+        .user-card small{color:var(--gray);font-size:0.75rem}
+        
+        /* MODAL */
+        .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;backdrop-filter:blur(4px)}
         .modal-bg.show{display:flex}
-        .modal{background:white;border-radius:1rem;width:100%;max-width:600px;max-height:90vh;overflow:auto;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
-        .modal-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
-        .modal-head h3{font-size:1.15rem}
-        .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)}
+        .modal{background:white;border-radius:16px;width:100%;max-width:700px;max-height:90vh;overflow:auto;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
+        .modal-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+        .modal-head h3{font-size:1.1rem;display:flex;align-items:center;gap:0.5rem}
+        .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .modal-close:hover{background:var(--light)}
         .modal-body{padding:1.5rem}
         .modal-foot{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem}
-        .modal-foot .btn{width:auto;padding:0.6rem 1.25rem}
         
-        /* Ticket styles */
-        .ticket-card{border:1px solid #e5e7eb;border-radius:0.75rem;padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:all 0.2s}
-        .ticket-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        /* DETAIL GRID */
+        .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem}
+        .detail-grid .full{grid-column:1/-1}
+        .detail-item{padding:0.75rem;background:var(--light);border-radius:8px}
+        .detail-item label{font-size:0.7rem;text-transform:uppercase;font-weight:700;color:var(--gray);display:block;margin-bottom:2px}
+        .detail-item span{font-weight:600;color:var(--dark)}
+        
+        /* TIMELINE */
+        .timeline{position:relative;padding-left:24px}
+        .timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#e5e7eb}
+        .timeline-item{position:relative;padding-bottom:1.25rem}
+        .timeline-item::before{content:'';position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary)}
+        .timeline-item.success::before{background:var(--success);box-shadow:0 0 0 2px var(--success)}
+        .timeline-item.warning::before{background:var(--warning);box-shadow:0 0 0 2px var(--warning)}
+        .timeline-item.danger::before{background:var(--danger);box-shadow:0 0 0 2px var(--danger)}
+        .timeline-item h5{font-size:0.85rem;margin-bottom:2px}
+        .timeline-item p{font-size:0.75rem;color:var(--gray)}
+        
+        /* TABS inside cards */
+        .tab-bar{display:flex;border-bottom:1px solid #e5e7eb}
+        .tab-btn{padding:0.75rem 1.25rem;border:none;background:none;font-size:0.8rem;font-weight:600;cursor:pointer;color:var(--gray);border-bottom:2px solid transparent;transition:all .15s}
+        .tab-btn:hover{color:var(--primary)}
+        .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .tab-pane{display:none;padding:1.25rem}
+        .tab-pane.active{display:block}
+        
+        /* TICKET */
+        .ticket-card{border:1px solid #e5e7eb;border-radius:10px;padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:all .2s}
+        .ticket-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.05)}
         .ticket-card.urgent{border-left:4px solid var(--danger)}
         .ticket-card.high{border-left:4px solid var(--warning)}
         .ticket-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem}
-        .ticket-header h4{font-size:0.95rem}
-        .ticket-meta{display:flex;gap:1rem;font-size:0.8rem;color:var(--gray)}
-        .ticket-preview{font-size:0.85rem;color:var(--gray);margin-top:0.5rem}
+        .ticket-meta{display:flex;gap:1rem;font-size:0.78rem;color:var(--gray)}
         
-        /* Chat messages */
-        .chat-container{max-height:400px;overflow-y:auto;padding:1rem;background:#f9fafb;border-radius:0.5rem}
+        /* CHAT */
+        .chat-container{max-height:350px;overflow-y:auto;padding:1rem;background:#f9fafb;border-radius:8px}
         .chat-msg{margin-bottom:1rem;display:flex;gap:0.75rem}
         .chat-msg.admin{flex-direction:row-reverse}
-        .chat-bubble{max-width:80%;padding:0.75rem 1rem;border-radius:1rem}
-        .chat-msg.user .chat-bubble{background:white;border:1px solid #e5e7eb;border-bottom-left-radius:0.25rem}
-        .chat-msg.admin .chat-bubble{background:var(--primary);color:white;border-bottom-right-radius:0.25rem}
-        .chat-sender{font-size:0.75rem;color:var(--gray);margin-bottom:0.25rem}
-        .chat-time{font-size:0.7rem;opacity:0.7;margin-top:0.25rem}
+        .chat-bubble{max-width:80%;padding:0.75rem 1rem;border-radius:12px;font-size:0.85rem}
+        .chat-msg.user .chat-bubble{background:white;border:1px solid #e5e7eb;border-bottom-left-radius:4px}
+        .chat-msg.admin .chat-bubble{background:var(--primary);color:white;border-bottom-right-radius:4px}
+        .chat-sender{font-size:0.7rem;color:var(--gray);margin-bottom:2px}
+        .chat-time{font-size:0.65rem;opacity:0.6;margin-top:4px}
         
-        /* User card */
-        .user-card{display:flex;align-items:center;gap:0.75rem}
-        .user-card .avatar{width:40px;height:40px}
-        .user-card h4{font-weight:500;font-size:0.9rem}
-        .user-card small{color:var(--gray);font-size:0.8rem}
+        /* STRIPE PANEL */
+        .stripe-header{background:linear-gradient(135deg,#635bff,#7c3aed);color:#fff;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between}
+        .stripe-header h2{display:flex;align-items:center;gap:0.5rem;font-size:1.2rem}
+        .stripe-connected{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;background:rgba(255,255,255,.2);padding:0.4rem 1rem;border-radius:2rem}
         
-        /* Current user */
-        .current-user{display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.75rem;background:var(--light);border-radius:2rem}
+        /* NOTIF */
+        .notif-wrap{position:relative}
+        .notif-btn{background:var(--light);border:none;width:38px;height:38px;border-radius:10px;font-size:1.15rem;cursor:pointer;position:relative}
+        .notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:white;font-size:0.55rem;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+        .notif-badge.hidden{display:none}
+        .notif-dropdown{position:absolute;top:46px;right:0;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.15);width:350px;max-height:400px;overflow:auto;display:none;z-index:100;border:1px solid #e5e7eb}
+        .notif-dropdown.show{display:block}
+        .notif-item{padding:0.75rem 1rem;border-bottom:1px solid #f3f4f6;cursor:pointer;display:flex;gap:0.75rem;font-size:0.85rem}
+        .notif-item:hover{background:#fafbfc}
+        .notif-item.unread{background:#eff6ff}
+        
+        /* CURRENT USER */
+        .current-user{display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.75rem;background:var(--light);border-radius:10px;cursor:pointer}
         .current-user-info{text-align:right}
-        .current-user-info h4{font-size:0.8rem;font-weight:600}
-        .current-user-info p{font-size:0.65rem;color:var(--gray)}
+        .current-user-info h4{font-size:0.78rem;font-weight:600}
+        .current-user-info p{font-size:0.62rem;color:var(--gray)}
         
-        /* Role badges */
+        /* ROLE BADGES */
         .role-super{background:linear-gradient(135deg,#f97316,#ea580c);color:white}
         .role-admin{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:white}
         .role-support{background:linear-gradient(135deg,#22c55e,#16a34a);color:white}
         
-        /* Status indicator */
-        .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:0.4rem}
-        .status-dot.online{background:#22c55e}
-        .status-dot.offline{background:#9ca3af}
+        /* STRIPE CONNECT CARD */
+        .stripe-key-card{background:linear-gradient(135deg,#635bff 0%,#7c3aed 100%);color:#fff;padding:2rem;border-radius:16px;text-align:center;max-width:500px;margin:2rem auto}
+        .stripe-key-card h3{font-size:1.2rem;margin-bottom:0.5rem}
+        .stripe-key-card p{font-size:0.85rem;opacity:0.8;margin-bottom:1.5rem}
+        .stripe-key-card input{width:100%;padding:0.85rem;border:2px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-size:0.9rem;font-family:monospace;text-align:center}
+        .stripe-key-card input::placeholder{color:rgba(255,255,255,.5)}
+        .stripe-key-card input:focus{outline:none;border-color:#fff}
+        .stripe-key-card button{margin-top:1rem;padding:0.75rem 2rem;background:#fff;color:#635bff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
         
-        /* Quick actions */
+        /* CHART CONTAINER */
+        .chart-container{position:relative;height:280px;padding:1rem}
+        
+        /* QUICK ACTIONS */
         .quick-actions{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem}
-        .quick-action{padding:0.5rem 1rem;background:white;border:1px solid #e5e7eb;border-radius:2rem;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem}
+        .quick-action{padding:0.4rem 0.85rem;background:white;border:1px solid #e5e7eb;border-radius:2rem;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500;transition:all .15s}
         .quick-action:hover{border-color:var(--primary);color:var(--primary)}
         
-        @media(max-width:768px){.stats,.content{padding:1rem}.header{padding:1rem}.main-tabs{padding:0}}
+        .empty{text-align:center;padding:2rem;color:var(--gray);font-size:0.9rem}
+        
+        /* Health Score */
+        .health-bar{width:60px;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px}
+        .health-fill{height:100%;border-radius:4px;transition:width .3s}
+        .health-score{font-weight:800;font-size:0.85rem;display:inline-flex;align-items:center;gap:4px}
+        
+        /* Lifecycle stages */
+        .lifecycle{display:inline-flex;align-items:center;gap:4px;padding:0.25rem 0.6rem;border-radius:2rem;font-size:0.7rem;font-weight:700}
+        .lc-onboarding{background:#f3e8ff;color:#7c3aed}
+        .lc-active{background:#dcfce7;color:#16a34a}
+        .lc-at-risk{background:#fef3c7;color:#d97706}
+        .lc-overdue{background:#fee2e2;color:#dc2626}
+        .lc-churned{background:#f3f4f6;color:#6b7280;text-decoration:line-through}
+        .lc-never{background:#fce7f3;color:#db2777}
+        
+        /* Onboarding pipeline columns */
+        .ob-col{background:var(--light);border-radius:10px;padding:0.75rem;min-height:120px}
+        .ob-col h4{font-size:0.75rem;text-transform:uppercase;font-weight:700;color:var(--gray);margin-bottom:0.75rem;display:flex;justify-content:space-between}
+        .ob-col h4 span{background:var(--primary);color:#fff;font-size:0.6rem;padding:2px 8px;border-radius:10px}
+        .ob-card{background:#fff;padding:0.6rem;border-radius:8px;margin-bottom:0.5rem;border:1px solid #e5e7eb;font-size:0.8rem;cursor:pointer;transition:all .15s}
+        .ob-card:hover{border-color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+        .ob-card h5{font-size:0.8rem;margin-bottom:2px}
+        .ob-card small{color:var(--gray);font-size:0.7rem}
+        
+        /* Follow-up cards */
+        .fu-card{display:flex;gap:0.75rem;padding:0.75rem;border-bottom:1px solid #f3f4f6;align-items:flex-start;cursor:pointer;transition:background .15s}
+        .fu-card:hover{background:#fafbfc}
+        .fu-card.overdue{background:#fff5f5}
+        .fu-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+        .fu-card h5{font-size:0.85rem;margin-bottom:2px}
+        .fu-card p{font-size:0.75rem;color:var(--gray)}
+        .fu-card .fu-date{font-size:0.7rem;font-weight:700}
+        
+        /* RESPONSIVE */
+        .menu-toggle{display:none;background:none;border:none;font-size:1.5rem;cursor:pointer}
+        @media(max-width:768px){
+            .sidebar{transform:translateX(-100%)}
+            .sidebar.open{transform:translateX(0)}
+            .main{margin-left:0}
+            .menu-toggle{display:block}
+            .stats-grid{grid-template-columns:1fr 1fr}
+            .detail-grid{grid-template-columns:1fr}
+            .search-box input{width:120px}
+        }
     </style>
 </head>
 <body>
-    <!-- LOGIN -->
-    <div class="login-box" id="login">
-        <div class="login-card">
-            <h1>🔐 Trade<span>Masters</span></h1>
-            <p>Panel de Administración</p>
-            <div class="error" id="err"></div>
-            <div class="form-group">
-                <label>📧 Email</label>
-                <input type="email" id="em" placeholder="tu@email.com">
-            </div>
-            <div class="form-group">
-                <label>🔑 Contraseña</label>
-                <input type="password" id="pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
-            </div>
-            <button class="btn" onclick="doLogin()">Entrar →</button>
-            <p style="text-align:center;margin-top:1.5rem;color:var(--gray);font-size:0.8rem"><a href="#" onclick="showAdminForgotPassword();return false" style="color:var(--accent);text-decoration:none;font-size:0.85rem">🔑 ¿Olvidaste tu contraseña?</a></p>
-        </div>
-    </div>
 
-    <!-- DASHBOARD -->
-    <div class="dashboard" id="dash">
-        <header class="header">
-            <h1>🔐 Trade<span>Masters</span> Admin</h1>
-            <div class="header-right">
+<!-- LOGIN -->
+<div class="login-box" id="login">
+    <div class="login-card">
+        <h1>🔐 Trade<span>Master</span></h1>
+        <p>Admin CRM Panel</p>
+        <div class="error" id="err"></div>
+        <div class="form-group"><label>📧 Email</label><input type="email" id="em" placeholder="tu@email.com"></div>
+        <div class="form-group"><label>🔑 Contraseña</label><input type="password" id="pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn" onclick="doLogin()">Entrar →</button>
+        <p style="text-align:center;margin-top:1.5rem"><a href="#" onclick="showAdminForgotPassword();return false" style="color:var(--accent);text-decoration:none;font-size:0.85rem">🔑 ¿Olvidaste tu contraseña?</a></p>
+    </div>
+</div>
+
+<!-- DASHBOARD LAYOUT -->
+<div class="dashboard" id="dash">
+    
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span style="font-size:1.5rem">🔧</span>
+            <h2>Trade<span>Master</span></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-group">Principal</div>
+            <div class="nav-item active" onclick="showSec('dashboard',this)">📊 Dashboard</div>
+            <div class="nav-item" onclick="showSec('empresas',this)">🏢 Empresas CRM</div>
+            <div class="nav-item" onclick="showSec('success',this)">🎯 Customer Success <span class="nav-badge" id="csBadge" style="display:none">0</span></div>
+            <div class="nav-item" onclick="showSec('stripe',this)">💳 Stripe Pagos</div>
+            
+            <div class="nav-group">Soporte</div>
+            <div class="nav-item" onclick="showSec('tickets',this)">🎫 Tickets <span class="nav-badge" id="ticketsBadge" style="display:none">0</span></div>
+            <div class="nav-item" onclick="showSec('passwords',this)">🔑 Passwords</div>
+            
+            <div class="nav-group">Finanzas</div>
+            <div class="nav-item" onclick="showSec('revenue',this)">📈 Revenue</div>
+            <div class="nav-item" onclick="showSec('pagos',this)">💰 Historial Pagos</div>
+            
+            <div class="nav-group">Sistema</div>
+            <div class="nav-item" onclick="showSec('admins',this)" id="navAdmins">👤 Admins</div>
+            <div class="nav-item" onclick="showSec('logs',this)">📋 Logs</div>
+            <div class="nav-item" onclick="showSec('settings',this)">⚙️ Config</div>
+        </div>
+        <div class="sidebar-footer">
+            <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" id="sideAv" style="width:32px;height:32px;font-size:0.7rem">M</div>
+                <div><div style="font-size:0.8rem;font-weight:600;color:#fff" id="sideName">Admin</div><div style="font-size:0.65rem;color:#64748b" id="sideRole">Role</div></div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- MAIN AREA -->
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                <h1 id="pageTitle">📊 Dashboard</h1>
+            </div>
+            <div class="topbar-right">
                 <div class="notif-wrap">
                     <button class="notif-btn" onclick="toggleNotifications()">🔔<span class="notif-badge" id="notifBadge">0</span></button>
                     <div class="notif-dropdown" id="notifDropdown">
-                        <div class="notif-header">
-                            <h4>Notificaciones</h4>
-                            <button class="btn-sm" onclick="markAllRead()" style="font-size:0.75rem">Marcar leídas</button>
+                        <div style="padding:1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+                            <h4 style="font-size:0.9rem">Notificaciones</h4>
+                            <button class="btn-sm btn-ghost" onclick="markAllRead()" style="font-size:0.7rem">Marcar leídas</button>
                         </div>
-                        <div id="notifList"><div class="notif-empty">Sin notificaciones</div></div>
+                        <div id="notifList"><div class="empty" style="padding:1.5rem">Sin notificaciones</div></div>
                     </div>
                 </div>
-                <button class="btn-sm btn-refresh" onclick="refreshAll()">🔄</button>
-                <div class="current-user">
-                    <div class="current-user-info">
-                        <h4 id="currentUserName">Usuario</h4>
-                        <p id="currentUserRole">Rol</p>
-                    </div>
+                <button class="btn-sm btn-ghost" onclick="refreshAll()">🔄</button>
+                <div class="current-user" onclick="showSec('admins',document.getElementById('navAdmins'))">
+                    <div class="current-user-info"><h4 id="currentUserName">User</h4><p id="currentUserRole">Role</p></div>
                     <div class="avatar" id="av">M</div>
                 </div>
                 <button class="btn-sm btn-danger" onclick="doLogout()">Salir</button>
             </div>
         </header>
         
-        <!-- Main Tabs -->
-        <div class="main-tabs">
-            <button class="main-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
-            <button class="main-tab" onclick="showSection('empresas')">🏢 Empresas</button>
-            <button class="main-tab" onclick="showSection('tickets')">🎫 Soporte <span class="tab-badge" id="ticketsBadge" style="display:none">0</span></button>
-            <button class="main-tab" onclick="showSection('passwords')">🔑 Passwords</button>
-            <button class="main-tab" onclick="showSection('pagos')">💳 Pagos</button>
-            <button class="main-tab" onclick="showSection('admins')" id="tabAdmins">👤 Admins</button>
-            <button class="main-tab" onclick="showSection('logs')">📋 Logs</button>
+        <div class="main-content">
+            
+<!-- ============ SECTION: DASHBOARD ============ -->
+<div class="section active" id="secDashboard">
+    <div class="stats-grid">
+        <div class="stat-card" onclick="showSec('empresas')"><div class="stat-icon" style="background:#dbeafe">🏢</div><div class="stat-info"><h3 id="s1">0</h3><p>Total Empresas</p></div></div>
+        <div class="stat-card" onclick="showSec('empresas')"><div class="stat-icon" style="background:#dcfce7">✅</div><div class="stat-info"><h3 id="s2">0</h3><p>Suscripciones Activas</p></div></div>
+        <div class="stat-card" onclick="showSec('revenue')"><div class="stat-icon" style="background:#f3e8ff">💰</div><div class="stat-info"><h3 id="s3">$0</h3><p>MRR</p></div></div>
+        <div class="stat-card" onclick="showSec('tickets')"><div class="stat-icon" style="background:#fee2e2">🎫</div><div class="stat-info"><h3 id="s6">0</h3><p>Tickets Abiertos</p></div></div>
+        <div class="stat-card" onclick="showSec('empresas')"><div class="stat-icon" style="background:#fef3c7">⏳</div><div class="stat-info"><h3 id="sTrial">0</h3><p>En Trial</p></div></div>
+        <div class="stat-card" onclick="showSec('stripe')"><div class="stat-icon" style="background:#ccfbf1">📊</div><div class="stat-info"><h3 id="sChurn">0%</h3><p>Churn Rate</p></div></div>
+    </div>
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-head"><h2>📈 Revenue (6 meses)</h2></div>
+            <div class="chart-container"><canvas id="revenueChart"></canvas></div>
         </div>
-        
-        <!-- Section: Dashboard -->
-        <div class="section active" id="secDashboard">
-            <div class="stats">
-                <div class="stat" onclick="showSection('empresas')"><div class="stat-icon" style="background:#dbeafe">🏢</div><h3 id="s1">0</h3><p>Empresas</p></div>
-                <div class="stat" onclick="showSection('empresas')"><div class="stat-icon" style="background:#dcfce7">💳</div><h3 id="s2">0</h3><p>Activas</p></div>
-                <div class="stat" onclick="showSection('pagos')"><div class="stat-icon" style="background:#ffedd5">💰</div><h3 id="s3">$0</h3><p>MRR</p></div>
-                <div class="stat" onclick="showSection('tickets')"><div class="stat-icon" style="background:#fee2e2">🎫</div><h3 id="s6">0</h3><p>Tickets Abiertos</p></div>
-                <div class="stat" onclick="showSection('passwords')"><div class="stat-icon" style="background:#fef3c7">🔑</div><h3 id="s7">0</h3><p>Reset Pendientes</p></div>
-            </div>
-            <div class="content">
-                <!-- Recent Activity -->
-                <div class="card">
-                    <div class="card-head"><h2>🕐 Actividad Reciente</h2></div>
-                    <div id="recentActivity" style="padding:1rem"><p class="empty">Cargando...</p></div>
-                </div>
-                <!-- Recent Companies -->
-                <div class="card">
-                    <div class="card-head"><h2>🆕 Últimas Empresas Registradas</h2><button class="btn-sm btn-primary" onclick="showSection('empresas')">Ver todas</button></div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Email</th><th>Registro</th><th>Plan</th></tr></thead><tbody id="recentCompanies"></tbody></table></div>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-head"><h2>🏢 Empresas por Plan</h2></div>
+            <div class="chart-container"><canvas id="planChart"></canvas></div>
         </div>
-        
-        <!-- Section: Empresas -->
-        <div class="section" id="secEmpresas">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="card">
-                    <div class="card-head">
-                        <h2>🏢 Empresas Registradas</h2>
-                        <div class="search"><span>🔍</span><input type="text" placeholder="Buscar..." id="q" oninput="doSearch()"></div>
-                    </div>
-                    <div style="padding:0.75rem 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;border-bottom:1px solid #e5e7eb">
-                        <button class="btn-sm" style="background:var(--primary);color:white" onclick="filterCompanies('all')">Todos</button>
-                        <button class="btn-sm btn-refresh" onclick="filterCompanies('free')">Free</button>
-                        <button class="btn-sm btn-refresh" onclick="filterCompanies('profesional')">Pro</button>
-                        <button class="btn-sm btn-refresh" onclick="filterCompanies('enterprise')">Enterprise</button>
-                    </div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Empresa</th><th>Teléfono</th><th>Registro</th><th>Plan</th><th>Empleados</th><th>Acciones</th></tr></thead><tbody id="tbody"></tbody></table></div>
-                </div>
+    </div>
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-head"><h2>🕐 Actividad Reciente</h2></div>
+            <div id="recentActivity" style="padding:1rem;max-height:300px;overflow-y:auto"><p class="empty">Cargando...</p></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h2>🆕 Últimas Empresas</h2><button class="btn-sm btn-ghost" onclick="showSec('empresas')">Ver todas →</button></div>
+            <div class="wrap"><table class="tbl"><thead><tr><th>#</th><th>Empresa</th><th>Plan</th><th>Registro</th></tr></thead><tbody id="recentCompanies"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SECTION: EMPRESAS CRM ============ -->
+<div class="section" id="secEmpresas">
+    <div class="card">
+        <div class="card-head">
+            <h2>🏢 Empresas CRM</h2>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+                <div class="search-box"><span>🔍</span><input type="text" placeholder="Buscar empresa..." id="q" oninput="doSearch()"></div>
+                <button class="btn-sm btn-primary" onclick="exportCompaniesCSV()">📥 CSV</button>
             </div>
         </div>
-        
-        <!-- Section: Tickets -->
-        <div class="section" id="secTickets">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="quick-actions">
-                    <button class="quick-action" onclick="filterTickets('all')">📋 Todos</button>
-                    <button class="quick-action" onclick="filterTickets('open')">🟢 Abiertos</button>
-                    <button class="quick-action" onclick="filterTickets('in_progress')">🟡 En Progreso</button>
-                    <button class="quick-action" onclick="filterTickets('waiting_response')">🟠 Esperando</button>
-                    <button class="quick-action" onclick="filterTickets('resolved')">✅ Resueltos</button>
-                </div>
-                <div class="card">
-                    <div class="card-head">
-                        <h2>🎫 Tickets de Soporte</h2>
-                        <div class="search"><span>🔍</span><input type="text" placeholder="Buscar ticket..." oninput="searchTickets(this.value)"></div>
-                    </div>
-                    <div style="padding:1rem" id="ticketsList"><p class="empty">Cargando tickets...</p></div>
-                </div>
+        <div class="filter-bar">
+            <div class="pill active" onclick="filterCompanies('all',this)">Todos</div>
+            <div class="pill" onclick="filterCompanies('free',this)">🆓 Free</div>
+            <div class="pill" onclick="filterCompanies('profesional',this)">⭐ Pro</div>
+            <div class="pill" onclick="filterCompanies('enterprise',this)">💎 Enterprise</div>
+            <div class="pill" onclick="filterCompanies('active',this)">✅ Activos</div>
+            <div class="pill" onclick="filterCompanies('canceled',this)">❌ Cancelados</div>
+            <div class="pill" onclick="filterCompanies('trial',this)">⏳ Trial</div>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>#</th><th>Empresa</th><th>Teléfono</th><th>Registrado</th><th>Plan</th><th>Status</th><th>Stripe</th><th>Empleados</th><th>Acciones</th>
+        </tr></thead><tbody id="tbody"></tbody></table></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: CUSTOMER SUCCESS ============ -->
+<div class="section" id="secSuccess">
+    <!-- Health Overview KPIs -->
+    <div class="stats-grid">
+        <div class="stat-card" style="border-left:4px solid var(--success)"><div class="stat-icon" style="background:#dcfce7">💚</div><div class="stat-info"><h3 id="csHealthy">0</h3><p>Healthy (Pagando)</p></div></div>
+        <div class="stat-card" style="border-left:4px solid var(--warning)"><div class="stat-icon" style="background:#fef3c7">⚠️</div><div class="stat-info"><h3 id="csAtRisk">0</h3><p>At Risk</p></div></div>
+        <div class="stat-card" style="border-left:4px solid var(--danger)"><div class="stat-icon" style="background:#fee2e2">🔴</div><div class="stat-info"><h3 id="csOverdue">0</h3><p>Pago Vencido</p></div></div>
+        <div class="stat-card" style="border-left:4px solid var(--gray)"><div class="stat-icon" style="background:#f3f4f6">👻</div><div class="stat-info"><h3 id="csNeverPaid">0</h3><p>Nunca Pagaron</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #8b5cf6"><div class="stat-icon" style="background:#f3e8ff">🆕</div><div class="stat-info"><h3 id="csOnboarding">0</h3><p>En Onboarding</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #ec4899"><div class="stat-icon" style="background:#fce7f3">💀</div><div class="stat-info"><h3 id="csChurned">0</h3><p>Churned</p></div></div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card">
+        <div class="card-head">
+            <h2>🎯 Customer Success — Lifecycle Tracker</h2>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+                <div class="search-box"><span>🔍</span><input type="text" placeholder="Buscar..." id="csSearch" oninput="filterCS()"></div>
+                <button class="btn-sm btn-primary" onclick="exportCSReport()">📥 Export</button>
             </div>
         </div>
-        
-        <!-- Section: Passwords -->
-        <div class="section" id="secPasswords">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="card">
-                    <div class="card-head">
-                        <h2>🔑 Solicitudes de Reset Password</h2>
-                        <button class="btn-sm btn-success" onclick="openManualResetModal()">➕ Reset Manual</button>
-                    </div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Empresa</th><th>Solicitado</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="passwordResets"></tbody></table></div>
-                </div>
-                
-                <!-- Quick Reset Tool -->
-                <div class="card">
-                    <div class="card-head"><h2>⚡ Reset Rápido</h2></div>
-                    <div style="padding:1.5rem">
-                        <p style="font-size:0.9rem;color:var(--gray);margin-bottom:1rem">Busca un usuario por email para resetear su contraseña o enviarle un magic link.</p>
-                        <div style="display:flex;gap:0.5rem">
-                            <input type="email" id="quickResetEmail" placeholder="email@empresa.com" style="flex:1;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem">
-                            <button class="btn-sm btn-primary" onclick="quickSearchUser()">🔍 Buscar</button>
-                        </div>
-                        <div id="quickResetResult" style="margin-top:1rem"></div>
-                    </div>
-                </div>
-            </div>
+        <div class="filter-bar" id="csFilters">
+            <div class="pill active" onclick="filterCSStatus('all',this)">📋 Todos</div>
+            <div class="pill" onclick="filterCSStatus('healthy',this)" style="border-color:#22c55e">💚 Healthy</div>
+            <div class="pill" onclick="filterCSStatus('at_risk',this)" style="border-color:#eab308">⚠️ At Risk</div>
+            <div class="pill" onclick="filterCSStatus('overdue',this)" style="border-color:#ef4444">🔴 Vencido</div>
+            <div class="pill" onclick="filterCSStatus('never_paid',this)" style="border-color:#6b7280">👻 Nunca Pagó</div>
+            <div class="pill" onclick="filterCSStatus('onboarding',this)" style="border-color:#8b5cf6">🆕 Onboarding</div>
+            <div class="pill" onclick="filterCSStatus('churned',this)" style="border-color:#ec4899">💀 Churned</div>
         </div>
-        
-        <!-- Section: Pagos -->
-        <div class="section" id="secPagos">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="stats" style="padding:0 0 1rem 0">
-                    <div class="stat"><div class="stat-icon" style="background:#dcfce7">💵</div><h3 id="totalRevenue">$0</h3><p>Ingresos Totales</p></div>
-                    <div class="stat"><div class="stat-icon" style="background:#dbeafe">📅</div><h3 id="monthlyRevenue">$0</h3><p>Este Mes</p></div>
-                    <div class="stat"><div class="stat-icon" style="background:#f3e8ff">📊</div><h3 id="avgRevenue">$0</h3><p>Promedio/Empresa</p></div>
-                </div>
-                <div class="card">
-                    <div class="card-head">
-                        <h2>💳 Historial de Pagos</h2>
-                        <button class="btn-sm btn-success" onclick="openAddPaymentModal()">➕ Registrar Pago</button>
-                    </div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Empresa</th><th>Plan</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead><tbody id="paymentsTable"></tbody></table></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Section: Admins -->
-        <div class="section" id="secAdmins">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="card">
-                    <div class="card-head">
-                        <h2>👤 Usuarios Admin</h2>
-                        <button class="btn-sm btn-success" onclick="openAddAdminModal()" id="btnAddAdmin">➕ Nuevo Admin</button>
-                    </div>
-                    <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Último Login</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="adminsTable"></tbody></table></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Section: Logs -->
-        <div class="section" id="secLogs">
-            <div class="content" style="padding-top:1.5rem">
-                <div class="card">
-                    <div class="card-head">
-                        <h2>📋 Logs de Actividad</h2>
-                        <select id="logFilter" onchange="filterLogs()" style="padding:0.5rem;border:1px solid #e5e7eb;border-radius:0.5rem">
-                            <option value="all">Todas</option>
-                            <option value="login">Logins</option>
-                            <option value="create">Creaciones</option>
-                            <option value="update">Ediciones</option>
-                            <option value="delete">Eliminaciones</option>
-                        </select>
-                    </div>
-                    <div id="logsContainer" style="max-height:500px;overflow-y:auto"><p class="empty">Cargando logs...</p></div>
-                </div>
-            </div>
+        <div class="wrap">
+            <table class="tbl">
+                <thead><tr>
+                    <th>#</th>
+                    <th>Empresa</th>
+                    <th>Health</th>
+                    <th>Lifecycle</th>
+                    <th>Plan</th>
+                    <th>Último Pago</th>
+                    <th>Días sin Pagar</th>
+                    <th>Total Pagado</th>
+                    <th>Registro</th>
+                    <th>Acciones</th>
+                </tr></thead>
+                <tbody id="csTable"></tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Modal: Ver Empresa -->
-    <div class="modal-bg" id="modalView">
-        <div class="modal">
-            <div class="modal-head"><h3 id="modalTitle">Empresa</h3><button class="modal-close" onclick="closeModal('modalView')">×</button></div>
-            <div class="modal-body" id="companyDetails"></div>
-            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalView')">Cerrar</button></div>
+    <!-- Follow-up Tasks -->
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-head">
+                <h2>📞 Follow-Ups Pendientes</h2>
+                <button class="btn-sm btn-success" onclick="openAddFollowUp()">➕ Nuevo</button>
+            </div>
+            <div id="followUpList" style="padding:1rem;max-height:400px;overflow-y:auto"><p class="empty">Sin follow-ups</p></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h2>📊 Health Distribution</h2></div>
+            <div class="chart-container"><canvas id="csHealthChart"></canvas></div>
         </div>
     </div>
 
-    <!-- Modal: Ver Ticket -->
-    <div class="modal-bg" id="modalTicket">
-        <div class="modal" style="max-width:700px">
-            <div class="modal-head"><h3 id="ticketTitle">Ticket</h3><button class="modal-close" onclick="closeModal('modalTicket')">×</button></div>
-            <div class="modal-body">
-                <div id="ticketInfo" style="margin-bottom:1rem"></div>
-                <div class="chat-container" id="ticketChat"></div>
-                <div style="margin-top:1rem">
-                    <textarea id="ticketReply" rows="3" placeholder="Escribe tu respuesta..." style="width:100%;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-family:inherit"></textarea>
-                    <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
-                        <select id="ticketStatus" style="padding:0.5rem;border:1px solid #e5e7eb;border-radius:0.5rem">
-                            <option value="in_progress">🟡 En Progreso</option>
-                            <option value="waiting_response">🟠 Esperando Respuesta</option>
-                            <option value="resolved">✅ Resuelto</option>
-                        </select>
-                        <button class="btn-sm btn-primary" onclick="sendTicketReply()">📤 Enviar</button>
-                    </div>
+    <!-- Onboarding Pipeline -->
+    <div class="card">
+        <div class="card-head"><h2>🚀 Onboarding Pipeline</h2></div>
+        <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem" id="onboardingPipeline">
+        </div>
+    </div>
+</div>
+
+<!-- ============ SECTION: STRIPE ============ -->
+<div class="section" id="secStripe">
+    <div id="stripeNotConnected">
+        <div class="stripe-key-card">
+            <div style="font-size:3rem;margin-bottom:1rem">💳</div>
+            <h3>Conectar Stripe</h3>
+            <p>Ingresa tu Stripe Secret Key para ver clientes, pagos y hacer reembolsos en tiempo real.</p>
+            <input type="password" id="stripeKeyInput" placeholder="sk_live_... o sk_test_...">
+            <br><button onclick="connectStripe()">🔗 Conectar</button>
+            <p style="font-size:0.7rem;opacity:0.6;margin-top:1rem">La key se guarda solo en tu navegador (localStorage)</p>
+        </div>
+    </div>
+    <div id="stripeConnected" style="display:none">
+        <div class="stripe-header">
+            <h2>💳 Stripe Dashboard</h2>
+            <div style="display:flex;align-items:center;gap:1rem">
+                <div class="stripe-connected">🟢 Conectado</div>
+                <button class="btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="disconnectStripe()">Desconectar</button>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon" style="background:#f3e8ff">💰</div><div class="stat-info"><h3 id="stripeBalance">$0</h3><p>Balance Disponible</p></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:#dcfce7">👥</div><div class="stat-info"><h3 id="stripeCust">0</h3><p>Clientes Stripe</p></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:#dbeafe">🔄</div><div class="stat-info"><h3 id="stripeSubs">0</h3><p>Suscripciones Activas</p></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:#fef3c7">📅</div><div class="stat-info"><h3 id="stripeMonth">$0</h3><p>Ingresos Este Mes</p></div></div>
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <h2>💳 Clientes & Pagos Stripe</h2>
+                <div style="display:flex;gap:0.5rem">
+                    <button class="btn-sm btn-ghost" onclick="loadStripeData()">🔄 Refresh</button>
+                </div>
+            </div>
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="showStripeTab('customers',this)">👥 Clientes</button>
+                <button class="tab-btn" onclick="showStripeTab('payments',this)">💰 Pagos</button>
+                <button class="tab-btn" onclick="showStripeTab('subscriptions',this)">🔄 Suscripciones</button>
+                <button class="tab-btn" onclick="showStripeTab('refunds',this)">↩️ Reembolsos</button>
+            </div>
+            <div class="tab-pane active" id="stripeTabCustomers">
+                <div class="wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Email</th><th>Creado</th><th>Suscripción</th><th>Total Pagado</th><th>Acciones</th></tr></thead><tbody id="stripeCustomersTable"></tbody></table></div>
+            </div>
+            <div class="tab-pane" id="stripeTabPayments">
+                <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Estado</th><th>ID</th><th>Acciones</th></tr></thead><tbody id="stripePaymentsTable"></tbody></table></div>
+            </div>
+            <div class="tab-pane" id="stripeTabSubscriptions">
+                <div class="wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Plan</th><th>Monto</th><th>Status</th><th>Próximo Cobro</th><th>Acciones</th></tr></thead><tbody id="stripeSubsTable"></tbody></table></div>
+            </div>
+            <div class="tab-pane" id="stripeTabRefunds">
+                <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Razón</th><th>Estado</th></tr></thead><tbody id="stripeRefundsTable"></tbody></table></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SECTION: TICKETS ============ -->
+<div class="section" id="secTickets">
+    <div class="quick-actions">
+        <button class="quick-action" onclick="filterTickets('all')">📋 Todos</button>
+        <button class="quick-action" onclick="filterTickets('open')">🟢 Abiertos</button>
+        <button class="quick-action" onclick="filterTickets('in_progress')">🟡 En Progreso</button>
+        <button class="quick-action" onclick="filterTickets('waiting_response')">🟠 Esperando</button>
+        <button class="quick-action" onclick="filterTickets('resolved')">✅ Resueltos</button>
+    </div>
+    <div class="card">
+        <div class="card-head">
+            <h2>🎫 Tickets de Soporte</h2>
+            <div class="search-box"><span>🔍</span><input type="text" placeholder="Buscar ticket..." oninput="searchTickets(this.value)"></div>
+        </div>
+        <div style="padding:1rem" id="ticketsList"><p class="empty">Cargando tickets...</p></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: PASSWORDS ============ -->
+<div class="section" id="secPasswords">
+    <div class="card">
+        <div class="card-head"><h2>🔑 Reset Requests</h2><button class="btn-sm btn-success" onclick="openManualResetModal()">➕ Reset Manual</button></div>
+        <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Empresa</th><th>Solicitado</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="passwordResets"></tbody></table></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h2>⚡ Reset Rápido</h2></div>
+        <div style="padding:1.25rem">
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1rem">Busca por email para resetear contraseña o enviar magic link.</p>
+            <div style="display:flex;gap:0.5rem">
+                <input type="email" id="quickResetEmail" placeholder="email@empresa.com" style="flex:1;padding:0.75rem;border:2px solid #e5e7eb;border-radius:8px">
+                <button class="btn-sm btn-primary" onclick="quickSearchUser()">🔍 Buscar</button>
+            </div>
+            <div id="quickResetResult" style="margin-top:1rem"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SECTION: REVENUE ============ -->
+<div class="section" id="secRevenue">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#dcfce7">💵</div><div class="stat-info"><h3 id="totalRevenue">$0</h3><p>Ingresos Totales</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#dbeafe">📅</div><div class="stat-info"><h3 id="monthlyRevenue">$0</h3><p>Este Mes</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f3e8ff">📊</div><div class="stat-info"><h3 id="avgRevenue">$0</h3><p>Promedio/Empresa</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fef3c7">↩️</div><div class="stat-info"><h3 id="totalRefunds">$0</h3><p>Total Reembolsos</p></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h2>📈 Revenue por Mes</h2></div>
+        <div class="chart-container"><canvas id="revDetailChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h2>💰 Historial de Pagos</h2><button class="btn-sm btn-success" onclick="openAddPaymentModal()">➕ Registrar Pago</button></div>
+        <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Empresa</th><th>Plan</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead><tbody id="paymentsTable"></tbody></table></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: PAGOS (Historial) ============ -->
+<div class="section" id="secPagos">
+    <div class="card">
+        <div class="card-head"><h2>💳 Todos los Pagos</h2><button class="btn-sm btn-success" onclick="openAddPaymentModal()">➕ Registrar Pago</button></div>
+        <div class="wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Empresa</th><th>Plan</th><th>Monto</th><th>Método</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="allPaymentsTable"></tbody></table></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: ADMINS ============ -->
+<div class="section" id="secAdmins">
+    <div class="card">
+        <div class="card-head"><h2>👤 Usuarios Admin</h2><button class="btn-sm btn-success" onclick="openAddAdminModal()" id="btnAddAdmin">➕ Nuevo</button></div>
+        <div class="wrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Último Login</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="adminsTable"></tbody></table></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: LOGS ============ -->
+<div class="section" id="secLogs">
+    <div class="card">
+        <div class="card-head">
+            <h2>📋 Actividad</h2>
+            <select id="logFilter" onchange="filterLogs()" style="padding:0.4rem 0.75rem;border:1px solid #e5e7eb;border-radius:8px;font-size:0.8rem">
+                <option value="all">Todas</option><option value="login">Logins</option><option value="create">Creaciones</option><option value="update">Ediciones</option><option value="delete">Eliminaciones</option>
+            </select>
+        </div>
+        <div id="logsContainer" style="max-height:600px;overflow-y:auto"><p class="empty">Cargando...</p></div>
+    </div>
+</div>
+
+<!-- ============ SECTION: SETTINGS ============ -->
+<div class="section" id="secSettings">
+    <div class="card">
+        <div class="card-head"><h2>⚙️ Configuración</h2></div>
+        <div style="padding:1.5rem">
+            <div class="form-group"><label>🔑 Stripe Secret Key</label><input type="password" id="settingsStripeKey" placeholder="sk_live_..." value=""><button class="btn-sm btn-primary" onclick="saveStripeKey()" style="margin-top:0.5rem">💾 Guardar Key</button></div>
+            <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb">
+            <div class="form-group"><label>📧 Email de Soporte</label><input type="email" id="settingsSupportEmail" placeholder="soporte@trademaster.com"></div>
+            <div class="form-group"><label>🏢 Nombre del Producto</label><input type="text" id="settingsProductName" value="Trade Master CRM"></div>
+        </div>
+    </div>
+</div>
+
+        </div><!-- /main-content -->
+    </div><!-- /main -->
+</div><!-- /dashboard -->
+
+<!-- ============ MODALS ============ -->
+
+<!-- Modal: Company Detail CRM -->
+<div class="modal-bg" id="modalCompany">
+    <div class="modal" style="max-width:900px">
+        <div class="modal-head">
+            <h3 id="modalCompanyTitle">🏢 Empresa</h3>
+            <div style="display:flex;align-items:center;gap:0.5rem">
+                <span class="badge b-blue" style="font-size:0.8rem;font-family:monospace;font-weight:800" id="companyNumber">TM-0000</span>
+                <button class="btn-sm btn-accent" id="btnEnterCRM" onclick="enterCompanyCRM()" style="font-weight:700">🚀 Entrar al CRM</button>
+                <button class="modal-close" onclick="closeModal('modalCompany')">×</button>
+            </div>
+        </div>
+        <div class="modal-body" style="padding:0">
+            <div class="tab-bar" id="companyTabs">
+                <button class="tab-btn active" onclick="showCompanyTab('info',this)">📋 Info</button>
+                <button class="tab-btn" onclick="showCompanyTab('crmdata',this)">🗄️ Su CRM</button>
+                <button class="tab-btn" onclick="showCompanyTab('payments',this)">💳 Pagos</button>
+                <button class="tab-btn" onclick="showCompanyTab('timeline',this)">🕐 Timeline</button>
+                <button class="tab-btn" onclick="showCompanyTab('actions',this)">⚡ Acciones</button>
+            </div>
+            <div class="tab-pane active" id="compTabInfo"><div id="companyDetails"></div></div>
+            <div class="tab-pane" id="compTabCrmdata"><div id="companyCRMData"></div></div>
+            <div class="tab-pane" id="compTabPayments"><div id="companyPayments"></div></div>
+            <div class="tab-pane" id="compTabTimeline"><div id="companyTimeline"></div></div>
+            <div class="tab-pane" id="compTabActions"><div id="companyActions"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Ticket -->
+<div class="modal-bg" id="modalTicket">
+    <div class="modal" style="max-width:700px">
+        <div class="modal-head"><h3 id="ticketTitle">Ticket</h3><button class="modal-close" onclick="closeModal('modalTicket')">×</button></div>
+        <div class="modal-body">
+            <div id="ticketInfo" style="margin-bottom:1rem"></div>
+            <div class="chat-container" id="ticketChat"></div>
+            <div style="margin-top:1rem">
+                <textarea id="ticketReply" rows="3" placeholder="Escribe tu respuesta..." style="width:100%;padding:0.75rem;border:2px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:0.85rem"></textarea>
+                <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+                    <select id="ticketStatus" style="padding:0.5rem;border:1px solid #e5e7eb;border-radius:8px;font-size:0.8rem">
+                        <option value="in_progress">🟡 En Progreso</option><option value="waiting_response">🟠 Esperando</option><option value="resolved">✅ Resuelto</option>
+                    </select>
+                    <button class="btn-sm btn-primary" onclick="sendTicketReply()">📤 Enviar</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal: Reset Password -->
-    <div class="modal-bg" id="modalReset">
-        <div class="modal" style="max-width:500px">
-            <div class="modal-head"><h3>🔑 Resetear Contraseña</h3><button class="modal-close" onclick="closeModal('modalReset')">×</button></div>
-            <div class="modal-body">
-                <div id="resetUserInfo" style="padding:1rem;background:var(--light);border-radius:0.5rem;margin-bottom:1rem"></div>
-                <div class="form-group">
-                    <label>Nueva Contraseña:</label>
-                    <div style="display:flex;gap:0.5rem">
-                        <input type="text" id="newPassword" placeholder="Mínimo 6 caracteres" style="flex:1">
-                        <button class="btn-sm btn-refresh" onclick="generatePassword()">🎲</button>
-                    </div>
-                </div>
-                <div style="display:flex;gap:0.5rem;margin-top:1rem">
-                    <button class="btn-sm btn-success" onclick="confirmResetPassword()" style="flex:1">🔑 Resetear</button>
-                    <button class="btn-sm btn-primary" onclick="sendMagicLink()" style="flex:1">✉️ Magic Link</button>
-                </div>
+<!-- Modal: Reset Password -->
+<div class="modal-bg" id="modalReset">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>🔑 Resetear Contraseña</h3><button class="modal-close" onclick="closeModal('modalReset')">×</button></div>
+        <div class="modal-body">
+            <div id="resetUserInfo" style="padding:1rem;background:var(--light);border-radius:8px;margin-bottom:1rem"></div>
+            <div class="form-group"><label>Nueva Contraseña:</label><div style="display:flex;gap:0.5rem"><input type="text" id="newPassword" placeholder="Mínimo 6 caracteres" style="flex:1"><button class="btn-sm btn-ghost" onclick="generatePassword()">🎲</button></div></div>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem">
+                <button class="btn-sm btn-success" onclick="confirmResetPassword()" style="flex:1">🔑 Resetear</button>
+                <button class="btn-sm btn-primary" onclick="sendMagicLink()" style="flex:1">✉️ Magic Link</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal: Add Admin -->
-    <div class="modal-bg" id="modalAddAdmin">
-        <div class="modal" style="max-width:500px">
-            <div class="modal-head"><h3>➕ Nuevo Admin</h3><button class="modal-close" onclick="closeModal('modalAddAdmin')">×</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Nombre</label><input type="text" id="newAdminName"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="newAdminEmail"></div>
-                <div class="form-group"><label>Contraseña</label><input type="text" id="newAdminPass"><button class="btn-sm btn-refresh" onclick="document.getElementById('newAdminPass').value=generatePass()" style="margin-top:0.5rem">🎲 Generar</button></div>
-                <div class="form-group"><label>Rol</label><select id="newAdminRole"><option value="support">👁️ Soporte</option><option value="admin">⚙️ Admin</option><option value="super_admin">👑 Super Admin</option></select></div>
-            </div>
-            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalAddAdmin')">Cancelar</button><button class="btn btn-sm btn-success" onclick="saveNewAdmin()">💾 Guardar</button></div>
+<!-- Modal: Add Admin -->
+<div class="modal-bg" id="modalAddAdmin">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>➕ Nuevo Admin</h3><button class="modal-close" onclick="closeModal('modalAddAdmin')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Nombre</label><input type="text" id="newAdminName"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="newAdminEmail"></div>
+            <div class="form-group"><label>Contraseña</label><input type="text" id="newAdminPass"><button class="btn-sm btn-ghost" onclick="document.getElementById('newAdminPass').value=generatePass()" style="margin-top:0.5rem">🎲 Generar</button></div>
+            <div class="form-group"><label>Rol</label><select id="newAdminRole"><option value="support">👁️ Soporte</option><option value="admin">⚙️ Admin</option><option value="super_admin">👑 Super Admin</option></select></div>
         </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalAddAdmin')">Cancelar</button><button class="btn-sm btn-success" onclick="saveNewAdmin()">💾 Guardar</button></div>
     </div>
+</div>
 
-    <!-- Modal: Add Payment -->
-    <div class="modal-bg" id="modalAddPayment">
-        <div class="modal" style="max-width:500px">
-            <div class="modal-head"><h3>➕ Registrar Pago</h3><button class="modal-close" onclick="closeModal('modalAddPayment')">×</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Empresa</label><select id="payCompany"></select></div>
-                <div class="form-group"><label>Monto ($)</label><input type="number" id="payAmount" step="0.01"></div>
-                <div class="form-group"><label>Plan</label><select id="payPlan"><option value="profesional">Profesional ($149.99)</option><option value="enterprise">Enterprise ($299)</option></select></div>
-                <div class="form-group"><label>Método</label><select id="payMethod"><option value="stripe">Stripe</option><option value="paypal">PayPal</option><option value="manual">Manual/Transferencia</option></select></div>
-                <div class="form-group"><label>Notas</label><textarea id="payNotes" rows="2"></textarea></div>
-            </div>
-            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalAddPayment')">Cancelar</button><button class="btn btn-sm btn-success" onclick="savePayment()">💾 Guardar</button></div>
+<!-- Modal: Add Payment -->
+<div class="modal-bg" id="modalAddPayment">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>➕ Registrar Pago</h3><button class="modal-close" onclick="closeModal('modalAddPayment')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Empresa</label><select id="payCompany"></select></div>
+            <div class="form-group"><label>Monto ($)</label><input type="number" id="payAmount" step="0.01" value="149.99"></div>
+            <div class="form-group"><label>Plan</label><select id="payPlan"><option value="profesional">Profesional ($149.99)</option><option value="enterprise">Enterprise ($299)</option></select></div>
+            <div class="form-group"><label>Método</label><select id="payMethod"><option value="stripe">Stripe</option><option value="paypal">PayPal</option><option value="manual">Manual</option></select></div>
+            <div class="form-group"><label>Notas</label><textarea id="payNotes" rows="2"></textarea></div>
         </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalAddPayment')">Cancelar</button><button class="btn-sm btn-success" onclick="savePayment()">💾 Guardar</button></div>
     </div>
+</div>
 
-    <!-- Modal: Confirmar Delete -->
-    <div class="modal-bg" id="modalDelete">
-        <div class="modal" style="max-width:400px">
-            <div class="modal-head"><h3>⚠️ Confirmar</h3><button class="modal-close" onclick="closeModal('modalDelete')">×</button></div>
-            <div class="modal-body"><p>¿Eliminar <strong id="deleteName"></strong>?</p><p style="font-size:0.85rem;color:var(--gray);margin-top:0.5rem">Esta acción no se puede deshacer.</p></div>
-            <div class="modal-foot"><button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalDelete')">Cancelar</button><button class="btn btn-sm btn-danger" onclick="confirmDelete()">🗑️ Eliminar</button></div>
+<!-- Modal: Stripe Refund -->
+<div class="modal-bg" id="modalRefund">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>↩️ Reembolso Stripe</h3><button class="modal-close" onclick="closeModal('modalRefund')">×</button></div>
+        <div class="modal-body">
+            <div id="refundInfo" style="padding:1rem;background:var(--light);border-radius:8px;margin-bottom:1rem"></div>
+            <div class="form-group"><label>Monto a Reembolsar ($)</label><input type="number" id="refundAmount" step="0.01"></div>
+            <div class="form-group"><label>Razón</label><select id="refundReason"><option value="requested_by_customer">Solicitado por cliente</option><option value="duplicate">Pago duplicado</option><option value="fraudulent">Fraude</option></select></div>
         </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalRefund')">Cancelar</button><button class="btn-sm btn-danger" onclick="confirmRefund()">↩️ Reembolsar</button></div>
     </div>
+</div>
+
+<!-- Modal: Follow-Up -->
+<div class="modal-bg" id="modalFollowUp">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>📞 Nuevo Follow-Up</h3><button class="modal-close" onclick="closeModal('modalFollowUp')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Empresa</label><select id="fuCompany"></select></div>
+            <div class="form-group"><label>Tipo</label><select id="fuType"><option value="call">📞 Llamada</option><option value="email">📧 Email</option><option value="whatsapp">💬 WhatsApp</option><option value="onboarding">🚀 Onboarding</option><option value="renewal">🔄 Renovación</option><option value="payment">💰 Cobro</option></select></div>
+            <div class="form-group"><label>Fecha Programada</label><input type="date" id="fuDate"></div>
+            <div class="form-group"><label>Prioridad</label><select id="fuPriority"><option value="low">🟢 Baja</option><option value="medium">🟡 Media</option><option value="high">🔴 Alta</option></select></div>
+            <div class="form-group"><label>Notas</label><textarea id="fuNotes" rows="3" placeholder="Notas del follow-up..."></textarea></div>
+        </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalFollowUp')">Cancelar</button><button class="btn-sm btn-success" onclick="saveFollowUp()">💾 Guardar</button></div>
+    </div>
+</div>
+
+<!-- Modal: Delete -->
+<div class="modal-bg" id="modalDelete">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-head"><h3>⚠️ Confirmar</h3><button class="modal-close" onclick="closeModal('modalDelete')">×</button></div>
+        <div class="modal-body"><p>¿Eliminar <strong id="deleteName"></strong>?</p><p style="font-size:0.85rem;color:var(--gray);margin-top:0.5rem">Esta acción no se puede deshacer.</p></div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalDelete')">Cancelar</button><button class="btn-sm btn-danger" onclick="confirmDelete()">🗑️ Eliminar</button></div>
+    </div>
+</div>
 
 <script>
+// ==========================================
+// CONFIG
+// ==========================================
 var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
-var RESEND_FUNCTION_URL = 'https://ucowlcrddzukykbaitzt.supabase.co/functions/v1/send-admin-email';
 
 var db, currentAdmin, companies=[], tickets=[], payments=[], adminUsers=[], logs=[], notifications=[], resetRequests=[];
-var selectedTicket=null, selectedResetUser=null, deleteTarget=null;
+var selectedTicket=null, selectedResetUser=null, deleteTarget=null, selectedCompany=null;
+var employeeCounts={};
+var STRIPE_KEY = localStorage.getItem('tm_stripe_key')||'';
+var stripeCustomers=[], stripePayments=[], stripeSubs=[], stripeRefunds=[];
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function(){
     db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    document.addEventListener('click', function(e) { if (!e.target.closest('.notif-wrap')) document.getElementById('notifDropdown').classList.remove('show'); });
+    document.addEventListener('click', function(e){if(!e.target.closest('.notif-wrap'))document.getElementById('notifDropdown').classList.remove('show');});
+    if(STRIPE_KEY) document.getElementById('settingsStripeKey').value = STRIPE_KEY;
 });
 
-// ========== AUTH ==========
-async function doLogin() {
-    var email = document.getElementById('em').value.trim().toLowerCase();
-    var pass = document.getElementById('pw').value;
-    if (!email || !pass) { showError('Ingresa email y contraseña'); return; }
-    
-    var res = await db.from('admin_users').select('*').eq('email', email).eq('is_active', true).single();
-    if (res.error || !res.data) { showError('Email no autorizado'); return; }
-    if (pass.length < 4) { showError('Contraseña incorrecta'); return; }
-    
-    currentAdmin = res.data;
-    await db.from('admin_users').update({ last_login: new Date().toISOString(), login_count: (currentAdmin.login_count||0)+1 }).eq('id', currentAdmin.id);
+// ==========================================
+// AUTH
+// ==========================================
+async function doLogin(){
+    var email=$('em').value.trim().toLowerCase(), pass=$('pw').value;
+    if(!email||!pass){showError('Ingresa email y contraseña');return;}
+    var res=await db.from('admin_users').select('*').eq('email',email).eq('is_active',true).single();
+    if(res.error||!res.data){showError('Email no autorizado');return;}
+    if(pass.length<4){showError('Contraseña incorrecta');return;}
+    currentAdmin=res.data;
+    await db.from('admin_users').update({last_login:new Date().toISOString(),login_count:(currentAdmin.login_count||0)+1}).eq('id',currentAdmin.id);
     await logActivity('login');
-    
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('dash').classList.add('active');
-    document.getElementById('av').textContent = initials(currentAdmin.name);
-    document.getElementById('currentUserName').textContent = currentAdmin.name;
-    document.getElementById('currentUserRole').textContent = getRoleName(currentAdmin.role);
-    
-    if (currentAdmin.role !== 'super_admin') document.getElementById('tabAdmins').style.display = 'none';
-    
-    refreshAll();
-    startNotificationPolling();
+    $('login').classList.add('hidden');$('dash').classList.add('active');
+    $('av').textContent=initials(currentAdmin.name);$('sideAv').textContent=initials(currentAdmin.name);
+    $('currentUserName').textContent=currentAdmin.name;$('sideName').textContent=currentAdmin.name;
+    $('currentUserRole').textContent=getRoleName(currentAdmin.role);$('sideRole').textContent=getRoleName(currentAdmin.role);
+    if(currentAdmin.role!=='super_admin')$('navAdmins').style.display='none';
+    refreshAll();startPolling();
 }
+function showAdminForgotPassword(){var email=$('em').value.trim();var d=document.createElement('div');d.className='modal-bg show';d.id='modalAdminForgot';d.innerHTML='<div class="modal" style="max-width:450px"><div class="modal-head"><h3>🔑 Recuperar Contraseña</h3><button class="modal-close" onclick="closeModal(\'modalAdminForgot\');this.closest(\'.modal-bg\').remove()">×</button></div><div class="modal-body"><p style="color:var(--gray);margin-bottom:1rem">Ingresa tu email para recibir un enlace de recuperación.</p><div class="form-group"><label>📧 Email</label><input type="email" id="adminForgotEmail" value="'+email+'"></div><button class="btn-sm btn-primary" onclick="submitAdminForgot()" style="width:100%">📧 Enviar Enlace</button></div></div>';document.body.appendChild(d);}
+async function submitAdminForgot(){var email=$('adminForgotEmail').value.trim();if(!email){alert('Ingresa email');return;}try{await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname.replace('admin.html','')});document.getElementById('modalAdminForgot').remove();alert('✅ Email enviado');}catch(e){alert('❌ '+e.message);}}
+function showError(msg){var e=$('err');e.textContent=msg;e.classList.add('show');setTimeout(function(){e.classList.remove('show')},3000);}
+function doLogout(){logActivity('logout');currentAdmin=null;$('login').classList.remove('hidden');$('dash').classList.remove('active');}
 
-        function showAdminForgotPassword() {
-                    var email = document.getElementById('em').value.trim();
-                    var html = '<div class="modal-bg" id="modalAdminForgot" style="display:flex"><div class="modal" style="max-width:450px"><div class="modal-head"><h3>🔑 Recuperar Contraseña</h3><button class="modal-close" onclick="document.getElementById(\'modalAdminForgot\').remove()">×</button></div><div class="modal-body"><p style="color:var(--gray);margin-bottom:1rem">Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p><div class="form-group"><label>📧 Email</label><input type="email" id="adminForgotEmail" value="' + email + '" placeholder="tu@email.com"></div><div style="display:flex;gap:0.5rem;margin-top:1rem"><button class="btn-sm" style="flex:1;background:var(--gray);color:white" onclick="document.getElementById(\'modalAdminForgot\').remove()">Cancelar</button><button class="btn-sm btn-primary" style="flex:1" onclick="submitAdminForgotPassword()">📧 Enviar Enlace</button></div></div></div></div>';
-                    document.body.insertAdjacentHTML('beforeend', html);
-        }
-        async function submitAdminForgotPassword() {
-                    var email = document.getElementById('adminForgotEmail').value.trim().toLowerCase();
-                    if (!email) { alert('Ingresa tu email'); return; }
-                    try {
-                                    await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname.replace('admin.html', '') });
-                                    document.getElementById('modalAdminForgot').remove();
-                                    alert('✅ ¡Email enviado!\n\n📧 Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.');
-                    } catch(err) { alert('❌ Error: ' + err.message); }
-        }
-    
-function showError(msg) { var e=document.getElementById('err'); e.textContent=msg; e.classList.add('show'); setTimeout(function(){e.classList.remove('show')},3000); }
-function doLogout() { logActivity('logout'); currentAdmin=null; document.getElementById('login').classList.remove('hidden'); document.getElementById('dash').classList.remove('active'); }
-
-// ========== DATA LOADING ==========
-async function refreshAll() {
-    await Promise.all([loadCompanies(), loadTickets(), loadPayments(), loadAdmins(), loadLogs(), loadResetRequests(), loadNotifications()]);
+// ==========================================
+// DATA LOADING
+// ==========================================
+async function refreshAll(){
+    await Promise.all([loadCompanies(),loadTickets(),loadPayments(),loadAdmins(),loadLogs(),loadResetRequests(),loadNotifications()]);
+    computeCSData();renderCS();
+    try{await loadFollowUps();}catch(e){}
     updateDashboard();
+    if(STRIPE_KEY)loadStripeData();
+}
+async function loadCompanies(){var r=await db.from('companies').select('*').order('created_at',{ascending:false});companies=r.data||[];await loadEmployeeCounts();renderCompanies(companies);renderRecentCompanies();}
+async function loadEmployeeCounts(){employeeCounts={};var r1=await db.from('technicians').select('company_id');if(r1.data)r1.data.forEach(function(t){if(t.company_id)employeeCounts[t.company_id]=(employeeCounts[t.company_id]||0)+1;});var r2=await db.from('team_users').select('company_id');if(r2.data)r2.data.forEach(function(u){if(u.company_id)employeeCounts[u.company_id]=(employeeCounts[u.company_id]||0)+1;});}
+async function loadTickets(){var r=await db.from('support_tickets').select('*').order('created_at',{ascending:false});tickets=r.data||[];var open=tickets.filter(function(t){return t.status==='open'||t.status==='in_progress'}).length;$('s6').textContent=open;var b=$('ticketsBadge');if(open>0){b.textContent=open;b.style.display='inline';}else b.style.display='none';renderTickets(tickets);}
+async function loadPayments(){var r=await db.from('payment_history').select('*').order('created_at',{ascending:false});payments=r.data||[];renderPayments();}
+async function loadAdmins(){var r=await db.from('admin_users').select('*').order('created_at');adminUsers=r.data||[];renderAdmins();}
+async function loadLogs(){var r=await db.from('admin_activity_logs').select('*').order('created_at',{ascending:false}).limit(200);logs=r.data||[];renderLogs(logs);}
+async function loadResetRequests(){var r=await db.from('password_reset_requests').select('*').order('requested_at',{ascending:false});resetRequests=r.data||[];$('s7')||null;renderResetRequests();}
+async function loadNotifications(){if(!currentAdmin)return;var r=await db.from('admin_notifications').select('*').eq('admin_user_id',currentAdmin.id).order('created_at',{ascending:false}).limit(50);notifications=r.data||[];renderNotifications();}
+function startPolling(){setInterval(loadNotifications,30000);setInterval(loadTickets,60000);}
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+function updateDashboard(){
+    $('s1').textContent=companies.length;
+    var active=companies.filter(function(c){return c.subscription_status==='active'&&c.plan!=='free'});
+    $('s2').textContent=active.length;
+    var mrr=0;companies.forEach(function(c){if(c.subscription_status==='active'){if(c.plan==='profesional')mrr+=149.99;if(c.plan==='enterprise')mrr+=299;}});
+    $('s3').textContent='$'+Math.round(mrr);
+    var trial=companies.filter(function(c){return c.plan==='free'||c.subscription_status==='trialing'});
+    $('sTrial').textContent=trial.length;
+    var canceled=companies.filter(function(c){return c.subscription_status==='canceled'}).length;
+    var churn=companies.length>0?Math.round(canceled/companies.length*100):0;
+    $('sChurn').textContent=churn+'%';
+    var total=payments.reduce(function(s,p){return s+(p.amount||0)},0);
+    var thisMonth=payments.filter(function(p){return new Date(p.created_at).getMonth()===new Date().getMonth()}).reduce(function(s,p){return s+(p.amount||0)},0);
+    $('totalRevenue').textContent='$'+total.toFixed(2);
+    $('monthlyRevenue').textContent='$'+thisMonth.toFixed(2);
+    $('avgRevenue').textContent=companies.length?'$'+(total/companies.length).toFixed(2):'$0';
+    $('totalRefunds').textContent='$0';
+    renderRecentActivity();renderCharts();
 }
 
-async function loadCompanies() {
-    var res = await db.from('companies').select('*').order('created_at', {ascending:false});
-    companies = res.data || [];
-    await loadEmployeeCounts();
-    renderCompanies(companies);
-    renderRecentCompanies();
+// ==========================================
+// CHARTS
+// ==========================================
+var revenueChartInst=null, planChartInst=null, revDetailInst=null;
+function renderCharts(){
+    // Revenue chart
+    var months=[],rev=[];
+    for(var i=5;i>=0;i--){var d=new Date();d.setMonth(d.getMonth()-i);var m=d.toLocaleString('es',{month:'short'});months.push(m);var mRev=payments.filter(function(p){var pd=new Date(p.created_at);return pd.getMonth()===d.getMonth()&&pd.getFullYear()===d.getFullYear()}).reduce(function(s,p){return s+(p.amount||0)},0);rev.push(mRev);}
+    if(revenueChartInst)revenueChartInst.destroy();
+    var ctx=$('revenueChart');if(ctx)revenueChartInst=new Chart(ctx,{type:'bar',data:{labels:months,datasets:[{label:'Revenue',data:rev,backgroundColor:'#3b82f6',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return'$'+v}}}}}});
+    // Plan chart
+    var free=companies.filter(function(c){return!c.plan||c.plan==='free'}).length;
+    var pro=companies.filter(function(c){return c.plan==='profesional'}).length;
+    var ent=companies.filter(function(c){return c.plan==='enterprise'}).length;
+    if(planChartInst)planChartInst.destroy();
+    var ctx2=$('planChart');if(ctx2)planChartInst=new Chart(ctx2,{type:'doughnut',data:{labels:['Free','Pro','Enterprise'],datasets:[{data:[free,pro,ent],backgroundColor:['#94a3b8','#f59e0b','#8b5cf6']}]},options:{responsive:true,maintainAspectRatio:false}});
+    // Revenue detail
+    if(revDetailInst)revDetailInst.destroy();
+    var ctx3=$('revDetailChart');if(ctx3)revDetailInst=new Chart(ctx3,{type:'line',data:{labels:months,datasets:[{label:'Revenue',data:rev,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return'$'+v}}}}}});
 }
 
-var employeeCounts = {};
-
-async function loadEmployeeCounts() {
-    employeeCounts = {};
-    
-    // Cargar técnicos
-    var res1 = await db.from('technicians').select('company_id');
-    if (res1.data) {
-        res1.data.forEach(t => {
-            if (t.company_id) employeeCounts[t.company_id] = (employeeCounts[t.company_id] || 0) + 1;
-        });
-    }
-    
-    // Cargar team_users
-    var res2 = await db.from('team_users').select('company_id');
-    if (res2.data) {
-        res2.data.forEach(u => {
-            if (u.company_id) employeeCounts[u.company_id] = (employeeCounts[u.company_id] || 0) + 1;
-        });
-    }
-}
-
-async function loadTickets() {
-    var res = await db.from('support_tickets').select('*').order('created_at', {ascending:false});
-    tickets = res.data || [];
-    var open = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
-    document.getElementById('s6').textContent = open;
-    var badge = document.getElementById('ticketsBadge');
-    if (open > 0) { badge.textContent = open; badge.style.display = 'inline'; } else { badge.style.display = 'none'; }
-    renderTickets(tickets);
-}
-
-async function loadPayments() {
-    var res = await db.from('payment_history').select('*').order('created_at', {ascending:false});
-    payments = res.data || [];
-    renderPayments();
-}
-
-async function loadAdmins() {
-    var res = await db.from('admin_users').select('*').order('created_at');
-    adminUsers = res.data || [];
-    renderAdmins();
-}
-
-async function loadLogs() {
-    var res = await db.from('admin_activity_logs').select('*').order('created_at', {ascending:false}).limit(100);
-    logs = res.data || [];
-    renderLogs(logs);
-}
-
-async function loadResetRequests() {
-    var res = await db.from('password_reset_requests').select('*').order('requested_at', {ascending:false});
-    resetRequests = res.data || [];
-    document.getElementById('s7').textContent = resetRequests.filter(r => r.status === 'pending').length;
-    renderResetRequests();
-}
-
-async function loadNotifications() {
-    if (!currentAdmin) return;
-    var res = await db.from('admin_notifications').select('*').eq('admin_user_id', currentAdmin.id).order('created_at', {ascending:false}).limit(50);
-    notifications = res.data || [];
-    renderNotifications();
-}
-
-function startNotificationPolling() {
-    setInterval(loadNotifications, 30000);
-    setInterval(loadTickets, 60000);
-}
-
-// ========== RENDERING ==========
-function updateDashboard() {
-    document.getElementById('s1').textContent = companies.length;
-    document.getElementById('s2').textContent = companies.filter(c => c.subscription_status === 'active' && c.plan !== 'free').length;
-    var mrr = 0;
-    companies.forEach(c => { if (c.subscription_status === 'active') { if (c.plan === 'profesional') mrr += 149.99; if (c.plan === 'enterprise') mrr += 299; }});
-    document.getElementById('s3').textContent = '$' + Math.round(mrr);
-    
-    var total = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    var thisMonth = payments.filter(p => new Date(p.created_at).getMonth() === new Date().getMonth()).reduce((sum, p) => sum + (p.amount || 0), 0);
-    document.getElementById('totalRevenue').textContent = '$' + total.toFixed(2);
-    document.getElementById('monthlyRevenue').textContent = '$' + thisMonth.toFixed(2);
-    document.getElementById('avgRevenue').textContent = companies.length ? '$' + (total / companies.length).toFixed(2) : '$0';
-    
-    renderRecentActivity();
-}
-
-function renderCompanies(list) {
-    var tb = document.getElementById('tbody');
-    if (!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay empresas</td></tr>'; return; }
-    tb.innerHTML = list.map(c => {
-        var empCount = employeeCounts[c.id] || 0;
-        return `<tr>
-        <td><div class="user-card"><div class="avatar">${initials(c.name)}</div><div><h4>${c.name||'Sin nombre'}</h4><small>${c.email||''}</small></div></div></td>
-        <td>${c.phone||'-'}</td>
-        <td>${fmtDate(c.created_at)}</td>
-        <td><span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></td>
-        <td><span class="badge b-blue">👷 ${empCount}</span></td>
-        <td><div class="actions">
-            <button class="act" onclick="viewCompany('${c.id}')" title="Ver">👁</button>
-            <button class="act" onclick="openResetForCompany('${c.id}')" title="Reset Pass">🔑</button>
-            <button class="act danger" onclick="openDelete('company','${c.id}','${c.name}')" title="Eliminar">🗑️</button>
-        </div></td>
-    </tr>`;
+// ==========================================
+// RENDER FUNCTIONS
+// ==========================================
+function renderCompanies(list){
+    var tb=$('tbody');if(!list.length){tb.innerHTML='<tr><td colspan="9" class="empty">No hay empresas</td></tr>';return;}
+    // Sort all companies by created_at for stable numbering
+    var sorted=companies.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at)});
+    tb.innerHTML=list.map(function(c){
+        var emp=employeeCounts[c.id]||0;
+        var days=Math.floor((Date.now()-new Date(c.created_at).getTime())/(86400000));
+        var statusBadge=c.subscription_status==='active'?'b-green':c.subscription_status==='canceled'?'b-red':c.subscription_status==='trialing'?'b-yellow':'b-gray';
+        var idx=sorted.findIndex(function(x){return x.id===c.id});
+        var compNum='TM-'+String(idx+1).padStart(4,'0');
+        return '<tr onclick="viewCompany(\''+c.id+'\')">'+
+        '<td><span class="badge b-blue" style="font-family:monospace;font-weight:800;font-size:0.75rem">'+compNum+'</span></td>'+
+        '<td><div class="user-card"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'Sin nombre')+'</h4><small>'+(c.email||'')+'</small></div></div></td>'+
+        '<td>'+(c.phone||'-')+'</td>'+
+        '<td>'+fmtDate(c.created_at)+'<br><small style="color:var(--gray)">'+days+'d</small></td>'+
+        '<td><span class="badge '+planClass(c.plan)+'">'+(c.plan||'free')+'</span></td>'+
+        '<td><span class="badge '+statusBadge+'">'+(c.subscription_status||'free')+'</span></td>'+
+        '<td style="font-size:0.7rem;font-family:monospace">'+(c.stripe_customer_id?c.stripe_customer_id.slice(0,12)+'…':'—')+'</td>'+
+        '<td><span class="badge b-blue">👷 '+emp+'</span></td>'+
+        '<td><div class="actions" onclick="event.stopPropagation()">'+
+        '<button class="act" onclick="viewCompany(\''+c.id+'\')" title="Ver CRM" style="background:#dbeafe">👁</button>'+
+        '<button class="act" onclick="enterCompanyCRMById(\''+c.id+'\')" title="Entrar a su CRM" style="background:#ffedd5">🚀</button>'+
+        '<button class="act" onclick="openResetForCompany(\''+c.id+'\')" title="Reset Pass">🔑</button>'+
+        '<button class="act danger" onclick="openDelete(\'company\',\''+c.id+'\',\''+c.name+'\')" title="Eliminar">🗑️</button>'+
+        '</div></td></tr>';
     }).join('');
 }
 
-function renderRecentCompanies() {
-    var recent = companies.slice(0, 5);
-    document.getElementById('recentCompanies').innerHTML = recent.map(c => `<tr>
-        <td><div class="user-card"><div class="avatar">${initials(c.name)}</div><div><h4>${c.name||'?'}</h4></div></div></td>
-        <td>${c.email||'-'}</td>
-        <td>${fmtDate(c.created_at)}</td>
-        <td><span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">No hay empresas</td></tr>';
+function renderRecentCompanies(){
+    var sorted=companies.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at)});
+    $('recentCompanies').innerHTML=companies.slice(0,5).map(function(c){var idx=sorted.findIndex(function(x){return x.id===c.id});var num='TM-'+String(idx+1).padStart(4,'0');return'<tr onclick="viewCompany(\''+c.id+'\')"><td><span class="badge b-blue" style="font-family:monospace;font-weight:800;font-size:0.7rem">'+num+'</span></td><td><div class="user-card"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'?')+'</h4></div></div></td><td><span class="badge '+planClass(c.plan)+'">'+(c.plan||'free')+'</span></td><td>'+fmtDate(c.created_at)+'</td></tr>'}).join('')||'<tr><td colspan="4" class="empty">Sin empresas</td></tr>';
 }
 
-function renderTickets(list) {
-    var container = document.getElementById('ticketsList');
-    if (!list.length) { container.innerHTML = '<p class="empty">No hay tickets</p>'; return; }
-    container.innerHTML = list.map(t => `<div class="ticket-card ${t.priority}" onclick="viewTicket('${t.id}')">
-        <div class="ticket-header">
-            <h4>${t.ticket_number} - ${t.subject}</h4>
-            <span class="badge ${statusClass(t.status)}">${statusText(t.status)}</span>
-        </div>
-        <div class="ticket-meta">
-            <span>👤 ${t.user_name||t.user_email}</span>
-            <span>🏢 ${t.company_name||'N/A'}</span>
-            <span>📅 ${fmtDateTime(t.created_at)}</span>
-        </div>
-    </div>`).join('');
+function renderTickets(list){
+    var ct=$('ticketsList');if(!list.length){ct.innerHTML='<p class="empty">No hay tickets</p>';return;}
+    ct.innerHTML=list.map(function(t){return'<div class="ticket-card '+(t.priority||'')+'" onclick="viewTicket(\''+t.id+'\')"><div class="ticket-header"><h4>'+(t.ticket_number||'#')+' - '+t.subject+'</h4><span class="badge '+statusClass(t.status)+'">'+statusText(t.status)+'</span></div><div class="ticket-meta"><span>👤 '+(t.user_name||t.user_email)+'</span><span>🏢 '+(t.company_name||'N/A')+'</span><span>📅 '+fmtDateTime(t.created_at)+'</span></div></div>'}).join('');
 }
 
-function renderPayments() {
-    var tb = document.getElementById('paymentsTable');
-    if (!payments.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay pagos</td></tr>'; return; }
-    tb.innerHTML = payments.map(p => `<tr>
-        <td>${fmtDate(p.created_at)}</td>
-        <td>${p.company_name||'N/A'}</td>
-        <td><span class="badge ${planClass(p.plan)}">${p.plan||'-'}</span></td>
-        <td style="font-weight:600;color:var(--success)">$${(p.amount||0).toFixed(2)}</td>
-        <td>${p.payment_method||'-'}</td>
-        <td><span class="badge ${p.status==='completed'?'b-green':'b-yellow'}">${p.status||'pending'}</span></td>
-    </tr>`).join('');
+function renderPayments(){
+    var tb=$('paymentsTable');var tb2=$('allPaymentsTable');
+    var html=payments.length?payments.map(function(p){return'<tr><td>'+fmtDate(p.created_at)+'</td><td>'+(p.company_name||'N/A')+'</td><td><span class="badge '+planClass(p.plan)+'">'+(p.plan||'-')+'</span></td><td style="font-weight:700;color:var(--success)">$'+(p.amount||0).toFixed(2)+'</td><td>'+(p.payment_method||'-')+'</td><td><span class="badge '+(p.status==='completed'?'b-green':'b-yellow')+'">'+(p.status||'pending')+'</span></td></tr>'}).join(''):'<tr><td colspan="6" class="empty">No hay pagos</td></tr>';
+    if(tb)tb.innerHTML=html;
+    if(tb2)tb2.innerHTML=payments.length?payments.map(function(p){return'<tr><td>'+fmtDate(p.created_at)+'</td><td>'+(p.company_name||'N/A')+'</td><td><span class="badge '+planClass(p.plan)+'">'+(p.plan||'-')+'</span></td><td style="font-weight:700;color:var(--success)">$'+(p.amount||0).toFixed(2)+'</td><td>'+(p.payment_method||'-')+'</td><td><span class="badge '+(p.status==='completed'?'b-green':'b-yellow')+'">'+(p.status||'pending')+'</span></td><td></td></tr>'}).join(''):'<tr><td colspan="7" class="empty">No hay pagos</td></tr>';
 }
 
-function renderAdmins() {
-    var tb = document.getElementById('adminsTable');
-    tb.innerHTML = adminUsers.map(u => `<tr>
-        <td><div class="user-card"><div class="avatar ${roleClass(u.role)}">${initials(u.name)}</div><div><h4>${u.name}</h4></div></div></td>
-        <td>${u.email}</td>
-        <td><span class="badge ${roleClass(u.role)}">${getRoleName(u.role)}</span></td>
-        <td>${u.last_login ? fmtDateTime(u.last_login) : 'Nunca'}</td>
-        <td><span class="badge ${u.is_active?'b-green':'b-red'}">${u.is_active?'Activo':'Inactivo'}</span></td>
-        <td><div class="actions">${currentAdmin?.role==='super_admin'?`<button class="act" onclick="editAdmin('${u.id}')">✏️</button>`:''}</div></td>
-    </tr>`).join('');
+function renderAdmins(){$('adminsTable').innerHTML=adminUsers.map(function(u){return'<tr><td><div class="user-card"><div class="avatar '+roleClass(u.role)+'">'+initials(u.name)+'</div><div><h4>'+u.name+'</h4></div></div></td><td>'+u.email+'</td><td><span class="badge '+roleClass(u.role)+'">'+getRoleName(u.role)+'</span></td><td>'+(u.last_login?fmtDateTime(u.last_login):'Nunca')+'</td><td><span class="badge '+(u.is_active?'b-green':'b-red')+'">'+(u.is_active?'Activo':'Inactivo')+'</span></td><td><div class="actions">'+(currentAdmin&&currentAdmin.role==='super_admin'?'<button class="act" onclick="editAdmin(\''+u.id+'\')">✏️</button>':'')+'</div></td></tr>'}).join('');}
+
+function renderLogs(list){var ct=$('logsContainer');if(!list.length){ct.innerHTML='<p class="empty">No hay logs</p>';return;}ct.innerHTML=list.map(function(l){return'<div style="display:flex;gap:0.75rem;padding:0.6rem 1rem;border-bottom:1px solid #f3f4f6"><div style="width:32px;height:32px;border-radius:8px;background:'+actionColor(l.action)+';display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">'+actionIcon(l.action)+'</div><div style="flex:1"><strong style="font-size:0.8rem">'+actionText(l.action)+'</strong>'+(l.entity_name?' - '+l.entity_name:'')+'<p style="font-size:0.72rem;color:var(--gray)">'+(l.admin_name||'Sistema')+' • '+fmtDateTime(l.created_at)+'</p></div></div>'}).join('');}
+
+function renderResetRequests(){var tb=$('passwordResets');if(!resetRequests.length){tb.innerHTML='<tr><td colspan="6" class="empty">No hay solicitudes</td></tr>';return;}tb.innerHTML=resetRequests.map(function(r){return'<tr><td>'+(r.user_name||'N/A')+'</td><td>'+r.user_email+'</td><td>'+(r.company_name||'-')+'</td><td>'+fmtDateTime(r.requested_at)+'</td><td><span class="badge '+(r.status==='pending'?'b-yellow':r.status==='completed'?'b-green':'b-gray')+'">'+r.status+'</span></td><td><div class="actions">'+(r.status==='pending'?'<button class="act" onclick="handleReset(\''+r.id+'\')">🔑</button>':'')+'</div></td></tr>'}).join('');}
+
+function renderNotifications(){var unread=notifications.filter(function(n){return!n.is_read}).length;var b=$('notifBadge');b.textContent=unread;b.classList.toggle('hidden',unread===0);var list=$('notifList');if(!notifications.length){list.innerHTML='<div class="empty" style="padding:1.5rem">Sin notificaciones</div>';return;}list.innerHTML=notifications.slice(0,20).map(function(n){return'<div class="notif-item '+(n.is_read?'':'unread')+'" onclick="handleNotification(\''+n.id+'\',\''+n.entity_type+'\',\''+n.entity_id+'\')"><div style="width:32px;height:32px;border-radius:8px;background:'+notifColor(n.type)+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+notifIcon(n.type)+'</div><div><strong style="font-size:0.8rem">'+n.title+'</strong><p style="font-size:0.72rem;color:var(--gray)">'+(n.message||'')+'</p></div></div>'}).join('');}
+
+function renderRecentActivity(){var a=logs.slice(0,10);$('recentActivity').innerHTML=a.length?a.map(function(l){return'<div style="display:flex;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #f3f4f6"><span style="font-size:1rem">'+actionIcon(l.action)+'</span><div><strong style="font-size:0.8rem">'+actionText(l.action)+'</strong>'+(l.entity_name?' - '+l.entity_name:'')+'<p style="font-size:0.72rem;color:var(--gray)">'+fmtDateTime(l.created_at)+'</p></div></div>'}).join(''):'<p class="empty">Sin actividad</p>';}
+
+// ==========================================
+// SECTIONS / NAVIGATION
+// ==========================================
+function showSec(name,el){
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
+    document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active')});
+    if(el)el.classList.add('active');
+    var sec=$('sec'+name.charAt(0).toUpperCase()+name.slice(1));
+    if(sec)sec.classList.add('active');
+    var titles={dashboard:'📊 Dashboard',empresas:'🏢 Empresas CRM',success:'🎯 Customer Success',stripe:'💳 Stripe Pagos',tickets:'🎫 Soporte',passwords:'🔑 Passwords',revenue:'📈 Revenue',pagos:'💰 Historial Pagos',admins:'👤 Admins',logs:'📋 Logs',settings:'⚙️ Configuración'};
+    $('pageTitle').textContent=titles[name]||name;
+    document.getElementById('sidebar').classList.remove('open');
+    if(name==='stripe'&&STRIPE_KEY)loadStripeData();
 }
 
-function renderLogs(list) {
-    var container = document.getElementById('logsContainer');
-    if (!list.length) { container.innerHTML = '<p class="empty">No hay logs</p>'; return; }
-    container.innerHTML = list.map(l => `<div style="display:flex;gap:1rem;padding:0.75rem 1.25rem;border-bottom:1px solid #e5e7eb">
-        <div style="width:36px;height:36px;border-radius:50%;background:${actionColor(l.action)};display:flex;align-items:center;justify-content:center">${actionIcon(l.action)}</div>
-        <div style="flex:1"><strong style="font-size:0.9rem">${actionText(l.action)}</strong>${l.entity_name?' - '+l.entity_name:''}<p style="font-size:0.8rem;color:var(--gray)">${l.admin_name||'Sistema'} • ${fmtDateTime(l.created_at)}</p></div>
-    </div>`).join('');
+// ==========================================
+// COMPANY CRM DETAIL
+// ==========================================
+function getCompanyNumber(c){
+    var idx=companies.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at)}).findIndex(function(x){return x.id===c.id});
+    return 'TM-'+String(idx+1).padStart(4,'0');
 }
 
-function renderResetRequests() {
-    var tb = document.getElementById('passwordResets');
-    if (!resetRequests.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No hay solicitudes</td></tr>'; return; }
-    tb.innerHTML = resetRequests.map(r => `<tr>
-        <td>${r.user_name||'N/A'}</td>
-        <td>${r.user_email}</td>
-        <td>${r.company_name||'-'}</td>
-        <td>${fmtDateTime(r.requested_at)}</td>
-        <td><span class="badge ${r.status==='pending'?'b-yellow':r.status==='completed'?'b-green':'b-gray'}">${r.status}</span></td>
-        <td><div class="actions">${r.status==='pending'?`<button class="act" onclick="handleReset('${r.id}')">🔑</button>`:''}</div></td>
-    </tr>`).join('');
-}
-
-function renderNotifications() {
-    var unread = notifications.filter(n => !n.is_read).length;
-    var badge = document.getElementById('notifBadge');
-    badge.textContent = unread;
-    badge.classList.toggle('hidden', unread === 0);
+async function viewCompany(id){
+    var c=companies.find(function(x){return x.id===id});if(!c)return;
+    selectedCompany=c;
+    var compNum=getCompanyNumber(c);
+    $('modalCompanyTitle').textContent='🏢 '+c.name;
+    $('companyNumber').textContent=compNum;
     
-    var list = document.getElementById('notifList');
-    if (!notifications.length) { list.innerHTML = '<div class="notif-empty">Sin notificaciones</div>'; return; }
-    list.innerHTML = notifications.slice(0,20).map(n => `<div class="notif-item ${n.is_read?'':'unread'}" onclick="handleNotification('${n.id}','${n.entity_type}','${n.entity_id}')">
-        <div class="notif-icon" style="background:${notifColor(n.type)}">${notifIcon(n.type)}</div>
-        <div class="notif-content"><h5>${n.title}</h5><p>${n.message||''}</p><p style="font-size:0.7rem;margin-top:0.25rem">${fmtDateTime(n.created_at)}</p></div>
-    </div>`).join('');
+    // Info tab
+    var days=Math.floor((Date.now()-new Date(c.created_at).getTime())/(86400000));
+    $('companyDetails').innerHTML='<div style="padding:1.25rem"><div class="detail-grid">'+
+        '<div class="detail-item full" style="background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;text-align:center;padding:1rem"><label style="color:rgba(255,255,255,.7)">Número de Empresa</label><span style="font-size:1.5rem;font-family:monospace;font-weight:800;color:#fff">'+compNum+'</span></div>'+
+        '<div class="detail-item"><label>Empresa</label><span>'+c.name+'</span></div>'+
+        '<div class="detail-item"><label>Email</label><span>'+c.email+'</span></div>'+
+        '<div class="detail-item"><label>Teléfono</label><span>'+(c.phone||'N/A')+'</span></div>'+
+        '<div class="detail-item"><label>Dirección</label><span>'+(c.address||'N/A')+'</span></div>'+
+        '<div class="detail-item"><label>Plan</label><span class="badge '+planClass(c.plan)+'" style="font-size:0.85rem">'+(c.plan||'free')+'</span></div>'+
+        '<div class="detail-item"><label>Status Suscripción</label><span class="badge '+(c.subscription_status==='active'?'b-green':c.subscription_status==='canceled'?'b-red':'b-yellow')+'">'+(c.subscription_status||'free')+'</span></div>'+
+        '<div class="detail-item"><label>Fecha Registro</label><span>'+fmtDateTime(c.created_at)+'</span></div>'+
+        '<div class="detail-item"><label>Antigüedad</label><span>'+days+' días</span></div>'+
+        '<div class="detail-item"><label>Stripe Customer ID</label><span style="font-family:monospace;font-size:0.75rem">'+(c.stripe_customer_id||'No conectado')+'</span></div>'+
+        '<div class="detail-item"><label>Stripe Sub ID</label><span style="font-family:monospace;font-size:0.75rem">'+(c.stripe_subscription_id||'—')+'</span></div>'+
+        '<div class="detail-item"><label>Dueño</label><span>'+(c.owner_name||c.name)+'</span></div>'+
+        '<div class="detail-item"><label>Contraseña</label><span style="font-family:monospace">'+(c.password?'••••••••':'—')+'</span> <button class="btn-sm btn-ghost" onclick="openResetForCompany(\''+c.id+'\');closeModal(\'modalCompany\')" style="margin-left:4px;font-size:0.7rem">🔑 Reset</button></div>'+
+    '</div></div>';
+    
+    // CRM Data tab — load their actual data from Supabase
+    $('companyCRMData').innerHTML='<div style="padding:1.5rem;text-align:center"><p>⏳ Cargando datos del CRM...</p></div>';
+    loadCompanyCRMData(c.id);
+    
+    // Payments tab
+    var cPay=payments.filter(function(p){return p.company_id===c.id||p.company_name===c.name});
+    $('companyPayments').innerHTML='<div style="padding:1.25rem">'+(cPay.length?'<table class="tbl"><thead><tr><th>Fecha</th><th>Monto</th><th>Plan</th><th>Método</th><th>Estado</th></tr></thead><tbody>'+cPay.map(function(p){return'<tr><td>'+fmtDate(p.created_at)+'</td><td style="font-weight:700;color:var(--success)">$'+(p.amount||0).toFixed(2)+'</td><td><span class="badge '+planClass(p.plan)+'">'+(p.plan||'-')+'</span></td><td>'+(p.payment_method||'-')+'</td><td><span class="badge '+(p.status==='completed'?'b-green':'b-yellow')+'">'+p.status+'</span></td></tr>'}).join('')+'</tbody></table>':'<p class="empty">Sin pagos registrados — <strong style="color:var(--danger)">Nunca ha pagado</strong></p>')+'</div>';
+    
+    // Timeline tab
+    var events=[];
+    events.push({date:c.created_at,text:'Empresa registrada — '+compNum,type:'success',icon:'🏢'});
+    if(c.subscription_status==='active')events.push({date:c.updated_at||c.created_at,text:'Suscripción activada — '+c.plan,type:'success',icon:'✅'});
+    if(c.subscription_status==='canceled')events.push({date:c.updated_at||c.created_at,text:'Suscripción cancelada',type:'danger',icon:'❌'});
+    cPay.forEach(function(p){events.push({date:p.created_at,text:'Pago $'+(p.amount||0).toFixed(2)+' via '+(p.payment_method||'?'),type:'',icon:'💳'})});
+    var cTickets=tickets.filter(function(t){return t.company_name===c.name||t.company_id===c.id});
+    cTickets.forEach(function(t){events.push({date:t.created_at,text:'Ticket: '+t.subject+' ('+statusText(t.status)+')',type:'warning',icon:'🎫'})});
+    events.sort(function(a,b){return new Date(b.date)-new Date(a.date)});
+    $('companyTimeline').innerHTML='<div style="padding:1.25rem">'+(events.length?'<div class="timeline">'+events.map(function(e){return'<div class="timeline-item '+(e.type||'')+'"><h5>'+e.icon+' '+e.text+'</h5><p>'+fmtDateTime(e.date)+'</p></div>'}).join('')+'</div>':'<p class="empty">Sin actividad</p>')+'</div>';
+    
+    // Actions tab
+    $('companyActions').innerHTML='<div style="padding:1.25rem;display:grid;gap:0.75rem">'+
+        '<div style="background:linear-gradient(135deg,#f97316,#ea580c);border-radius:12px;padding:1.25rem;color:#fff;text-align:center"><h3 style="margin-bottom:0.5rem">🚀 Entrar al CRM de '+c.name+'</h3><p style="font-size:0.85rem;opacity:0.9;margin-bottom:1rem">Abre su CRM como admin para ayudar a agregar, editar o borrar datos</p><button class="btn-sm" onclick="enterCompanyCRM()" style="background:#fff;color:#ea580c;padding:0.75rem 2rem;font-size:0.95rem;font-weight:700">🚀 Entrar Ahora</button></div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+            '<button class="btn-sm btn-primary" onclick="openResetForCompany(\''+c.id+'\');closeModal(\'modalCompany\')" style="padding:0.75rem;font-size:0.85rem">🔑 Resetear Contraseña</button>'+
+            '<button class="btn-sm" style="padding:0.75rem;font-size:0.85rem;background:#635bff;color:#fff" onclick="sendLoginLink(\''+c.id+'\')">📧 Enviar Link de Login</button>'+
+            (c.plan!=='free'?'<button class="btn-sm btn-warning" onclick="changePlan(\''+c.id+'\',\'free\')" style="padding:0.75rem;font-size:0.85rem">⬇️ Downgrade Free</button>':'<button class="btn-sm btn-success" onclick="changePlan(\''+c.id+'\',\'profesional\')" style="padding:0.75rem;font-size:0.85rem">⬆️ Upgrade Pro</button>')+
+            (c.stripe_customer_id&&STRIPE_KEY?'<button class="btn-sm btn-accent" onclick="openStripeCustomer(\''+c.stripe_customer_id+'\')" style="padding:0.75rem;font-size:0.85rem">💳 Stripe</button>':'<button class="btn-sm btn-ghost" disabled style="padding:0.75rem;font-size:0.85rem">💳 Sin Stripe</button>')+
+        '</div>'+
+        '<button class="btn-sm btn-danger" onclick="closeModal(\'modalCompany\');openDelete(\'company\',\''+c.id+'\',\''+c.name+'\')" style="padding:0.75rem;font-size:0.85rem">🗑️ Eliminar Empresa Completa</button>'+
+    '</div>';
+    
+    showCompanyTab('info',document.querySelector('#companyTabs .tab-btn'));
+    openModal('modalCompany');
+    logActivity('view','company',c.id,c.name);
 }
 
-function renderRecentActivity() {
-    var activity = logs.slice(0, 10);
-    document.getElementById('recentActivity').innerHTML = activity.length ? activity.map(l => `<div style="display:flex;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #f3f4f6">
-        <span style="font-size:1.1rem">${actionIcon(l.action)}</span>
-        <div><strong style="font-size:0.85rem">${actionText(l.action)}</strong>${l.entity_name?' - '+l.entity_name:''}<p style="font-size:0.75rem;color:var(--gray)">${fmtDateTime(l.created_at)}</p></div>
-    </div>`).join('') : '<p class="empty">Sin actividad reciente</p>';
-}
-
-// ========== SECTIONS ==========
-function showSection(name) {
-    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('sec' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
-}
-
-// ========== TICKETS ==========
-async function viewTicket(id) {
-    selectedTicket = tickets.find(t => t.id === id);
-    if (!selectedTicket) return;
-    
-    document.getElementById('ticketTitle').textContent = selectedTicket.ticket_number + ' - ' + selectedTicket.subject;
-    document.getElementById('ticketInfo').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.85rem">
-        <div><strong>Usuario:</strong> ${selectedTicket.user_name||'N/A'}</div>
-        <div><strong>Email:</strong> ${selectedTicket.user_email}</div>
-        <div><strong>Empresa:</strong> ${selectedTicket.company_name||'N/A'}</div>
-        <div><strong>Categoría:</strong> ${selectedTicket.category}</div>
-    </div>`;
-    document.getElementById('ticketStatus').value = selectedTicket.status;
-    
-    var res = await db.from('support_messages').select('*').eq('ticket_id', id).order('created_at');
-    var messages = res.data || [];
-    document.getElementById('ticketChat').innerHTML = messages.map(m => `<div class="chat-msg ${m.sender_type}">
-        <div class="chat-bubble"><div class="chat-sender">${m.sender_name||m.sender_email}</div>${m.message}<div class="chat-time">${fmtDateTime(m.created_at)}</div></div>
-    </div>`).join('') || '<p class="empty">Sin mensajes</p>';
-    
-    openModal('modalTicket');
-}
-
-async function sendTicketReply() {
-    if (!selectedTicket) return;
-    var msg = document.getElementById('ticketReply').value.trim();
-    var status = document.getElementById('ticketStatus').value;
-    if (!msg) { alert('Escribe un mensaje'); return; }
-    
-    await db.from('support_messages').insert({ ticket_id: selectedTicket.id, sender_type: 'admin', sender_name: currentAdmin.name, admin_user_id: currentAdmin.id, message: msg });
-    await db.from('support_tickets').update({ status: status, updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
-    await logActivity('update', 'ticket', selectedTicket.id, selectedTicket.ticket_number);
-    
-    document.getElementById('ticketReply').value = '';
-    viewTicket(selectedTicket.id);
-    loadTickets();
-}
-
-function filterTickets(status) {
-    if (status === 'all') renderTickets(tickets);
-    else renderTickets(tickets.filter(t => t.status === status));
-}
-
-function searchTickets(q) {
-    q = q.toLowerCase();
-    renderTickets(tickets.filter(t => (t.ticket_number||'').toLowerCase().includes(q) || (t.subject||'').toLowerCase().includes(q) || (t.user_email||'').toLowerCase().includes(q)));
-}
-
-// ========== PASSWORD RESET ==========
-async function quickSearchUser() {
-    var email = document.getElementById('quickResetEmail').value.trim().toLowerCase();
-    if (!email) return;
-    
-    var result = document.getElementById('quickResetResult');
-    result.innerHTML = '<p>Buscando...</p>';
-    
-    // Search in team_users
-    var res1 = await db.from('team_users').select('*, companies(name)').eq('email', email).single();
-    if (res1.data) {
-        selectedResetUser = { type: 'team_user', ...res1.data, company_name: res1.data.companies?.name };
-        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
-            <p><strong>✅ Usuario encontrado</strong></p>
-            <p>👤 ${res1.data.name} (Team User)</p>
-            <p>🏢 ${res1.data.companies?.name || 'N/A'}</p>
-            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
-        </div>`;
-        return;
+// ====== LOAD COMPANY CRM DATA (sync) ======
+async function loadCompanyCRMData(companyId){
+    var html='<div style="padding:1.25rem">';
+    try{
+        // Load all company data in parallel
+        var [clients,techs,jobs,invoices,expenses,teamUsers]=await Promise.all([
+            db.from('clients').select('*').eq('company_id',companyId).order('created_at',{ascending:false}).limit(50),
+            db.from('technicians').select('*').eq('company_id',companyId).order('created_at',{ascending:false}),
+            db.from('jobs').select('*').eq('company_id',companyId).order('created_at',{ascending:false}).limit(50),
+            db.from('invoices').select('*').eq('company_id',companyId).order('created_at',{ascending:false}).limit(50),
+            db.from('expenses').select('*').eq('company_id',companyId).order('created_at',{ascending:false}).limit(30),
+            db.from('team_users').select('*').eq('company_id',companyId)
+        ]);
+        var cl=clients.data||[],tc=techs.data||[],jb=jobs.data||[],inv=invoices.data||[],exp=expenses.data||[],tu=teamUsers.data||[];
+        var totalInv=inv.reduce(function(s,i){return s+(i.total||i.amount||0)},0);
+        var totalExp=exp.reduce(function(s,e){return s+(e.amount||0)},0);
+        
+        // Summary KPIs
+        html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem;margin-bottom:1.25rem">'+
+            '<div style="background:#dbeafe;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#1d4ed8">'+cl.length+'</div><div style="font-size:0.7rem;font-weight:600;color:#3b82f6">Clientes</div></div>'+
+            '<div style="background:#dcfce7;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#16a34a">'+tc.length+'</div><div style="font-size:0.7rem;font-weight:600;color:#22c55e">Técnicos</div></div>'+
+            '<div style="background:#fef3c7;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#d97706">'+jb.length+'</div><div style="font-size:0.7rem;font-weight:600;color:#eab308">Trabajos</div></div>'+
+            '<div style="background:#f3e8ff;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#7c3aed">'+inv.length+'</div><div style="font-size:0.7rem;font-weight:600;color:#8b5cf6">Facturas</div></div>'+
+            '<div style="background:#ccfbf1;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#0d9488">$'+totalInv.toFixed(0)+'</div><div style="font-size:0.7rem;font-weight:600;color:#14b8a6">Facturado</div></div>'+
+            '<div style="background:#fce7f3;padding:0.75rem;border-radius:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#db2777">'+tu.length+'</div><div style="font-size:0.7rem;font-weight:600;color:#ec4899">Team Users</div></div>'+
+        '</div>';
+        
+        // Clients table
+        html+='<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:0.5rem;background:var(--light);border-radius:8px">👥 Clientes ('+cl.length+')</summary>';
+        if(cl.length){
+            html+='<table class="tbl" style="margin-top:0.5rem"><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Tipo</th><th>Creado</th></tr></thead><tbody>';
+            cl.forEach(function(x){html+='<tr><td><strong>'+(x.name||'?')+'</strong></td><td>'+(x.email||'-')+'</td><td>'+(x.phone||'-')+'</td><td><span class="badge b-blue">'+(x.property_type||'-')+'</span></td><td>'+fmtDate(x.created_at)+'</td></tr>';});
+            html+='</tbody></table>';
+        }else html+='<p class="empty">Sin clientes</p>';
+        html+='</details>';
+        
+        // Technicians table
+        html+='<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:0.5rem;background:var(--light);border-radius:8px">👷 Técnicos ('+tc.length+')</summary>';
+        if(tc.length){
+            html+='<table class="tbl" style="margin-top:0.5rem"><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Especialidad</th><th>Vehículo</th></tr></thead><tbody>';
+            tc.forEach(function(x){html+='<tr><td><strong>'+(x.name||'?')+'</strong></td><td>'+(x.email||'-')+'</td><td>'+(x.phone||'-')+'</td><td><span class="badge b-teal">'+(x.specialty||'-')+'</span></td><td>'+(x.vehicle||'-')+'</td></tr>';});
+            html+='</tbody></table>';
+        }else html+='<p class="empty">Sin técnicos</p>';
+        html+='</details>';
+        
+        // Jobs table
+        html+='<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:0.5rem;background:var(--light);border-radius:8px">🔧 Trabajos ('+jb.length+')</summary>';
+        if(jb.length){
+            html+='<table class="tbl" style="margin-top:0.5rem"><thead><tr><th>Título</th><th>Estado</th><th>Técnico</th><th>Dirección</th><th>Fecha</th></tr></thead><tbody>';
+            jb.forEach(function(x){var stColor=x.status==='completed'?'b-green':x.status==='in_progress'?'b-yellow':'b-blue';html+='<tr><td><strong>'+(x.title||'?')+'</strong></td><td><span class="badge '+stColor+'">'+(x.status||'-')+'</span></td><td>'+(x.tech_name||'-')+'</td><td style="font-size:0.75rem">'+(x.address||'-')+'</td><td>'+fmtDate(x.date||x.created_at)+'</td></tr>';});
+            html+='</tbody></table>';
+        }else html+='<p class="empty">Sin trabajos</p>';
+        html+='</details>';
+        
+        // Invoices table
+        html+='<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:0.5rem;background:var(--light);border-radius:8px">📄 Facturas ('+inv.length+') — Total: $'+totalInv.toFixed(2)+'</summary>';
+        if(inv.length){
+            html+='<table class="tbl" style="margin-top:0.5rem"><thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Balance</th><th>Estado</th></tr></thead><tbody>';
+            inv.forEach(function(x){var stColor=x.status==='paid'?'b-green':x.status==='sent'?'b-yellow':'b-gray';html+='<tr><td style="font-family:monospace;font-size:0.75rem">'+(x.invoice_number||'-')+'</td><td>'+(x.client_name||'-')+'</td><td style="font-weight:700">$'+(x.total||0).toFixed(2)+'</td><td>$'+(x.amount_paid||0).toFixed(2)+'</td><td style="font-weight:700;color:'+(x.balance_due>0?'var(--danger)':'var(--success)')+'">$'+(x.balance_due||0).toFixed(2)+'</td><td><span class="badge '+stColor+'">'+(x.status||'draft')+'</span></td></tr>';});
+            html+='</tbody></table>';
+        }else html+='<p class="empty">Sin facturas</p>';
+        html+='</details>';
+        
+        // Team Users
+        html+='<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:0.5rem;background:var(--light);border-radius:8px">👤 Team Users ('+tu.length+')</summary>';
+        if(tu.length){
+            html+='<table class="tbl" style="margin-top:0.5rem"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Último Login</th></tr></thead><tbody>';
+            tu.forEach(function(x){html+='<tr><td><strong>'+(x.name||'?')+'</strong></td><td>'+(x.email||'-')+'</td><td><span class="badge b-purple">'+(x.role||'-')+'</span></td><td>'+fmtDateTime(x.last_login||x.created_at)+'</td></tr>';});
+            html+='</tbody></table>';
+        }else html+='<p class="empty">Sin team users</p>';
+        html+='</details>';
+        
+    }catch(e){
+        html+='<div style="background:#fee2e2;padding:1rem;border-radius:8px;color:#dc2626"><strong>⚠️ Error cargando datos:</strong> '+e.message+'<br><small>Algunas tablas podrían no existir aún para esta empresa.</small></div>';
     }
+    html+='</div>';
+    $('companyCRMData').innerHTML=html;
+}
+
+// ====== ENTER COMPANY CRM (admin access) ======
+function enterCompanyCRM(){
+    if(!selectedCompany){alert('No hay empresa seleccionada');return;}
+    enterCompanyCRMById(selectedCompany.id);
+}
+function enterCompanyCRMById(companyId){
+    var c=companies.find(function(x){return x.id===companyId});if(!c){alert('Empresa no encontrada');return;}
+    // Open the CRM with admin impersonation params
+    var baseUrl=location.origin+location.pathname.replace('admin.html','');
+    var params='?admin_access=true&company_id='+c.id+'&admin_token='+encodeURIComponent(currentAdmin.id);
+    var url=baseUrl+params;
+    window.open(url,'_blank');
+    logActivity('view','crm_access',c.id,'Admin entered CRM: '+c.name);
+}
+
+async function sendLoginLink(companyId){
+    var c=companies.find(function(x){return x.id===companyId});
+    if(!c||!c.email){alert('Sin email');return;}
+    try{
+        await db.auth.resetPasswordForEmail(c.email,{redirectTo:location.origin+location.pathname.replace('admin.html','')});
+        await logActivity('create','login_link',c.id,c.name);
+        alert('📧 Link de login enviado a: '+c.email);
+    }catch(e){alert('❌ '+e.message);}
+}
+
+async function changePlan(id,newPlan){
+    if(!confirm('¿Cambiar plan a '+newPlan+'?'))return;
+    await db.from('companies').update({plan:newPlan,subscription_status:newPlan==='free'?'free':'active'}).eq('id',id);
+    await logActivity('update','company',id,'Plan → '+newPlan);
+    closeModal('modalCompany');refreshAll();alert('✅ Plan actualizado');
+}
+
+function showCompanyTab(name,el){
+    document.querySelectorAll('#companyTabs .tab-btn').forEach(function(b){b.classList.remove('active')});
+    document.querySelectorAll('#modalCompany .tab-pane').forEach(function(p){p.classList.remove('active')});
+    if(el)el.classList.add('active');
+    var pane=$('compTab'+name.charAt(0).toUpperCase()+name.slice(1));
+    if(pane)pane.classList.add('active');
+}
+
+// ==========================================
+// STRIPE INTEGRATION
+// ==========================================
+function connectStripe(){
+    var key=$('stripeKeyInput').value.trim();
+    if(!key||!key.startsWith('sk_')){alert('Key inválida. Debe empezar con sk_live_ o sk_test_');return;}
+    STRIPE_KEY=key;localStorage.setItem('tm_stripe_key',key);
+    $('stripeNotConnected').style.display='none';$('stripeConnected').style.display='block';
+    loadStripeData();
+}
+function disconnectStripe(){STRIPE_KEY='';localStorage.removeItem('tm_stripe_key');$('stripeNotConnected').style.display='block';$('stripeConnected').style.display='none';}
+function saveStripeKey(){var key=$('settingsStripeKey').value.trim();if(key&&key.startsWith('sk_')){STRIPE_KEY=key;localStorage.setItem('tm_stripe_key',key);alert('✅ Key guardada');}else alert('Key inválida');}
+
+async function stripeAPI(endpoint,method,body){
+    var r=await fetch('https://api.stripe.com/v1/'+endpoint,{
+        method:method||'GET',
+        headers:{'Authorization':'Bearer '+STRIPE_KEY,'Content-Type':'application/x-www-form-urlencoded'},
+        body:body||undefined
+    });
+    return r.json();
+}
+
+async function loadStripeData(){
+    if(!STRIPE_KEY)return;
+    $('stripeNotConnected').style.display='none';$('stripeConnected').style.display='block';
+    try{
+        var [bal,cust,subs,charges,refunds]=await Promise.all([
+            stripeAPI('balance'),
+            stripeAPI('customers?limit=100'),
+            stripeAPI('subscriptions?limit=100&status=all'),
+            stripeAPI('charges?limit=100'),
+            stripeAPI('refunds?limit=50')
+        ]);
+        $('stripeBalance').textContent='$'+((bal.available?bal.available[0].amount:0)/100).toFixed(2);
+        stripeCustomers=cust.data||[];$('stripeCust').textContent=stripeCustomers.length;
+        stripeSubs=subs.data||[];$('stripeSubs').textContent=stripeSubs.filter(function(s){return s.status==='active'}).length;
+        stripePayments=charges.data||[];
+        var thisMonth=stripePayments.filter(function(p){return p.status==='succeeded'&&new Date(p.created*1000).getMonth()===new Date().getMonth()}).reduce(function(s,p){return s+p.amount},0);
+        $('stripeMonth').textContent='$'+(thisMonth/100).toFixed(2);
+        stripeRefunds=refunds.data||[];
+        renderStripeCustomers();renderStripePayments();renderStripeSubs();renderStripeRefunds();
+    }catch(e){console.error('Stripe error:',e);alert('Error conectando a Stripe: '+e.message);}
+}
+
+function renderStripeCustomers(){$('stripeCustomersTable').innerHTML=stripeCustomers.length?stripeCustomers.map(function(c){var sub=stripeSubs.find(function(s){return s.customer===c.id&&s.status==='active'});var totalPaid=stripePayments.filter(function(p){return p.customer===c.id&&p.status==='succeeded'}).reduce(function(s,p){return s+p.amount},0);return'<tr><td><div class="user-card"><div class="avatar" style="background:#635bff">'+initials(c.name||c.email||'?')+'</div><div><h4>'+(c.name||'Sin nombre')+'</h4></div></div></td><td>'+(c.email||'-')+'</td><td>'+new Date(c.created*1000).toLocaleDateString()+'</td><td>'+(sub?'<span class="badge b-green">Activa</span>':'<span class="badge b-gray">—</span>')+'</td><td style="font-weight:700">$'+(totalPaid/100).toFixed(2)+'</td><td><div class="actions"><button class="act" onclick="openStripeCustomer(\''+c.id+'\')" title="Ver">👁</button></div></td></tr>'}).join(''):'<tr><td colspan="6" class="empty">Sin clientes</td></tr>';}
+
+function renderStripePayments(){$('stripePaymentsTable').innerHTML=stripePayments.length?stripePayments.slice(0,50).map(function(p){return'<tr><td>'+new Date(p.created*1000).toLocaleDateString()+'</td><td>'+(p.billing_details?.name||p.customer||'-')+'</td><td style="font-weight:700;color:'+(p.status==='succeeded'?'var(--success)':'var(--gray)')+'">$'+(p.amount/100).toFixed(2)+'</td><td><span class="badge '+(p.status==='succeeded'?'b-green':p.refunded?'b-red':'b-yellow')+'">'+p.status+(p.refunded?' (refunded)':'')+'</span></td><td style="font-family:monospace;font-size:0.7rem">'+p.id.slice(0,16)+'…</td><td><div class="actions">'+(p.status==='succeeded'&&!p.refunded?'<button class="act" onclick="openRefund(\''+p.id+'\','+(p.amount/100)+',\''+(p.billing_details?.name||'')+'\')" title="Reembolso">↩️</button>':'')+'</div></td></tr>'}).join(''):'<tr><td colspan="6" class="empty">Sin pagos</td></tr>';}
+
+function renderStripeSubs(){$('stripeSubsTable').innerHTML=stripeSubs.length?stripeSubs.map(function(s){var cust=stripeCustomers.find(function(c){return c.id===s.customer});return'<tr><td>'+(cust?cust.name||cust.email:s.customer)+'</td><td>'+(s.items?.data[0]?.price?.nickname||s.items?.data[0]?.price?.id||'-')+'</td><td style="font-weight:700">$'+((s.items?.data[0]?.price?.unit_amount||0)/100).toFixed(2)+'/'+((s.items?.data[0]?.price?.recurring?.interval)||'mo')+'</td><td><span class="badge '+(s.status==='active'?'b-green':s.status==='canceled'?'b-red':'b-yellow')+'">'+s.status+'</span></td><td>'+(s.current_period_end?new Date(s.current_period_end*1000).toLocaleDateString():'—')+'</td><td><div class="actions">'+(s.status==='active'?'<button class="act danger" onclick="cancelStripeSub(\''+s.id+'\')" title="Cancelar">❌</button>':'')+'</div></td></tr>'}).join(''):'<tr><td colspan="6" class="empty">Sin suscripciones</td></tr>';}
+
+function renderStripeRefunds(){$('stripeRefundsTable').innerHTML=stripeRefunds.length?stripeRefunds.map(function(r){return'<tr><td>'+new Date(r.created*1000).toLocaleDateString()+'</td><td>'+(r.charge||'-')+'</td><td style="font-weight:700;color:var(--danger)">$'+(r.amount/100).toFixed(2)+'</td><td>'+(r.reason||'-')+'</td><td><span class="badge '+(r.status==='succeeded'?'b-green':'b-yellow')+'">'+r.status+'</span></td></tr>'}).join(''):'<tr><td colspan="5" class="empty">Sin reembolsos</td></tr>';}
+
+function showStripeTab(name,el){
+    document.querySelectorAll('#secStripe .tab-btn').forEach(function(b){b.classList.remove('active')});
+    document.querySelectorAll('#secStripe .tab-pane').forEach(function(p){p.classList.remove('active')});
+    if(el)el.classList.add('active');
+    var pane=$('stripeTab'+name.charAt(0).toUpperCase()+name.slice(1));
+    if(pane)pane.classList.add('active');
+}
+
+function openRefund(chargeId,amount,name){
+    $('refundInfo').innerHTML='<p><strong>Cargo:</strong> '+chargeId+'</p><p><strong>Cliente:</strong> '+name+'</p><p><strong>Monto original:</strong> $'+amount.toFixed(2)+'</p>';
+    $('refundAmount').value=amount.toFixed(2);$('refundAmount').max=amount;
+    selectedRefundCharge=chargeId;
+    openModal('modalRefund');
+}
+var selectedRefundCharge=null;
+async function confirmRefund(){
+    if(!selectedRefundCharge||!STRIPE_KEY)return;
+    var amount=Math.round(parseFloat($('refundAmount').value)*100);
+    var reason=$('refundReason').value;
+    if(!amount||amount<=0){alert('Monto inválido');return;}
+    if(!confirm('¿Confirmar reembolso de $'+(amount/100).toFixed(2)+'?'))return;
+    try{
+        var r=await stripeAPI('refunds','POST','charge='+selectedRefundCharge+'&amount='+amount+'&reason='+reason);
+        if(r.id){alert('✅ Reembolso exitoso: '+r.id);closeModal('modalRefund');loadStripeData();
+            await logActivity('create','refund',r.id,'$'+(amount/100).toFixed(2));
+        }else{alert('❌ Error: '+(r.error?.message||'Unknown'));}
+    }catch(e){alert('❌ '+e.message);}
+}
+
+async function cancelStripeSub(subId){
+    if(!confirm('¿Cancelar esta suscripción?'))return;
+    try{var r=await stripeAPI('subscriptions/'+subId,'DELETE');
+        if(r.status==='canceled'){alert('✅ Suscripción cancelada');loadStripeData();await logActivity('update','subscription',subId,'Cancelada');}
+        else alert('❌ '+(r.error?.message||'Error'));
+    }catch(e){alert('❌ '+e.message);}
+}
+
+async function openStripeCustomer(custId){
+    window.open('https://dashboard.stripe.com/customers/'+custId,'_blank');
+}
+
+// ==========================================
+// TICKETS
+// ==========================================
+async function viewTicket(id){selectedTicket=tickets.find(function(t){return t.id===id});if(!selectedTicket)return;$('ticketTitle').textContent=(selectedTicket.ticket_number||'#')+' - '+selectedTicket.subject;$('ticketInfo').innerHTML='<div class="detail-grid"><div class="detail-item"><label>Usuario</label><span>'+(selectedTicket.user_name||'N/A')+'</span></div><div class="detail-item"><label>Email</label><span>'+selectedTicket.user_email+'</span></div><div class="detail-item"><label>Empresa</label><span>'+(selectedTicket.company_name||'N/A')+'</span></div><div class="detail-item"><label>Categoría</label><span>'+selectedTicket.category+'</span></div></div>';$('ticketStatus').value=selectedTicket.status;var r=await db.from('support_messages').select('*').eq('ticket_id',id).order('created_at');var msgs=r.data||[];$('ticketChat').innerHTML=msgs.map(function(m){return'<div class="chat-msg '+m.sender_type+'"><div class="chat-bubble"><div class="chat-sender">'+(m.sender_name||m.sender_email)+'</div>'+m.message+'<div class="chat-time">'+fmtDateTime(m.created_at)+'</div></div></div>'}).join('')||'<p class="empty">Sin mensajes</p>';openModal('modalTicket');}
+async function sendTicketReply(){if(!selectedTicket)return;var msg=$('ticketReply').value.trim();var st=$('ticketStatus').value;if(!msg){alert('Escribe un mensaje');return;}await db.from('support_messages').insert({ticket_id:selectedTicket.id,sender_type:'admin',sender_name:currentAdmin.name,admin_user_id:currentAdmin.id,message:msg});await db.from('support_tickets').update({status:st,updated_at:new Date().toISOString()}).eq('id',selectedTicket.id);await logActivity('update','ticket',selectedTicket.id,selectedTicket.ticket_number);$('ticketReply').value='';viewTicket(selectedTicket.id);loadTickets();}
+function filterTickets(s){if(s==='all')renderTickets(tickets);else renderTickets(tickets.filter(function(t){return t.status===s}));}
+function searchTickets(q){q=q.toLowerCase();renderTickets(tickets.filter(function(t){return(t.ticket_number||'').toLowerCase().includes(q)||(t.subject||'').toLowerCase().includes(q)||(t.user_email||'').toLowerCase().includes(q)}));}
+
+// ==========================================
+// PASSWORD RESET
+// ==========================================
+async function quickSearchUser(){var email=$('quickResetEmail').value.trim().toLowerCase();if(!email)return;var result=$('quickResetResult');result.innerHTML='<p>Buscando...</p>';var r1=await db.from('team_users').select('*, companies(name)').eq('email',email).single();if(r1.data){selectedResetUser={type:'team_user',...r1.data,company_name:r1.data.companies?.name};result.innerHTML='<div style="padding:1rem;background:#dcfce7;border-radius:8px"><p><strong>✅ Team User encontrado</strong></p><p>👤 '+r1.data.name+'</p><p>🏢 '+(r1.data.companies?.name||'N/A')+'</p><button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button></div>';return;}var r2=await db.from('technicians').select('*, companies(name)').eq('email',email).single();if(r2.data){selectedResetUser={type:'technician',...r2.data,company_name:r2.data.companies?.name};result.innerHTML='<div style="padding:1rem;background:#dcfce7;border-radius:8px"><p><strong>✅ Técnico encontrado</strong></p><p>👤 '+r2.data.name+'</p><button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button></div>';return;}var r3=await db.from('companies').select('*').eq('email',email).single();if(r3.data){selectedResetUser={type:'company_owner',...r3.data,company_name:r3.data.name};result.innerHTML='<div style="padding:1rem;background:#dcfce7;border-radius:8px"><p><strong>✅ Dueño encontrado</strong></p><p>🏢 '+r3.data.name+'</p><button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button></div>';return;}result.innerHTML='<div style="padding:1rem;background:#fee2e2;border-radius:8px">❌ No encontrado</div>';}
+function openResetModal(){if(!selectedResetUser)return;$('resetUserInfo').innerHTML='<p><strong>👤 '+(selectedResetUser.name||selectedResetUser.email)+'</strong></p><p>📧 '+selectedResetUser.email+'</p><p>🏢 '+(selectedResetUser.company_name||'N/A')+'</p>';$('newPassword').value=generatePass();openModal('modalReset');}
+function openManualResetModal(){selectedResetUser=null;openResetModal();}
+async function confirmResetPassword(){if(!selectedResetUser)return;var np=$('newPassword').value;if(np.length<6){alert('Mínimo 6 caracteres');return;}var table=selectedResetUser.type==='team_user'?'team_users':selectedResetUser.type==='technician'?'technicians':'companies';await db.from(table).update({password:np}).eq('id',selectedResetUser.id);await logActivity('update','password_reset',selectedResetUser.id,selectedResetUser.email);await db.from('password_reset_requests').update({status:'completed',completed_at:new Date().toISOString(),completed_by:currentAdmin.id}).eq('user_email',selectedResetUser.email).eq('status','pending');try{await db.auth.resetPasswordForEmail(selectedResetUser.email,{redirectTo:location.origin+location.pathname.replace('admin.html','')});}catch(e){}closeModal('modalReset');alert('✅ Contraseña: '+np);loadResetRequests();}
+async function sendMagicLink(){if(!selectedResetUser)return;try{await db.auth.resetPasswordForEmail(selectedResetUser.email,{redirectTo:location.origin+location.pathname.replace('admin.html','')});alert('📧 Email enviado a: '+selectedResetUser.email);}catch(e){alert('❌ '+e.message);}closeModal('modalReset');}
+async function handleReset(id){var req=resetRequests.find(function(r){return r.id===id});if(!req)return;selectedResetUser={type:req.user_type,id:req.user_id,email:req.user_email,name:req.user_name,company_name:req.company_name};openResetModal();}
+function openResetForCompany(cid){var c=companies.find(function(x){return x.id===cid});if(!c||!c.email){alert('Sin email');return;}selectedResetUser={type:'company_owner',id:c.id,email:c.email,name:c.name,company_name:c.name};openResetModal();}
+
+// ==========================================
+// PAYMENTS
+// ==========================================
+function openAddPaymentModal(){$('payCompany').innerHTML=companies.map(function(c){return'<option value="'+c.id+'" data-name="'+c.name+'">'+c.name+'</option>'}).join('');$('payAmount').value='149.99';openModal('modalAddPayment');}
+async function savePayment(){var cid=$('payCompany').value;var cname=$('payCompany').selectedOptions[0]?.dataset.name||'';var amt=parseFloat($('payAmount').value)||0;var plan=$('payPlan').value;var method=$('payMethod').value;var notes=$('payNotes').value;await db.from('payment_history').insert({company_id:cid,company_name:cname,amount:amt,plan:plan,payment_method:method,status:'completed',notes:notes});await logActivity('create','payment',null,cname+' - $'+amt);closeModal('modalAddPayment');loadPayments();updateDashboard();alert('✅ Pago registrado');}
+
+// ==========================================
+// ADMINS
+// ==========================================
+function openAddAdminModal(){$('newAdminName').value='';$('newAdminEmail').value='';$('newAdminPass').value=generatePass();openModal('modalAddAdmin');}
+async function saveNewAdmin(){var name=$('newAdminName').value.trim();var email=$('newAdminEmail').value.trim().toLowerCase();var pass=$('newAdminPass').value;var role=$('newAdminRole').value;if(!name||!email||!pass){alert('Completa todos los campos');return;}await db.from('admin_users').insert({name:name,email:email,password_hash:pass,role:role,is_active:true,created_by:currentAdmin.id});await logActivity('create','admin_user',null,name);closeModal('modalAddAdmin');loadAdmins();alert('✅ Admin creado');}
+function editAdmin(id){var a=adminUsers.find(function(x){return x.id===id});if(!a)return;var d=document.createElement('div');d.className='modal-bg show';d.id='modalEditAdmin';d.innerHTML='<div class="modal" style="max-width:500px"><div class="modal-head"><h3>✏️ Editar Admin</h3><button class="modal-close" onclick="document.getElementById(\'modalEditAdmin\').remove()">×</button></div><div class="modal-body"><div class="form-group"><label>Nombre</label><input type="text" id="editAdminName" value="'+a.name+'"></div><div class="form-group"><label>Email</label><input type="email" id="editAdminEmail" value="'+a.email+'"></div><div class="form-group"><label>Nueva Contraseña</label><input type="text" id="editAdminPass" placeholder="Dejar vacío para no cambiar"></div><div class="form-group"><label>Rol</label><select id="editAdminRole"><option value="support" '+(a.role==='support'?'selected':'')+'>👁️ Soporte</option><option value="admin" '+(a.role==='admin'?'selected':'')+'>⚙️ Admin</option><option value="super_admin" '+(a.role==='super_admin'?'selected':'')+'>👑 Super Admin</option></select></div><div class="form-group"><label>Estado</label><select id="editAdminStatus"><option value="true" '+(a.is_active?'selected':'')+'>✅ Activo</option><option value="false" '+(!a.is_active?'selected':'')+'>⛔ Inactivo</option></select></div></div><div class="modal-foot"><button class="btn-sm btn-ghost" onclick="document.getElementById(\'modalEditAdmin\').remove()">Cancelar</button><button class="btn-sm btn-success" onclick="saveEditAdmin(\''+a.id+'\')">💾 Guardar</button></div></div>';document.body.appendChild(d);}
+async function saveEditAdmin(id){var name=$('editAdminName').value.trim();var email=$('editAdminEmail').value.trim().toLowerCase();var pass=$('editAdminPass').value;var role=$('editAdminRole').value;var active=$('editAdminStatus').value==='true';var upd={name:name,email:email,role:role,is_active:active};if(pass&&pass.length>=4)upd.password_hash=pass;await db.from('admin_users').update(upd).eq('id',id);await logActivity('update','admin_user',id,name);document.getElementById('modalEditAdmin').remove();loadAdmins();if(currentAdmin&&currentAdmin.id===id){currentAdmin.name=name;currentAdmin.role=role;$('currentUserName').textContent=name;$('sideName').textContent=name;$('currentUserRole').textContent=getRoleName(role);$('sideRole').textContent=getRoleName(role);}alert('✅ Actualizado');}
+
+// ==========================================
+// CUSTOMER SUCCESS
+// ==========================================
+var followUps=[];
+var csData=[];// computed customer success records
+
+function computeCSData(){
+    csData=companies.map(function(c){
+        var cPay=payments.filter(function(p){return p.company_id===c.id||p.company_name===c.name});
+        var totalPaid=cPay.reduce(function(s,p){return s+(p.amount||0)},0);
+        var lastPay=cPay.length?cPay.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at)})[0]:null;
+        var daysSincePayment=lastPay?Math.floor((Date.now()-new Date(lastPay.created_at).getTime())/86400000):9999;
+        var daysRegistered=Math.floor((Date.now()-new Date(c.created_at).getTime())/86400000);
+        var empCount=employeeCounts[c.id]||0;
+        var cTickets=tickets.filter(function(t){return t.company_name===c.name||t.company_id===c.id}).length;
+        
+        // Compute lifecycle stage
+        var lifecycle='onboarding';
+        if(c.subscription_status==='canceled')lifecycle='churned';
+        else if(totalPaid===0&&daysRegistered>14)lifecycle='never_paid';
+        else if(totalPaid===0&&daysRegistered<=14)lifecycle='onboarding';
+        else if(daysSincePayment>45)lifecycle='overdue';
+        else if(daysSincePayment>30||c.subscription_status==='past_due')lifecycle='at_risk';
+        else if(totalPaid>0&&c.subscription_status==='active')lifecycle='active';
+        else if(daysRegistered<=7)lifecycle='onboarding';
+        
+        // Health score 0-100
+        var health=50;
+        if(lifecycle==='active')health=85;
+        if(lifecycle==='onboarding')health=60;
+        if(lifecycle==='at_risk')health=35;
+        if(lifecycle==='overdue')health=15;
+        if(lifecycle==='never_paid')health=20;
+        if(lifecycle==='churned')health=0;
+        // Bonuses
+        if(totalPaid>500)health=Math.min(100,health+5);
+        if(empCount>3)health=Math.min(100,health+5);
+        if(cTickets>3)health=Math.max(0,health-10);
+        if(c.plan==='enterprise')health=Math.min(100,health+5);
+        
+        return{
+            id:c.id,name:c.name,email:c.email,phone:c.phone,
+            plan:c.plan||'free',status:c.subscription_status||'free',
+            stripe_id:c.stripe_customer_id,
+            created_at:c.created_at,
+            daysRegistered:daysRegistered,
+            totalPaid:totalPaid,
+            lastPayDate:lastPay?lastPay.created_at:null,
+            daysSincePayment:daysSincePayment,
+            paymentCount:cPay.length,
+            empCount:empCount,
+            ticketCount:cTickets,
+            lifecycle:lifecycle,
+            health:health
+        };
+    });
+    csData.sort(function(a,b){return a.health-b.health});// worst first
+}
+
+function renderCS(list){
+    if(!list)list=csData;
+    var tb=$('csTable');
+    if(!list.length){tb.innerHTML='<tr><td colspan="10" class="empty">No hay empresas</td></tr>';return;}
+    var sorted=companies.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at)});
+    tb.innerHTML=list.map(function(c){
+        var hColor=c.health>=70?'#22c55e':c.health>=40?'#eab308':'#ef4444';
+        var lcClass={onboarding:'lc-onboarding',active:'lc-active',at_risk:'lc-at-risk',overdue:'lc-overdue',churned:'lc-churned',never_paid:'lc-never'}[c.lifecycle]||'';
+        var lcText={onboarding:'🆕 Onboarding',active:'✅ Activo',at_risk:'⚠️ At Risk',overdue:'🔴 Vencido',churned:'💀 Churned',never_paid:'👻 Nunca Pagó'}[c.lifecycle]||c.lifecycle;
+        var daysTxt=c.daysSincePayment===9999?'<span style="color:var(--danger);font-weight:700">Nunca</span>':(c.daysSincePayment+'d');
+        var daysColor=c.daysSincePayment>45?'var(--danger)':c.daysSincePayment>30?'var(--warning)':'var(--success)';
+        var idx=sorted.findIndex(function(x){return x.id===c.id});
+        var compNum='TM-'+String(idx+1).padStart(4,'0');
+        return'<tr onclick="viewCompany(\''+c.id+'\')">'+
+            '<td><span class="badge b-blue" style="font-family:monospace;font-weight:800;font-size:0.7rem">'+compNum+'</span></td>'+
+            '<td><div class="user-card"><div class="avatar">'+initials(c.name)+'</div><div><h4>'+(c.name||'?')+'</h4><small>'+(c.email||'')+'</small></div></div></td>'+
+            '<td><span class="health-score" style="color:'+hColor+'">'+c.health+'</span><div class="health-bar"><div class="health-fill" style="width:'+c.health+'%;background:'+hColor+'"></div></div></td>'+
+            '<td><span class="lifecycle '+lcClass+'">'+lcText+'</span></td>'+
+            '<td><span class="badge '+planClass(c.plan)+'">'+c.plan+'</span></td>'+
+            '<td>'+(c.lastPayDate?fmtDate(c.lastPayDate):'<span style="color:var(--gray)">—</span>')+'</td>'+
+            '<td style="font-weight:700;color:'+daysColor+'">'+daysTxt+'</td>'+
+            '<td style="font-weight:700">$'+c.totalPaid.toFixed(2)+'</td>'+
+            '<td>'+fmtDate(c.created_at)+'<br><small style="color:var(--gray)">'+c.daysRegistered+'d</small></td>'+
+            '<td><div class="actions" onclick="event.stopPropagation()">'+
+                '<button class="act" onclick="viewCompany(\''+c.id+'\')" title="Ver CRM" style="background:#dbeafe">👁</button>'+
+                '<button class="act" onclick="enterCompanyCRMById(\''+c.id+'\')" title="Entrar a su CRM" style="background:#ffedd5">🚀</button>'+
+                '<button class="act" onclick="openAddFollowUpFor(\''+c.id+'\',\''+c.name+'\')" title="Follow-up">📞</button>'+
+                (c.lifecycle==='overdue'||c.lifecycle==='never_paid'?'<button class="act danger" onclick="sendPaymentReminder(\''+c.id+'\')" title="Recordatorio pago">💰</button>':'')+
+            '</div></td></tr>';
+    }).join('');
     
-    // Search in technicians
-    var res2 = await db.from('technicians').select('*, companies(name)').eq('email', email).single();
-    if (res2.data) {
-        selectedResetUser = { type: 'technician', ...res2.data, company_name: res2.data.companies?.name };
-        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
-            <p><strong>✅ Técnico encontrado</strong></p>
-            <p>👤 ${res2.data.name}</p>
-            <p>🏢 ${res2.data.companies?.name || 'N/A'}</p>
-            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
-        </div>`;
-        return;
+    // Update KPI cards
+    var healthy=csData.filter(function(c){return c.lifecycle==='active'}).length;
+    var atRisk=csData.filter(function(c){return c.lifecycle==='at_risk'}).length;
+    var overdue=csData.filter(function(c){return c.lifecycle==='overdue'}).length;
+    var neverPaid=csData.filter(function(c){return c.lifecycle==='never_paid'}).length;
+    var onboarding=csData.filter(function(c){return c.lifecycle==='onboarding'}).length;
+    var churned=csData.filter(function(c){return c.lifecycle==='churned'}).length;
+    $('csHealthy').textContent=healthy;
+    $('csAtRisk').textContent=atRisk;
+    $('csOverdue').textContent=overdue;
+    $('csNeverPaid').textContent=neverPaid;
+    $('csOnboarding').textContent=onboarding;
+    $('csChurned').textContent=churned;
+    
+    // Badge for nav
+    var urgent=atRisk+overdue;
+    var badge=$('csBadge');
+    if(urgent>0){badge.textContent=urgent;badge.style.display='inline';}else badge.style.display='none';
+    
+    renderCSChart();
+    renderOnboardingPipeline();
+}
+
+var csChartInst=null;
+function renderCSChart(){
+    var counts={active:0,at_risk:0,overdue:0,never_paid:0,onboarding:0,churned:0};
+    csData.forEach(function(c){counts[c.lifecycle]=(counts[c.lifecycle]||0)+1;});
+    if(csChartInst)csChartInst.destroy();
+    var ctx=$('csHealthChart');if(!ctx)return;
+    csChartInst=new Chart(ctx,{type:'doughnut',data:{
+        labels:['✅ Activo','⚠️ At Risk','🔴 Vencido','👻 Nunca Pagó','🆕 Onboarding','💀 Churned'],
+        datasets:[{data:[counts.active,counts.at_risk,counts.overdue,counts.never_paid,counts.onboarding,counts.churned],
+            backgroundColor:['#22c55e','#eab308','#ef4444','#ec4899','#8b5cf6','#94a3b8']}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}});
+}
+
+function renderOnboardingPipeline(){
+    var stages=[
+        {key:'registered',label:'📝 Registrado',filter:function(c){return c.daysRegistered<=3&&c.lifecycle==='onboarding'}},
+        {key:'exploring',label:'🔍 Explorando',filter:function(c){return c.daysRegistered>3&&c.daysRegistered<=7&&c.lifecycle==='onboarding'}},
+        {key:'trial',label:'⏳ Trial (7-14d)',filter:function(c){return c.daysRegistered>7&&c.daysRegistered<=14&&(c.lifecycle==='onboarding'||c.lifecycle==='never_paid')}},
+        {key:'converting',label:'🔥 Convertir',filter:function(c){return c.daysRegistered>14&&c.lifecycle==='never_paid'}},
+        {key:'active',label:'✅ Activo',filter:function(c){return c.lifecycle==='active'}}
+    ];
+    $('onboardingPipeline').innerHTML=stages.map(function(s){
+        var items=csData.filter(s.filter);
+        return'<div class="ob-col"><h4>'+s.label+' <span>'+items.length+'</span></h4>'+
+            items.slice(0,8).map(function(c){return'<div class="ob-card" onclick="viewCompany(\''+c.id+'\')"><h5>'+c.name+'</h5><small>'+c.daysRegistered+'d · '+(c.plan||'free')+(c.empCount?' · 👷'+c.empCount:'')+'</small></div>'}).join('')+
+            (items.length>8?'<small style="color:var(--gray)">+'+(items.length-8)+' más</small>':'')+
+        '</div>';
+    }).join('');
+}
+
+function filterCSStatus(status,el){
+    if(el){document.querySelectorAll('#csFilters .pill').forEach(function(p){p.classList.remove('active')});el.classList.add('active');}
+    if(status==='all')renderCS(csData);
+    else if(status==='healthy')renderCS(csData.filter(function(c){return c.lifecycle==='active'}));
+    else renderCS(csData.filter(function(c){return c.lifecycle===status}));
+}
+
+function filterCS(){
+    var q=$('csSearch').value.toLowerCase();
+    renderCS(csData.filter(function(c){return(c.name||'').toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)}));
+}
+
+function exportCSReport(){
+    var csv='Empresa,Email,Health,Lifecycle,Plan,Último Pago,Días sin Pagar,Total Pagado,Empleados,Registro\n';
+    csData.forEach(function(c){csv+='"'+c.name+'",'+c.email+','+c.health+','+c.lifecycle+','+c.plan+','+(c.lastPayDate||'nunca')+','+c.daysSincePayment+','+c.totalPaid.toFixed(2)+','+c.empCount+','+fmtDate(c.created_at)+'\n';});
+    var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='customer_success_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ==========================================
+// FOLLOW-UPS
+// ==========================================
+async function loadFollowUps(){
+    var r=await db.from('cs_follow_ups').select('*').order('due_date',{ascending:true});
+    followUps=r.data||[];
+    renderFollowUps();
+}
+
+function renderFollowUps(){
+    var ct=$('followUpList');
+    var pending=followUps.filter(function(f){return f.status!=='done'});
+    if(!pending.length){ct.innerHTML='<p class="empty">Sin follow-ups pendientes 🎉</p>';return;}
+    var today=new Date().toISOString().slice(0,10);
+    ct.innerHTML=pending.map(function(f){
+        var isOverdue=f.due_date<today;
+        var typeIcon={call:'📞',email:'📧',whatsapp:'💬',onboarding:'🚀',renewal:'🔄',payment:'💰'}[f.type]||'📋';
+        var prioColor={high:'#fee2e2',medium:'#fef3c7',low:'#dcfce7'}[f.priority]||'#f3f4f6';
+        return'<div class="fu-card '+(isOverdue?'overdue':'')+'">'+
+            '<div class="fu-icon" style="background:'+prioColor+'">'+typeIcon+'</div>'+
+            '<div style="flex:1"><h5>'+(f.company_name||'?')+' — '+typeIcon+' '+(f.type||'')+'</h5><p>'+(f.notes||'Sin notas')+'</p><span class="fu-date" style="color:'+(isOverdue?'var(--danger)':'var(--gray)')+'">📅 '+f.due_date+(isOverdue?' ⚠️ VENCIDO':'')+'</span></div>'+
+            '<div class="actions"><button class="act" onclick="completeFollowUp(\''+f.id+'\')" title="Completar">✅</button><button class="act danger" onclick="deleteFollowUp(\''+f.id+'\')" title="Eliminar">🗑️</button></div>'+
+        '</div>';
+    }).join('');
+}
+
+function openAddFollowUp(){
+    $('fuCompany').innerHTML=companies.map(function(c){return'<option value="'+c.id+'" data-name="'+(c.name||'')+'">'+c.name+'</option>'}).join('');
+    $('fuDate').value=new Date(Date.now()+86400000).toISOString().slice(0,10);
+    $('fuNotes').value='';
+    openModal('modalFollowUp');
+}
+
+function openAddFollowUpFor(cid,cname){
+    openAddFollowUp();
+    var sel=$('fuCompany');
+    for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===cid){sel.selectedIndex=i;break;}}
+}
+
+async function saveFollowUp(){
+    var cid=$('fuCompany').value;
+    var cname=$('fuCompany').selectedOptions[0]?.dataset.name||'';
+    var type=$('fuType').value;
+    var date=$('fuDate').value;
+    var priority=$('fuPriority').value;
+    var notes=$('fuNotes').value;
+    if(!cid||!date){alert('Completa los campos');return;}
+    
+    // Try Supabase table, fallback to local
+    try{
+        await db.from('cs_follow_ups').insert({company_id:cid,company_name:cname,type:type,due_date:date,priority:priority,notes:notes,status:'pending',created_by:currentAdmin?currentAdmin.id:null});
+    }catch(e){
+        // Table might not exist, store locally
+        followUps.push({id:'fu_'+Date.now(),company_id:cid,company_name:cname,type:type,due_date:date,priority:priority,notes:notes,status:'pending'});
     }
-    
-    // Search in companies (owner)
-    var res3 = await db.from('companies').select('*').eq('email', email).single();
-    if (res3.data) {
-        selectedResetUser = { type: 'company_owner', ...res3.data, company_name: res3.data.name };
-        result.innerHTML = `<div style="padding:1rem;background:#dcfce7;border-radius:0.5rem">
-            <p><strong>✅ Dueño de empresa encontrado</strong></p>
-            <p>🏢 ${res3.data.name}</p>
-            <button class="btn-sm btn-primary" onclick="openResetModal()" style="margin-top:0.5rem">🔑 Resetear</button>
-        </div>`;
-        return;
-    }
-    
-    result.innerHTML = '<div style="padding:1rem;background:#fee2e2;border-radius:0.5rem"><p>❌ Usuario no encontrado</p></div>';
+    closeModal('modalFollowUp');
+    loadFollowUps();
+    await logActivity('create','follow_up',null,cname+' - '+type);
 }
 
-function openResetModal() {
-    if (!selectedResetUser) return;
-    document.getElementById('resetUserInfo').innerHTML = `<p><strong>👤 ${selectedResetUser.name||selectedResetUser.email}</strong></p><p>📧 ${selectedResetUser.email}</p><p>🏢 ${selectedResetUser.company_name||'N/A'}</p><p>Tipo: ${selectedResetUser.type}</p>`;
-    document.getElementById('newPassword').value = generatePass();
-    openModal('modalReset');
+async function completeFollowUp(id){
+    try{await db.from('cs_follow_ups').update({status:'done',completed_at:new Date().toISOString()}).eq('id',id);}catch(e){followUps=followUps.filter(function(f){return f.id!==id});}
+    loadFollowUps();
 }
 
-async function confirmResetPassword() {
-    if (!selectedResetUser) return;
-    var newPass = document.getElementById('newPassword').value;
-    if (newPass.length < 6) { alert('Mínimo 6 caracteres'); return; }
-    
-    var table = selectedResetUser.type === 'team_user' ? 'team_users' : selectedResetUser.type === 'technician' ? 'technicians' : 'companies';
-    var field = selectedResetUser.type === 'company_owner' ? 'password' : 'password';
-    
-    await db.from(table).update({ [field]: newPass }).eq('id', selectedResetUser.id);
-    await logActivity('update', 'password_reset', selectedResetUser.id, selectedResetUser.email);
-    
-    // Update reset request if exists
-    await db.from('password_reset_requests').update({ status: 'completed', completed_at: new Date().toISOString(), completed_by: currentAdmin.id }).eq('user_email', selectedResetUser.email).eq('status', 'pending');
-
-            // Enviar email de reset via Supabase Auth para sincronizar contraseña
-            try {
-                            var resetRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
-                            await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: resetRedirectUrl });
-            } catch(authErr) { console.log('Auth reset email error:', authErr); }
-    
-    closeModal('modalReset');
-        alert('✅ Contraseña actualizada: ' + newPass + '\n\n📧 Se envió un email de reset al usuario para sincronizar su contraseña de acceso.');
-    loadResetRequests();
+async function deleteFollowUp(id){
+    if(!confirm('¿Eliminar este follow-up?'))return;
+    try{await db.from('cs_follow_ups').delete().eq('id',id);}catch(e){followUps=followUps.filter(function(f){return f.id!==id});}
+    loadFollowUps();
 }
 
-async function sendMagicLink() {
-    if (!selectedResetUser) return;
-        try {
-                        var magicRedirectUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
-                        await db.auth.resetPasswordForEmail(selectedResetUser.email, { redirectTo: magicRedirectUrl });
-                        alert('📧 Email de recuperación enviado a: ' + selectedResetUser.email + '\n\nEl usuario recibirá un enlace para restablecer su contraseña.');
-        } catch(err) {
-                        alert('❌ Error al enviar email: ' + err.message);
-        }
-            closeModal('modalReset');
+async function sendPaymentReminder(cid){
+    var c=companies.find(function(x){return x.id===cid});
+    if(!c){alert('Empresa no encontrada');return;}
+    if(!confirm('¿Enviar recordatorio de pago a '+c.name+' ('+c.email+')?'))return;
+    // Log the action - actual email would go through Supabase function
+    await logActivity('create','payment_reminder',c.id,c.name);
+    alert('✅ Recordatorio registrado para '+c.name+'\n📧 '+c.email);
 }
 
-async function handleReset(id) {
-    var req = resetRequests.find(r => r.id === id);
-    if (!req) return;
-    selectedResetUser = { type: req.user_type, id: req.user_id, email: req.user_email, name: req.user_name, company_name: req.company_name };
-    openResetModal();
-}
+// ==========================================
+// NOTIFICATIONS / DELETE / LOGS / SEARCH
+// ==========================================
+function toggleNotifications(){$('notifDropdown').classList.toggle('show');}
+async function handleNotification(id,et,eid){await db.from('admin_notifications').update({is_read:true}).eq('id',id);loadNotifications();if(et==='ticket'){showSec('tickets');setTimeout(function(){viewTicket(eid)},100);}else if(et==='company')showSec('empresas');}
+async function markAllRead(){if(!currentAdmin)return;await db.from('admin_notifications').update({is_read:true}).eq('admin_user_id',currentAdmin.id);loadNotifications();}
+function openDelete(type,id,name){deleteTarget={type:type,id:id};$('deleteName').textContent=name;openModal('modalDelete');}
+async function confirmDelete(){if(!deleteTarget)return;if(deleteTarget.type==='company'){await db.from('companies').delete().eq('id',deleteTarget.id);await logActivity('delete','company',deleteTarget.id,$('deleteName').textContent);}closeModal('modalDelete');deleteTarget=null;refreshAll();}
+async function logActivity(action,et,eid,en,details){if(!currentAdmin)return;await db.from('admin_activity_logs').insert({admin_user_id:currentAdmin.id,admin_name:currentAdmin.name,action:action,entity_type:et,entity_id:eid,entity_name:en,details:details});}
+function filterLogs(){var f=$('logFilter').value;if(f==='all')renderLogs(logs);else renderLogs(logs.filter(function(l){return l.action===f}));}
+function doSearch(){var q=$('q').value.toLowerCase();renderCompanies(companies.filter(function(c){return(c.name||'').toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)}));}
+function filterCompanies(plan,el){if(el){document.querySelectorAll('.filter-bar .pill').forEach(function(p){p.classList.remove('active')});el.classList.add('active');}if(plan==='all')renderCompanies(companies);else if(plan==='active')renderCompanies(companies.filter(function(c){return c.subscription_status==='active'}));else if(plan==='canceled')renderCompanies(companies.filter(function(c){return c.subscription_status==='canceled'}));else if(plan==='trial')renderCompanies(companies.filter(function(c){return!c.plan||c.plan==='free'||c.subscription_status==='trialing'}));else renderCompanies(companies.filter(function(c){return(c.plan||'free')===plan}));}
+function exportCompaniesCSV(){var csv='Nombre,Email,Telefono,Plan,Status,Registro,Stripe ID\n';companies.forEach(function(c){csv+='"'+(c.name||'')+'",'+(c.email||'')+','+(c.phone||'')+','+(c.plan||'free')+','+(c.subscription_status||'-')+','+fmtDate(c.created_at)+','+(c.stripe_customer_id||'')+'\n';});var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='empresas_'+new Date().toISOString().slice(0,10)+'.csv';a.click();}
 
-function openResetForCompany(companyId) {
-    var company = companies.find(c => c.id === companyId);
-    if (!company || !company.email) { alert('Empresa sin email'); return; }
-    selectedResetUser = { type: 'company_owner', id: company.id, email: company.email, name: company.name, company_name: company.name };
-    openResetModal();
-}
-
-// ========== PAYMENTS ==========
-function openAddPaymentModal() {
-    var sel = document.getElementById('payCompany');
-    sel.innerHTML = companies.map(c => `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`).join('');
-    document.getElementById('payAmount').value = '149.99';
-    openModal('modalAddPayment');
-}
-
-async function savePayment() {
-    var companyId = document.getElementById('payCompany').value;
-    var companyName = document.getElementById('payCompany').selectedOptions[0]?.dataset.name || '';
-    var amount = parseFloat(document.getElementById('payAmount').value) || 0;
-    var plan = document.getElementById('payPlan').value;
-    var method = document.getElementById('payMethod').value;
-    var notes = document.getElementById('payNotes').value;
-    
-    await db.from('payment_history').insert({ company_id: companyId, company_name: companyName, amount: amount, plan: plan, payment_method: method, status: 'completed', notes: notes });
-    await logActivity('create', 'payment', null, companyName + ' - $' + amount);
-    
-    closeModal('modalAddPayment');
-    loadPayments();
-    updateDashboard();
-    alert('✅ Pago registrado');
-}
-
-// ========== ADMINS ==========
-function openAddAdminModal() {
-    document.getElementById('newAdminName').value = '';
-    document.getElementById('newAdminEmail').value = '';
-    document.getElementById('newAdminPass').value = generatePass();
-    openModal('modalAddAdmin');
-}
-
-async function saveNewAdmin() {
-    var name = document.getElementById('newAdminName').value.trim();
-    var email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
-    var pass = document.getElementById('newAdminPass').value;
-    var role = document.getElementById('newAdminRole').value;
-    if (!name || !email || !pass) { alert('Completa todos los campos'); return; }
-    
-    await db.from('admin_users').insert({ name: name, email: email, password_hash: pass, role: role, is_active: true, created_by: currentAdmin.id });
-    await logActivity('create', 'admin_user', null, name);
-    closeModal('modalAddAdmin');
-    loadAdmins();
-    alert('✅ Admin creado');
-}
-
-var editingAdminId = null;
-
-function editAdmin(id) {
-    var admin = adminUsers.find(a => a.id === id);
-    if (!admin) return;
-    editingAdminId = id;
-    
-    var modal = document.createElement('div');
-    modal.className = 'modal-bg show';
-    modal.id = 'modalEditAdmin';
-    modal.innerHTML = `
-        <div class="modal" style="max-width:500px">
-            <div class="modal-head"><h3>✏️ Editar Admin</h3><button class="modal-close" onclick="closeModal('modalEditAdmin')">×</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Nombre</label><input type="text" id="editAdminName" value="${admin.name}"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="editAdminEmail" value="${admin.email}"></div>
-                <div class="form-group"><label>Nueva Contraseña (dejar vacío para no cambiar)</label><input type="text" id="editAdminPass" placeholder="Nueva contraseña"></div>
-                <div class="form-group"><label>Rol</label>
-                    <select id="editAdminRole">
-                        <option value="support" ${admin.role==='support'?'selected':''}>👁️ Soporte</option>
-                        <option value="admin" ${admin.role==='admin'?'selected':''}>⚙️ Admin</option>
-                        <option value="super_admin" ${admin.role==='super_admin'?'selected':''}>👑 Super Admin</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Estado</label>
-                    <select id="editAdminStatus">
-                        <option value="true" ${admin.is_active?'selected':''}>✅ Activo</option>
-                        <option value="false" ${!admin.is_active?'selected':''}>⛔ Inactivo</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-sm" style="background:var(--light);color:var(--dark)" onclick="closeModal('modalEditAdmin')">Cancelar</button>
-                <button class="btn btn-sm btn-success" onclick="saveEditAdmin()">💾 Guardar</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-async function saveEditAdmin() {
-    if (!editingAdminId) return;
-    var name = document.getElementById('editAdminName').value.trim();
-    var email = document.getElementById('editAdminEmail').value.trim().toLowerCase();
-    var pass = document.getElementById('editAdminPass').value;
-    var role = document.getElementById('editAdminRole').value;
-    var isActive = document.getElementById('editAdminStatus').value === 'true';
-    
-    var updateData = { name: name, email: email, role: role, is_active: isActive };
-    if (pass && pass.length >= 4) updateData.password_hash = pass;
-    
-    await db.from('admin_users').update(updateData).eq('id', editingAdminId);
-    await logActivity('update', 'admin_user', editingAdminId, name);
-    
-    closeModal('modalEditAdmin');
-    document.getElementById('modalEditAdmin').remove();
-    editingAdminId = null;
-    loadAdmins();
-    
-    // Si editó su propia cuenta, actualizar header
-    if (currentAdmin && currentAdmin.id === editingAdminId) {
-        currentAdmin.name = name;
-        currentAdmin.role = role;
-        document.getElementById('currentUserName').textContent = name;
-        document.getElementById('currentUserRole').textContent = getRoleName(role);
-    }
-    
-    alert('✅ Admin actualizado');
-}
-
-// ========== NOTIFICATIONS ==========
-function toggleNotifications() { document.getElementById('notifDropdown').classList.toggle('show'); }
-
-async function handleNotification(id, entityType, entityId) {
-    await db.from('admin_notifications').update({ is_read: true }).eq('id', id);
-    loadNotifications();
-    if (entityType === 'ticket') { showSection('tickets'); setTimeout(() => viewTicket(entityId), 100); }
-    else if (entityType === 'company') showSection('empresas');
-}
-
-async function markAllRead() {
-    if (!currentAdmin) return;
-    await db.from('admin_notifications').update({ is_read: true }).eq('admin_user_id', currentAdmin.id);
-    loadNotifications();
-}
-
-// ========== COMPANY ==========
-function viewCompany(id) {
-    var c = companies.find(x => x.id === id);
-    if (!c) return;
-    document.getElementById('modalTitle').textContent = c.name;
-    document.getElementById('companyDetails').innerHTML = `<div style="display:grid;gap:0.75rem">
-        <div><strong>📧 Email:</strong> ${c.email||'N/A'}</div>
-        <div><strong>📱 Teléfono:</strong> ${c.phone||'N/A'}</div>
-        <div><strong>📍 Dirección:</strong> ${c.address||'N/A'}</div>
-        <div><strong>💳 Plan:</strong> <span class="badge ${planClass(c.plan)}">${c.plan||'free'}</span></div>
-        <div><strong>📅 Registro:</strong> ${fmtDateTime(c.created_at)}</div>
-        <div><strong>🆔 ID:</strong> <code style="font-size:0.75rem;background:#f3f4f6;padding:2px 6px;border-radius:4px">${c.id}</code></div>
-    </div>`;
-    openModal('modalView');
-    logActivity('view', 'company', c.id, c.name);
-}
-
-function doSearch() {
-    var q = document.getElementById('q').value.toLowerCase();
-    renderCompanies(companies.filter(c => (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q)));
-}
-
-function filterCompanies(plan) {
-    if (plan === 'all') renderCompanies(companies);
-    else renderCompanies(companies.filter(c => (c.plan||'free') === plan));
-}
-
-// ========== DELETE ==========
-function openDelete(type, id, name) {
-    deleteTarget = { type, id };
-    document.getElementById('deleteName').textContent = name;
-    openModal('modalDelete');
-}
-
-async function confirmDelete() {
-    if (!deleteTarget) return;
-    if (deleteTarget.type === 'company') {
-        await db.from('companies').delete().eq('id', deleteTarget.id);
-        await logActivity('delete', 'company', deleteTarget.id, document.getElementById('deleteName').textContent);
-    }
-    closeModal('modalDelete');
-    deleteTarget = null;
-    refreshAll();
-}
-
-// ========== LOGS ==========
-async function logActivity(action, entityType, entityId, entityName, details) {
-    if (!currentAdmin) return;
-    await db.from('admin_activity_logs').insert({ admin_user_id: currentAdmin.id, admin_name: currentAdmin.name, action: action, entity_type: entityType, entity_id: entityId, entity_name: entityName, details: details });
-}
-
-function filterLogs() {
-    var f = document.getElementById('logFilter').value;
-    if (f === 'all') renderLogs(logs);
-    else renderLogs(logs.filter(l => l.action === f));
-}
-
-// ========== UTILITIES ==========
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-function initials(n) { return n ? n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) : '?'; }
-function fmtDate(d) { return d ? d.slice(0,10) : '-'; }
-function fmtDateTime(d) { return d ? new Date(d).toLocaleString() : '-'; }
-function generatePass() { var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; var p=''; for(var i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)]; return p; }
-function generatePassword() { document.getElementById('newPassword').value = generatePass(); }
-
-function planClass(p) { return p==='enterprise'?'b-purple':p==='profesional'?'b-yellow':'b-gray'; }
-function statusClass(s) { return s==='open'?'b-blue':s==='in_progress'?'b-yellow':s==='waiting_response'?'b-orange':s==='resolved'?'b-green':'b-gray'; }
-function statusText(s) { return {open:'Abierto',in_progress:'En Progreso',waiting_response:'Esperando',resolved:'Resuelto',closed:'Cerrado'}[s]||s; }
-function roleClass(r) { return r==='super_admin'?'role-super':r==='admin'?'role-admin':'role-support'; }
-function getRoleName(r) { return {super_admin:'👑 Super Admin',admin:'⚙️ Admin',support:'👁️ Soporte'}[r]||r; }
-
-function actionIcon(a) { return {login:'🔑',logout:'🚪',view:'👁',create:'➕',update:'✏️',delete:'🗑️'}[a]||'📋'; }
-function actionColor(a) { return {login:'#dcfce7',logout:'#f3f4f6',view:'#dbeafe',create:'#dcfce7',update:'#fef3c7',delete:'#fee2e2'}[a]||'#f3f4f6'; }
-function actionText(a) { return {login:'Login',logout:'Logout',view:'Vista',create:'Creación',update:'Edición',delete:'Eliminación'}[a]||a; }
-function notifIcon(t) { return {new_ticket:'🎫',new_message:'💬',new_company:'🏢',payment:'💳',password_reset:'🔑'}[t]||'🔔'; }
-function notifColor(t) { return {new_ticket:'#fee2e2',new_message:'#dbeafe',new_company:'#dcfce7',payment:'#f3e8ff',password_reset:'#fef3c7'}[t]||'#f3f4f6'; }
+// ==========================================
+// UTILITIES
+// ==========================================
+function $(id){return document.getElementById(id);}
+function openModal(id){$(id).classList.add('show');}
+function closeModal(id){$(id).classList.remove('show');}
+function initials(n){return n?n.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2):'?';}
+function fmtDate(d){return d?d.slice(0,10):'-';}
+function fmtDateTime(d){return d?new Date(d).toLocaleString():'-';}
+function generatePass(){var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';var p='';for(var i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];return p;}
+function generatePassword(){$('newPassword').value=generatePass();}
+function planClass(p){return p==='enterprise'?'b-purple':p==='profesional'?'b-yellow':'b-gray';}
+function statusClass(s){return s==='open'?'b-blue':s==='in_progress'?'b-yellow':s==='waiting_response'?'b-orange':s==='resolved'?'b-green':'b-gray';}
+function statusText(s){return{open:'Abierto',in_progress:'En Progreso',waiting_response:'Esperando',resolved:'Resuelto',closed:'Cerrado'}[s]||s;}
+function roleClass(r){return r==='super_admin'?'role-super':r==='admin'?'role-admin':'role-support';}
+function getRoleName(r){return{super_admin:'👑 Super Admin',admin:'⚙️ Admin',support:'👁️ Soporte'}[r]||r;}
+function actionIcon(a){return{login:'🔑',logout:'🚪',view:'👁',create:'➕',update:'✏️',delete:'🗑️'}[a]||'📋';}
+function actionColor(a){return{login:'#dcfce7',logout:'#f3f4f6',view:'#dbeafe',create:'#dcfce7',update:'#fef3c7',delete:'#fee2e2'}[a]||'#f3f4f6';}
+function actionText(a){return{login:'Login',logout:'Logout',view:'Vista',create:'Creación',update:'Edición',delete:'Eliminación'}[a]||a;}
+function notifIcon(t){return{new_ticket:'🎫',new_message:'💬',new_company:'🏢',payment:'💳',password_reset:'🔑'}[t]||'🔔';}
+function notifColor(t){return{new_ticket:'#fee2e2',new_message:'#dbeafe',new_company:'#dcfce7',payment:'#f3e8ff',password_reset:'#fef3c7'}[t]||'#f3f4f6';}
 </script>
 </body>
 </html>
