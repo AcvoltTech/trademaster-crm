@@ -43,6 +43,8 @@
         .nav-item:hover{background:#1e293b;color:#e2e8f0}
         .nav-item.active{background:#1e293b;color:#fff;border-left-color:var(--accent)}
         .nav-item .nav-badge{background:var(--danger);color:#fff;font-size:0.6rem;padding:2px 6px;border-radius:10px;margin-left:auto}
+        .section{display:none}
+        .section.active{display:block}
         .sidebar-footer{padding:1rem;border-top:1px solid #1e293b;font-size:0.75rem}
         
         /* MAIN */
@@ -1271,6 +1273,7 @@
 // ==========================================
 // CONFIG
 // ==========================================
+function $(id){return document.getElementById(id);}
 var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
 
