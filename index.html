@@ -342,6 +342,7 @@
             <span class="nav-group-title" data-i18n="nav_system">Sistema</span>
             <a href="#" onclick="showSection('team')" class="nav-link"><span>👥</span> Usuarios y Equipo</a>
             <a href="#" onclick="showSection('hr')" class="nav-link"><span>🛡️</span> Recursos Humanos</a>
+            <a href="#" onclick="launchDemoManual()" class="nav-link" style="color:#f97316"><span>🎬</span> Tour AI / Demo</a>
             <a href="#" onclick="showSection('settings')" class="nav-link"><span>⚙️</span> <span data-i18n="nav_settings">Configuración</span></a>
           </div>
         </nav>
@@ -416,6 +417,7 @@
                 <button onclick="showSection('clients')">✨ <span data-i18n="dash_import_data">Importar datos</span></button>
                 <button onclick="showSection('marketing')">✨ <span data-i18n="dash_connect_reviews">Conectar reseñas</span></button>
                 <button onclick="showSection('reports')">✨ <span data-i18n="dash_ask_something">Preguntar algo</span></button>
+                <button onclick="launchDemoManual()" style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff">🎬 Ver Demo AI</button>
               </div>
             </div>
 
@@ -5116,5 +5118,26 @@
     </script>
   <script src="i18n-patch.js"></script>
   <script src="ai-onboarding.js"></script>
+  <!-- Floating Demo Button -->
+  <div id="floatingDemoBtn" onclick="launchDemoManual()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9990;width:56px;height:56px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:50%;cursor:pointer;box-shadow:0 4px 20px rgba(249,115,22,.4);align-items:center;justify-content:center;font-size:24px;transition:all .2s;animation:floatPulse 2s ease infinite" title="Tour AI / Demo">
+    🎬
+    <style>
+      @keyframes floatPulse{0%,100%{box-shadow:0 4px 20px rgba(249,115,22,.4)}50%{box-shadow:0 4px 30px rgba(249,115,22,.6)}}
+      #floatingDemoBtn:hover{transform:scale(1.1)}
+    </style>
+  </div>
+  <script>
+    // Show floating demo button after dashboard loads (not in demo mode)
+    (function(){
+      if(new URLSearchParams(location.search).get('demo')==='true')return;
+      var checkBtn=setInterval(function(){
+        if(document.getElementById('dashboardPage')&&document.getElementById('dashboardPage').style.display!=='none'){
+          var fb=document.getElementById('floatingDemoBtn');
+          if(fb)fb.style.display='flex';
+          clearInterval(checkBtn);
+        }
+      },1000);
+    })();
+  </script>
   </body>
 </html>
