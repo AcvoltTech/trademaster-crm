@@ -846,7 +846,31 @@ var T={
 'Recién Pagadas':'Recently Paid',
 'Seleccionar trabajo...':'Select job...',
 'Seleccionar...':'Select...',
-'── Técnicos ──':'── Technicians ──'
+'── Técnicos ──':'── Technicians ──',
+
+// --- Installation pipeline ---
+'🔧 Instalaciones en Progreso':'🔧 Installations in Progress',
+'🚀 INICIADO':'🚀 STARTED',
+'🔧 EN PROGRESO':'🔧 IN PROGRESS',
+'✅ TERMINADO':'✅ COMPLETED',
+'📋 DOCUMENTADO':'📋 DOCUMENTED',
+'🏁 FINALIZADO':'🏁 FINISHED',
+'🚐 En Progreso':'🚐 In Progress',
+'En Progreso':'In Progress',
+
+// --- Dashboard dynamic labels ---
+'COBRADO':'COLLECTED',
+'TICKET PROMEDIO':'AVG TICKET',
+'Cobrado':'Collected',
+'Salespersones:':'Salespeople:',
+'Técnicos:':'Technicians:',
+'👷 Técnicos:':'👷 Technicians:',
+
+// --- Month abbreviations ---
+'Ene':'Jan',
+'Abr':'Apr',
+'Ago':'Aug',
+'Dic':'Dec'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -939,15 +963,38 @@ function translateTextNodes(el, fromText, toText){
 
 // Partial pattern replacements for dynamic content from script.js
 var PATTERNS = [
+  // Installation statuses (UPPERCASE from script.js)
+  [/\bINICIADO\b/g, 'STARTED'],
+  [/\bEN PROGRESO\b/g, 'IN PROGRESS'],
+  [/\bTERMINADO\b/g, 'COMPLETED'],
+  [/\bDOCUMENTADO\b/g, 'DOCUMENTED'],
+  [/\bFINALIZADO\b/g, 'FINISHED'],
+  [/Instalaciones en Progreso/g, 'Installations in Progress'],
+  [/En Progreso/g, 'In Progress'],
+  // Dashboard metrics
+  [/\bCOBRADO\b/g, 'COLLECTED'],
+  [/\bTICKET PROMEDIO\b/g, 'AVG TICKET'],
+  [/\bpendiente\b/g, 'pending'],
+  [/\bCobrado\b/g, 'Collected'],
+  // Month abbreviations (Spanish → English)
+  [/\bEne\b/g, 'Jan'],
+  [/\bAbr\b/g, 'Apr'],
+  [/\bAgo\b/g, 'Aug'],
+  [/\bDic\b/g, 'Dec'],
+  // Job types
   [/Reparación AC/g, 'AC Repair'],
   [/Instalación AC/g, 'AC Installation'],
   [/Reparación/g, 'Repair'],
+  // Time/counts
   [/(\d+) días/g, '$1 days'],
   [/Sin ubicación/g, 'No location'],
+  // Equipment warnings
   [/Equipo con más de (\d+) años/g, 'Equipment over $1 years old'],
   [/considerar reemplazo/g, 'consider replacement'],
+  // Service call rules
   [/La llamada de servicio SIEMPRE se cobra/g, 'The service call is ALWAYS charged'],
   [/si el cliente decide hacer el trabajo, se cobra ADICIONAL a labor \+ partes/g, 'if the client proceeds, it is charged IN ADDITION to labor + parts'],
+  // Status/location
   [/Fotos Después/g, 'After Photos'],
   [/Fuera de línea/g, 'Offline'],
   [/Última Ubicación/g, 'Last Location'],
@@ -959,11 +1006,121 @@ var PATTERNS = [
   [/Trabajo Nuevo/g, 'New Job'],
   [/Trabajo En Progreso/g, 'Job In Progress'],
   [/Recién Pagadas/g, 'Recently Paid'],
+  // Long dynamic messages
+  [/No hay empleados registrados\. Agrega técnicos en Despacho y vendedores en Home Advisors\./g, 'No employees registered. Add technicians in Dispatch and salespeople in Home Advisors.'],
+  [/No hay planes de servicio\. Crea tu primer plan de mantenimiento para generar ingresos recurrentes\./g, 'No service plans. Create your first maintenance plan to generate recurring income.'],
+  [/No hay citas próximas/g, 'No upcoming appointments'],
+  [/No hay instalaciones en progreso/g, 'No installations in progress'],
+  [/No hay facturas en esta categoría/g, 'No invoices in this category'],
+  [/No hay referencias todavía/g, 'No referrals yet'],
+  [/Sin artículos/g, 'No items'],
+  [/Sin campañas/g, 'No campaigns'],
+  [/Sin historial de sincronización/g, 'No sync history'],
+  // Documents/settings
   [/Sube tus documentos legales y de seguros/g, 'Upload your legal and insurance documents'],
   [/se incluirán automáticamente en estimados y facturas/g, 'will be automatically included in estimates and invoices'],
+  [/cuando el cliente o la ciudad lo requieran/g, 'when the client or city requires it'],
   [/Los recibos del vendedor deben coincidir con los recibos de la empresa/g, 'Salesperson receipts must match company receipts'],
   [/El sistema compara automáticamente/g, 'The system automatically compares'],
-  [/monto, fecha y proveedor/g, 'amount, date and supplier']
+  [/monto, fecha y proveedor/g, 'amount, date and supplier'],
+  [/Sube las credenciales y certificaciones de cada técnico/g, 'Upload the credentials and certifications for each technician'],
+  [/Estos documentos se pueden incluir/g, 'These documents can be included'],
+  [/en estimados y facturas para mostrar confianza al cliente/g, 'in estimates and invoices to show trust to the client'],
+  [/El técnico usará su/g, 'The technician will use their'],
+  [/contraseña/g, 'password'],
+  [/para entrar al CRM/g, 'to access the CRM'],
+  [/Crear acceso al CRM/g, 'Create CRM access'],
+  [/para que entre desde su celular/g, 'so they can enter from their phone'],
+  [/Agrega al Dueño\/CEO primero/g, 'Add the Owner/CEO first'],
+  [/luego la persona de contabilidad y el coordinador de despacho/g, 'then the accounting person and dispatch coordinator'],
+  [/Aplica igual para leads de la empresa y leads propios del vendedor/g, 'Applies equally to company leads and salesperson own leads'],
+  [/Fórmula:/g, 'Formula:'],
+  [/Tasa de Conversión:/g, 'Conversion Rate:'],
+  // Technician tracker messages
+  [/Tu ubicación se envía cada 30 segundos/g, 'Your location is sent every 30 seconds'],
+  [/mientras estés en servicio/g, 'while on service'],
+  [/Al terminar tu jornada/g, 'When your shift ends'],
+  [/haz Marcar Salida para dejar de compartir ubicación/g, 'Clock Out to stop sharing your location'],
+  [/Comparte este link con tus técnicos/g, 'Share this link with your technicians'],
+  [/para que reporten su ubicación en tiempo real desde su celular/g, 'so they can report their location in real time from their phone'],
+  // Pipeline / Advisors
+  [/Asignar Lead a Vendedor/g, 'Assign Lead to Salesperson'],
+  [/Lead Propio del Vendedor/g, 'Salesperson Own Lead'],
+  [/Leads por Vencer/g, 'Expiring Leads'],
+  [/días sin cerrar/g, 'days without closing'],
+  // Selects
+  [/Seleccionar Advisor\.\.\./g, 'Select Advisor...'],
+  [/Seleccionar Archivo/g, 'Select File'],
+  [/── Técnicos ──/g, '── Technicians ──'],
+  // Quick create
+  [/Crear Rápido/g, 'Quick Create'],
+  [/Crear Nuevo/g, 'Create New'],
+  // Various
+  [/Configurar ADP Workforce/g, 'Configure ADP Workforce'],
+  [/Cuenta del Proveedor/g, 'Supplier Account'],
+  [/Actualizar Foto/g, 'Update Photo'],
+  [/Coordinador de Despacho/g, 'Dispatch Coordinator'],
+  [/Registración del Vehículo/g, 'Vehicle Registration'],
+  [/Seguro Comercial del Vehículo/g, 'Commercial Vehicle Insurance'],
+  [/Identificación para/g, 'ID for'],
+  [/Editar Vehículo:/g, 'Edit Vehicle:'],
+  [/Factura manual/g, 'Manual Invoice'],
+  [/Otro proveedor\.\.\./g, 'Other supplier...'],
+  // Client limit modal
+  [/Has alcanzado tu límite/g, 'You have reached your limit'],
+  [/Límite de Clientes Alcanzado/g, 'Client Limit Reached'],
+  [/Actualizar Plan/g, 'Upgrade Plan'],
+  // Estimate pipeline statuses
+  [/\bABIERTOS\b/g, 'OPEN'],
+  [/\bAPROBADOS\b/g, 'APPROVED'],
+  [/\bINVOICED\b/g, 'INVOICED'],
+  [/\bCOLLECTED\b/g, 'COLLECTED'],
+  [/de estimados aprobados/g, 'of approved estimates'],
+  [/Sin registros de entrada hoy/g, 'No clock entries today'],
+  // Sidebar nav items that script.js generates
+  [/Recibos/g, 'Receipts'],
+  [/Gastos del Negocio/g, 'Business Expenses'],
+  [/Mi Dinero/g, 'My Money'],
+  [/Nómina/g, 'Payroll'],
+  [/Lista de Precios/g, 'Price List'],
+  [/Configuración/g, 'Settings'],
+  // Salesperson labels
+  [/Salespersones:/g, 'Salespeople:'],
+  [/Tecnicos:/g, 'Technicians:'],
+  // More form/content patterns
+  [/\bAprobado\b/g, 'Approved'],
+  [/Nombre, Teléfono, Email, Dirección/g, 'Name, Phone, Email, Address'],
+  [/uno por línea/g, 'one per line'],
+  [/Cobrado (\d+)/g, 'Collected $1'],
+  [/y certificaciones de cada técnico/g, 'and certifications for each technician'],
+  [/Estos documentos se pueden incluir/g, 'These documents can be included'],
+  [/en estimados y facturas para mostrar confianza al cliente/g, 'in estimates and invoices to show trust to the client'],
+  [/Identificación para/g, 'ID for'],
+  [/Registración del Vehículo/g, 'Vehicle Registration'],
+  [/Seguro Comercial del Vehículo/g, 'Commercial Vehicle Insurance'],
+  [/Personaliza los términos legales/g, 'Customize the legal terms'],
+  [/que aparecen en tus facturas e invoices/g, 'that appear on your invoices'],
+  [/Edita según las leyes de tu estado/g, 'Edit according to your state laws'],
+  [/Para contratistas independientes/g, 'For independent contractors'],
+  [/Nómina completa, impuestos, beneficios/g, 'Full payroll, taxes, benefits'],
+  [/Nómina para pequeñas empresas/g, 'Payroll for small businesses'],
+  [/Nómina y HR para empresas medianas/g, 'Payroll & HR for mid-size companies'],
+  [/Nómina y impuestos/g, 'Payroll & taxes'],
+  [/Conecta tu proveedor de nómina/g, 'Connect your payroll provider'],
+  [/para sincronizar horas, pagos y reportes automáticamente/g, 'to sync hours, payments and reports automatically'],
+  [/Administra nómina manualmente en Trade Master/g, 'Manage payroll manually in Trade Master'],
+  // Receipts/expenses
+  [/Recibos sin Conciliar/g, 'Unreconciled Receipts'],
+  [/Total Gastado/g, 'Total Spent'],
+  [/Total Gastos/g, 'Total Expenses'],
+  [/Total Recibos/g, 'Total Receipts'],
+  [/Gastos Fijos/g, 'Fixed Expenses'],
+  [/Gastos Variables/g, 'Variable Expenses'],
+  // Reports  
+  [/Todos los Proveedores/g, 'All Suppliers'],
+  [/Todas las Categorías/g, 'All Categories'],
+  [/Todas las categorías/g, 'All categories'],
+  [/Todo el Año/g, 'All Year']
 ];
 
 function applyPatterns(){
@@ -1008,12 +1165,12 @@ function setupObserver(){
       if(typeof currentLang !== 'undefined' && currentLang === 'en'){
         translateDOM();
       }
-    }, 300);
+    }, 80);
   });
   observer.observe(document.body, {
     childList: true,
     subtree: true,
-    characterData: false
+    characterData: true
   });
 }
 
@@ -1022,15 +1179,32 @@ function init(){
   fixI18nData();
   hookApplyLanguage();
   setupObserver();
-  // Apply now if already in English
-  if(typeof currentLang !== 'undefined' && currentLang === 'en'){
-    setTimeout(translateDOM, 500);
+
+  // Hook showSection to re-translate on section change
+  if(typeof showSection === 'function'){
+    var origShow = showSection;
+    window.showSection = function(){
+      origShow.apply(this, arguments);
+      if(typeof currentLang !== 'undefined' && currentLang === 'en'){
+        setTimeout(translateDOM, 50);
+        setTimeout(translateDOM, 300);
+      }
+    };
   }
+
   // Re-apply the i18n system to pick up fixed keys
   if(typeof applyLanguage === 'function'){
     setTimeout(applyLanguage, 100);
   }
-  console.log('✅ i18n-patch.js loaded — ' + Object.keys(T).length + ' translations ready');
+
+  // Multiple staggered scans to catch script.js dynamic content
+  if(typeof currentLang !== 'undefined' && currentLang === 'en'){
+    [200, 600, 1500, 3000, 5000].forEach(function(ms){
+      setTimeout(translateDOM, ms);
+    });
+  }
+
+  console.log('✅ i18n-patch.js v3 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
 }
 
 if(document.readyState === 'loading'){
