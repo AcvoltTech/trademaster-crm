@@ -1,0 +1,934 @@
+/* ============================================================
+   i18n-patch.js — Trade Master CRM Full Bilingual Patch v1
+   Fixes missing translations + adds DOM-scanning engine
+   Load AFTER script.js: <script src="i18n-patch.js"></script>
+   ============================================================ */
+(function(){
+'use strict';
+
+// ===== 1. FIX WRONG EN TRANSLATIONS =====
+function fixI18nData(){
+  if(typeof i18nData==='undefined') return;
+  if(!i18nData.en) i18nData.en={};
+  if(!i18nData.es) i18nData.es={};
+
+  // These EN values were still in Spanish
+  var fixes={
+    nav_dashboard:'Dashboard',
+    nav_leads:'Leads',
+    nav_pipeline:'Sales Pipeline',
+    nav_advisors:'Home Advisors',
+    nav_marketing:'Marketing',
+    mkt_title:'Marketing',
+    pay_total:'Total ($)',
+    pb_sku:'SKU / Part #',
+    pb_markup:'Markup %'
+  };
+  for(var k in fixes) i18nData.en[k]=fixes[k];
+
+  // ===== 2. ADD 37 MISSING KEYS =====
+  var missing_es={
+    nav_servicecalls:'Llamadas de Servicio',
+    clock_select_tech:'Seleccionar Persona',
+    clock_hourly_rate:'Tarifa por Hora',
+    clock_in:'Marcar Entrada',
+    clock_worked_today:'Trabajado Hoy',
+    clock_earned_today:'Ganado Hoy',
+    clock_projected_8h:'Proyección 8hrs',
+    clock_history:'Historial de Hoy',
+    money_f_month:'Este Mes',
+    money_f_quarter:'Este Trimestre',
+    money_f_year:'Este Año',
+    pay_f_week:'Esta Semana',
+    pay_f_biweek:'Quincenal',
+    pay_f_month:'Mensual',
+    pay_provider_title:'Proveedor de Nómina',
+    pay_provider_desc:'Conecta tu proveedor de nómina para sincronizar horas, pagos y reportes automáticamente.',
+    pay_manual:'Manual / Sin Proveedor',
+    pay_manual_desc:'Administra nómina manualmente en Trade Master',
+    pay_api_key:'API Key / Client ID',
+    pay_api_secret:'API Secret',
+    pay_company_id:'Company ID',
+    pay_sync_freq:'Frecuencia de Sync',
+    pay_sync_hours:'Sincronizar horas de Entrada/Salida',
+    pay_sync_rates:'Sincronizar tarifas de técnicos',
+    pay_connect:'Conectar',
+    pay_test:'Probar Conexión',
+    pay_sync_now:'Sincronizar Ahora',
+    pay_disconnect:'Desconectar',
+    pay_sync_history:'Historial de Sincronización',
+    pb_suppliers:'Proveedores',
+    pb_load_catalog:'Cargar Catálogo HVAC Completo',
+    pb_supplier_desc:'Busca precios directamente en los distribuidores más usados en HVAC/R.',
+    rpt_week:'Esta Semana',
+    rpt_month:'Este Mes',
+    rpt_quarter:'Este Trimestre',
+    rpt_year:'Este Año',
+    rpt_custom:'Personalizado'
+  };
+  var missing_en={
+    nav_servicecalls:'Service Calls',
+    clock_select_tech:'Select Person',
+    clock_hourly_rate:'Hourly Rate',
+    clock_in:'Clock In',
+    clock_worked_today:'Worked Today',
+    clock_earned_today:'Earned Today',
+    clock_projected_8h:'8hr Projection',
+    clock_history:'Today\'s History',
+    money_f_month:'This Month',
+    money_f_quarter:'This Quarter',
+    money_f_year:'This Year',
+    pay_f_week:'This Week',
+    pay_f_biweek:'Biweekly',
+    pay_f_month:'Monthly',
+    pay_provider_title:'Payroll Provider',
+    pay_provider_desc:'Connect your payroll provider to sync hours, payments and reports automatically.',
+    pay_manual:'Manual / No Provider',
+    pay_manual_desc:'Manage payroll manually in Trade Master',
+    pay_api_key:'API Key / Client ID',
+    pay_api_secret:'API Secret',
+    pay_company_id:'Company ID',
+    pay_sync_freq:'Sync Frequency',
+    pay_sync_hours:'Sync Clock In/Out Hours',
+    pay_sync_rates:'Sync Technician Rates',
+    pay_connect:'Connect',
+    pay_test:'Test Connection',
+    pay_sync_now:'Sync Now',
+    pay_disconnect:'Disconnect',
+    pay_sync_history:'Sync History',
+    pb_suppliers:'Suppliers',
+    pb_load_catalog:'Load Full HVAC Catalog',
+    pb_supplier_desc:'Search prices directly from the most used HVAC/R distributors.',
+    rpt_week:'This Week',
+    rpt_month:'This Month',
+    rpt_quarter:'This Quarter',
+    rpt_year:'This Year',
+    rpt_custom:'Custom'
+  };
+  for(var k in missing_es){ if(!i18nData.es[k]) i18nData.es[k]=missing_es[k]; }
+  for(var k in missing_en){ if(!i18nData.en[k]) i18nData.en[k]=missing_en[k]; }
+}
+
+// ===== 3. COMPREHENSIVE ES→EN TRANSLATION MAP =====
+// Maps Spanish text → English text for DOM scanning
+var T={
+// --- Navigation & Actions ---
+'Cancelar':'Cancel',
+'Guardar':'Save',
+'Cerrar Sesión':'Sign Out',
+'Crear Nuevo':'Create New',
+'Buscar':'Search',
+'Exportar':'Export',
+'Filtrar':'Filter',
+'Editar':'Edit',
+'Eliminar':'Delete',
+'Seleccionar':'Select',
+'Enviar':'Send',
+'Subir':'Upload',
+'Ver':'View',
+'Imprimir':'Print',
+'Descargar':'Download',
+'Agregar':'Add',
+'Pendiente':'Pending',
+'Completada':'Completed',
+'Asignada':'Assigned',
+'Activos':'Active',
+'Inactivo':'Inactive',
+'Nuevo':'New',
+'Todos':'All',
+'Total':'Total',
+'Notas':'Notes',
+'Monto':'Amount',
+'Fecha':'Date',
+'Nombre':'Name',
+'Estado':'Status',
+'Tipo':'Type',
+'Cliente':'Client',
+'Dirección':'Address',
+'Descripción':'Description',
+'Teléfono':'Phone',
+'Correo Electrónico':'Email',
+'Contraseña':'Password',
+'Confirmar Contraseña':'Confirm Password',
+'Proveedor':'Supplier',
+'Categoría':'Category',
+'Duración':'Duration',
+'Garantía':'Warranty',
+'Servicio':'Service',
+'Instalación':'Installation',
+'Reparación':'Repair',
+'Calefacción':'Heating',
+'Refrigeración':'Refrigeration',
+'Plomería':'Plumbing',
+'Eléctrico':'Electrical',
+'Vehículo':'Vehicle',
+'Comisión':'Commission',
+'Mañana':'Morning',
+'Día':'Day',
+'Reseñas':'Reviews',
+'Campañas':'Campaigns',
+'Empleados':'Employees',
+'Despacho':'Dispatch',
+'Cobranza':'Collections',
+'Reportes':'Reports',
+'Facturas':'Invoices',
+'Recibos':'Receipts',
+'Trabajos':'Jobs',
+'Clientes':'Clients',
+'Nómina':'Payroll',
+'Técnico':'Technician',
+'Técnicos':'Technicians',
+'Configuración':'Settings',
+'Comunicación':'Communication',
+
+// --- Buttons with icons ---
+'💾 Guardar':'💾 Save',
+'💾 Guardar Plan':'💾 Save Plan',
+'💾 Guardar Advisor':'💾 Save Advisor',
+'💾 Guardar Cláusulas':'💾 Save Clauses',
+'💾 Guardar Credenciales':'💾 Save Credentials',
+'💾 Guardar Factura':'💾 Save Invoice',
+'💾 Guardar Gasto':'💾 Save Expense',
+'💾 Guardar Llamada':'💾 Save Call',
+'💾 Guardar Nota':'💾 Save Note',
+'💾 Guardar Permisos':'💾 Save Permissions',
+'💾 Guardar Recibo':'💾 Save Receipt',
+'💾 Guardar Reporte':'💾 Save Report',
+'💾 Guardar Técnico':'💾 Save Technician',
+'💾 Guardar Usuario':'💾 Save User',
+'💾 Guardar Venta':'💾 Save Sale',
+'💾 Guardar Configuración':'💾 Save Settings',
+'💾 Crear Cita':'💾 Create Appointment',
+'💾 Crear Instalación':'💾 Create Installation',
+'📤 Subir':'📤 Upload',
+'📤 Subir Foto':'📤 Upload Photo',
+'📤 Enviar Solicitud':'📤 Send Request',
+'📥 Exportar':'📥 Export',
+'📥 Exportar CSV':'📥 Export CSV',
+'📥 Importar Clientes':'📥 Import Clients',
+'📷 Subir Foto':'📷 Upload Photo',
+'🧪 Probar Conexión':'🧪 Test Connection',
+'🔄 Sincronizar Ahora':'🔄 Sync Now',
+'✕ Desconectar':'✕ Disconnect',
+'✏️ Editar':'✏️ Edit',
+'👁️ Ver':'👁️ View',
+'🎲 Crear Datos Demo':'🎲 Create Demo Data',
+'↩️ Logo Default':'↩️ Default Logo',
+'⋮ Menú':'⋮ Menu',
+
+// --- Add/New buttons ---
+'+ Agregar Documento':'+ Add Document',
+'+ Agregar Gasto':'+ Add Expense',
+'+ Agregar Línea':'+ Add Line',
+'+ Agregar Recibo':'+ Add Receipt',
+'+ Agregar Seguimiento':'+ Add Follow-up',
+'+ Agregar Técnico':'+ Add Technician',
+'+ Agregar Usuario':'+ Add User',
+'+ Estimado':'+ Estimate',
+'+ Nueva Comunicación':'+ New Communication',
+'+ Nueva Factura':'+ New Invoice',
+'+ Nueva Instalación':'+ New Installation',
+'+ Nueva Llamada':'+ New Call',
+'+ Nuevo Advisor':'+ New Advisor',
+'+ Nuevo Cliente':'+ New Client',
+'+ Nuevo Lead':'+ New Lead',
+'+ Nuevo Plan':'+ New Plan',
+'+ Nuevo Reporte':'+ New Report',
+'+ Nuevo Trabajo':'+ New Job',
+'+ Subir Recibo':'+ Upload Receipt',
+'+ Trabajo':'+ Job',
+'👥 Nuevo Cliente':'👥 New Client',
+'🔧 Nuevo Trabajo':'🔧 New Job',
+'🎯 Nuevo Lead':'🎯 New Lead',
+'💰 Nuevo Estimado':'💰 New Estimate',
+'👤 Nuevo Home Advisor':'👤 New Home Advisor',
+'👤 Nuevo Usuario':'👤 New User',
+'👷 Nuevo Técnico':'👷 New Technician',
+'➕ Nuevo Cliente':'➕ New Client',
+
+// --- Selects / Dropdowns ---
+'-- Seleccionar Trabajo --':'-- Select Job --',
+'-- Seleccionar Técnico --':'-- Select Technician --',
+'-- Seleccionar vendedor --':'-- Select Salesperson --',
+'-- Seleccionar venta --':'-- Select Sale --',
+'-- Asignar después --':'-- Assign Later --',
+'-- Sin trabajo --':'-- No Job --',
+'Seleccionar o crear...':'Select or create...',
+'Seleccionar cliente...':'Select client...',
+'Seleccionar trabajo...':'Select job...',
+'Seleccionar...':'Select...',
+'Seleccionar Advisor':'Select Advisor',
+'Seleccionar Lead/Cliente':'Select Lead/Client',
+'Seleccionar Persona':'Select Person',
+'Seleccionar Trabajo':'Select Job',
+'Seleccionar Técnico':'Select Technician',
+'Asignar técnico...':'Assign technician...',
+'✏️ Escribir nombre manualmente...':'✏️ Type name manually...',
+'── Técnicos ──':'── Technicians ──',
+'🆕 Nuevo':'🆕 New',
+
+// --- Section headers ---
+'🗺️ Mapa de Operaciones en Tiempo Real':'🗺️ Real-Time Operations Map',
+'🗺️ Mapa de Despacho en Tiempo Real':'🗺️ Real-Time Dispatch Map',
+'🗺️ Mapa de Llamadas de Servicio':'🗺️ Service Calls Map',
+'🗺️ Ver Mapa General':'🗺️ View Full Map',
+'🎯 Coordinador de Despacho':'🎯 Dispatch Coordinator',
+'🎯 Ir a Despacho':'🎯 Go to Dispatch',
+'🎯 Leads Asignados':'🎯 Assigned Leads',
+'🎯 Leads Asignados a Vendedores':'🎯 Leads Assigned to Salespeople',
+'🎯 Plataformas de Generación de Leads':'🎯 Lead Generation Platforms',
+'📊 Reportes de Inspección y Auditoría':'📊 Inspection & Audit Reports',
+'📊 Nuevo Reporte de Inspección':'📊 New Inspection Report',
+'📊 Resumen del Cliente':'📊 Client Summary',
+'📋 Citas del Día':'📋 Today\'s Appointments',
+'📋 Cláusulas del Contrato / Invoice':'📋 Contract / Invoice Clauses',
+'📋 Estimados Guardados':'📋 Saved Estimates',
+'📋 Historial de Pagos':'📋 Payment History',
+'📋 Trabajos Pendientes':'📋 Pending Jobs',
+'📋 Órdenes Referidas':'📋 Referred Orders',
+'📋 Órdenes Referidas por Técnicos':'📋 Orders Referred by Technicians',
+'📜 Credenciales de Técnicos':'📜 Technician Credentials',
+'📑 Permisos y Documentos del Trabajo / Job Permits':'📑 Job Permits & Documents',
+'📝 Notas':'📝 Notes',
+'📝 Notas Internas':'📝 Internal Notes',
+'📝 Notas Adicionales':'📝 Additional Notes',
+'📝 Registrar Comunicación':'📝 Record Communication',
+'📞 Llamadas de Servicio':'📞 Service Calls',
+'📞 Nueva Llamada de Servicio':'📞 New Service Call',
+'📄 Facturas':'📄 Invoices',
+'📄 Facturas de este cliente':'📄 This client\'s invoices',
+'📄 Generar Estimado PDF':'📄 Generate Estimate PDF',
+'📄 Nueva Factura':'📄 New Invoice',
+'📄 Nuevo Documento':'📄 New Document',
+'📄 Nuevo Recibo':'📄 New Receipt',
+'📄 Otro Reporte':'📄 Other Report',
+'📄 Ver Política de Facturación':'📄 View Billing Policy',
+'💰 Cobranza':'💰 Collections',
+'💰 Crear Estimado / Presentación':'💰 Create Estimate / Presentation',
+'💰 Estimados':'💰 Estimates',
+'💰 Estimados de este cliente':'💰 This client\'s estimates',
+'💰 Nuevo Estimado':'💰 New Estimate',
+'💰 Términos de Pago / Payment Terms':'💰 Payment Terms',
+'💬 Comunicación':'💬 Communication',
+'💬 Registro de Comunicación':'💬 Communication Log',
+'💸 Nuevo Gasto del Negocio':'💸 New Business Expense',
+'🔧 Trabajos':'🔧 Jobs',
+'🔧 Trabajos Recientes':'🔧 Recent Jobs',
+'🔧 Trabajos de este cliente':'🔧 This client\'s jobs',
+'🔧 Nueva Instalación':'🔧 New Installation',
+'🔧 Nuevo Trabajo':'🔧 New Job',
+'🔧 Problema / Descripción':'🔧 Problem / Description',
+'🔧 Tipo de Equipo':'🔧 Equipment Type',
+'🔧 Técnico':'🔧 Technician',
+'🔧 Garantía':'🔧 Warranty',
+'👷 Técnicos':'👷 Technicians',
+'👷 Gestión de Técnicos':'👷 Technician Management',
+'👷 Asignadas':'👷 Assigned',
+'👷 Técnicos Asignados':'👷 Assigned Technicians',
+'👷 Técnicos:':'👷 Technicians:',
+'👷 Asignar Técnico (opcional)':'👷 Assign Technician (optional)',
+'👥 Clientes':'👥 Clients',
+'👥 Cliente Existente':'👥 Existing Client',
+'👥 Estado de Todo el Personal':'👥 All Staff Status',
+'👤 Cliente':'👤 Client',
+'👤 Nombre del Cliente':'👤 Client Name',
+'👤 Nombre del Dueño / CEO':'👤 Owner / CEO Name',
+'👑 Dueño / CEO':'👑 Owner / CEO',
+'📬 Bandeja - Centro de Comunicación':'📬 Inbox - Communication Center',
+'📱 Link de Tracking para Técnicos':'📱 Tracking Link for Technicians',
+'📱 Presentar al Cliente':'📱 Present to Client',
+'📱 Redes Sociales y Contenido':'📱 Social Media & Content',
+'📱 Teléfono':'📱 Phone',
+'📱 Llamada Saliente':'📱 Outgoing Call',
+'📱 Llamadas Salientes':'📱 Outgoing Calls',
+'📱 Llamada Entrante':'📱 Incoming Call',
+'📲 Llamada Entrante':'📲 Incoming Call',
+'📲 Llamadas Entrantes':'📲 Incoming Calls',
+'📷 Foto del Recibo':'📷 Receipt Photo',
+'📷 Fotos del Equipo (modelo, serial, data plate, condición)':'📷 Equipment Photos (model, serial, data plate, condition)',
+'📸 Foto de Factura / Comprobante':'📸 Invoice / Receipt Photo',
+'📸 Foto del Recibo':'📸 Receipt Photo',
+'🚐 Documentos del Vehículo / Vehicle Documents':'🚐 Vehicle Documents',
+'🚐 Vehículo Asignado':'🚐 Assigned Vehicle',
+'🚐 Vehículo Asignado / Assigned Vehicle':'🚐 Assigned Vehicle',
+'🛡️ Seguridad':'🛡️ Security',
+'🛡️ Plan de Servicio':'🛡️ Service Plan',
+'🛡️ Planes de Servicio / Plan de Servicios':'🛡️ Service Plans',
+'🛡️ Garantía / Garantía':'🛡️ Warranty',
+'🦺 Seguro & Bonding / Insurance & Bonding':'🦺 Insurance & Bonding',
+'🧾 Recibos de Proveedores':'🧾 Supplier Receipts',
+'🧾 Recibos del Vendedor y Conciliación':'🧾 Salesperson Receipts & Reconciliation',
+'🧾 Recibos y Conciliación':'🧾 Receipts & Reconciliation',
+'🧾 Subir Recibo del Vendedor':'🧾 Upload Salesperson Receipt',
+'🧾 Exportar Recibos CSV':'🧾 Export Receipts CSV',
+'🏢 Exportar Gastos CSV':'🏢 Export Expenses CSV',
+'🏢 Gastos Fijos y Recurrentes del Negocio':'🏢 Fixed & Recurring Business Expenses',
+'📤 Centro de Importación — Housecall Pro':'📤 Import Center — Housecall Pro',
+'📗 Integración con QuickBooks':'📗 QuickBooks Integration',
+'🔑 Recuperar Contraseña':'🔑 Recover Password',
+'🔑 ¿Olvidaste tu contraseña?':'🔑 Forgot your password?',
+'🔒 Política de Privacidad / Privacy Policy':'🔒 Privacy Policy',
+'🛟 Soporte Técnico':'🛟 Technical Support',
+'🧪 Datos de Demostración':'🧪 Demo Data',
+
+// --- Status labels ---
+'Completadas Hoy':'Completed Today',
+'Asignadas':'Assigned',
+'Nuevos':'New',
+'Pendientes':'Pending',
+'Cobrados':'Collected',
+'Facturados':'Invoiced',
+'Enviadas (sin pago)':'Sent (unpaid)',
+'Recién Pagadas':'Recently Paid',
+'Trabajo Nuevo':'New Job',
+'Trabajo En Progreso':'Job In Progress',
+'Leads Activos':'Active Leads',
+'Llamadas activas':'Active Calls',
+'Nuevos Clientes':'New Clients',
+'Trabajos Ganados':'Won Jobs',
+'Vendedores activos':'Active Salespeople',
+'Técnicos en Campo':'Technicians in Field',
+'Técnico Disponible':'Available Technician',
+'Técnico Ocupado':'Busy Technician',
+'Clientes Registrados':'Registered Clients',
+'Clientes registrados':'Registered clients',
+'Comisiones Pendientes':'Pending Commissions',
+'Recibos sin Conciliar':'Unreconciled Receipts',
+'Facturas pendientes':'Pending invoices',
+'Pendiente...':'Pending...',
+
+// --- Estimate steps ---
+'1. Seleccionar Trabajo':'1. Select Job',
+'2. Información del Equipo':'2. Equipment Information',
+'3. Llamada de Servicio (Service Call)':'3. Service Call',
+'5. Resumen del Estimado':'5. Estimate Summary',
+
+// --- Form labels ---
+'Nombre Completo':'Full Name',
+'Nombre de la Empresa':'Company Name',
+'Nombre de Usuario':'Username',
+'Nombre del Cliente':'Client Name',
+'Nombre del Plan':'Plan Name',
+'Nombre, Teléfono, Email, Dirección':'Name, Phone, Email, Address',
+'Descripción del Trabajo':'Job Description',
+'Descripción / Items':'Description / Items',
+'Asunto / Descripción':'Subject / Description',
+'Tipo de Contacto':'Contact Type',
+'Tipo de Equipo':'Equipment Type',
+'Tipo de Propiedad':'Property Type',
+'Tipo de Reporte':'Report Type',
+'Tipo de Servicio':'Service Type',
+'Lead/Cliente':'Lead/Client',
+'Trabajo Relacionado':'Related Job',
+'Trabajo/Venta Relacionada':'Related Job/Sale',
+'Fecha de Pago':'Payment Date',
+'Fecha de Vencimiento':'Due Date',
+'Fecha de Venta':'Sale Date',
+'Fecha del Recibo':'Receipt Date',
+'Fecha de Inspección':'Inspection Date',
+'Fecha Estimada de Fin':'Estimated End Date',
+'Fecha Preferida':'Preferred Date',
+'Fecha de Inicio':'Start Date',
+'Inicio del Período':'Period Start',
+'Fin del Período':'Period End',
+'Monto ($)':'Amount ($)',
+'Monto Cotizado ($)':'Quoted Amount ($)',
+'Monto Total de Venta ($)':'Total Sale Amount ($)',
+'Monto personalizado':'Custom amount',
+'Método de Pago':'Payment Method',
+'Calificación / Score':'Rating / Score',
+'Inspector / Técnico':'Inspector / Technician',
+'Dirección de la Propiedad':'Property Address',
+'Notas / Hallazgos':'Notes / Findings',
+'Notas / Responsabilidades':'Notes / Responsibilities',
+'Notas Internas (no se muestran al cliente)':'Internal Notes (not shown to client)',
+'Notas para el Advisor':'Notes for Advisor',
+'Notas para el Cliente':'Notes for Client',
+'Notas para el cliente':'Notes for client',
+'Próximo Seguimiento':'Next Follow-up',
+'Edición Aprox (años)':'Approx Age (years)',
+'Edad Aprox (años)':'Approx Age (years)',
+'Editar Vehículo:':'Edit Vehicle:',
+'# de Póliza / Cuenta':'Policy / Account #',
+'# de Recibo':'Receipt #',
+'# de Recibo / Invoice':'Receipt / Invoice #',
+'% COMISIÓN':'% COMMISSION',
+'Factura / Invoice':'Invoice',
+'Líneas de Factura':'Invoice Lines',
+'Tarjeta de Crédito':'Credit Card',
+'Tarjeta de Débito':'Debit Card',
+'ACH / Débito Automático':'ACH / Auto Debit',
+'Pago Parcial':'Partial Payment',
+'Creación desde Trabajo (opcional)':'Create from Job (optional)',
+'Crear desde Trabajo (opcional)':'Create from Job (optional)',
+'CATEGORÍAS':'CATEGORIES',
+'COMISIÓN':'COMMISSION',
+'Tasa de Conversión':'Conversion Rate',
+'TASA DE CONVERSIÓN':'CONVERSION RATE',
+'INGRESOS GANADOS':'REVENUE WON',
+'TRABAJOS COMPLETADOS':'JOBS COMPLETED',
+'NUEVOS TRABAJOS':'NEW JOBS',
+'RESERVADOS EN LÍNEA':'BOOKED ONLINE',
+'PENDIENTES':'PENDING',
+'TOTAL ARTÍCULOS':'TOTAL ITEMS',
+'VENTAS TOTALES':'TOTAL SALES',
+'VALOR TOTAL':'TOTAL VALUE',
+'RECIBOS SUBIDOS':'RECEIPTS UPLOADED',
+'DÍAS PARA CERRAR':'DAYS TO CLOSE',
+'Retorno de Inversión':'Return on Investment',
+'Categoría de Importación':'Import Category',
+'Contraseña para entrar al CRM':'Password to access the CRM',
+'Cuota del Proveedor':'Supplier Account',
+'Cuento del Proveedor':'Supplier Account',
+
+// --- Expenses categories ---
+'Gastos Fijos':'Fixed Expenses',
+'Gastos Variables':'Variable Expenses',
+'Gastos del Negocio':'Business Expenses',
+'Gasto Fijo':'Fixed Expense',
+'Gasto Variable':'Variable Expense',
+'Total Gastado':'Total Spent',
+'Total Gastos':'Total Expenses',
+'Total Recibos':'Total Receipts',
+'Total nómina':'Total payroll',
+'Rastreo de gastos':'Expense tracking',
+'Proveedor / A quién se paga':'Supplier / Who is paid',
+'Oficina / Papelería':'Office / Stationery',
+'Almacén / Bodega':'Warehouse / Storage',
+'Material Eléctrico':'Electrical Material',
+'CRM / Software de Gestión':'CRM / Management Software',
+'Internet / Teléfono':'Internet / Phone',
+'Servicio de Contestación':'Answering Service',
+'Servicios / Utilities':'Utilities',
+'Seguro Médico':'Health Insurance',
+'Seguro de Vehículos':'Vehicle Insurance',
+'Seguro Comercial del Vehículo':'Commercial Vehicle Insurance',
+'Pago de Préstamo':'Loan Payment',
+'Pago de Vehículo / Lease':'Vehicle Payment / Lease',
+'Mantenimiento de Vehículo':'Vehicle Maintenance',
+'Licencia / Certificación':'License / Certification',
+'Misceláneo':'Miscellaneous',
+'Misceláneos':'Miscellaneous',
+
+// --- Dashboard ---
+'Estado de Empleados':'Employee Status',
+'Flujo de Estimados':'Estimates Pipeline',
+'Ingresos por Período':'Revenue by Period',
+'Por Técnico':'By Technician',
+'Por Día de la Semana':'By Day of Week',
+'Top Servicios':'Top Services',
+'Visitas por Año':'Visits per Year',
+'No hay citas próximas':'No upcoming appointments',
+'Próximas Citas':'Upcoming Appointments',
+
+// --- Payroll ---
+'Nueva Entrada de Nómina':'New Payroll Entry',
+'Agregar Entrada':'Add Entry',
+'Nómina / Payroll':'Payroll',
+'Nómina + pagos con Square':'Payroll + payments with Square',
+'Nómina completa, impuestos, beneficios':'Full payroll, taxes, benefits',
+'Nómina para pequeñas empresas':'Payroll for small businesses',
+'Nómina y HR para empresas medianas':'Payroll & HR for mid-size companies',
+'Nómina y impuestos':'Payroll & taxes',
+'Para contratistas independientes':'For independent contractors',
+'QuickBooks Nómina':'QuickBooks Payroll',
+'Square Nómina':'Square Payroll',
+'Manual / Sin Proveedor':'Manual / No Provider',
+'Configurar Proveedor':'Configure Provider',
+'Sincronizar tarifas de técnicos':'Sync technician rates',
+'Historial de Sincronización':'Sync History',
+'Conectar':'Connect',
+'Frecuencia de Sync':'Sync Frequency',
+'Proyección 8hrs':'8hr Projection',
+
+// --- Settings ---
+'Configuración de la Empresa':'Company Settings',
+'Incluir documentos en estimados y facturas':'Include documents in estimates and invoices',
+'Haz clic para subir logo':'Click to upload logo',
+'Personaliza los términos legales que aparecen en tus facturas e invoices. Edita según las leyes de tu estado.':'Customize the legal terms that appear on your invoices. Edit according to your state laws.',
+'📝 Cláusula Adicional (Opcional)':'📝 Additional Clause (Optional)',
+
+// --- Permissions/Roles descriptions ---
+'Acceso total. Mi Dinero, cuenta bancaria, configuración, usuarios.':'Full access. My Money, bank account, settings, users.',
+'Despacho, trabajos, técnicos, clientes, correo, agenda.':'Dispatch, jobs, technicians, clients, mail, schedule.',
+'Nómina, gastos, recibos, facturas, QuickBooks, reportes.':'Payroll, expenses, receipts, invoices, QuickBooks, reports.',
+'Solo sus trabajos asignados, reloj de entrada/salida.':'Only their assigned jobs, clock in/out.',
+'Puede ver tablero y reportes pero no puede editar ni crear nada.':'Can view dashboard and reports but cannot edit or create anything.',
+'No ve finanzas ni nómina.':'Cannot see finances or payroll.',
+'Administra quién puede acceder al CRM y qué secciones puede ver. Solo el':'Manage who can access the CRM and which sections they can see. Only the',
+
+// --- Marketing ---
+'Solicitar Reseñas':'Request Reviews',
+'Crear Campaña':'Create Campaign',
+'Nueva Campaña':'New Campaign',
+'Perfil de negocio, reseñas, fotos':'Business profile, reviews, photos',
+'Publica contenido, interactúa con clientes':'Post content, interact with clients',
+'Noticias, actualizaciones rápidas':'News, quick updates',
+'Fotos y reels de trabajos completados':'Photos and reels of completed jobs',
+'Fotos de proyectos, antes/después':'Project photos, before/after',
+'Reseñas, fotos, responde a clientes':'Reviews, photos, respond to clients',
+'Campañas de búsqueda y display':'Search and display campaigns',
+'Analítica web y tráfico':'Web analytics and traffic',
+'Email marketing y automatización':'Email marketing and automation',
+'Diseña flyers, posts, tarjetas':'Design flyers, posts, cards',
+'Leads de servicios del hogar':'Home services leads',
+'Leads de servicios locales':'Local services leads',
+'Leads de servicios profesionales':'Professional services leads',
+'Plataforma de gestión de servicios':'Service management platform',
+'Administra campañas y anuncios pagados':'Manage campaigns and paid ads',
+'Comunicación directa con clientes':'Direct communication with clients',
+'Acreditación y confianza':'Accreditation and trust',
+'Accede directamente a tus plataformas para administrar campañas, responder leads y monitorear resultados.':'Access your platforms directly to manage campaigns, respond to leads and monitor results.',
+'Envía solicitudes de reseñas a tus clientes satisfechos para mejorar tu presencia en línea.':'Send review requests to your satisfied clients to improve your online presence.',
+'Busca precios directamente en los distribuidores más usados en HVAC/R. Haz clic para abrir su sitio.':'Search prices directly from the most used HVAC/R distributors. Click to open their site.',
+
+// --- Dispatch ---
+'Comparte este link con tus técnicos para que reporten su ubicación en tiempo real desde su celular:':'Share this link with your technicians so they can report their location in real time from their phone:',
+'Asigna un responsable de despacho':'Assign a dispatch coordinator',
+'Asignar Técnico':'Assign Technician',
+
+// --- Service Calls ---
+'Llamadas de Servicio':'Service Calls',
+'⚡ Urgencia':'⚡ Urgency',
+'⚡ Lo antes posible':'⚡ ASAP',
+'⚡ Requiere Acción (aparecerá en pendientes)':'⚡ Requires Action (will appear in pending)',
+'🌅 Mañana (8am-12pm)':'🌅 Morning (8am-12pm)',
+'Mañana 6am-2pm':'Morning 6am-2pm',
+'🟡 Prioritario':'🟡 Priority',
+'📞 Llamada':'📞 Call',
+
+// --- Estimates ---
+'Equipo Nuevo':'New Equipment',
+'No hay estimados guardados':'No saved estimates',
+'Agregar Artículo':'Add Item',
+'Nuevo Artículo':'New Item',
+'Cargar Catálogo HVAC Completo':'Load Full HVAC Catalog',
+'¿Cliente aprueba el trabajo?':'Does client approve the job?',
+'✅ SÍ — Hacer reparación':'✅ YES — Proceed with repair',
+'❌ NO — Solo cobrar service call':'❌ NO — Only charge service call',
+'🔄 Quiere equipo nuevo (referir)':'🔄 Wants new equipment (refer)',
+'📩 Enviar Referencia al Advisor':'📩 Send Referral to Advisor',
+'📱 Presentar al Cliente':'📱 Present to Client',
+
+// --- Clients ---
+'Clientes >':'Clients >',
+'Clientes:':'Clients:',
+
+// --- Inspection reports ---
+'🔋 Energy Audit / Auditoría Energética':'🔋 Energy Audit',
+'🔋 Energía':'🔋 Energy',
+'🏡 Home Inspection Completa':'🏡 Complete Home Inspection',
+'📄 Otro Reporte':'📄 Other Report',
+'ℹ️ Informativo (sin calificación)':'ℹ️ Informational (no rating)',
+'⏳ Pendiente de Resultados':'⏳ Pending Results',
+'Inspección Aprobada':'Inspection Approved',
+'⏳ Pendientes':'⏳ Pending',
+'✅ Completadas':'✅ Completed',
+'📊 Todos':'📊 All',
+
+// --- Permits ---
+'Permiso Eléctrico':'Electrical Permit',
+'Permiso Mecánico':'Mechanical Permit',
+'Permiso de Construcción':'Building Permit',
+'Permiso de Plomería':'Plumbing Permit',
+'Aprobación del Municipio':'City Approval',
+'Cálculo de Carga':'Load Calculation',
+
+// --- Technician section ---
+'📧 El técnico usará su':'📧 The technician will use their',
+'📱 ¿Eres técnico o vendedor?':'📱 Are you a technician or salesperson?',
+'📱 Crear acceso al CRM (para que entre desde su celular)':'📱 Create CRM access (so they can enter from their phone)',
+'Registración del Vehículo':'Vehicle Registration',
+
+// --- Home Advisors ---
+'Estos leads serán rotados automáticamente al siguiente vendedor disponible.':'These leads will be automatically rotated to the next available salesperson.',
+'Trabajos referidos por técnicos para reemplazo de equipo. Estos son leads pre-calificados listos para cerrar.':'Jobs referred by technicians for equipment replacement. These are pre-qualified leads ready to close.',
+'🏆 Cliente Ganado (Won)':'🏆 Won Client',
+'🏆 Clientes Ganados':'🏆 Won Clients',
+'📝 Cotización Enviada':'📝 Quote Sent',
+'📝 En Estimado':'📝 In Estimate',
+'Todos los Advisors':'All Advisors',
+'Todos los Status':'All Statuses',
+'>15 días sin cerrar':'>15 days without closing',
+'&gt;15 días sin cerrar':'&gt;15 days without closing',
+'⚠️ Leads por Vencer (15+ días sin cerrar)':'⚠️ Expiring Leads (15+ days without closing)',
+
+// --- Collection ---
+'Por Cobrar':'Accounts Receivable',
+'🔴 Facturas Vencidas':'🔴 Overdue Invoices',
+
+// --- Import ---
+'Arrastra tu archivo CSV aquí':'Drag your CSV file here',
+'o haz clic para seleccionar':'or click to select',
+'Sube el archivo aquí abajo 👇':'Upload the file below 👇',
+'📋 Cómo exportar de Housecall Pro:':'📋 How to export from Housecall Pro:',
+'(uno por línea)':'(one per line)',
+'Haz clic o arrastra la foto del recibo aquí':'Click or drag the receipt photo here',
+'Haz clic para subir el reporte PDF, foto o scan':'Click to upload the report PDF, photo or scan',
+'Haz clic para subir foto':'Click to upload photo',
+'Haz clic para subir foto, PDF o scan del documento':'Click to upload photo, PDF or document scan',
+
+// --- Vehicle Documents ---
+'Partes AC/Calefacción, refrigerantes':'AC/Heating parts, refrigerants',
+'Partes de Calefacción':'Heating Parts',
+'Tubería, conexiones, equipos':'Piping, fittings, equipment',
+'Equipos Refrigeración':'Refrigeration Equipment',
+'Equipos de Calefacción':'Heating Equipment',
+'Equipos de Refrigeración':'Refrigeration Equipment',
+
+// --- Auth ---
+'Crear Cuenta Empresarial':'Create Business Account',
+'Iniciar Sesión':'Sign In',
+'Iniciar sesión en tu cuenta':'Sign in to your account',
+'Inicia sesión':'Sign in',
+'Olvidé mi Contraseña':'Forgot my Password',
+'¿No tienes cuenta?':'Don\'t have an account?',
+'¿Ya tienes cuenta?':'Already have an account?',
+'Regístrate aquí':'Register here',
+'Tu Nombre':'Your Name',
+'Al registrarte aceptas recibir tu guía de onboarding y comunicaciones de soporte.':'By registering you accept receiving your onboarding guide and support communications.',
+'Acepto Términos, Privacidad, Facturación y NDA.':'I accept Terms, Privacy, Billing and NDA.',
+'Acepto los Términos, Privacidad, Facturación y Acuerdo de Confidencialidad (NDA).':'I accept the Terms, Privacy, Billing and Non-Disclosure Agreement (NDA).',
+'📧 Usaremos este email para enviarte tu guía y soporte':'📧 We will use this email to send you your guide and support',
+'Instala Trade Master en tu celular para acceso rápido:':'Install Trade Master on your phone for quick access:',
+'Agregar a Inicio':'Add to Home Screen',
+'¿Necesitas ayuda? Estamos aquí para ti.':'Need help? We are here for you.',
+'Gestión completa de clientes y trabajos':'Complete client and job management',
+'Despacho de técnicos con GPS':'Technician dispatch with GPS',
+'Facturación y cobranza integrada':'Integrated invoicing and collections',
+'Crea técnicos, clientes, leads y citas de ejemplo para probar el sistema.':'Create sample technicians, clients, leads and appointments to test the system.',
+'Las sesiones activas aparecerán aquí cuando los usuarios inicien sesión.':'Active sessions will appear here when users sign in.',
+'Registra llamadas, visitas, notas y cotizaciones enviadas a cada lead.':'Record calls, visits, notes and quotes sent to each lead.',
+'Registro centralizado de todas las comunicaciones con clientes. Llamadas, textos, emails, visitas y follow-ups.':'Centralized log of all client communications. Calls, texts, emails, visits and follow-ups.',
+'Membresías de mantenimiento recurrente. Genera ingresos estables y fideliza clientes.':'Recurring maintenance memberships. Generate stable income and build client loyalty.',
+'Sube HERS Ratings, Home Inspections, Energy Audits y otros reportes de inspección. Se vinculan al trabajo y al cliente.':'Upload HERS Ratings, Home Inspections, Energy Audits and other inspection reports. They link to the job and client.',
+'Sube los permisos, inspecciones, fotos y documentos de cada trabajo. Todo queda archivado con el expediente del trabajo.':'Upload permits, inspections, photos and documents for each job. Everything is filed with the job record.',
+'Sube una foto del coordinador de despacho. Se mostrará en el panel principal.':'Upload a photo of the dispatch coordinator. It will be shown on the main panel.',
+'Crear Plan de Servicio':'Create Service Plan',
+'Límite de clientes':'Client limit',
+'Crear Trabajo':'Create Job',
+'Guardar Lead':'Save Lead',
+'Guardar Configuración':'Save Settings',
+'Ver en despacho':'View in dispatch',
+'Ver llamadas de servicio':'View service calls',
+'Ver política de facturación':'View billing policy',
+'Ver todos los reportes':'View all reports',
+'Ver trabajos ganados':'View won jobs',
+'Ingresos':'Revenue',
+'Gastos':'Expenses',
+'Ganancia Neta':'Net Profit',
+'Todas las Categorías':'All Categories',
+'Todas las categorías':'All categories',
+'Todo el Año':'All Year',
+'Todos los Proveedores':'All Suppliers',
+'Este Año':'This Year',
+'Este Período':'This Period',
+'Mes hasta la fecha':'Month to date',
+'Año hasta la fecha':'Year to date',
+'Últimos 30 días':'Last 30 days',
+'Últimos 90 días':'Last 90 days',
+'⏱️ Historial Reciente':'⏱️ Recent History',
+'📅 Próximas Citas':'📅 Upcoming Appointments',
+'📅 Fecha Preferida':'📅 Preferred Date',
+'📅 Fecha Estimada de Fin':'📅 Estimated End Date',
+'📅 Fecha de Inicio':'📅 Start Date',
+'Reparación AC':'AC Repair',
+'Instalación AC':'AC Installation',
+'🏗️ Construcción Nueva':'🏗️ New Construction',
+'🏠 Tipo de Propiedad':'🏠 Property Type',
+'🏭 Industrial':'🏭 Industrial',
+'📍 Dirección de Instalación':'📍 Installation Address',
+'📍 Dirección del Servicio':'📍 Service Address',
+'📍 Tu ubicación se envía cada 30 segundos mientras estés en servicio':'📍 Your location is sent every 30 seconds while on service',
+'📍 Ubicación':'📍 Location',
+'📎 Subir Reporte (PDF, foto, scan)':'📎 Upload Report (PDF, photo, scan)',
+'🔴 Al terminar tu jornada, haz Marcar Salida para dejar de compartir ubicación':'🔴 When your shift ends, Clock Out to stop sharing your location',
+'⚠️ Derecho de Cancelación / Right to Cancel':'⚠️ Right to Cancel',
+'🔄 Cancelación & Restocking Fee':'🔄 Cancellation & Restocking Fee',
+'🔄 Restaurar Defaults del Estado':'🔄 Restore State Defaults',
+'Dueño/CEO':'Owner/CEO',
+'— Factura manual —':'— Manual Invoice —',
+'Guardar Llamada':'Save Call',
+'Crear Cita':'Create Appointment',
+'Conectar reseñas':'Connect reviews',
+'Preguntar algo':'Ask something',
+'Hola, ¿en qué nos enfocamos hoy?':'Hi, what should we dive into today?',
+'Última Ubicación':'Last Location',
+'⭐ Importante':'⭐ Important',
+'⭐ VIP':'⭐ VIP',
+'✅ Activo':'✅ Active',
+'⛔ Inactivo':'⛔ Inactive',
+'Seleccionar Persona':'Select Person',
+'Tarifa por Hora':'Hourly Rate',
+'Marcar Entrada':'Clock In',
+'Trabajado Hoy':'Worked Today',
+'Ganado Hoy':'Earned Today',
+'— El cliente podrá ver/descargar Workers\' Comp, GL, Bond, License, etc. directamente desde el estimado.':'— The client can view/download Workers\' Comp, GL, Bond, License, etc. directly from the estimate.',
+'PDF, JPG, PNG, DOC (máx 5MB)':'PDF, JPG, PNG, DOC (max 5MB)',
+'Fotos Después':'After Photos',
+'Tí\u0074ulo':'Title',
+'Título':'Title',
+'Título / Servicio':'Title / Service',
+'Ve los trabajos y estimados del día':'View today\'s jobs and estimates',
+'Agregar estimado':'Add estimate',
+'Agregar trabajo':'Add job',
+'Agregar materiales':'Add materials',
+'Crear Rápido':'Quick Create',
+'Nuevo Cliente':'New Client',
+'Nuevo Trabajo':'New Job',
+'Nuevo Lead':'New Lead',
+'Nuevo Estimado':'New Estimate',
+'Nuevo Gasto':'New Expense',
+'Leads Registrados':'Registered Leads',
+'Crear Cuenta Empresarial':'Create Business Account',
+'contraseña':'password',
+'pendiente':'pending',
+'o filtra por tipo':'or filter by type',
+'¡Has alcanzado tu límite!':'You have reached your limit!',
+'¡Límite de Clientes Alcanzado!':'Client Limit Reached!',
+'×':'×',
+'Guardar Lead':'Save Lead',
+'Nuevo Reporte':'New Report',
+'📧 Enviar Solicitud':'📧 Send Request',
+'Crear Campaña':'Create Campaign',
+'Conectar':'Connect',
+'Desconectar':'Disconnect',
+'Proveedores':'Suppliers',
+'🇺🇸 Estado / State':'🇺🇸 State',
+'Equipos de Refrigeración':'Refrigeration Equipment',
+'Equipos de Calefacción':'Heating Equipment',
+'Equipos Refrigeración':'Refrigeration Equipment'
+};
+
+// ===== 4. DOM SCANNING TRANSLATION ENGINE =====
+var originalTexts = new Map(); // element -> original ES text
+
+function translateDOM(){
+  if(typeof currentLang==='undefined') return;
+  var isEN = currentLang === 'en';
+
+  // Translate all text nodes in leaf elements
+  var selectors = 'button,label,h2,h3,h4,th,td,span,a,option,legend,summary,p,small,li';
+  document.querySelectorAll(selectors).forEach(function(el){
+    // Skip elements with data-i18n (handled by applyLanguage)
+    if(el.getAttribute('data-i18n')) return;
+    // Skip elements with many children (containers)
+    if(el.children.length > 3) return;
+    // Skip script/style
+    if(el.closest('script,style,.ai-chat-panel')) return;
+
+    var text = el.textContent.trim();
+    if(!text || text.length < 2 || text.length > 200) return;
+
+    if(isEN){
+      // Store original if not stored
+      if(!originalTexts.has(el)) originalTexts.set(el, text);
+      var orig = originalTexts.get(el);
+      // Look up translation
+      if(T[orig]){
+        // Only replace if the element is a leaf or has minimal children
+        if(el.children.length === 0){
+          el.textContent = T[orig];
+        } else {
+          // For elements with icon children, try to translate text nodes
+          translateTextNodes(el, orig, T[orig]);
+        }
+      }
+    } else {
+      // Restore Spanish
+      if(originalTexts.has(el)){
+        var orig = originalTexts.get(el);
+        if(el.children.length === 0){
+          el.textContent = orig;
+        } else {
+          translateTextNodes(el, el.textContent.trim(), orig);
+        }
+      }
+    }
+  });
+
+  // Translate placeholders
+  document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(function(el){
+    if(!el._origPH) el._origPH = el.placeholder;
+    if(isEN && T[el._origPH]){
+      el.placeholder = T[el._origPH];
+    } else if(!isEN && el._origPH){
+      el.placeholder = el._origPH;
+    }
+  });
+
+  // Translate title attributes
+  document.querySelectorAll('[title]').forEach(function(el){
+    if(!el._origTitle) el._origTitle = el.title;
+    if(isEN && T[el._origTitle]){
+      el.title = T[el._origTitle];
+    } else if(!isEN && el._origTitle){
+      el.title = el._origTitle;
+    }
+  });
+}
+
+function translateTextNodes(el, fromText, toText){
+  // Walk text nodes and replace
+  var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  while(walker.nextNode()){
+    var node = walker.currentNode;
+    var trimmed = node.textContent.trim();
+    if(trimmed.length > 1 && T[trimmed]){
+      node.textContent = node.textContent.replace(trimmed, T[trimmed]);
+    }
+  }
+}
+
+// ===== 5. HOOK INTO applyLanguage() =====
+function hookApplyLanguage(){
+  if(typeof applyLanguage !== 'function') return;
+  var originalApply = applyLanguage;
+  window.applyLanguage = function(){
+    originalApply.call(this);
+    // Run DOM translation after the original i18n system
+    setTimeout(translateDOM, 50);
+  };
+}
+
+// ===== 6. MUTATION OBSERVER for dynamic content =====
+function setupObserver(){
+  var debounceTimer;
+  var observer = new MutationObserver(function(){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function(){
+      if(typeof currentLang !== 'undefined' && currentLang === 'en'){
+        translateDOM();
+      }
+    }, 300);
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: false
+  });
+}
+
+// ===== INIT =====
+function init(){
+  fixI18nData();
+  hookApplyLanguage();
+  setupObserver();
+  // Apply now if already in English
+  if(typeof currentLang !== 'undefined' && currentLang === 'en'){
+    setTimeout(translateDOM, 500);
+  }
+  // Re-apply the i18n system to pick up fixed keys
+  if(typeof applyLanguage === 'function'){
+    setTimeout(applyLanguage, 100);
+  }
+  console.log('✅ i18n-patch.js loaded — ' + Object.keys(T).length + ' translations ready');
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
