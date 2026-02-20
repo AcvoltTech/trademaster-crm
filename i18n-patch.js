@@ -1956,11 +1956,37 @@ if(document.readyState==='loading'){
 }else{setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);}
 
 var obs=new MutationObserver(function(m){
-  var f=false;m.forEach(function(x){if(x.addedNodes.length>0)f=true;});
+  var f=false;m.forEach(function(x){if(x.addedNodes.length>0||x.type==='characterData')f=true;});
   if(f){clearTimeout(window._i18nFT);window._i18nFT=setTimeout(runAll,200);}
 });
-obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
-window.addEventListener('hashchange',function(){setTimeout(runAll,300);setTimeout(runAll,1000);setTimeout(runAll,2000);});
-var cc=0;var pi=setInterval(function(){runAll();cc++;if(cc>=6)clearInterval(pi);},5000);
-console.log('i18n v8.1 stubborn fixer loaded');
+obs.observe(document.body||document.documentElement,{childList:true,subtree:true,characterData:true});
+
+// Hashchange handler
+window.addEventListener('hashchange',function(){
+  setTimeout(runAll,300);setTimeout(runAll,800);setTimeout(runAll,1500);setTimeout(runAll,3000);
+});
+
+// AGGRESSIVE: Intercept ALL clicks anywhere in the sidebar
+document.addEventListener('click',function(e){
+  var el=e.target;
+  while(el&&el!==document.body){
+    if(el.classList&&(el.classList.contains('sidebar-link')||el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf('showSection')!==-1||el.tagName==='A'&&el.closest('nav,aside,.sidebar'))){
+      setTimeout(runAll,300);setTimeout(runAll,800);setTimeout(runAll,1500);setTimeout(runAll,3000);
+      break;
+    }
+    el=el.parentElement;
+  }
+},true);
+
+// Also intercept sidebar links by onclick attribute
+document.querySelectorAll('[onclick*="showSection"]').forEach(function(el){
+  el.addEventListener('click',function(){
+    setTimeout(runAll,300);setTimeout(runAll,800);setTimeout(runAll,1500);setTimeout(runAll,3000);
+  });
+});
+
+// Periodic check - more aggressive: every 3s for 60s
+var cc=0;var pi=setInterval(function(){runAll();cc++;if(cc>=20)clearInterval(pi);},3000);
+
+console.log('i18n v8.2 stubborn fixer loaded');
 })();
