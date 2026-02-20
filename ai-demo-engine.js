@@ -167,7 +167,7 @@ function createAssistant(){
   var _nm=getLang()==="en"?"Danielle":"Brenda";
   p.innerHTML='<div class="sf-head" id="sfHead"><div class="sf-hl"><span class="sf-av">\uD83D\uDC69\u200D\uD83D\uDCBC</span><div><span class="sf-name">Danielle</span><span class="sf-role">AI Assistant</span></div></div><div class="sf-hr"><button class="sf-hb" id="sfMute" title="Sonido">\uD83D\uDD0A</button><button class="sf-hb" id="sfMin">\u2212</button><button class="sf-hb" id="sfClose">\u2715</button></div></div><div class="sf-body"><div class="sf-pbar"><div class="sf-pfill" id="sfPFill"></div></div><div class="sf-step" id="sfStep">Step 0 of '+S.total+'</div><div class="sf-chat" id="sfChat"></div></div><div class="sf-ctrl"><button class="sf-cb" id="sfPrev">\u23EA Prev</button><button class="sf-cb sf-cp" id="sfPause">\u23F8\uFE0F Pause</button><button class="sf-cb" id="sfNext">\u23E9 Next</button><button class="sf-cb sf-auto" id="sfAuto">\u25B6\uFE0F Auto</button></div>';
   document.body.appendChild(p);
-  $('sfMute').onclick=function(){_ttsOn=!_ttsOn;this.textContent=_ttsOn?'\uD83D\uDD0A':'\uD83D\uDD07';if(!_ttsOn&&window.speechSynthesis)speechSynthesis.cancel();};
+  $('sfMute').onclick=function(){_ttsOn=!_ttsOn;this.textContent=_ttsOn?'\uD83D\uDD0A':'\uD83D\uDD07';if(!_ttsOn){if(window.speechSynthesis)speechSynthesis.cancel();_voiceDone=Promise.resolve();}};
   $('sfMin').onclick=toggleMin;$('sfClose').onclick=function(){if(confirm('Exit demo?'))location.href=location.pathname;};
   $('sfPrev').onclick=doPrev;$('sfPause').onclick=togglePause;$('sfNext').onclick=doNext;$('sfAuto').onclick=doAuto;
   var bb=document.createElement('div');bb.id='sfBubble';bb.textContent='\uD83D\uDC69\u200D\uD83D\uDCBC';bb.onclick=toggleMin;document.body.appendChild(bb);
@@ -184,49 +184,87 @@ function toggleMin(){S.mini=!S.mini;$('sofiaPanel').style.display=S.mini?'none':
 var _voiceReady=false;
 var _11KEY='sk_246e5760546ff26aad19d7ac336b20c4fc9b4da50cbd02ae';// ElevenLabs API key
 var _VOICES={en:'u5dk6dUlaEl9FLWKszcn',es:'7iMdMxFdAglGhAvtYtqS'};// Danielle=EN, Brenda=ES
-var _audioQ=[],_audioPlaying=false;
+/* Voice queue removed - now Promise-based for sync */
 function initVoice(){_voiceReady=true;}
 var _ttsOn=true;
+var _voiceDone=Promise.resolve(); // Resolves when current speech finishes
 function getLang(){return(window.currentLang||'es');}
+
+/* speak() returns a Promise that resolves ONLY when audio finishes */
 function speak(txt){
-  if(!_ttsOn)return;
+  if(!_ttsOn){_voiceDone=Promise.resolve();return _voiceDone;}
   var clean=txt.replace(/<[^>]*>/g,'').replace(/&[^;]+;/g,' ').replace(/\s+/g,' ').trim();
-  if(!clean)return;
-  if(_11KEY){speakEL(clean);}else{speakWS(clean);}
+  if(!clean){_voiceDone=Promise.resolve();return _voiceDone;}
+  if(_11KEY){_voiceDone=speakEL(clean);}else{_voiceDone=speakWS(clean);}
+  return _voiceDone;
 }
+
+/* Web Speech API - returns Promise, resolves on end */
 function speakWS(txt){
-  if(!window.speechSynthesis)return;speechSynthesis.cancel();
-  var lang=getLang();var u=new SpeechSynthesisUtterance(txt);
-  u.lang=lang==='en'?'en-US':'es-MX';u.rate=1.0;u.pitch=1.1;u.volume=1;
-  var vs=speechSynthesis.getVoices();var tl=u.lang;
-  var v=vs.find(function(x){return x.lang===tl&&/female|samantha|zira|sabina/i.test(x.name);})||
-  vs.find(function(x){return x.lang===tl;})||vs.find(function(x){return x.lang.startsWith(lang);})||null;
-  if(v)u.voice=v;speechSynthesis.speak(u);
+  return new Promise(function(resolve){
+    if(!window.speechSynthesis){resolve();return;}
+    speechSynthesis.cancel();
+    var lang=getLang();var u=new SpeechSynthesisUtterance(txt);
+    u.lang=lang==='en'?'en-US':'es-MX';u.rate=1.0;u.pitch=1.1;u.volume=1;
+    var vs=speechSynthesis.getVoices();var tl=u.lang;
+    var v=vs.find(function(x){return x.lang===tl&&/female|samantha|zira|sabina/i.test(x.name);})||
+    vs.find(function(x){return x.lang===tl;})||vs.find(function(x){return x.lang.startsWith(lang);})||null;
+    if(v)u.voice=v;
+    u.onend=function(){resolve();};
+    u.onerror=function(){resolve();};
+    speechSynthesis.speak(u);
+    // Safety timeout: resolve after 30s max
+    setTimeout(resolve,30000);
+  });
 }
-function speakEL(txt){_audioQ.push(txt);if(!_audioPlaying)playNextEL();}
-function playNextEL(){
-  if(_audioQ.length===0){_audioPlaying=false;return;}
-  _audioPlaying=true;var txt=_audioQ.shift();
-  var vid=_VOICES[getLang()]||_VOICES.en;
-  fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'/stream',{
-    method:'POST',headers:{'Content-Type':'application/json','xi-api-key':_11KEY},
-    body:JSON.stringify({text:txt,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.5,similarity_boost:0.75,style:0.3}})
-  }).then(function(r){if(!r.ok)throw new Error('EL '+r.status);return r.blob();})
-  .then(function(b){var a=new Audio(URL.createObjectURL(b));a.onended=function(){URL.revokeObjectURL(a.src);playNextEL();};a.onerror=function(){playNextEL();};a.play();})
-  .catch(function(e){console.warn('EL fallback:',e);speakWS(txt);playNextEL();});
+
+/* ElevenLabs TTS - returns Promise, resolves when audio finishes playing */
+function speakEL(txt){
+  return new Promise(function(resolve){
+    var vid=_VOICES[getLang()]||_VOICES.en;
+    fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'/stream',{
+      method:'POST',headers:{'Content-Type':'application/json','xi-api-key':_11KEY},
+      body:JSON.stringify({text:txt,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.5,similarity_boost:0.75,style:0.3}})
+    }).then(function(r){if(!r.ok)throw new Error('EL '+r.status);return r.blob();})
+    .then(function(b){
+      var a=new Audio(URL.createObjectURL(b));
+      a.onended=function(){URL.revokeObjectURL(a.src);resolve();};
+      a.onerror=function(){URL.revokeObjectURL(a.src);resolve();};
+      a.play().catch(function(){resolve();});
+    })
+    .catch(function(e){console.warn('EL fallback:',e);speakWS(txt).then(resolve);});
+    // Safety timeout: resolve after 30s max
+    setTimeout(resolve,30000);
+  });
 }
+
 function L(en,es){return getLang()==='en'?en:es;}
-function say(msg,t){t=t||'info';var ch=$('sfChat');var ic={info:'\uD83D\uDCAC',action:'\u26A1',success:'\u2705',nav:'\uD83D\uDCCD'};var m=document.createElement('div');m.className='sf-msg sf-'+t;m.innerHTML='<span class="sf-mi">'+(ic[t]||'\uD83D\uDCAC')+'</span><span class="sf-mt">'+msg+'</span>';ch.appendChild(m);ch.scrollTop=ch.scrollHeight;if(S.mini)toggleMin();speak(msg);}
+
+/* say() shows message + speaks + returns Promise that resolves when voice FINISHES */
+function say(msg,t){
+  t=t||'info';var ch=$('sfChat');
+  var ic={info:'\uD83D\uDCAC',action:'\u26A1',success:'\u2705',nav:'\uD83D\uDCCD'};
+  var m=document.createElement('div');m.className='sf-msg sf-'+t;
+  m.innerHTML='<span class="sf-mi">'+(ic[t]||'\uD83D\uDCAC')+'</span><span class="sf-mt">'+msg+'</span>';
+  ch.appendChild(m);ch.scrollTop=ch.scrollHeight;if(S.mini)toggleMin();
+  return speak(msg); // Returns Promise - resolves when voice finishes!
+}
+
+/* wv(extra) - Wait for Voice to finish + extra pause (default 800ms) */
+function wv(extra){
+  extra=extra||800;
+  return _voiceDone.then(function(){return sl(extra);});
+}
 
 /* ===== NAVIGATION FUNCTIONS ===== */
 function upP(){$('sfPFill').style.width=(S.step/S.total*100)+'%';$('sfStep').textContent=L('Step '+S.step+' of '+S.total,'Paso '+S.step+' de '+S.total);}
-function togglePause(){S.paused=!S.paused;$('sfPause').textContent=S.paused?'\u25B6\uFE0F':'\u23F8\uFE0F';if(S.paused){speechSynthesis&&speechSynthesis.cancel();_audioQ=[];}}
+function togglePause(){S.paused=!S.paused;$('sfPause').textContent=S.paused?'\u25B6\uFE0F':'\u23F8\uFE0F';if(S.paused){if(window.speechSynthesis)speechSynthesis.cancel();_voiceDone=Promise.resolve();}}
 function doNext(){if(S.step>=S.total){say(L('\uD83C\uDF89 Demo complete!','\uD83C\uDF89 Demo completado!'),'success');return Promise.resolve();}S.paused=false;$('sfPause').textContent='\u23F8\uFE0F';S.step++;upP();return runStep(S.step);}
 function doPrev(){if(S.step<=1)return Promise.resolve();S.step=Math.max(0,S.step-2);return doNext();}
 function doAuto(){
   if(S.playing){S.playing=false;$('sfAuto').textContent='\u25B6\uFE0F Auto';return Promise.resolve();}
   S.playing=true;S.paused=false;$('sfAuto').textContent='\u23F9\uFE0F Stop';
-  function lp(){if(!S.playing||S.step>=S.total){S.playing=false;$('sfAuto').textContent='\u25B6\uFE0F Auto';return Promise.resolve();}return doNext().then(function(){if(S.playing)return sl(4000).then(lp);});}
+  function lp(){if(!S.playing||S.step>=S.total){S.playing=false;$('sfAuto').textContent='\u25B6\uFE0F Auto';return Promise.resolve();}return doNext().then(function(){if(S.playing)return wv(2000).then(lp);});}
   return lp();
 }
 function runStep(n){return ck().then(function(){
@@ -242,89 +280,75 @@ function runStep(n){return ck().then(function(){
 });}
 /* ===== 35 STEPS - FULL CRM TUTORIAL ===== */
 
-/* S1: WARM WELCOME */
+
+/* sayW = say and Wait - shows message, speaks, waits for voice to finish + pause */
+function sayW(msg,t){say(msg,t);return wv();}
+/* ===== 35 STEPS - FULLY SYNCHRONIZED WITH VOICE ===== */
+
 function s1(){
-  say(L(
+  return sayW(L(
     "👋 <b>Thank you for choosing Trade Master CRM</b> to manage your company and take it to the next level! I'm <b>Danielle</b>, and I'll personally walk you through every single feature of this CRM. By the end of this demo, you'll know exactly how to run your entire business from one place. Let's get started!",
     "👋 <b>¡Gracias por elegir Trade Master CRM</b> para administrar tu empresa y llevarla al siguiente nivel! Soy <b>Brenda</b>, y te voy a enseñar personalmente cada función de este CRM. Al final de este demo, vas a saber exactamente cómo manejar todo tu negocio desde un solo lugar. ¡Empecemos!"
   ),'info');
-  return sl(W+2000);
 }
 
-/* S2: DASHBOARD TOUR */
 function s2(){
-  say(L(
-    "📍 This is your <b>Dashboard</b> — your home base. Everything you need is right here: today's jobs, revenue, team activity, and quick actions. Think of it as your business cockpit.",
-    "📍 Este es tu <b>Tablero</b> — tu base principal. Todo lo que necesitas está aquí: trabajos del día, ingresos, actividad del equipo y acciones rápidas. Piensa en él como la cabina de tu negocio."
-  ),'nav');
-  return sl(W).then(ck).then(function(){
-    smoothShow('dashboard');
-    return sl(W);
-  }).then(ck).then(function(){
-    say(L(
-      "✅ You can see <b>today's schedule</b>, <b>revenue cards</b>, <b>team locations on the map</b>, and <b>recent activity</b>. Everything updates in real-time. Now let's fill it with data!",
-      "✅ Puedes ver el <b>horario de hoy</b>, <b>tarjetas de ingresos</b>, <b>ubicaciones del equipo en el mapa</b> y <b>actividad reciente</b>. Todo se actualiza en tiempo real. ¡Ahora vamos a llenarlo con datos!"
+  return sayW(L(
+    "📍 This is your <b>Dashboard</b> — your home base. Today's jobs, revenue, team activity, and quick actions — everything you need at a glance.",
+    "📍 Este es tu <b>Tablero</b> — tu base principal. Trabajos del día, ingresos, actividad del equipo y acciones rápidas — todo lo que necesitas de un vistazo."
+  ),'nav').then(ck).then(function(){smoothShow('dashboard');
+    return sayW(L(
+      "✅ The dashboard updates in real-time. Now let's fill it with data — starting with <b>Customers</b>!",
+      "✅ El tablero se actualiza en tiempo real. ¡Ahora vamos a llenarlo con datos — empezando con <b>Clientes</b>!"
     ),'success');
   });
 }
 
-/* S3: NAVIGATE TO CLIENTS */
 function s3(){
-  say(L(
-    "📍 Let's start with <b>Customers</b>. Look at the <b>sidebar on the left</b> — that's your main menu. Click <b>Customers</b> to open the client section. This is where you store everyone you do business with.",
-    "📍 Empecemos con <b>Clientes</b>. Mira la <b>barra lateral izquierda</b> — ese es tu menú principal. Haz click en <b>Clientes</b> para abrir la sección de clientes. Aquí guardas a todos con los que haces negocio."
-  ),'nav');
-  return sl(W).then(ck).then(function(){
-    smoothShow('clients');
-    return sl(W);
-  }).then(ck).then(function(){
-    say(L(
-      "⚡ See that <b>orange button</b> at the top? It says <b>'+ New Customer'</b>. That's how you add every new client. I'll click it now and show you how to fill in the form.",
-      "⚡ ¿Ves ese <b>botón naranja</b> arriba? Dice <b>'+ Nuevo Cliente'</b>. Así es como agregas cada cliente nuevo. Voy a hacerle click y te enseño cómo llenar el formulario."
+  return sayW(L(
+    "📍 Look at the <b>sidebar on the left</b> — that's your main menu. I'm clicking <b>Customers</b> to open the client section. This is where you store everyone you do business with.",
+    "📍 Mira la <b>barra lateral izquierda</b> — ese es tu menú principal. Voy a hacer click en <b>Clientes</b> para abrir la sección. Aquí guardas a todos con los que haces negocio."
+  ),'nav').then(ck).then(function(){smoothShow('clients');
+    return sayW(L(
+      "⚡ See that <b>orange button</b> at the top? It says <b>'+ New Customer'</b>. That's how you add every new client. I'll click it now.",
+      "⚡ ¿Ves ese <b>botón naranja</b> arriba? Dice <b>'+ Nuevo Cliente'</b>. Así es como agregas cada cliente nuevo. Voy a hacerle click."
     ),'action');
-    var btn=$q('#clients-section [onclick*="showClientForm()"]');
-    return btn?clk(btn):Promise.resolve();
-  }).then(function(){return sl(1500);});
+  }).then(ck).then(function(){
+    var btn=$q('#clients-section [onclick*="showClientForm()"]');return btn?clk(btn):Promise.resolve();
+  }).then(function(){return sl(1200);});
 }
 
-/* S4: CREATE CLIENT 1 - RESIDENTIAL */
 function s4(){
-  say(L(
-    "✏️ The form is open. I'll fill in each field one by one so you can see exactly what goes where. First client: <b>María García</b> — a residential customer in Fontana.",
-    "✏️ El formulario está abierto. Voy a llenar cada campo uno por uno para que veas exactamente qué va dónde. Primer cliente: <b>María García</b> — una cliente residencial en Fontana."
-  ),'action');
-  return sl(W).then(ck).then(function(){
-    say(L("✏️ <b>Name:</b> María García","✏️ <b>Nombre:</b> María García"),'action');
-    return ty($('clientName'),'María García');
+  return sayW(L(
+    "✏️ The form is open. I'll fill in each field so you can see exactly what goes where. First client: <b>María García</b> — a residential customer in Fontana.",
+    "✏️ El formulario está abierto. Voy a llenar cada campo para que veas exactamente qué va dónde. Primer cliente: <b>María García</b> — una cliente residencial en Fontana."
+  ),'action').then(ck).then(function(){
+    return sayW(L("✏️ <b>Name:</b> María García","✏️ <b>Nombre:</b> María García"),'action');
+  }).then(function(){return ty($('clientName'),'María García');
   }).then(function(){return sl(SD);
   }).then(ck).then(function(){
-    say(L("📞 <b>Phone:</b> (909) 555-1234","📞 <b>Teléfono:</b> (909) 555-1234"),'action');
-    return ty($('clientPhone'),'(909) 555-1234');
-  }).then(function(){return sl(SD);
-  }).then(ck).then(function(){
-    return ty($('clientEmail'),'maria.garcia@email.com');
-  }).then(function(){sv($('clientPropertyType'),'Residencial');return sl(SD);
-  }).then(ck).then(function(){
+    return sayW(L("📞 <b>Phone:</b> (909) 555-1234","📞 <b>Teléfono:</b> (909) 555-1234"),'action');
+  }).then(function(){return ty($('clientPhone'),'(909) 555-1234');
+  }).then(function(){return ty($('clientEmail'),'maria.garcia@email.com');
+  }).then(function(){sv($('clientPropertyType'),'Residencial');
     return ty($('clientAddress'),'456 Oak St, Fontana, CA 92335');
   }).then(function(){
-    return ty($('clientNotes'),L('AC not cooling - Goodman 15 years. Service in Spanish.','AC no enfría - Goodman 15 años. Servicio en español.'));
-  }).then(function(){return sl(W);
+    return ty($('clientNotes'),L('AC not cooling - Goodman 15 years.','AC no enfría - Goodman 15 años.'));
+  }).then(function(){return sl(SD);
   }).then(ck).then(function(){
-    say(L("💾 All filled in! Now I click <b>Save</b>...","💾 ¡Todo listo! Ahora hago click en <b>Guardar</b>..."),'action');
-    $('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));
-    return sl(2500);
+    return sayW(L("💾 All filled in! Now I click <b>Save</b>...","💾 ¡Todo listo! Ahora hago click en <b>Guardar</b>..."),'action');
   }).then(function(){
-    say(L("✅ <b>María García</b> saved! She's now in your customer list forever. Let's add one more.","✅ ¡<b>María García</b> guardada! Ya está en tu lista de clientes para siempre. Vamos a agregar uno más."),'success');
+    $('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
+  }).then(function(){
+    return sayW(L("✅ <b>María García</b> saved! She's in your customer list forever. Let's add one more.","✅ ¡<b>María García</b> guardada! Está en tu lista de clientes para siempre. Vamos a agregar uno más."),'success');
   });
 }
 
-/* S5: CREATE CLIENT 2 - COMMERCIAL */
 function s5(){
-  say(L(
-    "⚡ Now a <b>commercial client</b> — a restaurant. Same process, but we select <b>Commercial</b> as the property type. Watch...",
-    "⚡ Ahora un <b>cliente comercial</b> — un restaurante. Mismo proceso, pero seleccionamos <b>Comercial</b> como tipo de propiedad. Mira..."
-  ),'info');
-  return sl(W).then(ck).then(function(){
+  return sayW(L(
+    "⚡ Now a <b>commercial client</b> — a restaurant. Same process, but we select <b>Commercial</b> as the property type.",
+    "⚡ Ahora un <b>cliente comercial</b> — un restaurante. Mismo proceso, pero seleccionamos <b>Comercial</b> como tipo de propiedad."
+  ),'info').then(ck).then(function(){
     var btn=$q('#clients-section [onclick*="showClientForm()"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(function(){return ty($('clientName'),'Roberto Méndez');
@@ -334,21 +358,19 @@ function s5(){
   }).then(function(){sv($('clientPropertyType'),'Comercial');return ty($('clientAddress'),'2890 Highland Ave, San Bernardino, CA');
   }).then(function(){return ty($('clientNotes'),L('Walk-in cooler not holding temp. Urgent.','Walk-in cooler no mantiene temp. Urgente.'));
   }).then(function(){return sl(SD);
-  }).then(function(){$('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b>2 clients</b> — residential and commercial. Your customer base is growing!","✅ <b>2 clientes</b> — residencial y comercial. ¡Tu base de clientes está creciendo!"),'success');
+    return sayW(L("✅ <b>2 clients</b> — residential and commercial. Your customer base is growing!","✅ <b>2 clientes</b> — residencial y comercial. ¡Tu base de clientes está creciendo!"),'success');
   });
 }
 
-/* S6: LEADS */
 function s6(){
-  say(L(
-    "📍 Now let's go to <b>Leads</b>. A lead is someone who called asking for a quote but hasn't hired you yet. This is your <b>sales pipeline starter</b> — every customer starts as a lead.",
-    "📍 Ahora vamos a <b>Prospectos</b>. Un prospecto es alguien que llamó pidiendo cotización pero aún no te contrata. Este es el <b>inicio de tu pipeline de ventas</b> — cada cliente empieza como prospecto."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('leads');return sl(W);
+  return sayW(L(
+    "📍 Now <b>Leads</b>. A lead is someone who called asking for a quote but hasn't hired you yet. Every customer starts as a lead. This is your sales pipeline starter.",
+    "📍 Ahora <b>Prospectos</b>. Un prospecto es alguien que llamó pidiendo cotización pero aún no te contrata. Cada cliente empieza como prospecto. Este es el inicio de tu pipeline."
+  ),'nav').then(ck).then(function(){smoothShow('leads');
+    return sayW(L("⚡ Click <b>'+ New Lead'</b>. Let's add a $4,500 furnace opportunity!","⚡ Click en <b>'+ Nuevo Prospecto'</b>. ¡Agreguemos una oportunidad de $4,500 furnace!"),'action');
   }).then(ck).then(function(){
-    say(L("⚡ Click <b>'+ New Lead'</b>. Let's add someone who wants a new furnace — a $4,500 opportunity!","⚡ Click en <b>'+ Nuevo Prospecto'</b>. Agreguemos alguien que quiere un furnace nuevo — ¡una oportunidad de $4,500!"),'action');
     var btn=$q('#leads-section [onclick*="showLeadForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(function(){return ty($('leadName'),'Roberto Sánchez');
@@ -357,52 +379,47 @@ function s6(){
   }).then(function(){sv($('leadService'),'Calefacción');sv($('leadPropertyType'),'residential');return ty($('leadAddress'),'1025 Pine Ave, Rialto, CA');
   }).then(function(){return ty($('leadNotes'),L('New furnace. 1800sqft. Budget $4,500.','Furnace nuevo. 1800sqft. Budget $4,500.'));
   }).then(function(){var la=$('leadLat'),ln=$('leadLng');if(la)la.value='34.1064';if(ln)ln.value='-117.3703';return sl(SD);
-  }).then(function(){$('leadForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('leadForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ Lead <b>Roberto Sánchez</b> 🔥 saved! You can see him on the map. When he signs, convert him to a customer with one click.","✅ ¡Prospecto <b>Roberto Sánchez</b> 🔥 guardado! Lo puedes ver en el mapa. Cuando firme, lo conviertes a cliente con un click."),'success');
+    return sayW(L("✅ Lead <b>Roberto Sánchez</b> saved! 🔥 When he signs, convert him to a customer with one click.","✅ ¡Prospecto <b>Roberto Sánchez</b> guardado! 🔥 Cuando firme, lo conviertes a cliente con un click."),'success');
   });
 }
 
-/* S7: PIPELINE */
 function s7(){
-  say(L(
-    "📍 Speaking of sales — let's look at the <b>Sales Pipeline</b>. This shows you where every deal stands: new leads, quoted, negotiating, won, or lost. It's like a visual funnel of your money.",
-    "📍 Hablando de ventas — veamos el <b>Flujo de Ventas</b>. Esto te muestra dónde está cada trato: nuevos, cotizados, negociando, ganados o perdidos. Es como un embudo visual de tu dinero."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('pipeline');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Drag deals between columns as they progress. You always know your closing rate and revenue forecast!","✅ Arrastra los tratos entre columnas conforme avanzan. ¡Siempre sabes tu tasa de cierre y pronóstico de ingresos!"),'success');
+  return sayW(L(
+    "📍 The <b>Sales Pipeline</b> shows where every deal stands — new, quoted, negotiating, won, or lost. It's a visual funnel of your money.",
+    "📍 El <b>Flujo de Ventas</b> muestra dónde está cada trato — nuevo, cotizado, negociando, ganado o perdido. Es un embudo visual de tu dinero."
+  ),'nav').then(ck).then(function(){smoothShow('pipeline');
+    return sayW(L("✅ Drag deals between columns as they progress. Always know your closing rate!","✅ Arrastra los tratos entre columnas conforme avanzan. ¡Siempre sabes tu tasa de cierre!"),'success');
   });
 }
 
-/* S8: TECHNICIAN 1 */
 function s8(){
-  say(L(
-    "📍 Time to add your <b>Technicians</b>. These are the guys in the field doing the work. Go to <b>Technicians</b>. Each tech gets GPS tracking, mobile access, and job assignments sent to their phone.",
-    "📍 Hora de agregar tus <b>Técnicos</b>. Estos son los que salen al campo a hacer el trabajo. Ve a <b>Técnicos</b>. Cada técnico tiene rastreo GPS, acceso móvil y trabajos enviados a su celular."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('technicians');return sl(W);
+  return sayW(L(
+    "📍 Time to add your <b>Technicians</b> — the field team. Each tech gets GPS tracking, mobile access, and jobs sent to their phone.",
+    "📍 Hora de agregar tus <b>Técnicos</b> — el equipo de campo. Cada técnico tiene rastreo GPS, acceso móvil y trabajos enviados a su celular."
+  ),'nav').then(ck).then(function(){smoothShow('technicians');
+    return sayW(L("⚡ Click <b>'+ New Technician'</b>...","⚡ Click en <b>'+ Nuevo Técnico'</b>..."),'action');
   }).then(ck).then(function(){
     var btn=$q('#technicians-section [onclick*="showTechFormInTechSection"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(ck).then(function(){
-    say(L("✏️ <b>Carlos Mendoza</b> — HVAC specialist, $35/hr","✏️ <b>Carlos Mendoza</b> — especialista HVAC, $35/hr"),'action');
-    return ty($('techNameAlt'),'Carlos Mendoza');
+    return sayW(L("✏️ <b>Carlos Mendoza</b> — HVAC specialist, $35/hr, 2023 Ford Transit","✏️ <b>Carlos Mendoza</b> — especialista HVAC, $35/hr, 2023 Ford Transit"),'action');
+  }).then(function(){return ty($('techNameAlt'),'Carlos Mendoza');
   }).then(function(){return ty($('techPhoneAlt'),'(909) 555-3456');
   }).then(function(){return ty($('techEmailAlt'),'carlos@rodriguezhvac.com');
   }).then(function(){sv($('techSpecialtyAlt'),'HVAC');var cb=$('techCreateLoginAlt');if(cb)cb.checked=false;return sl(300);
   }).then(function(){var v=$('techVehicleAlt');return v?ty(v,'2023 Ford Transit'):Promise.resolve();
   }).then(function(){var p=$('techPlateAlt');return p?ty(p,'8ABC123'):Promise.resolve();
-  }).then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b>Carlos Mendoza</b> registered! GPS tracking active on his Ford Transit.","✅ ¡<b>Carlos Mendoza</b> registrado! Rastreo GPS activo en su Ford Transit."),'success');
+    return sayW(L("✅ <b>Carlos Mendoza</b> registered! GPS tracking active on his Ford Transit.","✅ ¡<b>Carlos Mendoza</b> registrado! Rastreo GPS activo en su Ford Transit."),'success');
   });
 }
 
-/* S9: TECHNICIAN 2 */
 function s9(){
-  say(L("⚡ Second technician — <b>Miguel Ángel Torres</b>, Refrigeration specialist.","⚡ Segundo técnico — <b>Miguel Ángel Torres</b>, especialista en Refrigeración."),'action');
-  return sl(W).then(ck).then(function(){
+  return sayW(L("⚡ Second technician — <b>Miguel Ángel Torres</b>, Refrigeration specialist.","⚡ Segundo técnico — <b>Miguel Ángel Torres</b>, especialista en Refrigeración."),'action'
+  ).then(ck).then(function(){
     var btn=$q('#technicians-section [onclick*="showTechFormInTechSection"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(function(){return ty($('techNameAlt'),'Miguel Ángel Torres');
@@ -411,19 +428,18 @@ function s9(){
   }).then(function(){sv($('techSpecialtyAlt'),'Refrigeración');var cb=$('techCreateLoginAlt');if(cb)cb.checked=false;return sl(300);
   }).then(function(){var v=$('techVehicleAlt');return v?ty(v,'2022 Chevy Express'):Promise.resolve();
   }).then(function(){var p=$('techPlateAlt');return p?ty(p,'7DEF456'):Promise.resolve();
-  }).then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b>2 technicians</b> ready with GPS tracking and mobile access!","✅ ¡<b>2 técnicos</b> listos con rastreo GPS y acceso móvil!"),'success');
+    return sayW(L("✅ <b>2 technicians</b> ready with GPS tracking and mobile access!","✅ ¡<b>2 técnicos</b> listos con rastreo GPS y acceso móvil!"),'success');
   });
 }
 
-/* S10: HOME ADVISOR */
 function s10(){
-  say(L(
-    "📍 Now <b>Home Advisors</b> — your sales team. These are the people who go to homes, sell installations, and earn commissions.",
-    "📍 Ahora <b>Asesores del Hogar</b> — tu equipo de ventas. Son los que van a las casas, venden instalaciones y ganan comisiones."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('advisors');return sl(W);
+  return sayW(L(
+    "📍 Now <b>Home Advisors</b> — your sales team who go to homes, sell installations, and earn commissions.",
+    "📍 Ahora <b>Asesores del Hogar</b> — tu equipo de ventas que va a las casas, vende instalaciones y gana comisiones."
+  ),'nav').then(ck).then(function(){smoothShow('advisors');
+    return sayW(L("⚡ Adding <b>Diana Castillo</b> — $50K/month sales goal...","⚡ Agregando <b>Diana Castillo</b> — meta de ventas $50K/mes..."),'action');
   }).then(ck).then(function(){
     var btn=$q('#advisors-section [onclick*="showAdvisorForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
@@ -432,370 +448,305 @@ function s10(){
   }).then(function(){return ty($('advisorEmail'),'diana@rodriguezhvac.com');
   }).then(function(){sv($('advisorSpecialty'),'Residencial y Comercial');return ty($('advisorZone'),'Inland Empire');
   }).then(function(){var g=$('advisorGoal');return g?ty(g,'50000'):Promise.resolve();
-  }).then(function(){$('advisorForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('advisorForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b>Diana Castillo</b> — $50K/month goal, 5%-20% commissions. The CRM tracks her sales automatically.","✅ <b>Diana Castillo</b> — meta $50K/mes, comisiones 5%-20%. El CRM rastrea sus ventas automáticamente."),'success');
+    return sayW(L("✅ <b>Diana Castillo</b> — 5%-20% commissions, tracked automatically!","✅ <b>Diana Castillo</b> — comisiones 5%-20%, ¡rastreadas automáticamente!"),'success');
   });
 }
 
-/* S11: CALENDAR */
 function s11(){
-  say(L(
-    "📍 Let's check the <b>Calendar</b>. This is your scheduling hub — all appointments, jobs, and follow-ups show up here. Your whole team's schedule in one view.",
-    "📍 Veamos el <b>Calendario</b>. Este es tu centro de horarios — todas las citas, trabajos y seguimientos aparecen aquí. El horario de todo tu equipo en una vista."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('calendar');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ You can schedule appointments, set reminders, and see which technician is available when. Drag and drop to reschedule!","✅ Puedes agendar citas, poner recordatorios y ver qué técnico está disponible. ¡Arrastra y suelta para re-agendar!"),'success');
+  return sayW(L(
+    "📍 The <b>Calendar</b> — your scheduling hub. All appointments, jobs, and follow-ups in one view. Your whole team's schedule at a glance.",
+    "📍 El <b>Calendario</b> — tu centro de horarios. Todas las citas, trabajos y seguimientos en una vista. El horario de todo tu equipo de un vistazo."
+  ),'nav').then(ck).then(function(){smoothShow('calendar');
+    return sayW(L("✅ Schedule appointments, set reminders, drag and drop to reschedule!","✅ ¡Agenda citas, pon recordatorios, arrastra y suelta para re-agendar!"),'success');
   });
 }
 
-/* S12: DISPATCH - JOB 1 */
 function s12(){
-  say(L(
-    "📍 Now the <b>command center</b> — <b>Dispatch</b>! This is where you create jobs, assign technicians, and track everything live on the map. Let me create the first job.",
-    "📍 Ahora el <b>centro de control</b> — ¡<b>Despacho</b>! Aquí es donde creas trabajos, asignas técnicos y rastreas todo en vivo en el mapa. Déjame crear el primer trabajo."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('dispatch');return sl(W);
+  return sayW(L(
+    "📍 Now the <b>command center</b> — <b>Dispatch</b>! Create jobs, assign technicians, track everything live on the map. Let me create the first job.",
+    "📍 Ahora el <b>centro de control</b> — ¡<b>Despacho</b>! Crea trabajos, asigna técnicos, rastrea todo en vivo en el mapa. Déjame crear el primer trabajo."
+  ),'nav').then(ck).then(function(){smoothShow('dispatch');
+    return sayW(L("⚡ Click <b>'+ New Job'</b>...","⚡ Click en <b>'+ Nuevo Trabajo'</b>..."),'action');
   }).then(ck).then(function(){
     var btn=$q('#dispatch-section [onclick*="showJobForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(ck).then(function(){
-    say(L("✏️ <b>AC Repair</b> for María García — assigning to Carlos, $850","✏️ <b>AC Repair</b> para María García — asignando a Carlos, $850"),'action');
-    return ty($('jobTitle'),'AC Repair - Goodman not cooling');
+    return sayW(L("✏️ <b>AC Repair</b> for María García — assigning to Carlos, $850","✏️ <b>Reparación AC</b> para María García — asignando a Carlos, $850"),'action');
+  }).then(function(){return ty($('jobTitle'),'AC Repair - Goodman not cooling');
   }).then(function(){sv($('jobServiceType'),'Reparación');sv($('jobPriority'),'high');return ty($('jobAddress'),'456 Oak St, Fontana, CA');
   }).then(function(){var d=$('jobDate');if(d)d.value=new Date().toISOString().split('T')[0];var la=$('jobLat'),ln=$('jobLng');if(la)la.value='34.09';if(ln)ln.value='-117.43';var ts=$('jobTechId');if(ts&&window.techsData&&techsData[0])sv(ts,techsData[0].id);return ty($('jobNotes'),L('Capacitor and contactor. $850','Capacitor y contactor. $850'));
-  }).then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ Job assigned to <b>Carlos</b>! He gets a notification on his phone with the address and details.","✅ ¡Trabajo asignado a <b>Carlos</b>! Le llega notificación a su celular con la dirección y detalles."),'success');
+    return sayW(L("✅ Job assigned to <b>Carlos</b>! He gets a phone notification with the address and details.","✅ ¡Trabajo asignado a <b>Carlos</b>! Le llega notificación con la dirección y detalles."),'success');
   });
 }
 
-/* S13: DISPATCH - JOB 2 URGENT */
 function s13(){
-  say(L("⚡ Second job — <b>URGENT</b>! The restaurant's walk-in cooler is failing. Food is at risk. Let's dispatch Miguel immediately.","⚡ Segundo trabajo — ¡<b>URGENTE</b>! El walk-in cooler del restaurante está fallando. La comida está en riesgo. Despachemos a Miguel inmediatamente."),'action');
-  return sl(W).then(ck).then(function(){
+  return sayW(L("⚡ Second job — <b>URGENT</b>! The restaurant's walk-in cooler is failing. Dispatching Miguel immediately.","⚡ Segundo trabajo — ¡<b>URGENTE</b>! El walk-in cooler del restaurante está fallando. Despachando a Miguel inmediatamente."),'action'
+  ).then(ck).then(function(){
     var btn=$q('#dispatch-section [onclick*="showJobForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(function(){return ty($('jobTitle'),'Walk-in Cooler - Compressor');
   }).then(function(){sv($('jobServiceType'),'Reparación');sv($('jobPriority'),'urgent');return ty($('jobAddress'),'2890 Highland Ave, SB, CA');
   }).then(function(){var d=$('jobDate');if(d)d.value=new Date().toISOString().split('T')[0];var la=$('jobLat'),ln=$('jobLng');if(la)la.value='34.12';if(ln)ln.value='-117.29';var ts=$('jobTechId');if(ts&&window.techsData&&techsData[1])sv(ts,techsData[1].id);return ty($('jobNotes'),L('Urgent. Cooler 55°F. $2,200','Urgente. Cooler 55°F. $2,200'));
-  }).then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b>2 jobs dispatched</b> — $3,050 total! Carlos → Fontana, Miguel → San Bernardino.","✅ <b>2 trabajos despachados</b> — ¡$3,050 total! Carlos → Fontana, Miguel → San Bernardino."),'success');
+    return sayW(L("✅ <b>2 jobs dispatched</b> — $3,050 total! Carlos → Fontana, Miguel → San Bernardino.","✅ <b>2 trabajos despachados</b> — ¡$3,050 total! Carlos → Fontana, Miguel → San Bernardino."),'success');
   });
 }
 
-/* S14: SERVICE CALLS */
 function s14(){
-  say(L(
-    "📍 <b>Service Calls</b> — when a customer calls with an emergency, this is where you log it FAST. It's different from Dispatch — this is the intake for incoming calls.",
-    "📍 <b>Llamadas de Servicio</b> — cuando un cliente llama con emergencia, aquí lo registras RÁPIDO. Es diferente de Despacho — esta es la entrada para llamadas entrantes."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('servicecalls');return sl(W);
+  return sayW(L(
+    "📍 <b>Service Calls</b> — when a customer calls with an emergency, log it here FAST. This is the intake for incoming calls.",
+    "📍 <b>Llamadas de Servicio</b> — cuando un cliente llama con emergencia, regístralo aquí RÁPIDO. Esta es la entrada para llamadas entrantes."
+  ),'nav').then(ck).then(function(){smoothShow('servicecalls');
+    return sayW(L("⚡ Logging an emergency: <b>AC not cooling, pet in house!</b>","⚡ Registrando emergencia: <b>¡AC no enfría, mascota en casa!</b>"),'action');
   }).then(ck).then(function(){
     var btn=$q('#servicecalls-section [onclick*="showServiceCallForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
-  }).then(ck).then(function(){
-    say(L("✏️ Emergency: <b>AC not cooling, pet in house!</b>","✏️ Emergencia: <b>¡AC no enfría, mascota en casa!</b>"),'action');
-    return ty($('scClientName'),'María García');
+  }).then(function(){return ty($('scClientName'),'María García');
   }).then(function(){return ty($('scClientPhone'),'(909) 555-1234');
   }).then(function(){return ty($('scAddress'),'456 Oak St, Fontana, CA');
   }).then(function(){return ty($('scProblem'),L('AC not cooling. Pet in house. Urgent.','AC no enfría. Mascota en casa. Urgente.'));
   }).then(function(){sv($('scUrgency'),'emergency');sv($('scPropertyType'),'residential');var pd=$('scPreferredDate');if(pd)pd.value=new Date().toISOString().split('T')[0];if(window.techsData&&techsData[0]){var st=$('scTechAssign');if(st)sv(st,techsData[0].id);}return ty($('scNotes'),'Gate #1234.');
-  }).then(function(){$('serviceCallForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){$('serviceCallForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ <b style='color:#ef4444'>🔴 EMERGENCY</b> logged and dispatched! Tech gets an immediate alert.","✅ <b style='color:#ef4444'>🔴 EMERGENCIA</b> registrada y despachada! El técnico recibe alerta inmediata."),'success');
+    return sayW(L("✅ <b style='color:#ef4444'>🔴 EMERGENCY</b> logged and dispatched! Tech gets an immediate alert.","✅ <b style='color:#ef4444'>🔴 EMERGENCIA</b> registrada y despachada! El técnico recibe alerta inmediata."),'success');
   });
 }
 
-/* S15: GPS TRACKING */
 function s15(){
-  say(L(
-    "📍 Back to <b>Dispatch</b> — let's see the <b>GPS tracking</b>. This is your real-time command center.",
-    "📍 Regresemos a <b>Despacho</b> — veamos el <b>rastreo GPS</b>. Este es tu centro de control en tiempo real."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('dispatch');return sl(W);
-  }).then(ck).then(function(){
-    say(L(
-      "🚐 Look at the map! You can see exactly where each tech is:<br>🚐 <b>Carlos</b> → Fontana<br>🚐 <b>Miguel</b> → San Bernardino<br><br>Your customers get a <b>tracking link</b> too — like Uber for HVAC!",
-      "🚐 ¡Mira el mapa! Puedes ver exactamente dónde está cada técnico:<br>🚐 <b>Carlos</b> → Fontana<br>🚐 <b>Miguel</b> → San Bernardino<br><br>¡Tus clientes también reciben un <b>link de rastreo</b> — como Uber para HVAC!"
+  return sayW(L(
+    "📍 Back to <b>Dispatch</b> for the <b>GPS tracking</b>. This is your real-time command center. Look at the map!",
+    "📍 Regresemos a <b>Despacho</b> para el <b>rastreo GPS</b>. Este es tu centro de control en tiempo real. ¡Mira el mapa!"
+  ),'nav').then(ck).then(function(){smoothShow('dispatch');
+    return sayW(L(
+      "🚐 You can see exactly where each tech is. Carlos heading to Fontana, Miguel to San Bernardino. Your customers also get a tracking link — like Uber for HVAC!",
+      "🚐 Puedes ver exactamente dónde está cada técnico. Carlos camino a Fontana, Miguel a San Bernardino. ¡Tus clientes también reciben un link de rastreo — como Uber para HVAC!"
     ),'info');
-    return sl(W+2000);
   }).then(function(){
-    say(L("✅ Real-time fleet management. You're always in control!","✅ Administración de flota en tiempo real. ¡Siempre tienes el control!"),'success');
+    return sayW(L("✅ Real-time fleet management. You're always in control!","✅ Administración de flota en tiempo real. ¡Siempre tienes el control!"),'success');
   });
 }
 
-/* S16: JOBS LIST */
 function s16(){
-  say(L(
-    "📍 <b>Jobs</b> — this is the master list of ALL work orders. Filter by status: pending, in progress, completed. Track revenue per job.",
-    "📍 <b>Trabajos</b> — esta es la lista maestra de TODAS las órdenes de trabajo. Filtra por estatus: pendiente, en progreso, completado. Rastrea ingreso por trabajo."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('jobs');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Every job from creation to completion — tracked here. Export to PDF anytime.","✅ Cada trabajo desde la creación hasta el final — rastreado aquí. Exporta a PDF cuando quieras."),'success');
+  return sayW(L(
+    "📍 <b>Jobs</b> — the master list of ALL work orders. Filter by status: pending, in progress, completed. Track revenue per job.",
+    "📍 <b>Trabajos</b> — la lista maestra de TODAS las órdenes. Filtra por estatus: pendiente, en progreso, completado. Rastrea ingreso por trabajo."
+  ),'nav').then(ck).then(function(){smoothShow('jobs');
+    return sayW(L("✅ Every job tracked from creation to completion. Export to PDF anytime.","✅ Cada trabajo rastreado desde la creación hasta el final. Exporta a PDF cuando quieras."),'success');
   });
 }
 
-/* S17: INVOICES - CREATE */
 function s17(){
-  say(L(
-    "📍 Time to get <b>paid</b>! Let's go to <b>Invoices</b>. Every job should end with an invoice. I'll create one for María García's AC repair.",
-    "📍 ¡Hora de <b>cobrar</b>! Vamos a <b>Facturas</b>. Cada trabajo debe terminar con una factura. Voy a crear una para la reparación de AC de María García."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('invoices');return sl(W);
+  return sayW(L(
+    "📍 Time to get <b>paid</b>! <b>Invoices</b> — every job should end with an invoice. I'll create one for María García's AC repair.",
+    "📍 ¡Hora de <b>cobrar</b>! <b>Facturas</b> — cada trabajo debe terminar con una factura. Voy a crear una para la reparación de María García."
+  ),'nav').then(ck).then(function(){smoothShow('invoices');
+    return sayW(L("⚡ Creating invoice: Service Call $120 + Capacitor $85 + Contactor $65 + Labor $250 = <b>$520</b>","⚡ Creando factura: Visita $120 + Capacitor $85 + Contactor $65 + Mano de obra $250 = <b>$520</b>"),'action');
   }).then(ck).then(function(){
-    say(L("⚡ Creating invoice: Service Call $120 + Capacitor $85 + Contactor $65 + Labor $250 = <b>$520</b>","⚡ Creando factura: Visita $120 + Capacitor $85 + Contactor $65 + Mano de obra $250 = <b>$520</b>"),'action');
     var inv={id:'inv1',company_id:'demo-co',invoice_number:'INV-202602-0001',client_name:'María García',client_email:'maria.garcia@email.com',client_phone:'(909) 555-1234',client_address:'456 Oak St, Fontana',line_items:[{name:'Service Call',qty:1,unit_price:120,labor:0,total:120},{name:'Capacitor 45/5',qty:1,unit_price:85,labor:0,total:85},{name:'Contactor 2P',qty:1,unit_price:65,labor:0,total:65},{name:'Labor',qty:2,unit_price:0,labor:125,total:250}],subtotal:520,total:520,balance_due:520,amount_paid:0,status:'draft',created_at:new Date().toISOString()};
     _db.invoices.push(inv);window.invoicesData=[inv];renderInvoiceKPIs();renderInvoicesTable();
-    return sl(W);
-  }).then(function(){
-    say(L("✅ <b>INV-0001</b> created for <b>$520</b>! You can email it to the customer or print as PDF.","✅ <b>INV-0001</b> creada por <b>$520</b>! La puedes enviar por email o imprimir como PDF."),'success');
+    return sayW(L("✅ <b>INV-0001</b> created for <b>$520</b>! Email it or print as PDF.","✅ <b>INV-0001</b> creada por <b>$520</b>! Envíala por email o imprime como PDF."),'success');
   });
 }
 
-/* S18: INVOICES - MARK PAID + 2ND */
 function s18(){
-  say(L("⚡ María paid! Let me mark it as <b>PAID</b> and create the restaurant invoice...","⚡ ¡María pagó! Déjame marcarla como <b>PAGADA</b> y crear la factura del restaurante..."),'action');
-  return sl(W).then(ck).then(function(){
+  return sayW(L("⚡ María paid! Marking as <b>PAID</b> and creating the restaurant invoice...","⚡ ¡María pagó! Marcando como <b>PAGADA</b> y creando la factura del restaurante..."),'action'
+  ).then(ck).then(function(){
     invoicesData[0].status='paid';invoicesData[0].amount_paid=520;invoicesData[0].balance_due=0;
     var inv2={id:'inv2',company_id:'demo-co',invoice_number:'INV-202602-0002',client_name:'La Michoacana',client_phone:'(909) 555-5678',client_email:'lm@email.com',client_address:'2890 Highland, SB',line_items:[{name:'Cooler Repair',qty:1,unit_price:1800,labor:400,total:2200}],subtotal:2200,total:2200,balance_due:2200,amount_paid:0,status:'sent',created_at:new Date().toISOString()};
-    _db.invoices.push(inv2);invoicesData.push(inv2);renderInvoiceKPIs();renderInvoicesTable();return sl(W);
-  }).then(function(){
-    say(L("✅ INV-0001 <b style='color:#16a34a'>✅ PAID</b> $520 | INV-0002 <b style='color:#f59e0b'>⏳ PENDING</b> $2,200","✅ INV-0001 <b style='color:#16a34a'>✅ PAGADA</b> $520 | INV-0002 <b style='color:#f59e0b'>⏳ PENDIENTE</b> $2,200"),'success');
+    _db.invoices.push(inv2);invoicesData.push(inv2);renderInvoiceKPIs();renderInvoicesTable();
+    return sayW(L("✅ INV-0001 <b style='color:#16a34a'>✅ PAID</b> $520 | INV-0002 <b style='color:#f59e0b'>⏳ PENDING</b> $2,200","✅ INV-0001 <b style='color:#16a34a'>✅ PAGADA</b> $520 | INV-0002 <b style='color:#f59e0b'>⏳ PENDIENTE</b> $2,200"),'success');
   });
 }
 
-/* S19: COLLECTIONS */
 function s19(){
-  say(L(
-    "📍 <b>Collections</b> — when invoices are overdue, this is where you follow up. Track who owes you, how long it's been, and send reminders. Never lose money again.",
-    "📍 <b>Cobranza</b> — cuando las facturas se vencen, aquí es donde das seguimiento. Rastrea quién te debe, cuánto tiempo ha pasado y envía recordatorios. Nunca pierdas dinero otra vez."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('collections');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Automatic aging reports: 30, 60, 90 days overdue. One-click reminders to customers!","✅ Reportes de antigüedad automáticos: 30, 60, 90 días vencidos. ¡Recordatorios a clientes con un click!"),'success');
+  return sayW(L(
+    "📍 <b>Collections</b> — when invoices are overdue, follow up here. Track who owes you, how long, send reminders. Never lose money again.",
+    "📍 <b>Cobranza</b> — cuando las facturas se vencen, da seguimiento aquí. Rastrea quién te debe, cuánto tiempo, envía recordatorios. Nunca pierdas dinero."
+  ),'nav').then(ck).then(function(){smoothShow('collections');
+    return sayW(L("✅ Automatic aging reports: 30, 60, 90 days overdue. One-click reminders!","✅ Reportes de antigüedad automáticos: 30, 60, 90 días vencidos. ¡Recordatorios con un click!"),'success');
   });
 }
 
-/* S20: RECEIPTS */
 function s20(){
-  say(L(
-    "📍 <b>Receipts</b> — track every payment received. When a customer pays cash, check, Zelle, or card — log it here for your records and tax purposes.",
-    "📍 <b>Recibos</b> — registra cada pago recibido. Cuando un cliente paga efectivo, cheque, Zelle o tarjeta — regístralo aquí para tus archivos e impuestos."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('receipts');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Every payment documented. Your accountant will love you!","✅ Cada pago documentado. ¡Tu contador te va a amar!"),'success');
+  return sayW(L(
+    "📍 <b>Receipts</b> — track every payment received. Cash, check, Zelle, or card — log it here for your records and taxes.",
+    "📍 <b>Recibos</b> — registra cada pago recibido. Efectivo, cheque, Zelle o tarjeta — regístralo aquí para archivos e impuestos."
+  ),'nav').then(ck).then(function(){smoothShow('receipts');
+    return sayW(L("✅ Every payment documented. Your accountant will love you!","✅ Cada pago documentado. ¡Tu contador te va a amar!"),'success');
   });
 }
 
-/* S21: EXPENSES */
 function s21(){
-  say(L(
-    "📍 <b>Business Expenses</b> — track everything you spend: gas, insurance, tools, vehicle payments, CRM subscription. If money goes out, it goes here.",
-    "📍 <b>Gastos del Negocio</b> — registra todo lo que gastas: gasolina, seguro, herramientas, pagos de vehículo, suscripción del CRM. Si sale dinero, va aquí."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('expenses');return sl(W);
+  return sayW(L(
+    "📍 <b>Business Expenses</b> — track everything you spend: gas, insurance, tools, vehicle payments. If money goes out, it goes here.",
+    "📍 <b>Gastos del Negocio</b> — registra todo lo que gastas: gasolina, seguro, herramientas, pagos de vehículo. Si sale dinero, va aquí."
+  ),'nav').then(ck).then(function(){smoothShow('expenses');
+    return sayW(L("⚡ Adding gas expense: <b>$287.50</b> at Chevron","⚡ Agregando gasto de gasolina: <b>$287.50</b> en Chevron"),'action');
   }).then(ck).then(function(){
     var btn=$q('#expenses-section [onclick*="showExpenseForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
-  }).then(function(){
-    say(L("✏️ Adding gas: <b>$287.50</b> at Chevron","✏️ Agregando gasolina: <b>$287.50</b> en Chevron"),'action');
-    sv($('expCategory'),'vehicle_gas');return ty($('expVendor'),'Chevron');
+  }).then(function(){sv($('expCategory'),'vehicle_gas');return ty($('expVendor'),'Chevron');
   }).then(function(){return ty($('expAmount'),'287.50');
   }).then(function(){sv($('expFrequency'),'monthly');sv($('expType'),'variable');$('expDate').value=new Date().toISOString().split('T')[0];return sl(SD);
   }).then(function(){var f=$q('#expenses-section form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(1500);
   }).then(ck).then(function(){
+    return sayW(L("⚡ Adding 3 more monthly expenses...","⚡ Agregando 3 gastos mensuales más..."),'action');
+  }).then(function(){
     [{category:'general_liability',vendor:'State Farm',amount:450,type:'fixed'},{category:'software_crm',vendor:'Trade Master CRM',amount:149.99,type:'fixed'},{category:'vehicle_payment',vendor:'Ford Motor Credit',amount:650,type:'fixed'}]
     .forEach(function(e){e.id='exp'+(++_idc);e.company_id='demo-co';e.frequency='monthly';e.date=new Date().toISOString().split('T')[0];e.created_at=new Date().toISOString();_db.expenses.push(e);expensesData.push(e);});
-    renderExpenses();return sl(W);
-  }).then(function(){
-    say(L("✅ <b>4 expenses</b>: Gas $287.50 + Insurance $450 + CRM $149.99 + Vehicle $650 = <b>$1,537.49/month</b>","✅ <b>4 gastos</b>: Gasolina $287.50 + Seguro $450 + CRM $149.99 + Vehículo $650 = <b>$1,537.49/mes</b>"),'success');
+    renderExpenses();
+    return sayW(L("✅ <b>4 expenses</b>: Gas $287 + Insurance $450 + CRM $150 + Vehicle $650 = <b>$1,537/month</b>","✅ <b>4 gastos</b>: Gas $287 + Seguro $450 + CRM $150 + Vehículo $650 = <b>$1,537/mes</b>"),'success');
   });
 }
 
-/* S22: MY MONEY */
 function s22(){
-  say(L(
-    "📍 <b>My Money</b> — your financial overview. Income vs expenses in a chart. See your profit at a glance. This is the health of your business.",
-    "📍 <b>Mi Dinero</b> — tu vista financiera. Ingresos vs gastos en una gráfica. Ve tu ganancia de un vistazo. Esta es la salud de tu negocio."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('mymoney');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Revenue coming in, expenses going out, net profit — all in real-time!","✅ Ingresos entrando, gastos saliendo, ganancia neta — ¡todo en tiempo real!"),'success');
+  return sayW(L(
+    "📍 <b>My Money</b> — your financial overview. Income vs expenses in a chart. See your profit at a glance.",
+    "📍 <b>Mi Dinero</b> — tu vista financiera. Ingresos vs gastos en gráfica. Ve tu ganancia de un vistazo."
+  ),'nav').then(ck).then(function(){smoothShow('mymoney');
+    return sayW(L("✅ Revenue in, expenses out, net profit — all in real-time!","✅ Ingresos entrando, gastos saliendo, ganancia neta — ¡todo en tiempo real!"),'success');
   });
 }
 
-/* S23: PAYROLL */
 function s23(){
-  say(L(
-    "📍 <b>Payroll</b> — track what you owe each technician and advisor. Hours worked × hourly rate = total pay. No more spreadsheets!",
-    "📍 <b>Nómina</b> — rastrea lo que le debes a cada técnico y asesor. Horas trabajadas × tarifa por hora = pago total. ¡No más hojas de cálculo!"
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('payroll');return sl(W);
+  return sayW(L(
+    "📍 <b>Payroll</b> — track what you owe each technician and advisor. Hours worked times hourly rate equals total pay. No more spreadsheets!",
+    "📍 <b>Nómina</b> — rastrea lo que le debes a cada técnico y asesor. Horas trabajadas por tarifa por hora igual a pago total. ¡No más hojas de cálculo!"
+  ),'nav').then(ck).then(function(){smoothShow('payroll');
+    return sayW(L("⚡ Adding payroll data for this period...","⚡ Agregando datos de nómina para este período..."),'action');
   }).then(ck).then(function(){
     var e=[
       {id:'py1',company_id:'demo-co',tech_id:techsData[0]?techsData[0].id:null,tech_name:techsData[0]?techsData[0].name:'Carlos',type:'hourly',hours:42,rate:35,total:1470,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()},
       {id:'py2',company_id:'demo-co',tech_id:techsData[1]?techsData[1].id:null,tech_name:techsData[1]?techsData[1].name:'Miguel',type:'hourly',hours:38,rate:30,total:1140,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()},
       {id:'py3',company_id:'demo-co',tech_id:null,tech_name:advisorsData&&advisorsData[0]?advisorsData[0].name:'Diana',type:'commission',hours:0,rate:0,total:457.50,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()}];
-    e.forEach(function(x){_db.payroll_entries.push(x);});window.payrollData=e;renderPayroll();return sl(W);
-  }).then(function(){
-    say(L("✅ Carlos: 42hrs × $35 = <b>$1,470</b> | Miguel: 38hrs × $30 = <b>$1,140</b> | Diana: <b>$457.50</b> commission | Total: <b>$3,067.50</b>","✅ Carlos: 42hrs × $35 = <b>$1,470</b> | Miguel: 38hrs × $30 = <b>$1,140</b> | Diana: <b>$457.50</b> comisión | Total: <b>$3,067.50</b>"),'success');
+    e.forEach(function(x){_db.payroll_entries.push(x);});window.payrollData=e;renderPayroll();
+    return sayW(L("✅ Carlos: 42hrs × $35 = <b>$1,470</b> | Miguel: 38hrs × $30 = <b>$1,140</b> | Diana: <b>$457</b> commission | Total: <b>$3,067</b>","✅ Carlos: 42hrs × $35 = <b>$1,470</b> | Miguel: 38hrs × $30 = <b>$1,140</b> | Diana: <b>$457</b> comisión | Total: <b>$3,067</b>"),'success');
   });
 }
 
-/* S24: PAYROLL EXPORT */
 function s24(){
-  say(L(
-    "⚡ And the best part — you can <b>export payroll</b> directly to <b>QuickBooks, ADP, or Gusto</b> with one click. No double entry!",
-    "⚡ Y lo mejor — puedes <b>exportar la nómina</b> directo a <b>QuickBooks, ADP o Gusto</b> con un click. ¡Sin doble captura!"
-  ),'info');
-  return sl(W+2000).then(function(){
-    say(L("✅ Payroll is fully automated. Calculate, review, export — done!","✅ La nómina es completamente automática. Calcula, revisa, exporta — ¡listo!"),'success');
+  return sayW(L(
+    "⚡ The best part — <b>export payroll</b> directly to <b>QuickBooks, ADP, or Gusto</b> with one click. No double entry!",
+    "⚡ Lo mejor — ¡<b>exporta la nómina</b> directo a <b>QuickBooks, ADP o Gusto</b> con un click! ¡Sin doble captura!"
+  ),'info').then(function(){
+    return sayW(L("✅ Payroll is fully automated. Calculate, review, export — done!","✅ La nómina es completamente automática. Calcula, revisa, exporta — ¡listo!"),'success');
   });
 }
 
-/* S25: INBOX */
 function s25(){
-  say(L(
-    "📍 <b>Inbox</b> — your notification center. Every important event shows up here: new leads, completed jobs, overdue invoices, team updates. Never miss anything.",
-    "📍 <b>Bandeja</b> — tu centro de notificaciones. Cada evento importante aparece aquí: nuevos prospectos, trabajos completados, facturas vencidas, actualizaciones del equipo. Nunca te pierdas de nada."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('inbox');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ All notifications in one place. Read, archive, or take action instantly.","✅ Todas las notificaciones en un lugar. Lee, archiva o toma acción al instante."),'success');
+  return sayW(L(
+    "📍 <b>Inbox</b> — your notification center. New leads, completed jobs, overdue invoices, team updates — all here. Never miss anything.",
+    "📍 <b>Bandeja</b> — tu centro de notificaciones. Nuevos prospectos, trabajos completados, facturas vencidas, actualizaciones — todo aquí."
+  ),'nav').then(ck).then(function(){smoothShow('inbox');
+    return sayW(L("✅ All notifications in one place. Read, archive, or take action instantly.","✅ Todas las notificaciones en un lugar. Lee, archiva o toma acción al instante."),'success');
   });
 }
 
-/* S26: MAILBOX */
 function s26(){
-  say(L(
-    "📍 <b>Business Mail</b> — send and receive emails right from your CRM. No need to switch to Gmail or Outlook. Communicate with customers without leaving the app.",
-    "📍 <b>Correo del Negocio</b> — envía y recibe emails directo desde tu CRM. No necesitas cambiar a Gmail o Outlook. Comunícate con clientes sin salir de la app."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('mailbox');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Professional email integrated. Templates for quotes, follow-ups, and thank-you notes!","✅ Email profesional integrado. ¡Plantillas para cotizaciones, seguimientos y agradecimientos!"),'success');
+  return sayW(L(
+    "📍 <b>Business Mail</b> — send and receive emails right from the CRM. No need to switch to Gmail or Outlook.",
+    "📍 <b>Correo del Negocio</b> — envía y recibe emails directo desde el CRM. No necesitas cambiar a Gmail o Outlook."
+  ),'nav').then(ck).then(function(){smoothShow('mailbox');
+    return sayW(L("✅ Professional email integrated. Templates for quotes, follow-ups, and thank-you notes!","✅ Email profesional integrado. ¡Plantillas para cotizaciones, seguimientos y agradecimientos!"),'success');
   });
 }
 
-/* S27: MARKETING */
 function s27(){
-  say(L(
-    "📍 <b>Marketing</b> — grow your business! Create campaigns for Google Ads, Facebook, Yelp. Track which ads bring you the most customers.",
-    "📍 <b>Mercadotecnia</b> — ¡haz crecer tu negocio! Crea campañas para Google Ads, Facebook, Yelp. Rastrea qué anuncios te traen más clientes."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('marketing');return sl(W);
+  return sayW(L(
+    "📍 <b>Marketing</b> — grow your business! Create campaigns for Google Ads, Facebook, Yelp. Track which ads bring the most customers.",
+    "📍 <b>Mercadotecnia</b> — ¡haz crecer tu negocio! Crea campañas para Google Ads, Facebook, Yelp. Rastrea qué anuncios traen más clientes."
+  ),'nav').then(ck).then(function(){smoothShow('marketing');
+    return sayW(L("⚡ Creating a <b>Google Ads</b> campaign: AC Tune-Up $79, $1,500 budget...","⚡ Creando campaña de <b>Google Ads</b>: AC Tune-Up $79, presupuesto $1,500..."),'action');
   }).then(ck).then(function(){
     var btn=$q('#marketing-section [onclick*="showCampaignForm"]');return btn?clk(btn):Promise.resolve();
   }).then(function(){return sl(1200);
   }).then(function(){return ty($('campName'),'Promo Summer - AC Tune-Up $79');
   }).then(function(){sv($('campType'),'google_ads');return ty($('campBudget'),'1500');
   }).then(function(){var cs=$('campStart'),ce=$('campEnd');if(cs)cs.value=new Date().toISOString().split('T')[0];if(ce){var d=new Date();d.setDate(d.getDate()+60);ce.value=d.toISOString().split('T')[0];}return ty($('campMessage'),'AC Tune-Up $79. Rodriguez HVAC. (909) 555-0000');
-  }).then(function(){var f=$q('#marketing-section form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2500);
+  }).then(function(){var f=$q('#marketing-section form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(2000);
   }).then(function(){
-    say(L("✅ Campaign <b>Google Ads</b> active! $1,500 budget, 60 days. The CRM tracks ROI automatically.","✅ ¡Campaña <b>Google Ads</b> activa! $1,500 de presupuesto, 60 días. El CRM rastrea el ROI automáticamente."),'success');
+    return sayW(L("✅ Campaign <b>Google Ads</b> active! $1,500 for 60 days. CRM tracks ROI automatically.","✅ ¡Campaña <b>Google Ads</b> activa! $1,500 por 60 días. El CRM rastrea el ROI automáticamente."),'success');
   });
 }
 
-/* S28: PRICE BOOK */
 function s28(){
-  say(L(
-    "📍 <b>Price Book</b> — your catalog of parts, services, and prices. When you create invoices, you pull prices from here. Set your cost and selling price to see your profit margin.",
-    "📍 <b>Lista de Precios</b> — tu catálogo de partes, servicios y precios. Cuando creas facturas, jalas precios de aquí. Pon tu costo y precio de venta para ver tu margen."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('pricebook');return sl(W);
+  return sayW(L(
+    "📍 <b>Price Book</b> — your catalog of parts, services, and prices. Set cost and selling price to see your profit margin.",
+    "📍 <b>Lista de Precios</b> — tu catálogo de partes, servicios y precios. Pon costo y precio de venta para ver tu margen."
+  ),'nav').then(ck).then(function(){smoothShow('pricebook');
+    return sayW(L("⚡ Loading 10 common HVAC parts and services...","⚡ Cargando 10 partes y servicios comunes de HVAC..."),'action');
   }).then(ck).then(function(){
-    say(L("⚡ Loading 10 common HVAC parts and services...","⚡ Cargando 10 partes y servicios comunes de HVAC..."),'action');
     [{name:'Capacitor 45/5 MFD',sku:'CAP-455',category:'ac_parts',unit:'each',cost:12,price:85},{name:'Contactor 2P 40A',sku:'CON-2P',category:'ac_parts',unit:'each',cost:8,price:65},{name:'Motor Fan 1/4 HP',sku:'MTR-025',category:'motors',unit:'each',cost:45,price:195},{name:'R-410A per lb',sku:'REF-410',category:'refrigerants',unit:'lb',cost:15,price:85},{name:'Thermostat Honeywell',sku:'TSTAT',category:'controls',unit:'each',cost:35,price:175},{name:'Filter 16x25x1',sku:'FLT-162',category:'filters',unit:'each',cost:4,price:25},{name:'Service Call 0-10mi',sku:'SC-010',category:'labor',unit:'flat',cost:0,price:70},{name:'Service Call 10-20mi',sku:'SC-1020',category:'labor',unit:'flat',cost:0,price:120},{name:'Labor per Hour',sku:'LAB-HR',category:'labor',unit:'hour',cost:0,price:125},{name:'AC Tune-Up 21pts',sku:'TUNE-21',category:'labor',unit:'flat',cost:0,price:79}]
     .forEach(function(it){it.id='pb'+(++_idc);it.company_id='demo-co';_db.price_book.push(it);});
-    window.priceBookData=_db.price_book.slice();renderPriceBook();return sl(W);
-  }).then(function(){
-    say(L("✅ <b>10 items</b> loaded! Look at those margins: Capacitor $12→$85 (<b>608%</b>), R-410A $15→$85 (<b>467%</b>). This is how HVAC companies make money!","✅ ¡<b>10 artículos</b> cargados! Mira esos márgenes: Capacitor $12→$85 (<b>608%</b>), R-410A $15→$85 (<b>467%</b>). ¡Así es como las empresas HVAC ganan dinero!"),'success');
+    window.priceBookData=_db.price_book.slice();renderPriceBook();
+    return sayW(L("✅ <b>10 items</b> loaded! Capacitor $12→$85 (608% margin), R-410A $15→$85 (467%). This is how HVAC makes money!","✅ ¡<b>10 artículos</b>! Capacitor $12→$85 (608% margen), R-410A $15→$85 (467%). ¡Así ganan dinero las empresas HVAC!"),'success');
   });
 }
 
-/* S29: REPORTS */
 function s29(){
-  say(L(
-    "📍 <b>Reports</b> — the big picture of your business. Revenue by month, jobs per technician, lead sources, team productivity — all visualized in charts and graphs.",
-    "📍 <b>Reportes</b> — la foto completa de tu negocio. Ingresos por mes, trabajos por técnico, fuentes de prospectos, productividad del equipo — todo visualizado en gráficas."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('reports');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Export any report to <b>PDF</b>. Share with your accountant, partner, or bank for loans.","✅ Exporta cualquier reporte a <b>PDF</b>. Comparte con tu contador, socio o banco para préstamos."),'success');
+  return sayW(L(
+    "📍 <b>Reports</b> — the big picture. Revenue by month, jobs per technician, lead sources, team productivity — all in charts.",
+    "📍 <b>Reportes</b> — la foto completa. Ingresos por mes, trabajos por técnico, fuentes de prospectos, productividad — todo en gráficas."
+  ),'nav').then(ck).then(function(){smoothShow('reports');
+    return sayW(L("✅ Export any report to <b>PDF</b>. Share with your accountant or bank.","✅ Exporta cualquier reporte a <b>PDF</b>. Comparte con tu contador o banco."),'success');
   });
 }
 
-/* S30: TEAM - USERS */
 function s30(){
-  say(L(
-    "📍 <b>Users & Team</b> — manage who has access to your CRM. Add office staff, assign roles, control what each person can see and do. Security first!",
-    "📍 <b>Usuarios y Equipo</b> — administra quién tiene acceso a tu CRM. Agrega personal de oficina, asigna roles, controla lo que cada persona puede ver y hacer. ¡Seguridad primero!"
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('team');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Admin, Manager, Dispatcher, Technician — each role sees only what they need. Your data stays safe.","✅ Admin, Gerente, Despachador, Técnico — cada rol ve solo lo que necesita. Tu información está segura."),'success');
+  return sayW(L(
+    "📍 <b>Users & Team</b> — manage CRM access. Add office staff, assign roles, control what each person can see and do.",
+    "📍 <b>Usuarios y Equipo</b> — administra acceso al CRM. Agrega personal, asigna roles, controla lo que cada persona ve y hace."
+  ),'nav').then(ck).then(function(){smoothShow('team');
+    return sayW(L("✅ Admin, Manager, Dispatcher, Technician — each role sees only what they need.","✅ Admin, Gerente, Despachador, Técnico — cada rol ve solo lo que necesita."),'success');
   });
 }
 
-/* S31: HR - HUMAN RESOURCES */
 function s31(){
-  say(L(
-    "📍 <b>Human Resources</b> — employee files, contracts, certifications, performance reviews. Everything HR needs, built right into the CRM.",
-    "📍 <b>Recursos Humanos</b> — archivos de empleados, contratos, certificaciones, evaluaciones de desempeño. Todo lo que RH necesita, integrado en el CRM."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('hr');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Upload contracts, track certifications, manage employee documents — all in one place. No more paper files!","✅ Sube contratos, rastrea certificaciones, administra documentos de empleados — todo en un lugar. ¡No más archivos de papel!"),'success');
+  return sayW(L(
+    "📍 <b>Human Resources</b> — employee files, contracts, certifications, performance reviews. Everything HR needs, built into the CRM.",
+    "📍 <b>Recursos Humanos</b> — archivos de empleados, contratos, certificaciones, evaluaciones. Todo lo que RH necesita, integrado en el CRM."
+  ),'nav').then(ck).then(function(){smoothShow('hr');
+    return sayW(L("✅ Upload contracts, track certifications, manage documents — no more paper files!","✅ Sube contratos, rastrea certificaciones, administra documentos — ¡no más archivos de papel!"),'success');
   });
 }
 
-/* S32: SETTINGS */
 function s32(){
-  say(L(
-    "📍 <b>Settings</b> — configure your company info: name, license, bond, insurance, logo, and legal documents. This info appears on your invoices and contracts.",
-    "📍 <b>Configuración</b> — configura tu info de empresa: nombre, licencia, bond, seguro, logo y documentos legales. Esta info aparece en tus facturas y contratos."
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('settings');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Company profile, contractor license, insurance bond, contract templates — all saved and ready.","✅ Perfil de empresa, licencia de contratista, fianza de seguro, plantillas de contratos — todo guardado y listo."),'success');
+  return sayW(L(
+    "📍 <b>Settings</b> — configure company info: name, license, bond, insurance, logo. This appears on invoices and contracts.",
+    "📍 <b>Configuración</b> — configura info de empresa: nombre, licencia, bond, seguro, logo. Esto aparece en facturas y contratos."
+  ),'nav').then(ck).then(function(){smoothShow('settings');
+    return sayW(L("✅ Company profile, contractor license, insurance bond, contract templates — all saved and ready.","✅ Perfil de empresa, licencia, fianza, plantillas de contratos — todo guardado y listo."),'success');
   });
 }
 
-/* S33: RETURN TO DASHBOARD */
 function s33(){
-  say(L(
+  return sayW(L(
     "📍 Let's go back to the <b>Dashboard</b> to see everything we've built. Look how your business came alive!",
     "📍 Regresemos al <b>Tablero</b> para ver todo lo que construimos. ¡Mira cómo tu negocio cobró vida!"
-  ),'nav');
-  return sl(W).then(ck).then(function(){smoothShow('dashboard');return sl(W+2000);
-  }).then(function(){
-    say(L("✅ Your dashboard is now full of real data — customers, jobs, revenue, team activity. This is YOUR business, organized.","✅ Tu tablero está lleno de datos reales — clientes, trabajos, ingresos, actividad del equipo. Este es TU negocio, organizado."),'success');
+  ),'nav').then(ck).then(function(){smoothShow('dashboard');
+    return sayW(L("✅ Your dashboard is full of real data now! This is YOUR business, organized.","✅ ¡Tu tablero está lleno de datos reales! Este es TU negocio, organizado."),'success');
   });
 }
 
-/* S34: FINAL SUMMARY */
 function s34(){
-  say(L(
-    "🎉 <b>DEMO COMPLETE!</b><br><br>Here's everything we built together in 35 steps:<br><br>👥 2 customers (residential + commercial)<br>🎯 1 lead ($4,500 furnace)<br>📈 Sales pipeline<br>👷 2 technicians with GPS<br>🏠 1 home advisor<br>📅 Calendar & scheduling<br>🔧 2 jobs worth $3,050<br>📞 1 emergency service call<br>🚐 Real-time GPS tracking<br>📄 2 invoices ($2,720 total)<br>💰 Collections & receipts<br>🏢 4 expenses ($1,537/month)<br>💵 Financial overview<br>💳 Payroll ($3,067.50)<br>📬 Inbox & business email<br>📣 1 marketing campaign<br>📒 10 price book items<br>📊 Reports & analytics<br>👥 Team management<br>🛡️ HR & documents<br>⚙️ Company settings",
-    "🎉 <b>¡DEMO COMPLETADO!</b><br><br>Esto es todo lo que construimos juntos en 35 pasos:<br><br>👥 2 clientes (residencial + comercial)<br>🎯 1 prospecto ($4,500 furnace)<br>📈 Flujo de ventas<br>👷 2 técnicos con GPS<br>🏠 1 asesora del hogar<br>📅 Calendario y agenda<br>🔧 2 trabajos por $3,050<br>📞 1 llamada de emergencia<br>🚐 Rastreo GPS en tiempo real<br>📄 2 facturas ($2,720 total)<br>💰 Cobranza y recibos<br>🏢 4 gastos ($1,537/mes)<br>💵 Vista financiera<br>💳 Nómina ($3,067.50)<br>📬 Bandeja y correo<br>📣 1 campaña de marketing<br>📒 10 artículos de precios<br>📊 Reportes y analíticas<br>👥 Usuarios y equipo<br>🛡️ RH y documentos<br>⚙️ Configuración"
+  return sayW(L(
+    "🎉 <b>DEMO COMPLETE!</b> Here's everything we built in 35 steps:<br>👥 2 customers<br>🎯 1 lead ($4,500)<br>📈 Sales pipeline<br>👷 2 technicians with GPS<br>🏠 1 advisor<br>📅 Calendar<br>🔧 2 jobs ($3,050)<br>📞 1 emergency<br>📄 2 invoices ($2,720)<br>💰 Collections & receipts<br>🏢 4 expenses ($1,537/mo)<br>💳 Payroll ($3,067)<br>📬 Inbox & email<br>📣 Marketing campaign<br>📒 10 price book items<br>📊 Reports<br>👥 Team<br>🛡️ HR<br>⚙️ Settings",
+    "🎉 <b>¡DEMO COMPLETADO!</b> Todo lo que construimos en 35 pasos:<br>👥 2 clientes<br>🎯 1 prospecto ($4,500)<br>📈 Flujo de ventas<br>👷 2 técnicos con GPS<br>🏠 1 asesora<br>📅 Calendario<br>🔧 2 trabajos ($3,050)<br>📞 1 emergencia<br>📄 2 facturas ($2,720)<br>💰 Cobranza y recibos<br>🏢 4 gastos ($1,537/mes)<br>💳 Nómina ($3,067)<br>📬 Bandeja y correo<br>📣 Campaña marketing<br>📒 10 artículos precios<br>📊 Reportes<br>👥 Equipo<br>🛡️ RH<br>⚙️ Configuración"
   ),'success');
-  return sl(W+2000);
 }
 
-/* S35: CTA - SIGN UP */
 function s35(){
-  say(L(
-    "🚀 <b>This is what Trade Master CRM can do for your business.</b> Everything you just saw — customers, dispatch, GPS, invoicing, payroll, marketing, reports — all in one place, from any device. Ready to take your company to the next level?",
-    "🚀 <b>Esto es lo que Trade Master CRM puede hacer por tu negocio.</b> Todo lo que acabas de ver — clientes, despacho, GPS, facturación, nómina, mercadotecnia, reportes — todo en un lugar, desde cualquier dispositivo. ¿Listo para llevar tu empresa al siguiente nivel?"
-  ),'info');
-  return sl(W).then(function(){
+  return sayW(L(
+    "🚀 <b>This is what Trade Master CRM does for your business.</b> Customers, dispatch, GPS, invoicing, payroll, marketing, reports — all in one place, from any device. Ready to take your company to the next level?",
+    "🚀 <b>Esto es lo que Trade Master CRM hace por tu negocio.</b> Clientes, despacho, GPS, facturación, nómina, mercadotecnia, reportes — todo en un lugar, desde cualquier dispositivo. ¿Listo para llevar tu empresa al siguiente nivel?"
+  ),'info').then(function(){
     var ch=$('sfChat');var cta=document.createElement('div');
-    cta.innerHTML='<div style="padding:18px;text-align:center"><a href="'+location.pathname+'" style="display:inline-block;padding:18px 44px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:17px;box-shadow:0 8px 24px rgba(249,115,22,.4)">🚀 '+L('Start Free — 10 Clients Free','Empieza Gratis — 10 Clientes Gratis')+'</a><p style="margin-top:10px;font-size:12px;color:var(--text-muted)">'+L('Free plan: 10 clients | Pro: $149.99/mo — unlimited everything','Plan gratis: 10 clientes | Pro: $149.99/mes — todo ilimitado')+'</p><p style="margin-top:6px;font-size:11px;color:#94a3b8">'+L('Questions? Call (909) 555-0000','¿Preguntas? Llama al (909) 555-0000')+'</p></div>';
+    cta.innerHTML='<div style="padding:18px;text-align:center"><a href="'+location.pathname+'" style="display:inline-block;padding:18px 44px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:17px;box-shadow:0 8px 24px rgba(249,115,22,.4)">🚀 '+L('Start Free — 10 Clients Free','Empieza Gratis — 10 Clientes Gratis')+'</a><p style="margin-top:10px;font-size:12px;color:var(--text-muted)">'+L('Free: 10 clients | Pro: $149.99/mo — unlimited','Gratis: 10 clientes | Pro: $149.99/mes — ilimitado')+'</p></div>';
     ch.appendChild(cta);ch.scrollTop=99999;
   });
 }
@@ -806,18 +757,19 @@ document.addEventListener('DOMContentLoaded',function(){
     if(window.showSection&&!_origShowSection){_origShowSection=window.showSection;}
     showSplash().then(function(mode){
       createAssistant();
-      say(L(
+      sayW(L(
         '\uD83D\uDC4B <b>Thank you for choosing Trade Master CRM</b> to manage your company and take it to the next level! I\'m <b>Danielle</b>, and I\'ll be your personal guide through every feature.',
         '\uD83D\uDC4B <b>\u00A1Gracias por elegir Trade Master CRM</b> para administrar tu empresa y llevarla al siguiente nivel! Soy <b>Brenda</b>, y ser\u00E9 tu gu\u00EDa personal por cada funci\u00F3n.'
-      ),'info');
-      if(mode==='auto'){
-        setTimeout(function(){doAuto();},800);
-      }else{
-        say(L(
-          'Click <b>\u23E9 Next</b> to go step by step, or <b>\u25B6\uFE0F Auto</b> to sit back and watch the full tour.',
-          'Clic <b>\u23E9 Next</b> para ir paso a paso, o <b>\u25B6\uFE0F Auto</b> para sentarte y ver el tour completo.'
-        ),'info');
-      }
+      ),'info').then(function(){
+        if(mode==='auto'){
+          doAuto();
+        }else{
+          sayW(L(
+            'Click <b>\u23E9 Next</b> to go step by step, or <b>\u25B6\uFE0F Auto</b> to sit back and watch the full tour.',
+            'Clic <b>\u23E9 Next</b> para ir paso a paso, o <b>\u25B6\uFE0F Auto</b> para sentarte y ver el tour completo.'
+          ),'info');
+        }
+      });
     });
   },2000);
 });
