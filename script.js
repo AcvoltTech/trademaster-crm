@@ -3,6 +3,12 @@ var SUPABASE_URL = 'https://ucowlcrddzukykbaitzt.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb3dsY3JkZHp1a3lrYmFpdHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDY4MDUsImV4cCI6MjA4NTg4MjgwNX0.SMZ6VA4jOfT120nUZm0U19dGE2j2MQ2sn_gGjv-oPes';
 var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===== UTILITY: formatMoney =====
+function formatMoney(n) {
+    if (n == null || isNaN(n)) return '0.00';
+    return Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
 // ===== ONBOARDING EMAIL FUNCTION (VIA SUPABASE EDGE FUNCTION) =====
 async function sendOnboardingEmail(companyData) {
   try {
