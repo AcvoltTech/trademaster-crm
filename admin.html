@@ -706,6 +706,56 @@
 </div>
 
 <!-- ============ SECTION: ADMINS ============ -->
+<!-- ============ SECTION: EMBAJADORES ============ -->
+<div class="section" id="secEmbajadores">
+    <div class="stats-grid">
+        <div class="stat-card" style="border-left:4px solid #f97316"><div class="stat-icon" style="background:#fff7ed">🌟</div><div class="stat-info"><h3 id="ambTotalRefs">0</h3><p>Total Referidos</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #22c55e"><div class="stat-icon" style="background:#dcfce7">✅</div><div class="stat-info"><h3 id="ambTotalConverted">0</h3><p>Convertidos</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #3b82f6"><div class="stat-icon" style="background:#dbeafe">🏢</div><div class="stat-info"><h3 id="ambActiveAmbassadors">0</h3><p>Embajadores Activos</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #8b5cf6"><div class="stat-icon" style="background:#f3e8ff">💰</div><div class="stat-info"><h3 id="ambTotalPaid">$0</h3><p>Comisiones Pagadas</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #ef4444"><div class="stat-icon" style="background:#fee2e2">💸</div><div class="stat-info"><h3 id="ambTotalPending">$0</h3><p>Comisiones Pendientes</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #14b8a6"><div class="stat-icon" style="background:#ccfbf1">📈</div><div class="stat-info"><h3 id="ambMonthlyRecurring">$0</h3><p>Comisiones Recurrentes/Mes</p></div></div>
+    </div>
+
+    <!-- All Referrals -->
+    <div class="card">
+        <div class="card-head">
+            <h2>📋 Todos los Referidos</h2>
+            <div style="display:flex;gap:0.5rem">
+                <select id="ambFilterStatus" onchange="filterAmbRefs()" style="padding:0.4rem;border:1px solid #e5e7eb;border-radius:8px;font-size:0.8rem">
+                    <option value="all">Todos</option>
+                    <option value="pending">⏳ Pendientes</option>
+                    <option value="registered">📝 Registrados</option>
+                    <option value="converted">✅ Convertidos</option>
+                    <option value="active">🟢 Activos</option>
+                    <option value="cancelled">❌ Cancelados</option>
+                </select>
+                <button class="btn-sm btn-success" onclick="openAddReferral()">➕ Referido Manual</button>
+            </div>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Embajador (Quién Refirió)</th><th>Negocio Referido</th><th>Fecha</th><th>Plan</th><th>Status</th><th>Comisión/Mes</th><th>Acciones</th>
+        </tr></thead><tbody id="ambRefsTable"></tbody></table></div>
+    </div>
+
+    <!-- Payout Management -->
+    <div class="card">
+        <div class="card-head">
+            <h2>💸 Pagos de Comisiones</h2>
+            <button class="btn-sm btn-success" onclick="openPayAmbassador()">💵 Pagar Comisión</button>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Embajador</th><th>Monto</th><th>Fecha</th><th>Método</th><th>Status</th><th>Notas</th>
+        </tr></thead><tbody id="ambPayoutsTable"></tbody></table></div>
+    </div>
+
+    <!-- Top Ambassadors -->
+    <div class="card">
+        <div class="card-head"><h2>🏆 Top Embajadores</h2></div>
+        <div id="topAmbassadors" style="padding:1rem"><p class="empty">Sin datos</p></div>
+    </div>
+</div>
+
 <div class="section" id="secAdmins">
     <!-- KPIs -->
     <div class="stats-grid">
