@@ -136,7 +136,7 @@ function injectCSS(){
 function showSplash(){
   return new Promise(function(res){
     var s=document.createElement('div');s.id='demoSplash';
-    s.innerHTML='<div class="ds-content"><div style="font-size:60px;margin-bottom:12px">\uD83D\uDD27</div><h1 style="font-size:2rem;font-weight:800;margin:0 0 6px;color:#fff">Trade Master CRM</h1><p style="color:#f97316;font-weight:600;margin:0 0 4px">Demo Interactivo con IA</p><p style="color:#94a3b8;font-size:.85rem;margin:0 0 24px">'+CO.name+'</p><p style="color:#cbd5e1;font-size:.9rem;line-height:1.7;margin:0 0 28px;max-width:440px">Sof\u00EDa operar\u00E1 el <strong>CRM completo</strong> \u2014 crear\u00E1 clientes, t\u00E9cnicos, trabajos, facturas y m\u00E1s. <strong>20 pasos reales</strong>.</p><button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Iniciar Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Completo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 8-12 min</p></div>';
+    s.innerHTML='<div class="ds-content"><div style="font-size:60px;margin-bottom:12px">\uD83D\uDD27</div><h1 style="font-size:2rem;font-weight:800;margin:0 0 6px;color:#fff">Trade Master CRM</h1><p style="color:#f97316;font-weight:600;margin:0 0 4px">Interactive AI Demo</p><p style="color:#94a3b8;font-size:.85rem;margin:0 0 24px">'+CO.name+'</p><p style="color:#cbd5e1;font-size:.9rem;line-height:1.7;margin:0 0 28px;max-width:440px">'+((window.currentLang||'es')==='en'?'Danielle will operate the <strong>entire CRM</strong> — creating clients, technicians, jobs, invoices and more. <strong>20 real steps</strong>.':'Brenda operar\u00E1 el <strong>CRM completo</strong> — crear\u00E1 clientes, t\u00E9cnicos, trabajos, facturas y m\u00E1s. <strong>20 pasos reales</strong>.')+'</p><button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Start Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Full Demo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 8-12 min</p></div>';
     document.body.appendChild(s);
     $('demoStartBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('manual');},500);};
     $('demoAutoBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('auto');},500);};
@@ -144,11 +144,13 @@ function showSplash(){
 }
 
 /* ===== SOFIA PANEL ===== */
-function createSofia(){
+function createAssistant(){
   var p=document.createElement('div');p.id='sofiaPanel';
-  p.innerHTML='<div class="sf-head" id="sfHead"><div class="sf-hl"><span class="sf-av">\uD83D\uDC69\u200D\uD83D\uDCBC</span><div><span class="sf-name">Sof\u00EDa</span><span class="sf-role">Asistente AI</span></div></div><div class="sf-hr"><button class="sf-hb" id="sfMin">\u2212</button><button class="sf-hb" id="sfClose">\u2715</button></div></div><div class="sf-body"><div class="sf-pbar"><div class="sf-pfill" id="sfPFill"></div></div><div class="sf-step" id="sfStep">Paso 0 de '+S.total+'</div><div class="sf-chat" id="sfChat"></div></div><div class="sf-ctrl"><button class="sf-cb" id="sfPrev">\u23EA Anterior</button><button class="sf-cb sf-cp" id="sfPause">\u23F8\uFE0F Pausa</button><button class="sf-cb" id="sfNext">\u23E9 Siguiente</button><button class="sf-cb sf-auto" id="sfAuto">\u25B6\uFE0F Auto</button></div>';
+  var _nm=getLang()==="en"?"Danielle":"Brenda";
+  p.innerHTML='<div class="sf-head" id="sfHead"><div class="sf-hl"><span class="sf-av">\uD83D\uDC69\u200D\uD83D\uDCBC</span><div><span class="sf-name">Danielle</span><span class="sf-role">AI Assistant</span></div></div><div class="sf-hr"><button class="sf-hb" id="sfMute" title="Sonido">\uD83D\uDD0A</button><button class="sf-hb" id="sfMin">\u2212</button><button class="sf-hb" id="sfClose">\u2715</button></div></div><div class="sf-body"><div class="sf-pbar"><div class="sf-pfill" id="sfPFill"></div></div><div class="sf-step" id="sfStep">Step 0 of '+S.total+'</div><div class="sf-chat" id="sfChat"></div></div><div class="sf-ctrl"><button class="sf-cb" id="sfPrev">\u23EA Prev</button><button class="sf-cb sf-cp" id="sfPause">\u23F8\uFE0F Pause</button><button class="sf-cb" id="sfNext">\u23E9 Next</button><button class="sf-cb sf-auto" id="sfAuto">\u25B6\uFE0F Auto</button></div>';
   document.body.appendChild(p);
-  $('sfMin').onclick=toggleMin;$('sfClose').onclick=function(){if(confirm('Salir del demo?'))location.href=location.pathname;};
+  $('sfMute').onclick=function(){_ttsOn=!_ttsOn;this.textContent=_ttsOn?'\uD83D\uDD0A':'\uD83D\uDD07';if(!_ttsOn&&window.speechSynthesis)speechSynthesis.cancel();};
+  $('sfMin').onclick=toggleMin;$('sfClose').onclick=function(){if(confirm('Exit demo?'))location.href=location.pathname;};
   $('sfPrev').onclick=doPrev;$('sfPause').onclick=togglePause;$('sfNext').onclick=doNext;$('sfAuto').onclick=doAuto;
   var bb=document.createElement('div');bb.id='sfBubble';bb.textContent='\uD83D\uDC69\u200D\uD83D\uDCBC';bb.onclick=toggleMin;document.body.appendChild(bb);
   // Drag
@@ -157,14 +159,49 @@ function createSofia(){
   document.addEventListener('mouseup',function(){dr=false;});
   // Banner
   var bn=document.createElement('div');
-  bn.innerHTML='<div style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 16px;text-align:center;font-size:13px;font-weight:600;position:fixed;top:0;left:0;right:0;z-index:10001;display:flex;align-items:center;justify-content:center;gap:12px"><span>\uD83C\uDFAC DEMO \u2014 '+CO.name+'</span><button onclick="location.href=location.pathname" style="background:#fff;color:#ea580c;border:none;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer">\u2715 Salir</button></div>';
+  bn.innerHTML='<div style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 16px;text-align:center;font-size:13px;font-weight:600;position:fixed;top:0;left:0;right:0;z-index:10001;display:flex;align-items:center;justify-content:center;gap:12px"><span>\uD83C\uDFAC DEMO \u2014 '+CO.name+'</span><button onclick="location.href=location.pathname" style="background:#fff;color:#ea580c;border:none;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer">\u2715 Exit</button></div>';
   document.body.appendChild(bn);document.body.style.paddingTop='38px';
 }
 function toggleMin(){S.mini=!S.mini;$('sofiaPanel').style.display=S.mini?'none':'flex';$('sfBubble').style.display=S.mini?'flex':'none';}
-function say(msg,t){t=t||'info';var ch=$('sfChat');var ic={info:'\uD83D\uDCAC',action:'\u26A1',success:'\u2705',nav:'\uD83D\uDCCD'};var m=document.createElement('div');m.className='sf-msg sf-'+t;m.innerHTML='<span class="sf-mi">'+(ic[t]||'\uD83D\uDCAC')+'</span><span class="sf-mt">'+msg+'</span>';ch.appendChild(m);ch.scrollTop=ch.scrollHeight;if(S.mini)toggleMin();}
-function upP(){$('sfPFill').style.width=(S.step/S.total*100)+'%';$('sfStep').textContent='Paso '+S.step+' de '+S.total;}
-function togglePause(){S.paused=!S.paused;$('sfPause').textContent=S.paused?'\u25B6\uFE0F Play':'\u23F8\uFE0F Pausa';}
-function doNext(){if(S.step>=S.total){say('\uD83C\uDF89 Demo completado!','success');return Promise.resolve();}S.paused=false;$('sfPause').textContent='\u23F8\uFE0F Pausa';S.step++;upP();return runStep(S.step);}
+var _voiceReady=false;
+var _11KEY='';// ElevenLabs API key
+var _VOICES={en:'u5dk6dUlaEl9FLWKszcn',es:'7iMdMxFdAglGhAvtYtqS'};// Danielle=EN, Brenda=ES
+var _audioQ=[],_audioPlaying=false;
+function initVoice(){_voiceReady=true;}
+var _ttsOn=true;
+function getLang(){return(window.currentLang||'es');}
+function speak(txt){
+  if(!_ttsOn)return;
+  var clean=txt.replace(/<[^>]*>/g,'').replace(/&[^;]+;/g,' ').replace(/\s+/g,' ').trim();
+  if(!clean)return;
+  if(_11KEY){speakEL(clean);}else{speakWS(clean);}
+}
+function speakWS(txt){
+  if(!window.speechSynthesis)return;speechSynthesis.cancel();
+  var lang=getLang();var u=new SpeechSynthesisUtterance(txt);
+  u.lang=lang==='en'?'en-US':'es-MX';u.rate=1.0;u.pitch=1.1;u.volume=1;
+  var vs=speechSynthesis.getVoices();var tl=u.lang;
+  var v=vs.find(function(x){return x.lang===tl&&/female|samantha|zira|sabina/i.test(x.name);})||
+  vs.find(function(x){return x.lang===tl;})||vs.find(function(x){return x.lang.startsWith(lang);})||null;
+  if(v)u.voice=v;speechSynthesis.speak(u);
+}
+function speakEL(txt){_audioQ.push(txt);if(!_audioPlaying)playNextEL();}
+function playNextEL(){
+  if(_audioQ.length===0){_audioPlaying=false;return;}
+  _audioPlaying=true;var txt=_audioQ.shift();
+  var vid=_VOICES[getLang()]||_VOICES.en;
+  fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'/stream',{
+    method:'POST',headers:{'Content-Type':'application/json','xi-api-key':_11KEY},
+    body:JSON.stringify({text:txt,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.5,similarity_boost:0.75,style:0.3}})
+  }).then(function(r){if(!r.ok)throw new Error('EL '+r.status);return r.blob();})
+  .then(function(b){var a=new Audio(URL.createObjectURL(b));a.onended=function(){URL.revokeObjectURL(a.src);playNextEL();};a.onerror=function(){playNextEL();};a.play();})
+  .catch(function(e){console.warn('EL fallback:',e);speakWS(txt);playNextEL();});
+}
+function L(en,es){return getLang()==='en'?en:es;}
+function say(msg,t){t=t||'info';var ch=$('sfChat');var ic={info:'\uD83D\uDCAC',action:'\u26A1',success:'\u2705',nav:'\uD83D\uDCCD'};var m=document.createElement('div');m.className='sf-msg sf-'+t;m.innerHTML='<span class="sf-mi">'+(ic[t]||'\uD83D\uDCAC')+'</span><span class="sf-mt">'+msg+'</span>';ch.appendChild(m);ch.scrollTop=ch.scrollHeight;if(S.mini)toggleMin();speak(msg);}
+function upP(){$('sfPFill').style.width=(S.step/S.total*100)+'%';$('sfStep').textContent='Step '+S.step+' of '+S.total;}
+function togglePause(){S.paused=!S.paused;$('sfPause').textContent=S.paused?L('\u25B6\uFE0F Play','\u25B6\uFE0F Play'):'\u23F8\uFE0F Pause';}
+function doNext(){if(S.step>=S.total){say(L('\uD83C\uDF89 Demo complete!','\uD83C\uDF89 Demo completado!'),'success');return Promise.resolve();}S.paused=false;$('sfPause').textContent='\u23F8\uFE0F Pause';S.step++;upP();return runStep(S.step);}
 function doPrev(){if(S.step<=1)return Promise.resolve();S.step=Math.max(0,S.step-2);return doNext();}
 function doAuto(){
   if(S.playing){S.playing=false;$('sfAuto').textContent='\u25B6\uFE0F Auto';return Promise.resolve();}
@@ -182,53 +219,53 @@ case 16:return s16();case 17:return s17();case 18:return s18();case 19:return s1
 }});}
 
 function s1(){
-  say('\uD83D\uDC4B Soy <b>Sof\u00EDa</b>. Vamos a crear tu primer cliente.','info');
-  return sl(SD).then(function(){say('\uD83D\uDCCD <b>Clientes</b>','nav');showSection('clients');return sl(SD);})
-  .then(function(){say('\u26A1 Abriendo formulario...','action');var btn=$q('#clients-section [onclick*="showClientForm()"]');return btn?clk(btn):Promise.resolve();})
+  say(L("I'm <b>Danielle</b>. Let's create your first client.","Soy <b>Brenda</b>. Vamos a crear tu primer cliente."),'info');
+  return sl(SD).then(function(){say(L('<b>Customers</b>','<b>Clientes</b>'),'nav');showSection('clients');return sl(SD);})
+  .then(function(){say(L('Opening form...','Abriendo formulario...'),'action');var btn=$q('#clients-section [onclick*="showClientForm()"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>Mar\u00EDa Garc\u00EDa</b> \u2014 Residencial, Fontana','action');return ty($('clientName'),'Mar\u00EDa Garc\u00EDa');})
+  .then(function(){say(L('✏️ <b>María García</b> — Residential, Fontana','✏️ <b>María García</b> — Residencial, Fontana'),'action');return ty($('clientName'),'María García');})
   .then(function(){return ty($('clientPhone'),'(909) 555-1234');})
   .then(function(){return ty($('clientEmail'),'maria.garcia@email.com');})
   .then(function(){sv($('clientPropertyType'),'Residencial');return sl(50);})
   .then(function(){return ty($('clientAddress'),'456 Oak St, Fontana, CA 92335');})
-  .then(function(){return ty($('clientNotes'),'AC no enfr\u00EDa - Goodman 15 a\u00F1os. Servicio en espa\u00F1ol.');})
+  .then(function(){return ty($('clientNotes'),L('AC not cooling - Goodman 15 years. Service in Spanish.','AC no enfría - Goodman 15 años. Servicio en español.'));})
   .then(function(){return sl(SD);})
-  .then(function(){say('\uD83D\uDCBE Guardando...','action');$('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>Mar\u00EDa Garc\u00EDa</b> creada!','success');});
+  .then(function(){say(L('💾 Saving...','💾 Guardando...'),'action');$('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
+  .then(function(){say(L('✅ <b>María García</b> created!','✅ <b>María García</b> creada!'),'success');});
 }
 function s2(){
-  say('Cliente <b>comercial</b> \u2014 restaurante.','info');
+  say(L('<b>Commercial</b> client — restaurant.','Cliente <b>comercial</b> — restaurante.'),'info');
   return sl(SD).then(function(){showSection('clients');var btn=$q('#clients-section [onclick*="showClientForm()"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){return ty($('clientName'),'Roberto M\u00E9ndez');})
+  .then(function(){return ty($('clientName'),'Roberto Méndez');})
   .then(function(){var c=$('clientCompany');return c?ty(c,'La Michoacana Restaurant'):Promise.resolve();})
   .then(function(){return ty($('clientPhone'),'(909) 555-5678');})
   .then(function(){return ty($('clientEmail'),'lamichoacana@email.com');})
   .then(function(){sv($('clientPropertyType'),'Comercial');return ty($('clientAddress'),'2890 Highland Ave, San Bernardino, CA');})
-  .then(function(){return ty($('clientNotes'),'Walk-in cooler no mantiene temp. Urgente.');})
+  .then(function(){return ty($('clientNotes'),L('Walk-in cooler not holding temp. Urgent.','Walk-in cooler no mantiene temp. Urgente.'));})
   .then(function(){$('clientForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>2 clientes</b> en la tabla.','success');});
+  .then(function(){say(L('✅ <b>2 clients</b> in the table.','✅ <b>2 clientes</b> en la tabla.'),'success');});
 }
 function s3(){
-  say('\uD83D\uDCCD <b>Prospectos</b> \u2014 lead caliente.','nav');
+  say(L('📍 <b>Leads</b> — hot lead.','📍 <b>Prospectos</b> — lead caliente.'),'nav');
   return sl(SD).then(function(){showSection('leads');return sl(SD);})
   .then(function(){var btn=$q('#leads-section [onclick*="showLeadForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>Roberto S\u00E1nchez</b> \u2014 Furnace $4,500','action');return ty($('leadName'),'Roberto S\u00E1nchez');})
+  .then(function(){say(L('✏️ <b>Roberto Sánchez</b> — Furnace $4,500','✏️ <b>Roberto Sánchez</b> — Furnace $4,500'),'action');return ty($('leadName'),'Roberto Sánchez');})
   .then(function(){return ty($('leadPhone'),'(909) 555-9012');})
   .then(function(){return ty($('leadEmail'),'roberto.s@email.com');})
-  .then(function(){sv($('leadService'),'Calefacci\u00F3n');sv($('leadPropertyType'),'residential');return ty($('leadAddress'),'1025 Pine Ave, Rialto, CA');})
-  .then(function(){return ty($('leadNotes'),'Furnace nuevo. 1800sqft. Budget $4,500.');})
+  .then(function(){sv($('leadService'),'Calefacción');sv($('leadPropertyType'),'residential');return ty($('leadAddress'),'1025 Pine Ave, Rialto, CA');})
+  .then(function(){return ty($('leadNotes'),L('New furnace. 1800sqft. Budget $4,500.','Furnace nuevo. 1800sqft. Budget $4,500.'));})
   .then(function(){var la=$('leadLat'),ln=$('leadLng');if(la)la.value='34.1064';if(ln)ln.value='-117.3703';return sl(SD);})
   .then(function(){$('leadForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 Lead <b>Roberto S\u00E1nchez</b> \uD83D\uDD25','success');});
+  .then(function(){say(L('✅ Lead <b>Roberto Sánchez</b> 🔥','✅ Lead <b>Roberto Sánchez</b> 🔥'),'success');});
 }
 function s4(){
-  say('\uD83D\uDCCD <b>T\u00E9cnicos</b>','nav');
+  say(L('📍 <b>Technicians</b>','📍 <b>Técnicos</b>'),'nav');
   return sl(SD).then(function(){showSection('technicians');return sl(SD);})
   .then(function(){var btn=$q('#technicians-section [onclick*="showTechFormInTechSection"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>Carlos Mendoza</b> \u2014 HVAC, $35/hr','action');return ty($('techNameAlt'),'Carlos Mendoza');})
+  .then(function(){say(L('✏️ <b>Carlos Mendoza</b> — HVAC, $35/hr','✏️ <b>Carlos Mendoza</b> — HVAC, $35/hr'),'action');return ty($('techNameAlt'),'Carlos Mendoza');})
   .then(function(){return ty($('techPhoneAlt'),'(909) 555-3456');})
   .then(function(){return ty($('techEmailAlt'),'carlos@rodriguezhvac.com');})
   .then(function(){sv($('techSpecialtyAlt'),'HVAC');var cb=$('techCreateLoginAlt');if(cb)cb.checked=false;return sl(50);})
@@ -236,115 +273,115 @@ function s4(){
   .then(function(){var p=$('techPlateAlt');return p?ty(p,'8ABC123'):Promise.resolve();})
   .then(function(){return sl(SD);})
   .then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>Carlos Mendoza</b> registrado.','success');});
+  .then(function(){say(L('✅ <b>Carlos Mendoza</b> registered.','✅ <b>Carlos Mendoza</b> registrado.'),'success');});
 }
 function s5(){
-  say('\u26A1 Segundo t\u00E9cnico \u2014 <b>Refrigeraci\u00F3n</b>.','action');
+  say(L('⚡ Second technician — <b>Refrigeration</b>.','⚡ Segundo técnico — <b>Refrigeración</b>.'),'action');
   return sl(SD).then(function(){var btn=$q('#technicians-section [onclick*="showTechFormInTechSection"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){return ty($('techNameAlt'),'Miguel \u00C1ngel Torres');})
+  .then(function(){return ty($('techNameAlt'),'Miguel Ángel Torres');})
   .then(function(){return ty($('techPhoneAlt'),'(909) 555-7890');})
   .then(function(){return ty($('techEmailAlt'),'miguel@rodriguezhvac.com');})
-  .then(function(){sv($('techSpecialtyAlt'),'Refrigeraci\u00F3n');var cb=$('techCreateLoginAlt');if(cb)cb.checked=false;return sl(50);})
+  .then(function(){sv($('techSpecialtyAlt'),'Refrigeración');var cb=$('techCreateLoginAlt');if(cb)cb.checked=false;return sl(50);})
   .then(function(){var v=$('techVehicleAlt');return v?ty(v,'2022 Chevy Express'):Promise.resolve();})
   .then(function(){var p=$('techPlateAlt');return p?ty(p,'7DEF456'):Promise.resolve();})
   .then(function(){var f=$q('#techFormContainerAlt form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>2 t\u00E9cnicos</b> con GPS y acceso m\u00F3vil.','success');});
+  .then(function(){say(L('✅ <b>2 technicians</b> with GPS and mobile access.','✅ <b>2 técnicos</b> con GPS y acceso móvil.'),'success');});
 }
 function s6(){
-  say('\uD83D\uDCCD <b>Asesores del Hogar</b>','nav');
+  say(L('📍 <b>Home Advisors</b>','📍 <b>Asesores del Hogar</b>'),'nav');
   return sl(SD).then(function(){showSection('advisors');return sl(SD);})
   .then(function(){var btn=$q('#advisors-section [onclick*="showAdvisorForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>Diana Castillo</b> \u2014 meta $50K/mes','action');return ty($('advisorName'),'Diana Castillo');})
+  .then(function(){say(L('✏️ <b>Diana Castillo</b> — goal $50K/month','✏️ <b>Diana Castillo</b> — meta $50K/mes'),'action');return ty($('advisorName'),'Diana Castillo');})
   .then(function(){return ty($('advisorPhone'),'(909) 555-2345');})
   .then(function(){return ty($('advisorEmail'),'diana@rodriguezhvac.com');})
   .then(function(){sv($('advisorSpecialty'),'Residencial y Comercial');return ty($('advisorZone'),'Inland Empire');})
   .then(function(){var g=$('advisorGoal');return g?ty(g,'50000'):Promise.resolve();})
   .then(function(){$('advisorForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>Diana Castillo</b> \u2014 comisiones 5%-20%.','success');});
+  .then(function(){say(L('✅ <b>Diana Castillo</b> — commissions 5%-20%.','✅ <b>Diana Castillo</b> — comisiones 5%-20%.'),'success');});
 }
 function s7(){
-  say('\uD83D\uDCCD <b>Despacho</b> \u2014 crear trabajos','nav');
+  say(L('📍 <b>Dispatch</b> — create jobs','📍 <b>Despacho</b> — crear trabajos'),'nav');
   return sl(SD).then(function(){showSection('dispatch');return sl(SD);})
   .then(function(){var btn=$q('#dispatch-section [onclick*="showJobForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>AC Repair</b> $850 \u2192 Carlos','action');return ty($('jobTitle'),'AC Repair - Goodman no enfr\u00EDa');})
-  .then(function(){sv($('jobServiceType'),'Reparaci\u00F3n');sv($('jobPriority'),'high');return ty($('jobAddress'),'456 Oak St, Fontana, CA');})
-  .then(function(){var d=$('jobDate');if(d){d.value=new Date().toISOString().split('T')[0];}
+  .then(function(){say(L('✏️ <b>AC Repair</b> $850 → Carlos','✏️ <b>AC Repair</b> $850 → Carlos'),'action');return ty($('jobTitle'),'AC Repair - Goodman not cooling');})
+  .then(function(){sv($('jobServiceType'),'Reparación');sv($('jobPriority'),'high');return ty($('jobAddress'),'456 Oak St, Fontana, CA');})
+  .then(function(){var d=$('jobDate');if(d)d.value=new Date().toISOString().split('T')[0];
     var la=$('jobLat'),ln=$('jobLng');if(la)la.value='34.09';if(ln)ln.value='-117.43';
     var ts=$('jobTechId');if(ts&&window.techsData&&techsData[0])sv(ts,techsData[0].id);
-    return ty($('jobNotes'),'Capacitor y contactor. Mar\u00EDa Garc\u00EDa. $850');})
+    return ty($('jobNotes'),L('Capacitor and contactor. María García. $850','Capacitor y contactor. María García. $850'));})
   .then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 Trabajo asignado a <b>Carlos</b>.','success');});
+  .then(function(){say(L('✅ Job assigned to <b>Carlos</b>.','✅ Trabajo asignado a <b>Carlos</b>.'),'success');});
 }
 function s8(){
-  say('\u26A1 <b>Walk-in Cooler</b> URGENTE','action');
+  say(L('⚡ <b>Walk-in Cooler</b> URGENT','⚡ <b>Walk-in Cooler</b> URGENTE'),'action');
   return sl(SD).then(function(){var btn=$q('#dispatch-section [onclick*="showJobForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){return ty($('jobTitle'),'Walk-in Cooler - Compresor');})
-  .then(function(){sv($('jobServiceType'),'Reparaci\u00F3n');sv($('jobPriority'),'urgent');return ty($('jobAddress'),'2890 Highland Ave, SB, CA');})
+  .then(function(){return ty($('jobTitle'),'Walk-in Cooler - Compressor');})
+  .then(function(){sv($('jobServiceType'),'Reparación');sv($('jobPriority'),'urgent');return ty($('jobAddress'),'2890 Highland Ave, SB, CA');})
   .then(function(){var d=$('jobDate');if(d)d.value=new Date().toISOString().split('T')[0];
     var la=$('jobLat'),ln=$('jobLng');if(la)la.value='34.12';if(ln)ln.value='-117.29';
     var ts=$('jobTechId');if(ts&&window.techsData&&techsData[1])sv(ts,techsData[1].id);
-    return ty($('jobNotes'),'Urgente. Cooler 55\u00B0F. La Michoacana. $2,200');})
+    return ty($('jobNotes'),L('Urgent. Cooler 55°F. La Michoacana. $2,200','Urgente. Cooler 55°F. La Michoacana. $2,200'));})
   .then(function(){$('jobForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b>2 trabajos</b> $3,050.','success');});
+  .then(function(){say(L('✅ <b>2 jobs</b> $3,050.','✅ <b>2 trabajos</b> $3,050.'),'success');});
 }
 function s9(){
-  say('\uD83D\uDCCD <b>Llamadas de Servicio</b> \u2014 EMERGENCIA','nav');
+  say(L('📍 <b>Service Calls</b> — EMERGENCY','📍 <b>Llamadas de Servicio</b> — EMERGENCIA'),'nav');
   return sl(SD).then(function(){showSection('servicecalls');return sl(SD);})
   .then(function(){var btn=$q('#servicecalls-section [onclick*="showServiceCallForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F Emergencia: <b>AC no enfr\u00EDa</b>','action');return ty($('scClientName'),'Mar\u00EDa Garc\u00EDa');})
+  .then(function(){say(L('✏️ Emergency: <b>AC not cooling</b>','✏️ Emergencia: <b>AC no enfría</b>'),'action');return ty($('scClientName'),'María García');})
   .then(function(){return ty($('scClientPhone'),'(909) 555-1234');})
   .then(function(){return ty($('scAddress'),'456 Oak St, Fontana, CA');})
-  .then(function(){return ty($('scProblem'),'AC no enfr\u00EDa. Aire caliente. Mascota. Urgente.');})
+  .then(function(){return ty($('scProblem'),L('AC not cooling. Hot air only. Pet in house. Urgent.','AC no enfría. Aire caliente. Mascota. Urgente.'));})
   .then(function(){sv($('scUrgency'),'emergency');sv($('scPropertyType'),'residential');
     var pd=$('scPreferredDate');if(pd)pd.value=new Date().toISOString().split('T')[0];
     if(window.techsData&&techsData[0]){var st=$('scTechAssign');if(st)sv(st,techsData[0].id);}
     return ty($('scNotes'),'Gate #1234.');})
   .then(function(){$('serviceCallForm').dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 <b style="color:#ef4444">\uD83D\uDD34 EMERGENCIA</b> registrada.','success');});
+  .then(function(){say(L('✅ <b style="color:#ef4444">🔴 EMERGENCY</b> dispatched.','✅ <b style="color:#ef4444">🔴 EMERGENCIA</b> despachada.'),'success');});
 }
 function s10(){
-  say('\uD83D\uDCCD <b>Despacho GPS</b> \u2014 monitoreo en vivo','nav');
+  say(L('📍 <b>GPS Dispatch</b> — live tracking','📍 <b>Despacho GPS</b> — monitoreo en vivo'),'nav');
   return sl(SD).then(function(){showSection('dispatch');return sl(SD);})
-  .then(function(){say('\uD83D\uDE90 Carlos \u2192 Fontana<br>\uD83D\uDE90 Miguel \u2192 San Bernardino<br>GPS en tiempo real. Cliente recibe link de tracking.','info');return sl(SD);})
-  .then(function(){say('\u2705 Centro de control operando.','success');});
+  .then(function(){say(L('🚐 Carlos → Fontana<br>🚐 Miguel → San Bernardino<br>Real-time GPS. Customer gets tracking link.','🚐 Carlos → Fontana<br>🚐 Miguel → San Bernardino<br>GPS en tiempo real. Cliente recibe link de tracking.'),'info');return sl(SD);})
+  .then(function(){say(L('✅ Control center operating.','✅ Centro de control operando.'),'success');});
 }
 function s11(){
-  say('\uD83D\uDCCD <b>N\u00F3mina</b>','nav');
+  say(L('📍 <b>Payroll</b>','📍 <b>Nómina</b>'),'nav');
   return sl(SD).then(function(){showSection('payroll');return sl(SD);})
   .then(function(){
     var e=[{id:'py1',company_id:'demo-co',tech_id:techsData[0]?techsData[0].id:null,tech_name:techsData[0]?techsData[0].name:'Carlos',type:'hourly',hours:42,rate:35,total:1470,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()},
     {id:'py2',company_id:'demo-co',tech_id:techsData[1]?techsData[1].id:null,tech_name:techsData[1]?techsData[1].name:'Miguel',type:'hourly',hours:38,rate:30,total:1140,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()},
     {id:'py3',company_id:'demo-co',tech_id:null,tech_name:advisorsData&&advisorsData[0]?advisorsData[0].name:'Diana Castillo',type:'commission',hours:0,rate:0,total:457.50,period_start:new Date().toISOString().split('T')[0],period_end:new Date().toISOString().split('T')[0],status:'pending',created_at:new Date().toISOString()}];
     e.forEach(function(x){_db.payroll_entries.push(x);});window.payrollData=e;renderPayroll();return sl(SD);})
-  .then(function(){say('\u2705 Carlos: <b>$1,470</b> | Miguel: <b>$1,140</b> | Diana: <b>$457.50</b> | Total: <b>$3,067.50</b>','success');});
+  .then(function(){say('✅ Carlos: <b>$1,470</b> | Miguel: <b>$1,140</b> | Diana: <b>$457.50</b> | Total: <b>$3,067.50</b>','success');});
 }
 function s12(){
-  say('\uD83D\uDCCD <b>Facturas</b>','nav');
+  say(L('📍 <b>Invoices</b>','📍 <b>Facturas</b>'),'nav');
   return sl(SD).then(function(){showSection('invoices');return sl(SD);})
   .then(function(){
-    var inv={id:'inv1',company_id:'demo-co',invoice_number:'INV-202602-0001',client_name:'Mar\u00EDa Garc\u00EDa',client_email:'maria.garcia@email.com',client_phone:'(909) 555-1234',client_address:'456 Oak St, Fontana',line_items:[{name:'Service Call',qty:1,unit_price:120,labor:0,total:120},{name:'Capacitor 45/5',qty:1,unit_price:85,labor:0,total:85},{name:'Contactor 2P',qty:1,unit_price:65,labor:0,total:65},{name:'Labor',qty:2,unit_price:0,labor:125,total:250}],subtotal:520,total:520,balance_due:520,amount_paid:0,status:'draft',created_at:new Date().toISOString()};
+    var inv={id:'inv1',company_id:'demo-co',invoice_number:'INV-202602-0001',client_name:'María García',client_email:'maria.garcia@email.com',client_phone:'(909) 555-1234',client_address:'456 Oak St, Fontana',line_items:[{name:'Service Call',qty:1,unit_price:120,labor:0,total:120},{name:'Capacitor 45/5',qty:1,unit_price:85,labor:0,total:85},{name:'Contactor 2P',qty:1,unit_price:65,labor:0,total:65},{name:'Labor',qty:2,unit_price:0,labor:125,total:250}],subtotal:520,total:520,balance_due:520,amount_paid:0,status:'draft',created_at:new Date().toISOString()};
     _db.invoices.push(inv);window.invoicesData=[inv];renderInvoiceKPIs();renderInvoicesTable();return sl(SD);})
-  .then(function(){say('\u2705 <b>INV-0001</b> $520: Service $120 + Capacitor $85 + Contactor $65 + Labor $250','success');});
+  .then(function(){say('✅ <b>INV-0001</b> $520: Service $120 + Capacitor $85 + Contactor $65 + Labor $250','success');});
 }
 function s13(){
-  say('\u26A1 Marcando <b>PAGADA</b>...','action');
+  say(L('⚡ Marking <b>PAID</b>...','⚡ Marcando <b>PAGADA</b>...'),'action');
   return sl(SD).then(function(){
     invoicesData[0].status='paid';invoicesData[0].amount_paid=520;invoicesData[0].balance_due=0;
     var inv2={id:'inv2',company_id:'demo-co',invoice_number:'INV-202602-0002',client_name:'La Michoacana',client_phone:'(909) 555-5678',client_email:'lm@email.com',client_address:'2890 Highland, SB',line_items:[{name:'Cooler Repair',qty:1,unit_price:1800,labor:400,total:2200}],subtotal:2200,total:2200,balance_due:2200,amount_paid:0,status:'sent',created_at:new Date().toISOString()};
     _db.invoices.push(inv2);invoicesData.push(inv2);renderInvoiceKPIs();renderInvoicesTable();return sl(SD);})
-  .then(function(){say('\u2705 INV-0001 <b style="color:#16a34a">PAGADA</b> | INV-0002 <b style="color:#f59e0b">$2,200 pendiente</b>','success');});
+  .then(function(){say(L('✅ INV-0001 <b style="color:#16a34a">PAID</b> $520 | INV-0002 <b style="color:#f59e0b">$2,200 pending</b>','✅ INV-0001 <b style="color:#16a34a">PAGADA</b> $520 | INV-0002 <b style="color:#f59e0b">$2,200 pendiente</b>'),'success');});
 }
 function s14(){
-  say('\uD83D\uDCCD <b>Gastos</b>','nav');
+  say(L('📍 <b>Expenses</b>','📍 <b>Gastos</b>'),'nav');
   return sl(SD).then(function(){showSection('expenses');return sl(SD);})
   .then(function(){var btn=$q('#expenses-section [onclick*="showExpenseForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F Gasolina <b>$287.50</b>','action');sv($('expCategory'),'vehicle_gas');return ty($('expVendor'),'Chevron');})
+  .then(function(){say(L('✏️ Gas <b>$287.50</b>','✏️ Gasolina <b>$287.50</b>'),'action');sv($('expCategory'),'vehicle_gas');return ty($('expVendor'),'Chevron');})
   .then(function(){return ty($('expAmount'),'287.50');})
   .then(function(){sv($('expFrequency'),'monthly');sv($('expType'),'variable');$('expDate').value=new Date().toISOString().split('T')[0];return sl(SD);})
   .then(function(){var f=$q('#expenses-section form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(600);})
@@ -354,79 +391,78 @@ function s14(){
      {category:'vehicle_payment',vendor:'Ford Motor Credit',amount:650,type:'fixed'}]
     .forEach(function(e){e.id='exp'+(++_idc);e.company_id='demo-co';e.frequency='monthly';e.date=new Date().toISOString().split('T')[0];e.created_at=new Date().toISOString();_db.expenses.push(e);expensesData.push(e);});
     renderExpenses();return sl(SD);})
-  .then(function(){say('\u2705 <b>4 gastos</b> \u2014 Total: <b>$1,537.49</b>','success');});
+  .then(function(){say(L('✅ <b>4 expenses</b> — Total: <b>$1,537.49</b>','✅ <b>4 gastos</b> — Total: <b>$1,537.49</b>'),'success');});
 }
 function s15(){
-  say('\uD83D\uDCCD <b>Mi Dinero</b>','nav');
+  say(L('📍 <b>My Money</b>','📍 <b>Mi Dinero</b>'),'nav');
   return sl(SD).then(function(){showSection('mymoney');return sl(SD);})
-  .then(function(){say('\u2705 Gr\u00E1fica ingresos vs gastos. Transacciones en tiempo real.','success');});
+  .then(function(){say(L('✅ Income vs Expenses chart. Real-time transactions.','✅ Gráfica ingresos vs gastos. Transacciones en tiempo real.'),'success');});
 }
 function s16(){
-  say('\uD83D\uDCCD <b>N\u00F3mina</b> detallada','nav');
+  say(L('📍 <b>Payroll</b> detailed','📍 <b>Nómina</b> detallada'),'nav');
   return sl(SD).then(function(){showSection('payroll');return sl(SD);})
-  .then(function(){say('\u2705 Tabla completa. Exporta a QuickBooks, ADP, Gusto.','success');});
+  .then(function(){say(L('✅ Full table. Export to QuickBooks, ADP, Gusto.','✅ Tabla completa. Exporta a QuickBooks, ADP, Gusto.'),'success');});
 }
 function s17(){
-  say('\uD83D\uDCCD <b>Mercadotecnia</b>','nav');
+  say(L('📍 <b>Marketing</b>','📍 <b>Mercadotecnia</b>'),'nav');
   return sl(SD).then(function(){showSection('marketing');return sl(SD);})
   .then(function(){var btn=$q('#marketing-section [onclick*="showCampaignForm"]');return btn?clk(btn):Promise.resolve();})
   .then(function(){return sl(400);})
-  .then(function(){say('\u270D\uFE0F <b>AC Tune-Up $79</b> Google Ads','action');return ty($('campName'),'Promo Verano - AC Tune-Up $79');})
+  .then(function(){say(L('✏️ <b>AC Tune-Up $79</b> Google Ads','✏️ <b>AC Tune-Up $79</b> Google Ads'),'action');return ty($('campName'),'Promo Summer - AC Tune-Up $79');})
   .then(function(){sv($('campType'),'google_ads');return ty($('campBudget'),'1500');})
   .then(function(){var cs=$('campStart'),ce=$('campEnd');if(cs)cs.value=new Date().toISOString().split('T')[0];if(ce){var d=new Date();d.setDate(d.getDate()+60);ce.value=d.toISOString().split('T')[0];}
     return ty($('campMessage'),'Tune-Up $79. Rodriguez HVAC. (909) 555-0000');})
   .then(function(){var f=$q('#marketing-section form');if(f)f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return sl(800);})
-  .then(function(){say('\u2705 Campa\u00F1a <b>Google Ads</b> $1,500 activa.','success');});
+  .then(function(){say(L('✅ Campaign <b>Google Ads</b> $1,500 active.','✅ Campaña <b>Google Ads</b> $1,500 activa.'),'success');});
 }
 function s18(){
-  say('\uD83D\uDCCD <b>Lista de Precios</b>','nav');
+  say(L('📍 <b>Price Book</b>','📍 <b>Lista de Precios</b>'),'nav');
   return sl(SD).then(function(){showSection('pricebook');return sl(SD);})
   .then(function(){
     [{name:'Capacitor 45/5 MFD',sku:'CAP-455',category:'ac_parts',unit:'each',cost:12,price:85},
      {name:'Contactor 2P 40A',sku:'CON-2P',category:'ac_parts',unit:'each',cost:8,price:65},
      {name:'Motor Fan 1/4 HP',sku:'MTR-025',category:'motors',unit:'each',cost:45,price:195},
-     {name:'R-410A por libra',sku:'REF-410',category:'refrigerants',unit:'lb',cost:15,price:85},
-     {name:'Termostato Honeywell',sku:'TSTAT',category:'controls',unit:'each',cost:35,price:175},
-     {name:'Filtro 16x25x1',sku:'FLT-162',category:'filters',unit:'each',cost:4,price:25},
+     {name:'R-410A per lb',sku:'REF-410',category:'refrigerants',unit:'lb',cost:15,price:85},
+     {name:'Thermostat Honeywell',sku:'TSTAT',category:'controls',unit:'each',cost:35,price:175},
+     {name:'Filter 16x25x1',sku:'FLT-162',category:'filters',unit:'each',cost:4,price:25},
      {name:'Service Call 0-10mi',sku:'SC-010',category:'labor',unit:'flat',cost:0,price:70},
      {name:'Service Call 10-20mi',sku:'SC-1020',category:'labor',unit:'flat',cost:0,price:120},
-     {name:'Labor por Hora',sku:'LAB-HR',category:'labor',unit:'hour',cost:0,price:125},
+     {name:'Labor per Hour',sku:'LAB-HR',category:'labor',unit:'hour',cost:0,price:125},
      {name:'AC Tune-Up 21pts',sku:'TUNE-21',category:'labor',unit:'flat',cost:0,price:79}]
     .forEach(function(it){it.id='pb'+(++_idc);it.company_id='demo-co';_db.price_book.push(it);});
     window.priceBookData=_db.price_book.slice();renderPriceBook();return sl(SD);})
-  .then(function(){say('\u2705 <b>10 art\u00EDculos</b> \u2014 Capacitor $12\u2192$85 (608%), R-410A $15\u2192$85 (467%)','success');});
+  .then(function(){say(L('✅ <b>10 items</b> — Capacitor $12→$85 (608%), R-410A $15→$85 (467%)','✅ <b>10 artículos</b> — Capacitor $12→$85 (608%), R-410A $15→$85 (467%)'),'success');});
 }
 function s19(){
-  say('\uD83D\uDCCD <b>Reportes</b>','nav');
+  say(L('📍 <b>Reports</b>','📍 <b>Reportes</b>'),'nav');
   return sl(SD).then(function(){showSection('reports');return sl(SD);})
-  .then(function(){say('\u2705 Revenue, trabajos por t\u00E9cnico, fuentes, productividad. Exporta a PDF.','success');});
+  .then(function(){say(L('✅ Revenue, jobs by tech, lead sources, productivity. Export to PDF.','✅ Revenue, trabajos por técnico, fuentes, productividad. Exporta a PDF.'),'success');});
 }
 function s20(){
-  say('\uD83D\uDCCD <b>Configuraci\u00F3n</b>','nav');
+  say(L('📍 <b>Settings</b>','📍 <b>Configuración</b>'),'nav');
   return sl(SD).then(function(){showSection('settings');return sl(SD);})
-  .then(function(){say('\u2705 Empresa configurada: licencia, bond, documentos legales.','success');return sl(SD);})
-  .then(function(){say('\uD83D\uDCCD <b>Dashboard</b> final','nav');showSection('dashboard');return sl(SD);})
-  .then(function(){say('\uD83C\uDF89 <b>DEMO COMPLETADO!</b><br>\uD83D\uDC65 2 clientes | \uD83C\uDFAF 1 lead | \uD83D\uDC77 2 t\u00E9cnicos | \uD83C\uDFE0 1 advisor<br>\uD83D\uDD27 2 trabajos $3,050 | \uD83D\uDCDE 1 emergencia<br>\uD83D\uDCC4 2 facturas $2,720 | \uD83D\uDCE3 1 campa\u00F1a | \uD83D\uDCD2 10 art\u00EDculos','success');return sl(600);})
+  .then(function(){say(L('✅ Company configured: license, bond, legal docs.','✅ Empresa configurada: licencia, bond, documentos legales.'),'success');return sl(SD);})
+  .then(function(){say(L('📍 <b>Dashboard</b> final','📍 <b>Dashboard</b> final'),'nav');showSection('dashboard');return sl(SD);})
+  .then(function(){say(L('🎉 <b>DEMO COMPLETE!</b><br>👥 2 clients | 🎯 1 lead | 👷 2 techs | 🏠 1 advisor<br>🔧 2 jobs $3,050 | 📞 1 emergency<br>📄 2 invoices $2,720 | 📣 1 campaign | 📒 10 items','🎉 <b>¡DEMO COMPLETADO!</b><br>👥 2 clientes | 🎯 1 lead | 👷 2 técnicos | 🏠 1 advisor<br>🔧 2 trabajos $3,050 | 📞 1 emergencia<br>📄 2 facturas $2,720 | 📣 1 campaña | 📒 10 artículos'),'success');return sl(600);})
   .then(function(){
     var ch=$('sfChat');var cta=document.createElement('div');
-    cta.innerHTML='<div style="padding:14px;text-align:center"><a href="'+location.pathname+'" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(249,115,22,.4)">\uD83D\uDE80 Registrarme</a><p style="margin-top:8px;font-size:11px;color:var(--text-muted)">Free 10 clientes | Pro $149.99/mes</p></div>';
+    cta.innerHTML='<div style="padding:14px;text-align:center"><a href="'+location.pathname+'" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(249,115,22,.4)">🚀 '+L('Sign Up Now','Registrarme')+'</a><p style="margin-top:8px;font-size:11px;color:var(--text-muted)">'+L('Free 10 clients | Pro $149.99/mo','Free 10 clientes | Pro $149.99/mes')+'</p></div>';
     ch.appendChild(cta);ch.scrollTop=99999;
   });
 }
-
 /* ===== INIT - Wait for CRM to fully load ===== */
 document.addEventListener('DOMContentLoaded',function(){
   // script.js DOMContentLoaded fires first, inits CRM with our mock
   // Give it time to finish async init (loadCompanyId, showDashboard, loadAllData)
   setTimeout(function(){
-    injectCSS();
+    injectCSS();initVoice();
     showSplash().then(function(mode){
-      createSofia();
-      say('\uD83D\uDC4B Soy <b>Sof\u00EDa</b>, tu asistente AI de Trade Master CRM.','info');
+      createAssistant();
+      say(L('\uD83D\uDC4B I\'m <b>Danielle</b>, your AI assistant for Trade Master CRM.','\uD83D\uDC4B Soy <b>Brenda</b>, tu asistente AI de Trade Master CRM.'),'info');
       if(mode==='auto'){
         setTimeout(function(){doAuto();},800);
       }else{
-        say('Clic <b>\u23E9 Siguiente</b> o <b>\u25B6\uFE0F Auto</b> para comenzar.','info');
+        say('Clic <b>\u23E9 Next</b> o <b>\u25B6\uFE0F Auto</b> para comenzar.','info');
       }
     });
   },2000);
