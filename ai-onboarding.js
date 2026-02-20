@@ -26,8 +26,8 @@ if(typeof formatMoney==='undefined'){window.formatMoney=function(a){var n=parseF
   let currentLang = 'es';
   let currentAudio = null;
   const XI_KEY = 'sk_8e80353deeb8fe03cc064e016d771560111e4777e0eb2df3';
-  const VOICE_ES = 'xNBKYX8bgbeq8SQujlNN';
-  const VOICE_EN = 'QhsNwX2LUJNG0LGpS0pi';
+  const VOICE_ES = '7iMdMxFdAglGhAvtYtqS';
+  const VOICE_EN = '7iMdMxFdAglGhAvtYtqS';
 
   function initVoice() {
     detectCRMLang();
