@@ -450,6 +450,15 @@ function switchTab(tab) {
     else { btns[1].classList.add('active'); rf.classList.add('active'); }
 }
 
+// ====== ADMIN MODE EXIT ======
+function exitAdminMode() {
+    localStorage.removeItem('tm_admin_access');
+    window._adminMode = null;
+    window.close(); // Close the tab (opened by admin)
+    // If window.close doesn't work (wasn't opened by script), redirect
+    setTimeout(function() { location.href = location.pathname.replace('index.html', 'admin.html'); }, 200);
+}
+
 async function handleLogin(event) {
     event.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -2215,6 +2224,63 @@ document.addEventListener('DOMContentLoaded', async function() {
     var params = new URLSearchParams(window.location.search);
     var trackId = params.get('track');
     if (trackId) { initTrackingPage(trackId); return; }
+
+    // ====== ADMIN ACCESS MODE ======
+    var adminData = null;
+    try { adminData = JSON.parse(localStorage.getItem('tm_admin_access')); } catch(e){}
+    if (adminData && adminData.company_id && (Date.now() - adminData.timestamp) < 3600000) {
+        // Valid admin session (expires in 1 hour)
+        console.log('🔧 ADMIN MODE: Entering CRM for', adminData.company_name);
+        
+        // Set globals to impersonate this company
+        companyId = adminData.company_id;
+        currentUser = {
+            id: 'admin_' + adminData.admin_id,
+            email: adminData.company_email || 'admin@trademaster.com',
+            user_metadata: {
+                first_name: '🔧 Admin',
+                last_name: '(' + adminData.admin_name + ')',
+                company_name: adminData.company_name
+            }
+        };
+        
+        // Load full company info from Supabase
+        var compRes = await sbClient.from('companies').select('*').eq('id', companyId).single();
+        if (compRes.data) {
+            window._companyInfo = compRes.data;
+        } else {
+            window._companyInfo = {
+                id: adminData.company_id,
+                name: adminData.company_name,
+                email: adminData.company_email,
+                phone: adminData.company_phone,
+                address: adminData.company_address
+            };
+        }
+        
+        // Clear the admin access token (one-time use)
+        localStorage.removeItem('tm_admin_access');
+        // Store flag so we know we're in admin mode during this session
+        window._adminMode = adminData;
+        
+        // Show dashboard
+        showDashboard();
+        
+        // Inject admin toolbar
+        var adminBar = document.createElement('div');
+        adminBar.id = 'adminBar';
+        adminBar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-family:Inter,sans-serif;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,0.2)';
+        adminBar.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">🔧</span> MODO ADMIN — Estás en el CRM de <strong style="margin:0 4px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:4px">' + adminData.company_name + '</strong> como ' + adminData.admin_name + '</div><button onclick="exitAdminMode()" style="background:#fff;color:#ea580c;border:none;padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">✕ Salir del CRM</button>';
+        document.body.prepend(adminBar);
+        // Push dashboard down
+        var dashPage = document.getElementById('dashboardPage');
+        if (dashPage) dashPage.style.paddingTop = '44px';
+        var sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.style.top = '44px';
+        
+        return; // Skip normal auth flow
+    }
+    // ====== END ADMIN ACCESS MODE ======
 
     var session = await sbClient.auth.getSession();
     if (session.data.session && session.data.session.user) {
