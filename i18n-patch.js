@@ -938,7 +938,14 @@ var T={
 'Técnico':'Technician',
 'Trabajo':'Job',
 'Correo del Negocio':'Business Email',
-'Licencia de Manejar':'Driver License'
+'Licencia de Manejar':'Driver License',
+'Todas':'All',
+'Sin comunicaciones. Registra tu primera interacción con un cliente.':'No communications. Record your first interaction with a client.',
+'Todas las comunicaciones':'All communications',
+'Llamada':'Call',
+'Mensaje de Texto':'Text Message',
+'Visita':'Visit',
+'Seguimiento':'Follow-up'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -1243,7 +1250,9 @@ var PATTERNS = [
   [/Factura manual/g, 'Manual Invoice'],
   [/Prueba de Flujo/g, 'Airflow Test'],
   [/El coordinador de despacho puede subir correo/g, 'The dispatch coordinator can upload mail'],
-  [/Contabilidad/g, 'Accounting']
+  [/Contabilidad/g, 'Accounting'],
+  [/Sin comunicaciones/g, 'No communications'],
+  [/Registra tu primera interacción con un cliente/g, 'Record your first interaction with a client']
 ];
 
 function applyPatterns(){
