@@ -25,7 +25,7 @@
         <meta name="twitter:description" content="CRM profesional para técnicos HVAC con asistente AI integrado.">
     <title>Trade Master - CRM HVACR | Gestión para Técnicos HVAC</title>
     <link rel="stylesheet" href="styles.css">
-        <!-- ai-onboarding removed - replaced by ai-demo-engine.js -->
+        <link rel="stylesheet" href="ai-onboarding.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkHcL1QcgKzxABmI4IJeEmjjvnZz_Xtys"></script>
   </head>
@@ -136,13 +136,6 @@
             </form>
             <p class="auth-link">¿No tienes cuenta? <a href="#" onclick="switchTab('register')">Regístrate aquí</a></p>
             
-            <!-- DEMO BUTTON -->
-            <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:2px solid #f9731644;">
-              <p style="margin:0 0 8px;font-size:12px;color:#64748b;">¿Quieres ver cómo funciona primero?</p>
-              <a href="?demo=true" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(249,115,22,.35);transition:all .3s;letter-spacing:.5px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 30px rgba(249,115,22,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 24px rgba(249,115,22,.35)'">▶️ Ver Demo en Vivo</a>
-              <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;">Sofia te guiará por todo el CRM — sin registrarte</p>
-            </div>
-
             <!-- Forgot Password -->
             <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;">
               <a href="#" onclick="showForgotPassword()" style="color:#1e3a5f;text-decoration:none;font-size:14px;">🔑 ¿Olvidaste tu contraseña?</a>
@@ -316,6 +309,7 @@
             <a href="#" onclick="showSection('marketing')" class="nav-link"><span>📣</span> <span data-i18n="nav_marketing">Mercadotecnia</span></a>
             <a href="#" onclick="showSection('pricebook')" class="nav-link"><span>📒</span> <span data-i18n="nav_pricebook">Lista de Precios</span></a>
             <a href="#" onclick="showSection('reports')" class="nav-link"><span>📊</span> <span data-i18n="nav_reports">Reportes</span></a>
+            <a href="#" onclick="showSection('ambassadors')" class="nav-link"><span>🌟</span> Programa Embajadores</a>
           </div>
           <div class="nav-group">
             <span class="nav-group-title" data-i18n="nav_system">Sistema</span>
@@ -2706,6 +2700,64 @@
             </div>
           </div>
 
+          <!-- ===== PROGRAMA EMBAJADORES ===== -->
+          <div id="ambassadors-section" class="section">
+            <div class="card" style="margin-bottom:16px;border:2px solid #f97316;background:linear-gradient(135deg,#fff7ed,#fff);">
+              <div class="card-top">
+                <h3>🌟 Programa de Embajadores Trade Master</h3>
+              </div>
+              <p style="font-size:13px;color:#92400e;margin-bottom:16px;font-weight:500">
+                ¡Gana dinero refiriendo negocios a Trade Master CRM! Comparte tu código único y gana <strong>comisión por cada negocio que se registre y active su plan.</strong>
+              </p>
+              <!-- Referral Code Box -->
+              <div style="background:linear-gradient(135deg,#f97316,#ea580c);border-radius:12px;padding:24px;color:#fff;text-align:center;margin-bottom:20px">
+                <p style="font-size:12px;opacity:0.8;margin-bottom:6px">Tu Código de Embajador</p>
+                <div style="font-size:28px;font-weight:900;font-family:monospace;letter-spacing:4px;margin-bottom:12px" id="ambassadorCode">TM-0000</div>
+                <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:8px;font-size:12px;margin-bottom:16px;word-break:break-all" id="ambassadorLink">https://trademaster-crm.com/?ref=TM-0000</div>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                  <button onclick="copyRefLink()" style="background:#fff;color:#ea580c;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📋 Copiar Link</button>
+                  <button onclick="shareRefWhatsApp()" style="background:#25d366;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">💬 WhatsApp</button>
+                  <button onclick="shareRefEmail()" style="background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📧 Email</button>
+                  <button onclick="shareRefFacebook()" style="background:#1877f2;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">📘 Facebook</button>
+                </div>
+              </div>
+              <!-- Ambassador Stats -->
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f97316" id="ambReferred">0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Referidos</div></div>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e" id="ambConverted">0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Convertidos</div></div>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#8b5cf6" id="ambEarned">$0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Ganado</div></div>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#3b82f6" id="ambPending">$0</div><div style="font-size:11px;color:#6b7280;font-weight:600">Pendiente</div></div>
+              </div>
+              <!-- How it Works -->
+              <div style="background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin-bottom:20px">
+                <h4 style="font-size:14px;margin-bottom:12px">🎯 ¿Cómo funciona?</h4>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:12px">
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">1️⃣</span><div><strong>Comparte tu código</strong><br>Envía tu link a negocios que necesiten un CRM</div></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">2️⃣</span><div><strong>Se registran</strong><br>El negocio crea su cuenta con tu código</div></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">3️⃣</span><div><strong>Activan plan</strong><br>Cuando pagan su primer mes, tú ganas</div></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:20px">4️⃣</span><div><strong>¡Cobra!</strong><br>Recibe tu comisión cada mes</div></div>
+                </div>
+              </div>
+              <!-- Commission Table -->
+              <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:20px">
+                <h4 style="font-size:14px;margin-bottom:12px">💰 Tabla de Comisiones</h4>
+                <table style="width:100%;font-size:12px;border-collapse:collapse">
+                  <thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Plan Referido</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Precio</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Tu Comisión</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Recurrente</th></tr></thead>
+                  <tbody>
+                    <tr><td style="padding:8px">🔵 Profesional</td><td style="padding:8px;text-align:center">$149.99/mes</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$25/mes</td><td style="padding:8px;text-align:center">✅ Cada mes</td></tr>
+                    <tr style="background:#f8fafc"><td style="padding:8px">🟣 Enterprise</td><td style="padding:8px;text-align:center">$299/mes</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$50/mes</td><td style="padding:8px;text-align:center">✅ Cada mes</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Referrals List -->
+              <h4 style="font-size:14px;margin-bottom:12px">📋 Mis Referidos</h4>
+              <div id="ambassadorReferrals" style="max-height:400px;overflow-y:auto"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Aún no tienes referidos — ¡comparte tu código!</p></div>
+              <!-- Payout History -->
+              <h4 style="font-size:14px;margin:20px 0 12px">💸 Historial de Pagos</h4>
+              <div id="ambassadorPayouts" style="max-height:300px;overflow-y:auto"><p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Sin pagos aún</p></div>
+            </div>
+          </div>
+
           <!-- ===== USUARIOS Y EQUIPO ===== -->
           <div id="team-section" class="section">
             <div class="card" style="margin-bottom:16px;border:2px solid var(--primary);">
@@ -4486,7 +4538,7 @@
       }
     </style>
 
-    <script src="script.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="script.js"></script>
     <script>
       // Format phone number as user types
       function formatPhone(input) {
@@ -4972,7 +5024,6 @@
       console.log('✅ Trade Master CRM - Client Limits System loaded');
     </script>
   <script src="i18n-patch.js"></script>
-  <!-- ai-onboarding.js removed - replaced by ai-demo-engine.js -->
-    <script src="ai-demo-engine.js"></script>
-</body>
+  <script src="ai-onboarding.js"></script>
+  </body>
 </html>
