@@ -797,7 +797,56 @@ var T={
 '🇺🇸 Estado / State':'🇺🇸 State',
 'Equipos de Refrigeración':'Refrigeration Equipment',
 'Equipos de Calefacción':'Heating Equipment',
-'Equipos Refrigeración':'Refrigeration Equipment'
+'Equipos Refrigeración':'Refrigeration Equipment',
+
+// --- Dynamic/script.js generated texts ---
+'🎯 Centro de Mando':'🎯 Command Center',
+'Operaciones en tiempo real - Haz clic en cada tarjeta para ver detalles y ubicaciones':'Real-time operations - Click each card to see details and locations',
+'🔄 Actualizar':'🔄 Refresh',
+'Por agendar':'To schedule',
+'Ver vendedores':'View salespeople',
+'Disponibles':'Available',
+'Disponible':'Available',
+'Fuera de línea':'Offline',
+'Vendedor':'Salesperson',
+'🏠 Vendedor (Home Advisor)':'🏠 Salesperson (Home Advisor)',
+'Disponible • ❓ Sin ubicación':'Available • ❓ No location',
+'Ocupado • ❓ Sin ubicación':'Busy • ❓ No location',
+'Vendedor • ❓ Sin ubicación':'Salesperson • ❓ No location',
+'No hay instalaciones en progreso. Usa el botón \"+ Nueva Instalación\" para agregar una.':'No installations in progress. Use the \"+ New Installation\" button to add one.',
+'Tasa de Conversión:':'Conversion Rate:',
+'No hay facturas en esta categoría.':'No invoices in this category.',
+'No hay referencias todavía':'No referrals yet',
+'Sin artículos':'No items',
+'Sin campañas':'No campaigns',
+'Sin historial de sincronización':'No sync history',
+'Método':'Method',
+'Factura':'Invoice',
+'Coordinador de Despacho':'Dispatch Coordinator',
+'🎯 Coordinador de Despacho':'🎯 Dispatch Coordinator',
+'Seleccionar Advisor...':'Select Advisor...',
+'Seleccionar Archivo':'Select File',
+'👤 Lead Propio del Vendedor':'👤 Salesperson\'s Own Lead',
+'🎯 Asignar Lead a Vendedor':'🎯 Assign Lead to Salesperson',
+'📷 Actualizar Foto':'📷 Update Photo',
+'Cuenta del Proveedor':'Supplier Account',
+'Configurar ADP Workforce':'Configure ADP Workforce',
+'Última Ubicación':'Last Location',
+'Fórmula:':'Formula:',
+'— Factura manual —':'— Manual Invoice —',
+'✏️ Otro proveedor...':'✏️ Other supplier...',
+'Vehículo / Vehicle':'Vehicle',
+'Vehículo / Mantenimiento':'Vehicle / Maintenance',
+'Agrega al Dueño/CEO primero, luego la persona de contabilidad y el coordinador de despacho.':'Add the Owner/CEO first, then the accounting person and dispatch coordinator.',
+'* Aplica igual para leads de la empresa y leads propios del vendedor':'* Applies equally to company leads and salesperson\'s own leads',
+'Reparación AC':'AC Repair',
+'Instalación AC':'AC Installation',
+'Fotos Después':'After Photos',
+'No hay citas próximas':'No upcoming appointments',
+'Recién Pagadas':'Recently Paid',
+'Seleccionar trabajo...':'Select job...',
+'Seleccionar...':'Select...',
+'── Técnicos ──':'── Technicians ──'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -808,14 +857,15 @@ function translateDOM(){
   var isEN = currentLang === 'en';
 
   // Translate all text nodes in leaf elements
-  var selectors = 'button,label,h2,h3,h4,th,td,span,a,option,legend,summary,p,small,li';
+  var selectors = 'button,label,h2,h3,h4,h5,th,td,span,a,option,legend,summary,p,small,li,div';
   document.querySelectorAll(selectors).forEach(function(el){
     // Skip elements with data-i18n (handled by applyLanguage)
     if(el.getAttribute('data-i18n')) return;
-    // Skip elements with many children (containers)
-    if(el.children.length > 3) return;
-    // Skip script/style
-    if(el.closest('script,style,.ai-chat-panel')) return;
+    // Skip elements with many children (containers) - but allow divs with few children
+    if(el.tagName === 'DIV' && el.children.length > 2) return;
+    if(el.tagName !== 'DIV' && el.children.length > 3) return;
+    // Skip script/style/ai panel
+    if(el.closest('script,style,.ai-chat-panel,noscript')) return;
 
     var text = el.textContent.trim();
     if(!text || text.length < 2 || text.length > 200) return;
@@ -850,8 +900,12 @@ function translateDOM(){
   // Translate placeholders
   document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(function(el){
     if(!el._origPH) el._origPH = el.placeholder;
-    if(isEN && T[el._origPH]){
-      el.placeholder = T[el._origPH];
+    if(isEN){
+      if(T[el._origPH]){
+        el.placeholder = T[el._origPH];
+      } else if(el._origPH.match(/Buscar cliente, trabajo, factura/)){
+        el.placeholder = el._origPH.replace('Buscar cliente, trabajo, factura...','Search client, job, invoice...');
+      }
     } else if(!isEN && el._origPH){
       el.placeholder = el._origPH;
     }
@@ -866,6 +920,9 @@ function translateDOM(){
       el.title = el._origTitle;
     }
   });
+
+  // Apply regex patterns for dynamic content
+  if(isEN) applyPatterns();
 }
 
 function translateTextNodes(el, fromText, toText){
@@ -877,6 +934,57 @@ function translateTextNodes(el, fromText, toText){
     if(trimmed.length > 1 && T[trimmed]){
       node.textContent = node.textContent.replace(trimmed, T[trimmed]);
     }
+  }
+}
+
+// Partial pattern replacements for dynamic content from script.js
+var PATTERNS = [
+  [/Reparación AC/g, 'AC Repair'],
+  [/Instalación AC/g, 'AC Installation'],
+  [/Reparación/g, 'Repair'],
+  [/(\d+) días/g, '$1 days'],
+  [/Sin ubicación/g, 'No location'],
+  [/Equipo con más de (\d+) años/g, 'Equipment over $1 years old'],
+  [/considerar reemplazo/g, 'consider replacement'],
+  [/La llamada de servicio SIEMPRE se cobra/g, 'The service call is ALWAYS charged'],
+  [/si el cliente decide hacer el trabajo, se cobra ADICIONAL a labor \+ partes/g, 'if the client proceeds, it is charged IN ADDITION to labor + parts'],
+  [/Fotos Después/g, 'After Photos'],
+  [/Fuera de línea/g, 'Offline'],
+  [/Última Ubicación/g, 'Last Location'],
+  [/Por agendar/g, 'To schedule'],
+  [/Disponible/g, 'Available'],
+  [/Ocupado/g, 'Busy'],
+  [/Vendedor/g, 'Salesperson'],
+  [/Pendiente/g, 'Pending'],
+  [/Trabajo Nuevo/g, 'New Job'],
+  [/Trabajo En Progreso/g, 'Job In Progress'],
+  [/Recién Pagadas/g, 'Recently Paid'],
+  [/Sube tus documentos legales y de seguros/g, 'Upload your legal and insurance documents'],
+  [/se incluirán automáticamente en estimados y facturas/g, 'will be automatically included in estimates and invoices'],
+  [/Los recibos del vendedor deben coincidir con los recibos de la empresa/g, 'Salesperson receipts must match company receipts'],
+  [/El sistema compara automáticamente/g, 'The system automatically compares'],
+  [/monto, fecha y proveedor/g, 'amount, date and supplier']
+];
+
+function applyPatterns(){
+  if(typeof currentLang==='undefined' || currentLang !== 'en') return;
+  // Apply regex patterns to text nodes that weren't caught by exact match
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  while(walker.nextNode()){
+    var node = walker.currentNode;
+    if(node.parentElement && node.parentElement.closest('script,style,.ai-chat-panel,noscript,input,textarea')) continue;
+    var text = node.textContent;
+    if(text.length < 3) continue;
+    var changed = false;
+    PATTERNS.forEach(function(p){
+      if(p[0].test(text)){
+        text = text.replace(p[0], p[1]);
+        changed = true;
+        // Reset regex lastIndex
+        p[0].lastIndex = 0;
+      }
+    });
+    if(changed) node.textContent = text;
   }
 }
 
