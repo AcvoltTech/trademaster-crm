@@ -970,7 +970,78 @@ var T={
 'Llamada':'Call',
 'Mensaje de Texto':'Text Message',
 'Visita':'Visit',
-'Seguimiento':'Follow-up'
+'Seguimiento':'Follow-up',
+// --- Schedule ---
+'📅 Calendario de Citas':'📅 Appointment Calendar',
+'Calendario de Citas':'Appointment Calendar',
+'Mes':'Month',
+'Semana':'Week',
+'Hoy':'Today',
+'+ Nueva Cita':'+ New Appointment',
+'Febrero 2026':'February 2026',
+'Enero':'January','Febrero':'February','Marzo':'March','Abril':'April','Mayo':'May','Junio':'June',
+'Julio':'July','Agosto':'August','Septiembre':'September','Octubre':'October','Noviembre':'November','Diciembre':'December',
+'DOM':'SUN','LUN':'MON','MAR':'TUE','MIÉ':'WED','JUE':'THU','VIE':'FRI','SÁB':'SAT',
+'No hay citas este día.':'No appointments this day.',
+'+ Crear cita':'+ Create appointment',
+'jueves, 19 de febrero':'Thursday, February 19',
+
+// --- Leads ---
+'📞 Llamar':'📞 Call',
+'💬 Texto':'💬 Text',
+'Mapa de Leads':'Leads Map',
+'ACCIONES':'ACTIONS',
+'Texto enviado':'Text sent',
+
+// --- Service Calls ---
+'Nuevas':'New',
+'En Camino':'On the Way',
+'Completadas Hoy':'Completed Today',
+'Esperando':'Waiting',
+'En ruta':'En route',
+'Finalizadas':'Finished',
+'PROBLEMA:':'PROBLEM:',
+'Nueva':'New',
+'Asignada':'Assigned',
+'En Camino':'On the Way',
+'Completada':'Completed',
+'🔴 Activas (sin completar)':'🔴 Active (not completed)',
+'🆕 Nuevas (sin asignar)':'🆕 New (unassigned)',
+
+// --- Jobs ---
+'0-10 millas':'0-10 miles',
+'10-20 millas':'10-20 miles',
+'20+ millas':'20+ miles',
+'HORAS DE LABOR':'LABOR HOURS',
+'4. Componentes y Reparaciones':'4. Components & Repairs',
+'Componentes y Reparaciones':'Components & Repairs',
+'DESCUENTO (%)':'DISCOUNT (%)',
+
+// --- Home Advisors ---
+'Por pagar':'To pay',
+'En seguimiento':'In follow-up',
+'Equipo de Ventas':'Sales Team',
+'👥 Equipo de Ventas':'👥 Sales Team',
+'Ventas y Comisiones':'Sales & Commissions',
+'💵 Ventas y Comisiones':'💵 Sales & Commissions',
+'Estructura de Comisiones (Basada en Ganancia)':'Commission Structure (Profit Based)',
+'📊 Estructura de Comisiones (Basada en Ganancia)':'📊 Commission Structure (Profit Based)',
+'Ganancia':'Profit',
+'ESPECIALIDAD':'SPECIALTY',
+'ZONA':'ZONE',
+'Residencial':'Residential',
+'Activo':'Active',
+'📞 Registro de Seguimientos (Follow-Ups)':'📞 Follow-Up Log',
+'Registro de Seguimientos (Follow-Ups)':'Follow-Up Log',
+'No hay seguimientos registrados.':'No follow-ups recorded.',
+
+// --- Invoices ---
+'VENCIDO':'OVERDUE',
+'TOTAL FACTURAS':'TOTAL INVOICES',
+'VENCE':'DUE',
+'Borrador':'Draft',
+'Pagada':'Paid',
+'Pago':'Payment'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -1292,7 +1363,51 @@ var PATTERNS = [
   [/Editar Vehículo:/g, 'Edit Vehicle:'],
   [/Registración del Vehículo/g, 'Vehicle Registration'],
   [/Seguro Comercial del Vehículo/g, 'Commercial Vehicle Insurance'],
-  [/Sin registros de entrada hoy/g, 'No clock entries today']
+  [/Sin registros de entrada hoy/g, 'No clock entries today'],
+  [/Calendario de Citas/g, 'Appointment Calendar'],
+  [/Nueva Cita/g, 'New Appointment'],
+  [/No hay citas este día/g, 'No appointments this day'],
+  [/Crear cita/g, 'Create appointment'],
+  [/En Camino/g, 'On the Way'],
+  [/Completadas Hoy/g, 'Completed Today'],
+  [/Esperando/g, 'Waiting'],
+  [/En ruta/g, 'En route'],
+  [/Finalizadas/g, 'Finished'],
+  [/PROBLEMA:/g, 'PROBLEM:'],
+  [/HORAS DE LABOR/g, 'LABOR HOURS'],
+  [/Componentes y Reparaciones/g, 'Components & Repairs'],
+  [/DESCUENTO/g, 'DISCOUNT'],
+  [/Por pagar/g, 'To pay'],
+  [/En seguimiento/g, 'In follow-up'],
+  [/Equipo de Ventas/g, 'Sales Team'],
+  [/Ventas y Comisiones/g, 'Sales & Commissions'],
+  [/Estructura de Comisiones/g, 'Commission Structure'],
+  [/Basada en Ganancia/g, 'Profit Based'],
+  [/Ganancia/g, 'Profit'],
+  [/ESPECIALIDAD/g, 'SPECIALTY'],
+  [/ZONA/g, 'ZONE'],
+  [/Residencial/g, 'Residential'],
+  [/Registro de Seguimientos/g, 'Follow-Up Log'],
+  [/No hay seguimientos registrados/g, 'No follow-ups recorded'],
+  [/VENCIDO/g, 'OVERDUE'],
+  [/TOTAL FACTURAS/g, 'TOTAL INVOICES'],
+  [/VENCE/g, 'DUE'],
+  [/Borrador/g, 'Draft'],
+  [/Pagada/g, 'Paid'],
+  [/Pago/g, 'Payment'],
+  [/millas/g, 'miles'],
+  [/Febrero/g, 'February'],
+  [/Enero/g, 'January'],
+  [/Marzo/g, 'March'],
+  [/Abril/g, 'April'],
+  [/Mayo/g, 'May'],
+  [/Junio/g, 'June'],
+  [/Julio/g, 'July'],
+  [/Agosto/g, 'August'],
+  [/Septiembre/g, 'September'],
+  [/Octubre/g, 'October'],
+  [/Noviembre/g, 'November'],
+  [/Diciembre/g, 'December']
 ];
 
 function applyPatterns(){
@@ -1376,7 +1491,7 @@ function init(){
     });
   }
 
-  console.log('✅ i18n-patch.js v4.2 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
+  console.log('✅ i18n-patch.js v5 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
 }
 
 if(document.readyState === 'loading'){
