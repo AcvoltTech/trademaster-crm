@@ -309,6 +309,7 @@
             <div class="nav-item" onclick="showSec('vendedores',this)">🤝 Vendedores</div>
             <div class="nav-item" onclick="showSec('marketing',this)">📣 Marketing & ROI</div>
             <div class="nav-item" onclick="showSec('embajadores',this)">🌟 Embajadores</div>
+            <div class="nav-item" onclick="showSec('demotools',this)">🎬 Demo & Onboarding</div>
             
             <div class="nav-group">Sistema</div>
             <div class="nav-item" onclick="showSec('admins',this)" id="navAdmins">👤 Admins</div>
@@ -756,6 +757,154 @@
     </div>
 </div>
 
+<!-- ============ SECTION: DEMO & ONBOARDING TOOLS ============ -->
+<div class="section" id="secDemotools">
+    <!-- Hero -->
+    <div class="card" style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);color:#fff;margin-bottom:1.5rem;border:none">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <span style="font-size:48px">🎬</span>
+            <div style="flex:1">
+                <h2 style="margin:0;font-size:1.2rem">Demo AI & Herramientas de Onboarding</h2>
+                <p style="margin:4px 0 0;font-size:0.8rem;opacity:.8">QR codes, business cards, links compartibles y email templates para cerrar ventas</p>
+            </div>
+            <a href="https://acvolttech.github.io/trademaster-crm/?demo=true" target="_blank" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.85rem">▶️ Ver Demo en Vivo</a>
+        </div>
+    </div>
+
+    <!-- Demo Link + QR -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <!-- Link Section -->
+        <div class="card">
+            <div class="card-head"><h2>🔗 Link del Demo</h2></div>
+            <div style="padding:1rem">
+                <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Este link abre el CRM con la demo AI de Brenda/Danielle. El cliente ve todo el CRM funcionando con datos reales y narración de voz.</p>
+                <div style="background:#f1f5f9;border:2px solid #e2e8f0;border-radius:10px;padding:12px;font-family:monospace;font-size:0.8rem;word-break:break-all;margin-bottom:1rem" id="demoLinkDisplay">https://acvolttech.github.io/trademaster-crm/?demo=true</div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                    <button class="btn-sm btn-success" onclick="copyDemoLink()">📋 Copiar Link</button>
+                    <button class="btn-sm" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="shareDemoWhatsApp()">💬 WhatsApp</button>
+                    <button class="btn-sm" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="shareDemoEmail()">📧 Email</button>
+                    <button class="btn-sm" style="background:#000;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="shareDemoSMS()">📱 Texto</button>
+                </div>
+                <div style="margin-top:1rem;background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:0.72rem;color:#92400e">
+                    <strong>💡 Tip para vendedores:</strong> Manda este link por WhatsApp con un mensaje como: "Mira este sistema que maneja todo tu negocio en un solo lugar. Dale play y Brenda te muestra todo 🎬"
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="card">
+            <div class="card-head"><h2>📱 QR Code del Demo</h2></div>
+            <div style="padding:1rem;text-align:center">
+                <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Escanear = Abre el demo automáticamente. Perfecto para tarjetas, flyers y presentaciones.</p>
+                <div id="demoQRCode" style="margin:0 auto 1rem;width:220px;height:220px;background:#f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center">
+                    <img src="" id="demoQRImg" style="width:220px;height:220px;border-radius:12px" alt="QR">
+                </div>
+                <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
+                    <button class="btn-sm btn-success" onclick="downloadDemoQR()">⬇️ Descargar QR</button>
+                    <button class="btn-sm" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="downloadDemoQRHD()">⬇️ QR HD (grande)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Cards & Pamphlets -->
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-head"><h2>🪪 Tarjetas & Material Imprimible</h2></div>
+        <div style="padding:1rem">
+            <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Imprime tarjetas profesionales con QR para tus vendedores. El cliente escanea → ve el demo → se registra.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+                <!-- Business Card Preview -->
+                <div style="border:2px solid #e5e7eb;border-radius:12px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);padding:16px;color:#fff">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <div>
+                                <div style="font-size:14px;font-weight:900">🏗️ TRADE MASTER CRM</div>
+                                <div style="font-size:9px;opacity:.7;margin-top:2px">#1 HVAC & Contractor Management</div>
+                            </div>
+                            <div style="width:50px;height:50px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center"><img src="" class="demoQRMini" style="width:46px;height:46px;border-radius:4px" alt="QR"></div>
+                        </div>
+                        <div style="margin-top:10px;font-size:10px;opacity:.9">
+                            ✅ Clientes & Trabajos &nbsp;✅ GPS & Despacho<br>
+                            ✅ Facturas & Cobros &nbsp;✅ Nómina & Reportes
+                        </div>
+                    </div>
+                    <div style="padding:12px;background:#fff;text-align:center">
+                        <div style="font-size:11px;font-weight:800;color:#f97316;margin-bottom:4px">📱 ESCANEA PARA VER DEMO EN VIVO</div>
+                        <div style="font-size:9px;color:#6b7280">trademaster-crm.com • Free para 10 clientes</div>
+                    </div>
+                </div>
+                <!-- Flyer Preview -->
+                <div style="border:2px solid #e5e7eb;border-radius:12px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#f97316,#ea580c);padding:16px;color:#fff;text-align:center">
+                        <div style="font-size:16px;font-weight:900">¿TODAVÍA USAS PAPEL?</div>
+                        <div style="font-size:11px;margin-top:4px;opacity:.9">Maneja TODO tu negocio desde el celular 📱</div>
+                    </div>
+                    <div style="padding:16px;background:#fff;text-align:center">
+                        <div style="width:80px;height:80px;margin:0 auto 8px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center"><img src="" class="demoQRMini" style="width:76px;height:76px;border-radius:6px" alt="QR"></div>
+                        <div style="font-size:12px;font-weight:800;color:#1e293b">ESCANEA → VE EL DEMO → REGÍSTRATE</div>
+                        <div style="font-size:9px;color:#6b7280;margin-top:4px">Trade Master CRM — Gratis para empezar</div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
+                <button class="btn-sm btn-success" onclick="printBusinessCards()">🖨️ Imprimir Tarjetas (8 por página)</button>
+                <button class="btn-sm" style="background:#8b5cf6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="printFlyers()">🖨️ Imprimir Flyers (4 por página)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Marketing Templates -->
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-head"><h2>📧 Templates de Email Marketing</h2></div>
+        <div style="padding:1rem">
+            <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Emails listos para enviar a compañías de construcción, HVAC, plomería y electricidad.</p>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+                <button class="btn-sm" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer;font-weight:700" onclick="showEmailTemplate('cold')">🥶 Cold Outreach</button>
+                <button class="btn-sm" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer;font-weight:700" onclick="showEmailTemplate('followup')">🔄 Follow Up</button>
+                <button class="btn-sm" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer;font-weight:700" onclick="showEmailTemplate('referral')">🤝 Para Referidos</button>
+                <button class="btn-sm" style="background:#8b5cf6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer;font-weight:700" onclick="showEmailTemplate('construction')">🏗️ Construcción</button>
+            </div>
+            <div id="emailTemplatePreview" style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;padding:16px;min-height:200px">
+                <div style="text-align:center;color:#9ca3af;padding:20px;font-size:0.85rem">👆 Selecciona un template arriba</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem">
+                <button class="btn-sm btn-success" onclick="copyEmailTemplate()">📋 Copiar Email</button>
+                <button class="btn-sm" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;cursor:pointer" onclick="openEmailTemplate()">📧 Abrir en Email</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendedor Kit -->
+    <div class="card">
+        <div class="card-head"><h2>🎒 Kit del Vendedor</h2></div>
+        <div style="padding:1rem">
+            <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Todo lo que necesita tu equipo de ventas para cerrar.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+                <div style="background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:16px;text-align:center;cursor:pointer" onclick="copyDemoLink()">
+                    <div style="font-size:28px;margin-bottom:6px">🔗</div>
+                    <div style="font-size:0.8rem;font-weight:700">Link del Demo</div>
+                    <div style="font-size:0.7rem;color:var(--gray)">Click para copiar</div>
+                </div>
+                <div style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:16px;text-align:center;cursor:pointer" onclick="downloadDemoQR()">
+                    <div style="font-size:28px;margin-bottom:6px">📱</div>
+                    <div style="font-size:0.8rem;font-weight:700">QR Code</div>
+                    <div style="font-size:0.7rem;color:var(--gray)">Click para descargar</div>
+                </div>
+                <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:16px;text-align:center;cursor:pointer" onclick="printBusinessCards()">
+                    <div style="font-size:28px;margin-bottom:6px">🪪</div>
+                    <div style="font-size:0.8rem;font-weight:700">Tarjetas</div>
+                    <div style="font-size:0.7rem;color:var(--gray)">Click para imprimir</div>
+                </div>
+                <div style="background:#fdf4ff;border:2px solid #f5d0fe;border-radius:12px;padding:16px;text-align:center;cursor:pointer" onclick="copySalesScript()">
+                    <div style="font-size:28px;margin-bottom:6px">📝</div>
+                    <div style="font-size:0.8rem;font-weight:700">Script de Venta</div>
+                    <div style="font-size:0.7rem;color:var(--gray)">Click para copiar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="section" id="secAdmins">
     <!-- KPIs -->
     <div class="stats-grid">
@@ -1172,6 +1321,7 @@ async function refreshAll(){
     try{await loadFollowUps();}catch(e){}
     try{await Promise.all([loadSalesReps(),loadDeals(),loadCampaigns(),loadMkExpenses()]);}catch(e){}
     try{await loadAmbassadorAdmin();}catch(e){}
+    try{initDemoTools();}catch(e){}
     updateDashboard();
     if(STRIPE_KEY)loadStripeData();
 }
@@ -1334,7 +1484,7 @@ function showSec(name,el){
     if(el)el.classList.add('active');
     var sec=$('sec'+name.charAt(0).toUpperCase()+name.slice(1));
     if(sec)sec.classList.add('active');
-    var titles={dashboard:'📊 Dashboard',empresas:'🏢 Empresas CRM',success:'🎯 Customer Success',stripe:'💳 Stripe Pagos',tickets:'🎫 Soporte',passwords:'🔑 Passwords',revenue:'📈 Revenue',pagos:'💰 Historial Pagos',vendedores:'🤝 Vendedores',marketing:'📣 Marketing & ROI',embajadores:'🌟 Programa Embajadores',admins:'👤 Admins',logs:'📋 Logs',settings:'⚙️ Configuración'};
+    var titles={dashboard:'📊 Dashboard',empresas:'🏢 Empresas CRM',success:'🎯 Customer Success',stripe:'💳 Stripe Pagos',tickets:'🎫 Soporte',passwords:'🔑 Passwords',revenue:'📈 Revenue',pagos:'💰 Historial Pagos',vendedores:'🤝 Vendedores',marketing:'📣 Marketing & ROI',embajadores:'🌟 Programa Embajadores',demotools:'🎬 Demo & Onboarding',admins:'👤 Admins',logs:'📋 Logs',settings:'⚙️ Configuración'};
     $('pageTitle').textContent=titles[name]||name;
     document.getElementById('sidebar').classList.remove('open');
     if(name==='stripe'&&STRIPE_KEY)loadStripeData();
@@ -2147,6 +2297,150 @@ async function saveMkExpense(){
     if(campId){var camp=campaigns.find(function(c){return c.id===campId});if(camp){await db.from('marketing_campaigns').update({amount_spent:(camp.amount_spent||0)+data.amount}).eq('id',campId);}}
     await logActivity('create','mk_expense',null,campName+' $'+data.amount);
     closeModal('modalMkExpense');loadMkExpenses();loadCampaigns();
+}
+
+// ==========================================
+// DEMO & ONBOARDING TOOLS
+// ==========================================
+var DEMO_URL='https://acvolttech.github.io/trademaster-crm/?demo=true';
+var DEMO_QR_URL='https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl='+encodeURIComponent(DEMO_URL)+'&choe=UTF-8&chld=H|2';
+var DEMO_QR_HD='https://chart.googleapis.com/chart?chs=600x600&cht=qr&chl='+encodeURIComponent(DEMO_URL)+'&choe=UTF-8&chld=H|2';
+
+function initDemoTools(){
+    var img=$('demoQRImg');if(img)img.src=DEMO_QR_URL;
+    document.querySelectorAll('.demoQRMini').forEach(function(m){m.src=DEMO_QR_URL;});
+}
+
+function copyDemoLink(){
+    navigator.clipboard.writeText(DEMO_URL).then(function(){alert('✅ Link copiado: '+DEMO_URL);}).catch(function(){
+        var t=document.createElement('textarea');t.value=DEMO_URL;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('✅ Link copiado');
+    });
+}
+
+function shareDemoWhatsApp(){
+    var msg='🎬 ¡Mira este sistema que maneja TODO tu negocio de HVAC en un solo lugar!\n\nDale play y nuestra AI Brenda te muestra cada función con voz en vivo:\n✅ Clientes y trabajos\n✅ Despacho GPS de técnicos\n✅ Facturas y cobros\n✅ Nómina y reportes\n\n👉 '+DEMO_URL+'\n\n¡Es GRATIS para empezar! 🚀';
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function shareDemoSMS(){
+    var msg='🎬 Mira este CRM para HVAC — nuestra AI te da un tour completo con voz! '+DEMO_URL+' ¡Gratis para empezar!';
+    window.open('sms:?&body='+encodeURIComponent(msg));
+}
+
+function shareDemoEmail(){
+    var subj='🎬 Demo en Vivo — Trade Master CRM para tu negocio';
+    var body='¡Hola!\n\nTe invito a ver una demostración en vivo de Trade Master CRM, el sistema #1 para negocios de HVAC y contratistas.\n\nNuestra asistente AI Brenda te guiará por cada función con narración de voz:\n\n✅ Manejo de clientes y trabajos\n✅ Despacho GPS de técnicos en tiempo real\n✅ Facturación y cobros instantáneos\n✅ Nómina y reportes financieros\n✅ Marketing y más\n\n👉 Ver Demo: '+DEMO_URL+'\n\n¡Es GRATIS para empezar con hasta 10 clientes!\n\nSaludos,\nTrade Master CRM Team';
+    window.open('mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body));
+}
+
+function downloadDemoQR(){var a=document.createElement('a');a.href=DEMO_QR_URL;a.download='TradeMaster-Demo-QR.png';a.click();}
+function downloadDemoQRHD(){var a=document.createElement('a');a.href=DEMO_QR_HD;a.download='TradeMaster-Demo-QR-HD.png';a.click();}
+
+function printBusinessCards(){
+    var qr=DEMO_QR_URL;
+    var w=window.open('','_blank','width=800,height=1100');
+    w.document.write('<!DOCTYPE html><html><head><title>Trade Master - Business Cards</title><style>'+
+        '@page{margin:0.5in}body{font-family:Arial,sans-serif;margin:0;padding:0}'+
+        '.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0.5in}'+
+        '.card{width:3.35in;height:2in;border:1px solid #ccc;border-radius:10px;overflow:hidden;page-break-inside:avoid}'+
+        '.card-top{background:linear-gradient(135deg,#1e3a5f,#2d5a8e);padding:10px 12px;color:#fff;display:flex;justify-content:space-between;align-items:center}'+
+        '.card-bot{padding:8px 12px;background:#fff;text-align:center}'+
+        '.logo{font-size:12px;font-weight:900}.tag{font-size:7px;opacity:.7;margin-top:2px}'+
+        '.feats{font-size:8px;opacity:.85;margin-top:8px;line-height:1.5}'+
+        '.qr{width:55px;height:55px;border-radius:6px;background:#fff;padding:2px}'+
+        '.qr img{width:100%;height:100%;border-radius:4px}'+
+        '.cta{font-size:10px;font-weight:800;color:#f97316}.sub{font-size:7px;color:#666;margin-top:3px}'+
+    '</style></head><body><div class="grid">');
+    for(var i=0;i<8;i++){
+        w.document.write('<div class="card"><div class="card-top"><div><div class="logo">🏗️ TRADE MASTER CRM</div><div class="tag">#1 HVAC & Contractor Management</div><div class="feats">✅ Clientes & Trabajos &nbsp;&nbsp;✅ GPS & Despacho<br>✅ Facturas & Cobros &nbsp;&nbsp;✅ Nómina & Reportes</div></div><div class="qr"><img src="'+qr+'" alt="QR"></div></div><div class="card-bot"><div class="cta">📱 ESCANEA PARA VER DEMO EN VIVO</div><div class="sub">trademaster-crm.com • Gratis para 10 clientes</div></div></div>');
+    }
+    w.document.write('</div></body></html>');w.document.close();setTimeout(function(){w.print();},700);
+}
+
+function printFlyers(){
+    var qr=DEMO_QR_HD;
+    var w=window.open('','_blank','width=800,height=1100');
+    w.document.write('<!DOCTYPE html><html><head><title>Trade Master - Flyers</title><style>'+
+        '@page{margin:0.25in}body{font-family:Arial,sans-serif;margin:0;padding:0.25in}'+
+        '.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}'+
+        '.flyer{border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;page-break-inside:avoid}'+
+        '.fly-top{background:linear-gradient(135deg,#f97316,#ea580c);padding:20px;color:#fff;text-align:center}'+
+        '.fly-title{font-size:22px;font-weight:900}.fly-sub{font-size:12px;margin-top:4px;opacity:.9}'+
+        '.fly-mid{padding:20px;background:#fff;text-align:center}'+
+        '.fly-qr{width:150px;height:150px;margin:0 auto 12px}'+
+        '.fly-qr img{width:100%;height:100%;border-radius:8px}'+
+        '.fly-cta{font-size:16px;font-weight:900;color:#1e293b}.fly-info{font-size:10px;color:#6b7280;margin-top:6px}'+
+        '.fly-feats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;font-size:10px;text-align:left}'+
+        '.fly-feat{background:#f0fdf4;padding:6px 8px;border-radius:6px;color:#166534}'+
+    '</style></head><body><div class="grid">');
+    for(var i=0;i<4;i++){
+        w.document.write('<div class="flyer"><div class="fly-top"><div class="fly-title">¿TODAVÍA USAS PAPEL? 📋</div><div class="fly-sub">Maneja TODO tu negocio desde el celular 📱</div></div><div class="fly-mid"><div class="fly-qr"><img src="'+qr+'" alt="QR"></div><div class="fly-cta">ESCANEA → VE EL DEMO → REGÍSTRATE</div><div class="fly-info">Trade Master CRM — El Sistema #1 para Contratistas</div><div class="fly-feats"><div class="fly-feat">✅ Clientes & CRM</div><div class="fly-feat">✅ GPS Técnicos</div><div class="fly-feat">✅ Facturas & Cobros</div><div class="fly-feat">✅ Nómina & Reportes</div><div class="fly-feat">✅ Marketing</div><div class="fly-feat">✅ App Móvil</div></div><div style="margin-top:12px;font-size:9px;color:#9ca3af">Gratis para empezar • trademaster-crm.com</div></div></div>');
+    }
+    w.document.write('</div></body></html>');w.document.close();setTimeout(function(){w.print();},700);
+}
+
+var emailTemplates={
+    cold:{
+        subject:'¿Todavía manejas tu negocio con papel? 📋 Mira esto',
+        body:'¡Hola!\n\nSoy [TU NOMBRE] de Trade Master CRM.\n\n¿Sabías que el 73% de los contratistas pierden dinero por no tener un sistema organizado? Clientes olvidados, facturas sin cobrar, técnicos sin dirección...\n\nTrade Master CRM resuelve TODO eso en UNA sola plataforma:\n\n✅ Maneja clientes, trabajos y estimados\n✅ Despacha técnicos con GPS en tiempo real\n✅ Crea facturas profesionales y cobra al instante\n✅ Nómina, reportes financieros y marketing\n✅ App móvil para tu equipo\n\n🎬 VE LA DEMO EN VIVO (nuestra AI te muestra todo en 10 min):\n👉 DEMO_URL\n\nEs GRATIS para empezar con hasta 10 clientes.\n\n¿Tienes 10 minutos esta semana para una llamada rápida?\n\nSaludos,\n[TU NOMBRE]\nTrade Master CRM\n📞 [TU TELÉFONO]'
+    },
+    followup:{
+        subject:'Seguimiento — Demo de Trade Master CRM 🎬',
+        body:'¡Hola de nuevo!\n\nTe escribí la semana pasada sobre Trade Master CRM. Sé que estás ocupado manejando tu negocio — ¡por eso creamos este sistema!\n\nSolo quería recordarte que puedes ver una demo completa con narración AI en menos de 10 minutos:\n\n🎬 DEMO_URL\n\nNuestra asistente Brenda te muestra paso a paso cómo:\n• Agregar un cliente en 30 segundos\n• Despachar un técnico desde el mapa\n• Crear una factura y cobrar al instante\n• Y mucho más...\n\nSin compromiso, sin tarjeta de crédito. Gratis para empezar.\n\n¿Te late agendar 15 minutos esta semana?\n\nSaludos,\n[TU NOMBRE]'
+    },
+    referral:{
+        subject:'💰 Gana $50 por cada negocio que refieras a Trade Master CRM',
+        body:'¡Hola!\n\n¿Conoces a otros dueños de negocios de HVAC, plomería o electricidad?\n\nTrade Master CRM tiene un Programa de Embajadores donde puedes GANAR $50 por cada negocio que refieras y se active.\n\nAsí funciona:\n1️⃣ Comparte el link del demo\n2️⃣ Ellos ven la demo y se registran\n3️⃣ Cuando activan su plan, tú ganas $50\n4️⃣ Sin límite — mientras más refieras, más ganas\n\n🎬 Link del Demo para compartir:\n👉 DEMO_URL\n\n¿Interesado? Responde este email y te damos tu código de embajador.\n\nSaludos,\nTrade Master CRM Team'
+    },
+    construction:{
+        subject:'Para empresas de construcción: el CRM que manejan los pros 🏗️',
+        body:'¡Hola!\n\nSi manejas una empresa de construcción, HVAC, plomería o electricidad, esto es para ti.\n\nTrade Master CRM es el sistema TODO-EN-UNO diseñado específicamente para contratistas:\n\n🏗️ PARA TU OFICINA:\n• CRM completo con clientes y prospectos\n• Estimados profesionales con firma electrónica\n• Facturación y cobros automáticos\n• Reportes financieros en tiempo real\n\n🚚 PARA TU EQUIPO EN CAMPO:\n• Despacho de técnicos con mapa GPS en vivo\n• App móvil para tu equipo\n• Check-in/out con geolocalización\n• Fotos antes/después de cada trabajo\n\n💰 PARA TU BOLSILLO:\n• Cobra más rápido con pagos por link\n• Reduce trabajo administrativo 80%\n• Nunca olvides un follow-up\n• Gratis para empezar\n\n🎬 VE LA DEMO COMPLETA (10 minutos):\n👉 DEMO_URL\n\nMás de [X] contratistas ya usan Trade Master. ¿Cuándo empiezas tú?\n\nSaludos,\n[TU NOMBRE]\nTrade Master CRM'
+    }
+};
+
+var currentEmailTemplate='';
+
+function showEmailTemplate(type){
+    var tmpl=emailTemplates[type];if(!tmpl)return;
+    currentEmailTemplate=type;
+    var body=tmpl.body.replace(/DEMO_URL/g,DEMO_URL);
+    var subj=tmpl.subject;
+    var labels={cold:'🥶 Cold Outreach',followup:'🔄 Follow Up',referral:'🤝 Para Referidos',construction:'🏗️ Construcción'};
+    var el=$('emailTemplatePreview');
+    el.innerHTML='<div style="margin-bottom:12px"><span style="background:#f97316;color:#fff;padding:3px 10px;border-radius:8px;font-size:0.72rem;font-weight:700">'+labels[type]+'</span></div>'+
+        '<div style="margin-bottom:8px"><strong style="font-size:0.75rem;color:var(--gray)">Asunto:</strong> <span style="font-size:0.85rem;font-weight:600">'+subj+'</span></div>'+
+        '<div style="border-top:1px solid #e5e7eb;padding-top:12px;white-space:pre-wrap;font-size:0.8rem;line-height:1.6;color:#374151">'+body.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+}
+
+function copyEmailTemplate(){
+    if(!currentEmailTemplate){alert('Selecciona un template primero');return;}
+    var tmpl=emailTemplates[currentEmailTemplate];
+    var text='Asunto: '+tmpl.subject+'\n\n'+tmpl.body.replace(/DEMO_URL/g,DEMO_URL);
+    navigator.clipboard.writeText(text).then(function(){alert('✅ Email copiado al portapapeles');}).catch(function(){alert('Error copiando');});
+}
+
+function openEmailTemplate(){
+    if(!currentEmailTemplate){alert('Selecciona un template primero');return;}
+    var tmpl=emailTemplates[currentEmailTemplate];
+    var body=tmpl.body.replace(/DEMO_URL/g,DEMO_URL);
+    window.open('mailto:?subject='+encodeURIComponent(tmpl.subject)+'&body='+encodeURIComponent(body));
+}
+
+function copySalesScript(){
+    var script='📞 SCRIPT DE VENTA — TRADE MASTER CRM\n'+
+        '═══════════════════════════════════\n\n'+
+        '1️⃣ APERTURA:\n'+
+        '"¡Hola [NOMBRE]! Soy [TU NOMBRE] de Trade Master CRM. Te llamo porque trabajamos con empresas de HVAC como la tuya y quería preguntarte — ¿cómo manejas tus clientes y trabajos actualmente?"\n\n'+
+        '2️⃣ DOLOR:\n'+
+        '"¿Alguna vez has perdido un cliente porque se te olvidó darle seguimiento? ¿O un técnico llegó a la dirección equivocada? ¿Facturas sin cobrar?"\n\n'+
+        '3️⃣ SOLUCIÓN:\n'+
+        '"Trade Master CRM resuelve exactamente eso. Es UN solo sistema donde manejas clientes, despachas técnicos con GPS, creas facturas y cobras — todo desde tu celular."\n\n'+
+        '4️⃣ DEMO:\n'+
+        '"Te voy a mandar un link donde nuestra AI Brenda te da un tour de 10 minutos. Vas a ver exactamente cómo funciona con datos reales. ¿A qué número te lo mando por WhatsApp?"\n\n'+
+        '5️⃣ CIERRE:\n'+
+        '"Es GRATIS para empezar con 10 clientes. No necesitas tarjeta. ¿Lo probamos esta semana?"\n\n'+
+        '📱 Link del Demo: '+DEMO_URL;
+    navigator.clipboard.writeText(script).then(function(){alert('✅ Script de venta copiado');}).catch(function(){alert('Error');});
 }
 
 // ==========================================
