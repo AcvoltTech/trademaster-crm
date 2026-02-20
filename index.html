@@ -242,6 +242,33 @@
 
     <!-- ==================== DASHBOARD PAGE ==================== -->
     <div id="dashboardPage" class="dashboard-container" style="display:none;">
+
+    <!-- ===== ONBOARDING WELCOME ===== -->
+    <div id="onboardingWelcome" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px">
+      <div style="background:#fff;border-radius:20px;max-width:520px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,.2);overflow:hidden;animation:obIn .5s ease">
+        <style>@keyframes obIn{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}</style>
+        <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);padding:32px;color:#fff;text-align:center;position:relative;overflow:hidden">
+          <div style="font-size:56px;margin-bottom:8px">🚀</div>
+          <h2 style="font-size:24px;font-weight:900;margin:0 0 8px">¡Bienvenido a Trade Master CRM!</h2>
+          <p style="font-size:13px;opacity:.8;margin:0">Tu asistente AI te dará un tour completo en menos de 10 minutos</p>
+        </div>
+        <div style="padding:28px 32px">
+          <p style="font-size:14px;color:#374151;margin-bottom:20px;line-height:1.6">Nuestra AI <strong>Brenda</strong> te guiará paso a paso por todas las funciones del CRM con voz y narración en vivo. Verás cómo:</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;font-size:12px">
+            <div style="background:#f0fdf4;padding:10px;border-radius:8px;color:#166534">✅ Agregar clientes</div>
+            <div style="background:#eff6ff;padding:10px;border-radius:8px;color:#1d4ed8">✅ Despachar técnicos</div>
+            <div style="background:#fdf4ff;padding:10px;border-radius:8px;color:#86198f">✅ Crear facturas</div>
+            <div style="background:#fff7ed;padding:10px;border-radius:8px;color:#9a3412">✅ Cobrar pagos</div>
+            <div style="background:#fefce8;padding:10px;border-radius:8px;color:#854d0e">✅ Manejar nómina</div>
+            <div style="background:#f0f9ff;padding:10px;border-radius:8px;color:#0c4a6e">✅ Y mucho más...</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button onclick="startOnboardingTour()" style="width:100%;padding:16px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 4px 15px rgba(249,115,22,.3)">🎬 ¡Empezar Tour Guiado!</button>
+            <button onclick="skipOnboarding()" style="width:100%;padding:12px;background:none;color:#9ca3af;border:1px solid #e5e7eb;border-radius:12px;font-weight:600;font-size:13px;cursor:pointer">Ya sé usar el CRM — Saltar →</button>
+          </div>
+        </div>
+      </div>
+    </div>
       <aside class="sidebar">
         <div class="sidebar-brand">
           <div class="brand-logo" id="companyLogo">
