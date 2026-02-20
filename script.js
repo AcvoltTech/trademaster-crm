@@ -565,6 +565,8 @@ function showDashboard() {
     }
     showSection('dashboard');
     loadAllData();
+    // Check if new user needs onboarding tour
+    checkOnboardingTour();
 }
 
 async function loadAllData() {
@@ -12095,4 +12097,62 @@ function renderAmbassadorPayouts(payouts) {
 function formatAmbDate(d) {
     if (!d) return '—';
     try { return new Date(d).toLocaleDateString('es', { day:'numeric', month:'short', year:'numeric' }); } catch(e) { return d; }
+}
+
+// ==========================================
+// ONBOARDING TOUR (AI Demo Engine)
+// ==========================================
+
+function checkOnboardingTour() {
+    // Skip if already in demo mode
+    if (new URLSearchParams(location.search).get('demo') === 'true') return;
+    // Skip if no company
+    if (!companyId) return;
+    
+    // Check localStorage first (fast)
+    var obKey = 'tm_onboarding_done_' + companyId;
+    if (localStorage.getItem(obKey) === 'true') return;
+    
+    // Check Supabase
+    sbClient.from('companies').select('onboarding_completed').eq('id', companyId).single().then(function(res) {
+        if (res.data && res.data.onboarding_completed) {
+            localStorage.setItem(obKey, 'true');
+            return;
+        }
+        
+        // Also check if they have real data (skip if veteran user)
+        sbClient.from('clients').select('id').eq('company_id', companyId).limit(3).then(function(cRes) {
+            if (cRes.data && cRes.data.length >= 3) {
+                // Veteran user, mark complete
+                markOnboardingDone();
+                return;
+            }
+            // New user - show welcome
+            setTimeout(function() {
+                var ov = document.getElementById('onboardingWelcome');
+                if (ov) ov.style.display = 'flex';
+            }, 1500); // Small delay to let dashboard load
+        });
+    }).catch(function() {});
+}
+
+function startOnboardingTour() {
+    // Hide welcome modal
+    var ov = document.getElementById('onboardingWelcome');
+    if (ov) ov.style.display = 'none';
+    // Redirect to demo mode
+    var url = location.pathname + '?demo=true';
+    location.href = url;
+}
+
+function skipOnboarding() {
+    var ov = document.getElementById('onboardingWelcome');
+    if (ov) ov.style.display = 'none';
+    markOnboardingDone();
+}
+
+function markOnboardingDone() {
+    if (!companyId) return;
+    localStorage.setItem('tm_onboarding_done_' + companyId, 'true');
+    sbClient.from('companies').update({ onboarding_completed: true }).eq('id', companyId).then(function() {}).catch(function() {});
 }
