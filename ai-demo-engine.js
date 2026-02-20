@@ -76,6 +76,9 @@ window.sbClient={
 var _origAlert=window.alert;
 window.alert=function(msg){if(S.step>0||S.playing)return;_origAlert.call(window,msg);};
 
+// Polyfill: formatMoney (missing from script.js)
+if(typeof window.formatMoney==='undefined'){window.formatMoney=function(n){if(n==null)return'0.00';return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};}
+
 /* ===== UTILITIES ===== */
 function sl(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function ck(){if(S.paused)return new Promise(function(r){var i=setInterval(function(){if(!S.paused){clearInterval(i);r();}},100);});return Promise.resolve();}
