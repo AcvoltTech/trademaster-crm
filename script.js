@@ -1068,7 +1068,7 @@ function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     var t = document.getElementById(name + '-section');
     if (t) t.classList.add('active');
-    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', servicecalls:'Llamadas de Servicio', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo', hr:'Recursos Humanos' };
+    var titles = { dashboard:'Tablero', calendar:'Agenda', inbox:'Bandeja de Comunicaciones', leads:'Gestión de Prospectos', servicecalls:'Llamadas de Servicio', dispatch:'Despacho - Centro de Control', clients:'Clientes', jobs:'Trabajos', technicians:'Técnicos', advisors:'Asesores del Hogar', invoices:'Facturas', collections:'Cobranza', settings:'Configuración', pipeline:'Flujo de Ventas', mymoney:'Mi Dinero', payroll:'Nómina', marketing:'Mercadotecnia', pricebook:'Lista de Precios', reports:'Reportes', ambassadors:'Programa Embajadores', receipts:'Recibos de Proveedores', expenses:'Gastos del Negocio', mailbox:'Correo del Negocio', team:'Usuarios y Equipo', hr:'Recursos Humanos' };
     var titlesEN = { dashboard:'Dashboard', calendar:'Schedule', inbox:'Inbox', leads:'Leads Management', servicecalls:'Service Calls', dispatch:'Dispatch - Control Center', clients:'Customers', jobs:'Jobs', technicians:'Technicians', advisors:'Home Advisors', invoices:'Invoices', collections:'Collections', settings:'Settings', pipeline:'Sales Pipeline', mymoney:'My Money', payroll:'Payroll', marketing:'Marketing', pricebook:'Price Book', reports:'Reports', receipts:'Vendor Receipts', expenses:'Business Expenses', mailbox:'Business Mail', team:'Users & Team', hr:'Human Resources' };
     document.getElementById('pageTitle').textContent = (currentLang === 'en' ? titlesEN[name] : titles[name]) || 'Dashboard';
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
@@ -1091,6 +1091,7 @@ function showSection(name) {
     if (name === 'marketing') { renderMarketing(); }
     if (name === 'pricebook') { renderPriceBook(); }
     if (name === 'reports') { renderReports(); }
+    if (name === 'ambassadors') { loadAmbassadorData(); }
     if (name === 'servicecalls') { initServiceCallsSection(); }
     if (name === 'hr') { loadHRData().then(function() { renderHRSection(); }); }
 }
@@ -11797,4 +11798,147 @@ async function getHRProbationAlerts() {
     }
     
     return alerts;
+}
+
+// ==========================================
+// PROGRAMA DE EMBAJADORES
+// ==========================================
+
+async function loadAmbassadorData() {
+    if (!companyId) return;
+    
+    // Get or create ambassador code
+    try {
+        var compRes = await sbClient.from('companies').select('id, name, company_number, ambassador_code, ambassador_status').eq('id', companyId).single();
+        var comp = compRes.data;
+        
+        if (!comp.ambassador_code) {
+            // Generate unique code from company number
+            var code = 'TM-' + (comp.company_number || '0000').toString().replace('TM-','');
+            await sbClient.from('companies').update({ ambassador_code: code, ambassador_status: 'active' }).eq('id', companyId);
+            comp.ambassador_code = code;
+        }
+        
+        var code = comp.ambassador_code;
+        var el = document.getElementById('ambassadorCode');
+        if (el) el.textContent = code;
+        var linkEl = document.getElementById('ambassadorLink');
+        if (linkEl) linkEl.textContent = 'https://acvolttech.github.io/trademaster-crm/?ref=' + code;
+        
+        // Load referrals
+        var refRes = await sbClient.from('ambassador_referrals').select('*').eq('referrer_company_id', companyId).order('created_at', { ascending: false });
+        var referrals = refRes.data || [];
+        
+        // Load payouts
+        var payRes = await sbClient.from('ambassador_payouts').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+        var payouts = payRes.data || [];
+        
+        // Calculate stats
+        var totalReferred = referrals.length;
+        var converted = referrals.filter(function(r) { return r.status === 'converted' || r.status === 'active'; }).length;
+        var totalEarned = payouts.filter(function(p) { return p.status === 'paid'; }).reduce(function(sum, p) { return sum + (p.amount || 0); }, 0);
+        var totalPending = payouts.filter(function(p) { return p.status === 'pending'; }).reduce(function(sum, p) { return sum + (p.amount || 0); }, 0);
+        // Also calculate ongoing commissions from active referrals
+        var monthlyCommission = referrals.filter(function(r) { return r.status === 'active'; }).reduce(function(sum, r) {
+            return sum + (r.plan === 'enterprise' ? 50 : 25);
+        }, 0);
+        
+        var el2 = document.getElementById('ambReferred'); if (el2) el2.textContent = totalReferred;
+        var el3 = document.getElementById('ambConverted'); if (el3) el3.textContent = converted;
+        var el4 = document.getElementById('ambEarned'); if (el4) el4.textContent = '$' + totalEarned.toFixed(0);
+        var el5 = document.getElementById('ambPending'); if (el5) el5.textContent = '$' + (totalPending + monthlyCommission).toFixed(0);
+        
+        // Render referrals list
+        renderAmbassadorReferrals(referrals);
+        
+        // Render payouts
+        renderAmbassadorPayouts(payouts);
+        
+    } catch(e) {
+        console.log('Ambassador load error:', e);
+    }
+}
+
+function renderAmbassadorReferrals(referrals) {
+    var c = document.getElementById('ambassadorReferrals');
+    if (!c) return;
+    if (!referrals.length) {
+        c.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Aún no tienes referidos — ¡comparte tu código para empezar a ganar!</p>';
+        return;
+    }
+    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Negocio</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Plan</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Estado</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Comisión/Mes</th></tr></thead><tbody>' +
+    referrals.map(function(r) {
+        var statusBadge = {
+            pending: '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px">⏳ Pendiente</span>',
+            registered: '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px">📝 Registrado</span>',
+            converted: '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">✅ Convertido</span>',
+            active: '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">🟢 Activo</span>',
+            cancelled: '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px">❌ Cancelado</span>'
+        }[r.status] || r.status;
+        var commission = (r.status === 'active' || r.status === 'converted') ? (r.plan === 'enterprise' ? '$50' : '$25') : '—';
+        var commColor = commission !== '—' ? 'color:#22c55e;font-weight:700' : 'color:#9ca3af';
+        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px"><strong>' + (r.referred_name || 'Pendiente') + '</strong><br><small style="color:#9ca3af">' + (r.referred_email || '') + '</small></td><td style="padding:8px;text-align:center">' + formatAmbDate(r.created_at) + '</td><td style="padding:8px;text-align:center">' + (r.plan || 'Trial') + '</td><td style="padding:8px;text-align:center">' + statusBadge + '</td><td style="padding:8px;text-align:center;' + commColor + '">' + commission + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+function renderAmbassadorPayouts(payouts) {
+    var c = document.getElementById('ambassadorPayouts');
+    if (!c) return;
+    if (!payouts.length) {
+        c.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Sin pagos aún — genera referidos para empezar a ganar</p>';
+        return;
+    }
+    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Monto</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Método</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Estado</th><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Notas</th></tr></thead><tbody>' +
+    payouts.map(function(p) {
+        var stBadge = p.status === 'paid' ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">✅ Pagado</span>' : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px">⏳ Pendiente</span>';
+        var method = { transfer:'🏦 Transferencia', zelle:'⚡ Zelle', venmo:'💜 Venmo', paypal:'💰 PayPal', check:'📋 Cheque', credit:'🎫 Crédito CRM' }[p.method] || p.method || '—';
+        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px">' + formatAmbDate(p.payout_date || p.created_at) + '</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$' + (p.amount || 0).toFixed(2) + '</td><td style="padding:8px;text-align:center">' + method + '</td><td style="padding:8px;text-align:center">' + stBadge + '</td><td style="padding:8px;font-size:11px;color:#6b7280">' + (p.notes || '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+function formatAmbDate(d) {
+    if (!d) return '—';
+    try { return new Date(d).toLocaleDateString('es', { day:'numeric', month:'short', year:'numeric' }); } catch(e) { return d; }
+}
+
+// Share functions
+function copyRefLink() {
+    var link = document.getElementById('ambassadorLink').textContent;
+    navigator.clipboard.writeText(link).then(function() {
+        alert('✅ Link copiado al portapapeles');
+    }).catch(function() {
+        // Fallback
+        var ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        alert('✅ Link copiado');
+    });
+}
+
+function shareRefWhatsApp() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    var msg = '¡Hola! Te recomiendo Trade Master CRM para manejar tu negocio de HVAC. ' +
+              'Usa mi código ' + code + ' y obtén acceso al mejor CRM del mercado. ' +
+              '👉 ' + link;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function shareRefEmail() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    var subject = 'Te recomiendo Trade Master CRM - Código ' + code;
+    var body = 'Hola,\n\nTe escribo para recomendarte Trade Master CRM, el sistema que uso para manejar mi negocio.\n\n' +
+               'Con Trade Master puedes:\n' +
+               '- Manejar clientes, trabajos e invoices\n' +
+               '- Despachar técnicos en tiempo real\n' +
+               '- Cobrar por internet y llevar tu contabilidad\n' +
+               '- Y mucho más\n\n' +
+               'Usa mi código de referido: ' + code + '\n' +
+               'Link: ' + link + '\n\n' +
+               '¡Saludos!';
+    window.open('mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+}
+
+function shareRefFacebook() {
+    var link = document.getElementById('ambassadorLink').textContent;
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link), '_blank', 'width=600,height=400');
 }
