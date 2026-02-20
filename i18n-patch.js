@@ -940,8 +940,33 @@ var T={
 'Correo del Negocio':'Business Email',
 'Licencia de Manejar':'Driver License',
 'Todas':'All',
+'📋 Todas':'📋 All',
+'Acciones':'Actions',
+'ACCIONES':'ACTIONS',
+'📞 Llamar':'📞 Call',
+'💬 Texto':'💬 Text',
+'💬 Texto/SMS':'💬 Text/SMS',
+'Ganado':'Won',
+'Mapa de Leads':'Leads Map',
+'Sin asignar':'Unassigned',
+'Sin reportar':'Not reported',
+'Nuevas':'New',
+'🔴 Activas (sin completar)':'🔴 Active (not completed)',
+'🆕 Nuevas (sin asignar)':'🆕 New (unassigned)',
+'✅ Completar':'✅ Complete',
 'Sin comunicaciones. Registra tu primera interacción con un cliente.':'No communications. Record your first interaction with a client.',
-'Todas las comunicaciones':'All communications',
+'📭 Sin comunicaciones. Registra tu primera interacción con un cliente.':'📭 No communications. Record your first interaction with a client.',
+'Seleccionar cliente...':'Select client...',
+'Licencia de Contratista':'Contractor License',
+'Licencia de Manejar':'Driver License',
+'Editar Vehículo:':'Edit Vehicle:',
+'Registración del Vehículo':'Vehicle Registration',
+'Seguro Comercial del Vehículo':'Commercial Vehicle Insurance',
+'trabajos activos':'active jobs',
+'0 trabajos activos':'0 active jobs',
+'Fuera de línea':'Offline',
+'Nombre, Teléfono, Email, Dirección':'Name, Phone, Email, Address',
+'(uno por línea)':'(one per line)',
 'Llamada':'Call',
 'Mensaje de Texto':'Text Message',
 'Visita':'Visit',
@@ -1252,7 +1277,22 @@ var PATTERNS = [
   [/El coordinador de despacho puede subir correo/g, 'The dispatch coordinator can upload mail'],
   [/Contabilidad/g, 'Accounting'],
   [/Sin comunicaciones/g, 'No communications'],
-  [/Registra tu primera interacción con un cliente/g, 'Record your first interaction with a client']
+  [/Registra tu primera interacción con un cliente/g, 'Record your first interaction with a client'],
+  [/Sin asignar/g, 'Unassigned'],
+  [/Sin reportar/g, 'Not reported'],
+  [/Activas \(sin completar\)/g, 'Active (not completed)'],
+  [/Nuevas \(sin asignar\)/g, 'New (unassigned)'],
+  [/Mapa de Leads/g, 'Leads Map'],
+  [/Texto enviado/g, 'Text sent'],
+  [/Acciones/g, 'Actions'],
+  [/Llamar/g, 'Call'],
+  [/Ganado/g, 'Won'],
+  [/Nombre, Teléfono, Email, Dirección/g, 'Name, Phone, Email, Address'],
+  [/uno por línea/g, 'one per line'],
+  [/Editar Vehículo:/g, 'Edit Vehicle:'],
+  [/Registración del Vehículo/g, 'Vehicle Registration'],
+  [/Seguro Comercial del Vehículo/g, 'Commercial Vehicle Insurance'],
+  [/Sin registros de entrada hoy/g, 'No clock entries today']
 ];
 
 function applyPatterns(){
@@ -1336,7 +1376,7 @@ function init(){
     });
   }
 
-  console.log('✅ i18n-patch.js v4 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
+  console.log('✅ i18n-patch.js v4.2 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
 }
 
 if(document.readyState === 'loading'){
