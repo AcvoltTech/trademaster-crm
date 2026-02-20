@@ -917,7 +917,28 @@ var T={
 'TOTAL POR COBRAR':'TOTAL TO COLLECT',
 'Referencia':'Reference',
 'REFERENCIA':'REFERENCE',
-'Seleccionar...':'Select...'
+'Seleccionar...':'Select...',
+'Usuarios y Equipo':'Users & Team',
+'Recursos Humanos':'Human Resources',
+'Ticket Promedio':'Avg Ticket',
+'TICKET PROMEDIO':'AVG TICKET',
+'trabajos activos':'active jobs',
+'0 trabajos activos':'0 active jobs',
+'Mensuales':'Monthly',
+'Este mes':'This month',
+'ESTE MES':'THIS MONTH',
+'COLLECTED ESTE MES':'COLLECTED THIS MONTH',
+'Cobrado 2026':'Collected 2026',
+'No hay gastos registrados. Agrega tu renta, seguros y otros gastos fijos.':'No expenses registered. Add your rent, insurance and other fixed expenses.',
+'Tu contador puede acceder directamente a QuickBooks con su propia cuenta.':'Your accountant can access QuickBooks directly with their own account.',
+'Ir a QuickBooks':'Go to QuickBooks',
+'Dueño/CEO':'Owner/CEO',
+'Contabilidad':'Accounting',
+'en estimados y facturas para cumplir con requisitos de empresas y clientes comerciales.':'in estimates and invoices to meet business and commercial client requirements.',
+'Técnico':'Technician',
+'Trabajo':'Job',
+'Correo del Negocio':'Business Email',
+'Licencia de Manejar':'Driver License'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -1202,7 +1223,27 @@ var PATTERNS = [
   [/CSV y upload/g, 'CSV and upload'],
   [/CSV y súbelos/g, 'CSV and upload them'],
   // Reports
-  [/\bReparación\b/g, 'Repair']
+  [/\bReparación\b/g, 'Repair'],
+  [/Usuarios y Equipo/g, 'Users & Team'],
+  [/Recursos Humanos/g, 'Human Resources'],
+  [/Ticket Promedio/g, 'Avg Ticket'],
+  [/TICKET PROMEDIO/g, 'AVG TICKET'],
+  [/trabajos activos/g, 'active jobs'],
+  [/Mensuales/g, 'Monthly'],
+  [/Este mes/g, 'This month'],
+  [/ESTE MES/g, 'THIS MONTH'],
+  [/No hay gastos registrados/g, 'No expenses registered'],
+  [/Agrega tu renta, seguros y otros gastos fijos/g, 'Add your rent, insurance and other fixed expenses'],
+  [/Tu contador puede acceder directamente a QuickBooks/g, 'Your accountant can access QuickBooks directly'],
+  [/Ir a QuickBooks/g, 'Go to QuickBooks'],
+  [/Cobrado (\d+)/g, 'Collected $1'],
+  [/Correo Entrante/g, 'Incoming Mail'],
+  [/Correo Saliente/g, 'Outgoing Mail'],
+  [/Licencia de Manejar/g, 'Driver License'],
+  [/Factura manual/g, 'Manual Invoice'],
+  [/Prueba de Flujo/g, 'Airflow Test'],
+  [/El coordinador de despacho puede subir correo/g, 'The dispatch coordinator can upload mail'],
+  [/Contabilidad/g, 'Accounting']
 ];
 
 function applyPatterns(){
@@ -1286,7 +1327,7 @@ function init(){
     });
   }
 
-  console.log('✅ i18n-patch.js v3 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
+  console.log('✅ i18n-patch.js v4 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
 }
 
 if(document.readyState === 'loading'){
