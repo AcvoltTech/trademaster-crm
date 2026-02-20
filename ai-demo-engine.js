@@ -155,8 +155,24 @@ function injectCSS(){
 function showSplash(){
   return new Promise(function(res){
     var s=document.createElement('div');s.id='demoSplash';
-    s.innerHTML='<div class="ds-content"><div style="font-size:60px;margin-bottom:12px">\uD83D\uDD27</div><h1 style="font-size:2rem;font-weight:800;margin:0 0 6px;color:#fff">Trade Master CRM</h1><p style="color:#f97316;font-weight:600;margin:0 0 4px">Interactive AI Demo</p><p style="color:#94a3b8;font-size:.85rem;margin:0 0 24px">'+CO.name+'</p><p style="color:#cbd5e1;font-size:.9rem;line-height:1.7;margin:0 0 28px;max-width:440px">'+((window.currentLang||'es')==='en'?'I will walk you through every feature of the <strong>entire CRM</strong> — creating clients, technicians, jobs, invoices and more. <strong>35 complete steps</strong>.':'Brenda te enseñar\u00E1 cada funci\u00F3n del <strong>CRM completo</strong> — crear\u00E1 clientes, t\u00E9cnicos, trabajos, facturas y m\u00E1s. <strong>35 pasos completos</strong>.')+'</p><button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Start Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Full Demo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 30-40 min</p></div>';
+    var isEN=(window.currentLang||'es')==='en';
+    s.innerHTML='<div class="ds-content"><div style="font-size:60px;margin-bottom:12px">\uD83D\uDD27</div><h1 style="font-size:2rem;font-weight:800;margin:0 0 6px;color:#fff">Trade Master CRM</h1><p style="color:#f97316;font-weight:600;margin:0 0 4px">Interactive AI Demo</p><p style="color:#94a3b8;font-size:.85rem;margin:0 0 20px">'+CO.name+'</p>'+
+    '<p style="color:#cbd5e1;font-size:.85rem;margin:0 0 14px">Choose your guide / Elige tu guía:</p>'+
+    '<div style="display:flex;gap:12px;justify-content:center;margin:0 0 22px">'+
+    '<button id="splEN" style="padding:10px 22px;border-radius:12px;border:2px solid '+(isEN?'#f97316':'rgba(255,255,255,.2)')+';background:'+(isEN?'rgba(249,115,22,.15)':'transparent')+';color:#fff;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s"><span style="font-size:1.4rem">\uD83D\uDC71\u200D\u2640\uFE0F</span><br>Danielle<br><span style="font-size:.7rem;color:#94a3b8">English</span></button>'+
+    '<button id="splES" style="padding:10px 22px;border-radius:12px;border:2px solid '+(!isEN?'#f97316':'rgba(255,255,255,.2)')+';background:'+(!isEN?'rgba(249,115,22,.15)':'transparent')+';color:#fff;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s"><span style="font-size:1.4rem">\uD83D\uDC69\uD83C\uDFFC</span><br>Brenda<br><span style="font-size:.7rem;color:#94a3b8">Español</span></button>'+
+    '</div>'+
+    '<button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Start Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Full Demo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 30-40 min</p></div>';
     document.body.appendChild(s);
+    function selLang(lang){
+      window.currentLang=lang;var en=lang==='en';
+      $('splEN').style.borderColor=en?'#f97316':'rgba(255,255,255,.2)';
+      $('splEN').style.background=en?'rgba(249,115,22,.15)':'transparent';
+      $('splES').style.borderColor=!en?'#f97316':'rgba(255,255,255,.2)';
+      $('splES').style.background=!en?'rgba(249,115,22,.15)':'transparent';
+    }
+    $('splEN').onclick=function(){selLang('en');};
+    $('splES').onclick=function(){selLang('es');};
     $('demoStartBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('manual');},800);};
     $('demoAutoBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('auto');},800);};
   });
@@ -175,6 +191,7 @@ function createAssistant(){
     $('sfAvatar').textContent=en?'\uD83D\uDC71\u200D\u2640\uFE0F':'\uD83D\uDC69\uD83C\uDFFC';
     $('sfEN').className='sf-lang'+(en?' sf-lang-on':'');
     $('sfES').className='sf-lang'+(!en?' sf-lang-on':'');
+    if($('sfBubble'))$('sfBubble').textContent=en?'\uD83D\uDC71\u200D\u2640\uFE0F':'\uD83D\uDC69\uD83C\uDFFC';
     if(window.speechSynthesis)speechSynthesis.cancel();
     if(_currentAudio){try{_currentAudio.pause();}catch(e){}_currentAudio=null;}
   }
