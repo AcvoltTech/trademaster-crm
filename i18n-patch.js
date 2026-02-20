@@ -1779,3 +1779,24 @@ if(document.readyState === 'loading'){
 }
 
 })();
+
+
+// ============================================================
+// i18n v8 Stubborn Fixer - Final comprehensive translation fix
+// ============================================================
+(function(){
+'use strict';
+var TM={DOM:'SUN',LUN:'MON',MAR:'TUE','MIÉ':'WED',MIE:'WED',JUE:'THU',VIE:'FRI','SÁB':'SAT',SAB:'SAT',VENCIDO:'OVERDUE','TOTAL FACTURAS':'TOTAL INVOICES',VENCE:'DUE DATE',Vencido:'Overdue',Nuevas:'New',Nueva:'New',Asignada:'Assigned',Completada:'Completed',ESPECIALIDAD:'SPECIALTY',Especialidad:'Specialty',PRIORIDAD:'PRIORITY',Prioridad:'Priority',ZONA:'ZONE',Zona:'Zone',Activo:'Active',Activa:'Active',Inactivo:'Inactive',EMPRESA:'COMPANY',Empresa:'Company',CONTACTO:'CONTACT',Contacto:'Contact',MARCA:'BRAND',Marca:'Brand','MODELO #':'MODEL #','Modelo #':'Model #','HORAS DE LABOR':'LABOR HOURS','Horas de Labor':'Labor Hours','DESCUENTO (%)':'DISCOUNT (%)','Descuento (%)':'Discount (%)','LOGO DE LA EMPRESA':'COMPANY LOGO','Logo de la Empresa':'Company Logo','Logo de la empresa':'Company Logo','No conectado':'Not connected','Integrado con contabilidad QB':'Integrated with QB accounting',Salespersones:'Salespersons','(Salespersones)':'(Salespersons)',Todas:'All',Todos:'All',Ganado:'Won',Ganada:'Won',Perdido:'Lost',Perdida:'Lost',Pendiente:'Pending',Borrador:'Draft',Pagado:'Paid',Pagada:'Paid',Cancelado:'Cancelled',Cancelada:'Cancelled',Abierto:'Open',Abierta:'Open',Cerrado:'Closed',Cerrada:'Closed','En progreso':'In Progress','En Progreso':'In Progress','Importar de HCP':'Import from HCP'};
+var PM={'Buscar cliente...':'Search client...','Buscar cliente':'Search client','Buscar empleado...':'Search employee...','Buscar empleado':'Search employee','Buscar...':'Search...','Ingresa tu API Key...':'Enter your API Key...','Ingresa tu Secret...':'Enter your Secret...','ID de tu empresa en el proveedor':'Your company ID in the provider'};
+function fixT(r){var w=document.createTreeWalker(r||document.body,NodeFilter.SHOW_TEXT,null,false);var n;while(n=w.nextNode()){var t=n.nodeValue;if(!t||!t.trim())continue;var s=t.trim();if(TM[s]){n.nodeValue=t.replace(s,TM[s]);continue;}if(s.includes('COLLECTED ESTE MES')){n.nodeValue=t.replace('COLLECTED ESTE MES','COLLECTED THIS MONTH');}else if(s.includes('ESTE MES')){n.nodeValue=t.replace('ESTE MES','THIS MONTH');}else if(s.includes('este mes')){n.nodeValue=t.replace('este mes','this month');}if(/\d+ de \d+/.test(s)){n.nodeValue=t.replace(/ de (\d+)/,' of $1');}if(s.includes('hace')){n.nodeValue=t.replace(/hace/g,'ago');}if(s.includes('al d')){n.nodeValue=t.replace(/al d[ií]a/g,'up to date');}if(s.includes('con su propia cuenta')){n.nodeValue=t.replace('con su propia cuenta','with their own account');}if(s.includes('con business')){n.nodeValue=t.replace('con business','with business');}}}
+function fixP(r){var i=(r||document).querySelectorAll('input[placeholder],textarea[placeholder]');i.forEach(function(e){var p=e.placeholder;if(PM[p]){e.placeholder=PM[p];return;}if(p.indexOf('Ej:')!==-1||p.indexOf('Ej.')!==-1){e.placeholder=p.replace(/Ej[:.]/g,'Ex:');}if(p.indexOf('Buscar')!==-1){e.placeholder=p.replace('Buscar','Search');}if(p.indexOf('Ingresa')!==-1){e.placeholder=p.replace(/Ingresa tu /g,'Enter your ').replace(/Ingresa /g,'Enter ');}});}
+function fixS(r){var o=(r||document).querySelectorAll('select option');o.forEach(function(e){var t=e.textContent.trim();if(TM[t])e.textContent=TM[t];});}
+function fixD(){var dm={DOM:'SUN',LUN:'MON',MAR:'TUE','MIÉ':'WED',MIE:'WED',JUE:'THU',VIE:'FRI','SÁB':'SAT',SAB:'SAT'};document.querySelectorAll('th,td,div,span').forEach(function(e){if(e.children.length===0){var t=e.textContent.trim();if(dm[t])e.textContent=dm[t];}});}
+function runAll(){fixT();fixP();fixS();fixD();}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);});}else{setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);}
+var obs=new MutationObserver(function(m){var f=false;m.forEach(function(x){if(x.addedNodes.length>0)f=true;});if(f){clearTimeout(window._i18nFT);window._i18nFT=setTimeout(runAll,200);}});
+obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
+window.addEventListener('hashchange',function(){setTimeout(runAll,300);setTimeout(runAll,1000);setTimeout(runAll,2000);});
+var cc=0;var pi=setInterval(function(){runAll();cc++;if(cc>=6)clearInterval(pi);},5000);
+console.log('i18n v8 stubborn fixer loaded');
+})();
