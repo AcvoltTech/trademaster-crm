@@ -1782,21 +1782,185 @@ if(document.readyState === 'loading'){
 
 
 // ============================================================
-// i18n v8 Stubborn Fixer - Final comprehensive translation fix
+// i18n v8.1 Stubborn Fixer - Case-corrected comprehensive fix
 // ============================================================
 (function(){
 'use strict';
-var TM={DOM:'SUN',LUN:'MON',MAR:'TUE','MIÉ':'WED',MIE:'WED',JUE:'THU',VIE:'FRI','SÁB':'SAT',SAB:'SAT',VENCIDO:'OVERDUE','TOTAL FACTURAS':'TOTAL INVOICES',VENCE:'DUE DATE',Vencido:'Overdue',Nuevas:'New',Nueva:'New',Asignada:'Assigned',Completada:'Completed',ESPECIALIDAD:'SPECIALTY',Especialidad:'Specialty',PRIORIDAD:'PRIORITY',Prioridad:'Priority',ZONA:'ZONE',Zona:'Zone',Activo:'Active',Activa:'Active',Inactivo:'Inactive',EMPRESA:'COMPANY',Empresa:'Company',CONTACTO:'CONTACT',Contacto:'Contact',MARCA:'BRAND',Marca:'Brand','MODELO #':'MODEL #','Modelo #':'Model #','HORAS DE LABOR':'LABOR HOURS','Horas de Labor':'Labor Hours','DESCUENTO (%)':'DISCOUNT (%)','Descuento (%)':'Discount (%)','LOGO DE LA EMPRESA':'COMPANY LOGO','Logo de la Empresa':'Company Logo','Logo de la empresa':'Company Logo','No conectado':'Not connected','Integrado con contabilidad QB':'Integrated with QB accounting',Salespersones:'Salespersons','(Salespersones)':'(Salespersons)',Todas:'All',Todos:'All',Ganado:'Won',Ganada:'Won',Perdido:'Lost',Perdida:'Lost',Pendiente:'Pending',Borrador:'Draft',Pagado:'Paid',Pagada:'Paid',Cancelado:'Cancelled',Cancelada:'Cancelled',Abierto:'Open',Abierta:'Open',Cerrado:'Closed',Cerrada:'Closed','En progreso':'In Progress','En Progreso':'In Progress','Importar de HCP':'Import from HCP'};
-var PM={'Buscar cliente...':'Search client...','Buscar cliente':'Search client','Buscar empleado...':'Search employee...','Buscar empleado':'Search employee','Buscar...':'Search...','Ingresa tu API Key...':'Enter your API Key...','Ingresa tu Secret...':'Enter your Secret...','ID de tu empresa en el proveedor':'Your company ID in the provider'};
-function fixT(r){var w=document.createTreeWalker(r||document.body,NodeFilter.SHOW_TEXT,null,false);var n;while(n=w.nextNode()){var t=n.nodeValue;if(!t||!t.trim())continue;var s=t.trim();if(TM[s]){n.nodeValue=t.replace(s,TM[s]);continue;}if(s.includes('COLLECTED ESTE MES')){n.nodeValue=t.replace('COLLECTED ESTE MES','COLLECTED THIS MONTH');}else if(s.includes('ESTE MES')){n.nodeValue=t.replace('ESTE MES','THIS MONTH');}else if(s.includes('este mes')){n.nodeValue=t.replace('este mes','this month');}if(/\d+ de \d+/.test(s)){n.nodeValue=t.replace(/ de (\d+)/,' of $1');}if(s.includes('hace')){n.nodeValue=t.replace(/hace/g,'ago');}if(s.includes('al d')){n.nodeValue=t.replace(/al d[ií]a/g,'up to date');}if(s.includes('con su propia cuenta')){n.nodeValue=t.replace('con su propia cuenta','with their own account');}if(s.includes('con business')){n.nodeValue=t.replace('con business','with business');}}}
-function fixP(r){var i=(r||document).querySelectorAll('input[placeholder],textarea[placeholder]');i.forEach(function(e){var p=e.placeholder;if(PM[p]){e.placeholder=PM[p];return;}if(p.indexOf('Ej:')!==-1||p.indexOf('Ej.')!==-1){e.placeholder=p.replace(/Ej[:.]/g,'Ex:');}if(p.indexOf('Buscar')!==-1){e.placeholder=p.replace('Buscar','Search');}if(p.indexOf('Ingresa')!==-1){e.placeholder=p.replace(/Ingresa tu /g,'Enter your ').replace(/Ingresa /g,'Enter ');}});}
-function fixS(r){var o=(r||document).querySelectorAll('select option');o.forEach(function(e){var t=e.textContent.trim();if(TM[t])e.textContent=TM[t];});}
-function fixD(){var dm={DOM:'SUN',LUN:'MON',MAR:'TUE','MIÉ':'WED',MIE:'WED',JUE:'THU',VIE:'FRI','SÁB':'SAT',SAB:'SAT'};document.querySelectorAll('th,td,div,span').forEach(function(e){if(e.children.length===0){var t=e.textContent.trim();if(dm[t])e.textContent=dm[t];}});}
-function runAll(){fixT();fixP();fixS();fixD();}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);});}else{setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);}
-var obs=new MutationObserver(function(m){var f=false;m.forEach(function(x){if(x.addedNodes.length>0)f=true;});if(f){clearTimeout(window._i18nFT);window._i18nFT=setTimeout(runAll,200);}});
+
+// CASE-INSENSITIVE text map (key = lowercase, value = English)
+var TM_lower = {
+  'dom':'Sun','lun':'Mon','mar':'Tue','mié':'Wed','mie':'Wed',
+  'jue':'Thu','vie':'Fri','sáb':'Sat','sab':'Sat',
+  'vencido':'Overdue','total facturas':'Total Invoices','vence':'Due Date',
+  'vence:':'Due Date:',
+  'nuevas':'New','nueva':'New','asignada':'Assigned','completada':'Completed',
+  'especialidad':'Specialty','prioridad':'Priority','zona':'Zone',
+  'activo':'Active','activa':'Active','inactivo':'Inactive','inactiva':'Inactive',
+  'empresa':'Company','contacto':'Contact',
+  'marca':'Brand','modelo #':'Model #',
+  'horas de labor':'Labor Hours','descuento (%)':'Discount (%)',
+  'descuento en reparaciones (%)':'Discount on Repairs (%)',
+  'logo de la empresa':'Company Logo',
+  'no conectado':'Not connected',
+  'integrado con contabilidad qb':'Integrated with QB accounting',
+  'salespersones':'Salespersons','(salespersones)':'(Salespersons)',
+  'todas':'All','todos':'All',
+  'ganado':'Won','ganada':'Won','perdido':'Lost','perdida':'Lost',
+  'pendiente':'Pending','borrador':'Draft',
+  'pagado':'Paid','pagada':'Paid',
+  'cancelado':'Cancelled','cancelada':'Cancelled',
+  'abierto':'Open','abierta':'Open','cerrado':'Closed','cerrada':'Closed',
+  'en progreso':'In Progress',
+  'registrar empresa':'Register Company',
+  'nombre de la empresa':'Company Name',
+  'zona de cobertura':'Coverage Zone',
+  'importar de hcp':'Import from HCP',
+  'registrar sale cerrada':'Register Closed Sale',
+  'registrar':'Register',
+  'horas de labor':'Labor Hours',
+  'incluir documentos en estimados y facturas':'Include documents in estimates and invoices',
+  'lead de la empresa':'Company Lead'
+};
+
+function fixT(root){
+  var w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT,null,false);
+  var n;
+  while(n=w.nextNode()){
+    var t=n.nodeValue;
+    if(!t||!t.trim())continue;
+    var s=t.trim();
+    var sl=s.toLowerCase();
+    // Exact match (case insensitive)
+    if(TM_lower[sl]){
+      // Preserve surrounding whitespace
+      n.nodeValue=t.replace(s,TM_lower[sl]);
+      continue;
+    }
+    // Partial matches
+    var changed=t;
+    if(/este mes/i.test(changed)) changed=changed.replace(/COLLECTED ESTE MES/gi,'COLLECTED THIS MONTH').replace(/este mes/gi,'this month');
+    if(/\\d+ de \\d+/.test(changed)) changed=changed.replace(/(\\d+) de (\\d+)/g,'$1 of $2');
+    if(/hace/i.test(changed) && !/desha|hacem/i.test(changed)) changed=changed.replace(/\\bhace\\b/gi,'ago');
+    if(/al d[ií]a/i.test(changed)) changed=changed.replace(/al d[ií]a/gi,'up to date');
+    if(/con su propia cuenta/i.test(changed)) changed=changed.replace(/con su propia cuenta/gi,'with their own account');
+    if(/sistema multi-empresa/i.test(changed)) changed=changed.replace(/Sistema Multi-Empresa/gi,'Multi-Company System');
+    if(changed!==t) n.nodeValue=changed;
+  }
+}
+
+var PM={
+  'Buscar cliente...':'Search client...','Buscar cliente':'Search client',
+  'Buscar empleado...':'Search employee...','Buscar empleado':'Search employee',
+  'Buscar...':'Search...','Ingresa tu API Key...':'Enter your API Key...',
+  'Ingresa tu Secret...':'Enter your Secret...',
+  'ID de tu empresa en el proveedor':'Your company ID in the provider'
+};
+
+function fixP(root){
+  var i=(root||document).querySelectorAll('input[placeholder],textarea[placeholder]');
+  i.forEach(function(e){
+    var p=e.placeholder;
+    if(PM[p]){e.placeholder=PM[p];return;}
+    if(p.indexOf('Ej:')!==-1||p.indexOf('Ej.')!==-1) e.placeholder=p.replace(/Ej[:.]/g,'Ex:');
+    if(p.indexOf('Buscar')!==-1) e.placeholder=p.replace('Buscar','Search');
+    if(p.indexOf('Ingresa')!==-1) e.placeholder=p.replace(/Ingresa tu /g,'Enter your ').replace(/Ingresa /g,'Enter ');
+  });
+}
+
+function fixS(root){
+  var o=(root||document).querySelectorAll('select option');
+  o.forEach(function(e){
+    var t=e.textContent.trim();
+    var tl=t.toLowerCase();
+    if(TM_lower[tl]) e.textContent=TM_lower[tl];
+    // Fix emoji prefixed options
+    if(t.includes('Lead de la Empresa')) e.textContent=t.replace('Lead de la Empresa','Company Lead');
+  });
+}
+
+function fixD(){
+  var dm={'Dom':'Sun','Lun':'Mon','Mar':'Tue','Mié':'Wed','Mie':'Wed','Jue':'Thu','Vie':'Fri','Sáb':'Sat','Sab':'Sat'};
+  document.querySelectorAll('.cal-day-header, th, [class*="day-header"]').forEach(function(e){
+    if(e.children.length===0){
+      var t=e.textContent.trim();
+      if(dm[t]) e.textContent=dm[t];
+    }
+  });
+}
+
+function fixButtons(){
+  document.querySelectorAll('button, .btn, [class*="btn"]').forEach(function(e){
+    var t=e.textContent.trim();
+    if(t.includes('Importar de HCP')) e.innerHTML=e.innerHTML.replace('Importar de HCP','Import from HCP');
+    if(t.includes('Registrar Empresa')) e.innerHTML=e.innerHTML.replace('Registrar Empresa','Register Company');
+    if(t.includes('Registrar Sale')) e.innerHTML=e.innerHTML.replace('Registrar Sale Cerrada','Register Closed Sale');
+    if(t==='+ Registrar') e.textContent='+ Register';
+  });
+}
+
+function fixLabels(){
+  document.querySelectorAll('label, .label, h3, h4, strong, span').forEach(function(e){
+    if(e.children.length>1) return;
+    var t=e.textContent.trim();
+    var tl=t.toLowerCase().replace(/[^\\w\\s]/g,'').trim();
+    if(TM_lower[tl]){
+      var inner=e.innerHTML;
+      e.innerHTML=inner.replace(t, TM_lower[tl]);
+    }
+    // Specific fixes
+    if(t.includes('Nombre de la Empresa')) e.innerHTML=e.innerHTML.replace('Nombre de la Empresa','Company Name');
+    if(t.includes('Horas de labor')) e.innerHTML=e.innerHTML.replace('Horas de labor','Labor Hours');
+    if(t.includes('Zona de Cobertura')) e.innerHTML=e.innerHTML.replace('Zona de Cobertura','Coverage Zone');
+    if(t.includes('Descuento en Reparaciones')) e.innerHTML=e.innerHTML.replace('Descuento en Reparaciones (%)','Discount on Repairs (%)');
+    if(t.includes('Incluir documentos')) e.innerHTML=e.innerHTML.replace('Incluir documentos en estimados y facturas','Include documents in estimates and invoices');
+    if(t.includes('Salespersones')) e.innerHTML=e.innerHTML.replace('Salespersones','Salespersons');
+    if(t.includes('Activo') && !t.includes('Active')) e.innerHTML=e.innerHTML.replace('Activo','Active');
+  });
+}
+
+function fixKpiLabels(){
+  document.querySelectorAll('.inv-kpi-label').forEach(function(e){
+    var t=e.textContent.trim();
+    if(t==='Vencido') e.textContent='Overdue';
+    if(t==='Total Facturas') e.textContent='Total Invoices';
+  });
+  document.querySelectorAll('th').forEach(function(e){
+    var t=e.textContent.trim();
+    if(t==='Vence') e.textContent='Due Date';
+    if(t==='Empresa') e.textContent='Company';
+    if(t==='Contacto') e.textContent='Contact';
+    if(t==='Especialidad') e.textContent='Specialty';
+    if(t==='Prioridad') e.textContent='Priority';
+    if(t==='Zona') e.textContent='Zone';
+    if(t==='Marca') e.textContent='Brand';
+  });
+}
+
+function fixBadges(){
+  document.querySelectorAll('.badge, [class*="status"], [class*="tag"]').forEach(function(e){
+    var t=e.textContent.trim();
+    if(t==='No conectado') e.textContent='Not connected';
+    if(t==='Activo') e.textContent='Active';
+    if(t==='Inactivo') e.textContent='Inactive';
+  });
+}
+
+function runAll(){
+  try{
+    fixT();fixP();fixS();fixD();fixButtons();fixLabels();fixKpiLabels();fixBadges();
+  }catch(e){}
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);});
+}else{setTimeout(runAll,500);setTimeout(runAll,1500);setTimeout(runAll,3000);}
+
+var obs=new MutationObserver(function(m){
+  var f=false;m.forEach(function(x){if(x.addedNodes.length>0)f=true;});
+  if(f){clearTimeout(window._i18nFT);window._i18nFT=setTimeout(runAll,200);}
+});
 obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
 window.addEventListener('hashchange',function(){setTimeout(runAll,300);setTimeout(runAll,1000);setTimeout(runAll,2000);});
 var cc=0;var pi=setInterval(function(){runAll();cc++;if(cc>=6)clearInterval(pi);},5000);
-console.log('i18n v8 stubborn fixer loaded');
+console.log('i18n v8.1 stubborn fixer loaded');
 })();
