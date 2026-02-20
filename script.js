@@ -11801,29 +11801,48 @@ async function getHRProbationAlerts() {
 }
 
 // ==========================================
-// PROGRAMA DE EMBAJADORES
+// PROGRAMA DE EMBAJADORES (FLASHY v2)
 // ==========================================
+
+var epicMessages = [
+    "🔥 ¡Hey! Estoy usando Trade Master CRM para manejar todo mi negocio de HVAC y es INCREÍBLE. Clientes, trabajos, facturas, despacho de técnicos, cobros — TODO en un solo lugar.\n\n💰 Si te registras con mi código {CODE}, los dos ganamos.\n\n👉 {LINK}\n\n¡No te quedes atrás! El futuro del HVAC es digital 🚀",
+    "💡 Bro, ¿todavía manejas tu negocio con papel y Excel? Yo cambié a Trade Master CRM y ahora facturo más, cobro más rápido, y mis técnicos trabajan mejor.\n\nUsa mi código: {CODE}\n👉 {LINK}\n\n¡Te van a agradecer tus clientes! 🙌",
+    "🏆 Si tienes un negocio de HVAC, NECESITAS esto. Trade Master CRM me cambió la vida — despacho técnicos desde mi celular, cobro en el campo, y tengo reportes de todo.\n\n🎁 Código de referido: {CODE}\n🔗 {LINK}\n\n¡Pruébalo y me dices! 💪",
+    "⚡ ¿Cansado de perder clientes por desorganización? Trade Master CRM es el sistema #1 para negocios de HVAC. Lo uso todos los días y ha sido un game-changer.\n\n🔑 Mi código: {CODE}\n🌐 {LINK}\n\n¡Únete a los que ya están ganando más! 📈",
+    "🚀 Te comparto algo que me está ayudando MUCHO en mi negocio: Trade Master CRM. Manejo todo desde una sola app — clientes, técnicos, facturas, cobros, y hasta marketing.\n\n💎 Regístrate con: {CODE}\n👉 {LINK}\n\n¡El mejor CRM para HVAC, punto! 🔥"
+];
+
+var currentEpicIndex = 0;
 
 async function loadAmbassadorData() {
     if (!companyId) return;
     
-    // Get or create ambassador code
     try {
-        var compRes = await sbClient.from('companies').select('id, name, company_number, ambassador_code, ambassador_status').eq('id', companyId).single();
+        var compRes = await sbClient.from('companies').select('id, name, ambassador_code, ambassador_status, w9_uploaded').eq('id', companyId).single();
         var comp = compRes.data;
         
         if (!comp.ambassador_code) {
-            // Generate unique code from company number
-            var code = 'TM-' + (comp.company_number || '0000').toString().replace('TM-','');
+            var code = 'TM-' + Math.random().toString(36).substring(2, 6).toUpperCase();
             await sbClient.from('companies').update({ ambassador_code: code, ambassador_status: 'active' }).eq('id', companyId);
             comp.ambassador_code = code;
         }
         
         var code = comp.ambassador_code;
+        var link = 'https://acvolttech.github.io/trademaster-crm/?ref=' + code;
+        
         var el = document.getElementById('ambassadorCode');
         if (el) el.textContent = code;
         var linkEl = document.getElementById('ambassadorLink');
-        if (linkEl) linkEl.textContent = 'https://acvolttech.github.io/trademaster-crm/?ref=' + code;
+        if (linkEl) linkEl.textContent = link;
+        
+        // Generate QR Code
+        generateQR(link);
+        
+        // Set epic message
+        setEpicMessage(code, link);
+        
+        // Check W9 status
+        updateW9Status(comp.w9_uploaded);
         
         // Load referrals
         var refRes = await sbClient.from('ambassador_referrals').select('*').eq('referrer_company_id', companyId).order('created_at', { ascending: false });
@@ -11833,25 +11852,19 @@ async function loadAmbassadorData() {
         var payRes = await sbClient.from('ambassador_payouts').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
         var payouts = payRes.data || [];
         
-        // Calculate stats
+        // Stats - $50 flat per referral
         var totalReferred = referrals.length;
         var converted = referrals.filter(function(r) { return r.status === 'converted' || r.status === 'active'; }).length;
         var totalEarned = payouts.filter(function(p) { return p.status === 'paid'; }).reduce(function(sum, p) { return sum + (p.amount || 0); }, 0);
-        var totalPending = payouts.filter(function(p) { return p.status === 'pending'; }).reduce(function(sum, p) { return sum + (p.amount || 0); }, 0);
-        // Also calculate ongoing commissions from active referrals
-        var monthlyCommission = referrals.filter(function(r) { return r.status === 'active'; }).reduce(function(sum, r) {
-            return sum + (r.plan === 'enterprise' ? 50 : 25);
-        }, 0);
+        var totalPending = converted * 50 - totalEarned;
+        if (totalPending < 0) totalPending = 0;
         
         var el2 = document.getElementById('ambReferred'); if (el2) el2.textContent = totalReferred;
         var el3 = document.getElementById('ambConverted'); if (el3) el3.textContent = converted;
         var el4 = document.getElementById('ambEarned'); if (el4) el4.textContent = '$' + totalEarned.toFixed(0);
-        var el5 = document.getElementById('ambPending'); if (el5) el5.textContent = '$' + (totalPending + monthlyCommission).toFixed(0);
+        var el5 = document.getElementById('ambPending'); if (el5) el5.textContent = '$' + totalPending.toFixed(0);
         
-        // Render referrals list
         renderAmbassadorReferrals(referrals);
-        
-        // Render payouts
         renderAmbassadorPayouts(payouts);
         
     } catch(e) {
@@ -11859,25 +11872,208 @@ async function loadAmbassadorData() {
     }
 }
 
+function generateQR(link) {
+    var qrDiv = document.getElementById('ambassadorQR');
+    if (!qrDiv) return;
+    // Use Google Charts QR API
+    var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(link) + '&choe=UTF-8&chld=H|2';
+    qrDiv.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;border-radius:8px" id="ambassadorQRImg">';
+}
+
+function downloadQR() {
+    var img = document.getElementById('ambassadorQRImg');
+    if (!img) return;
+    var a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'TradeMaster-QR-' + (document.getElementById('ambassadorCode').textContent || 'code') + '.png';
+    a.click();
+}
+
+function printAmbCard() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    var qrImg = document.getElementById('ambassadorQRImg');
+    var qrSrc = qrImg ? qrImg.src : '';
+    
+    var w = window.open('', '_blank', 'width=500,height=700');
+    w.document.write('<!DOCTYPE html><html><head><title>Trade Master Ambassador Card</title><style>'+
+        '@page{size:3.5in 2in;margin:0}'+
+        'body{font-family:Arial,sans-serif;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:20px}'+
+        '.card{width:3.3in;height:1.9in;border:2px solid #f97316;border-radius:12px;padding:12px;box-sizing:border-box;background:linear-gradient(135deg,#fff7ed,#fff);position:relative;overflow:hidden;page-break-after:always}'+
+        '.card::before{content:"";position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:#f97316;opacity:.1;border-radius:50%}'+
+        '.logo{font-size:14px;font-weight:900;color:#f97316;margin-bottom:6px}'+
+        '.tagline{font-size:8px;color:#666;margin-bottom:10px}'+
+        '.code-label{font-size:7px;color:#999;text-transform:uppercase;letter-spacing:1px}'+
+        '.code{font-size:22px;font-weight:900;font-family:monospace;color:#ea580c;letter-spacing:3px}'+
+        '.reward{font-size:10px;color:#166534;font-weight:700;margin-top:6px;background:#dcfce7;padding:3px 8px;border-radius:6px;display:inline-block}'+
+        '.qr{position:absolute;right:10px;top:50%;transform:translateY(-50%)}'+
+        '.link{font-size:7px;color:#6b7280;margin-top:8px;word-break:break-all}'+
+    '</style></head><body>');
+    
+    // Print 4 cards per page
+    for (var i = 0; i < 8; i++) {
+        w.document.write('<div class="card">'+
+            '<div class="logo">🌟 TRADE MASTER CRM</div>'+
+            '<div class="tagline">Programa de Embajadores — #1 HVAC Management</div>'+
+            '<div class="code-label">Código de Referido</div>'+
+            '<div class="code">' + code + '</div>'+
+            '<div class="reward">💰 ¡Gana $50 por cada referido!</div>'+
+            '<div class="link">' + link + '</div>'+
+            (qrSrc ? '<div class="qr"><img src="' + qrSrc + '" width="65" height="65" style="border-radius:4px"></div>' : '')+
+        '</div>');
+    }
+    
+    w.document.write('</body></html>');
+    w.document.close();
+    setTimeout(function() { w.print(); }, 500);
+}
+
+function setEpicMessage(code, link) {
+    var msg = epicMessages[currentEpicIndex % epicMessages.length];
+    msg = msg.replace(/\{CODE\}/g, code).replace(/\{LINK\}/g, link);
+    var el = document.getElementById('epicMessage');
+    if (el) el.textContent = msg;
+}
+
+function refreshEpicMessage() {
+    currentEpicIndex++;
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    setEpicMessage(code, link);
+}
+
+function copyEpicMessage() {
+    var msg = document.getElementById('epicMessage').textContent;
+    navigator.clipboard.writeText(msg).then(function() {
+        alert('✅ ¡Mensaje copiado! Pégalo donde quieras');
+    }).catch(function() {
+        var ta = document.createElement('textarea'); ta.value = msg; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        alert('✅ ¡Mensaje copiado!');
+    });
+}
+
+// W9 Upload
+async function uploadW9(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('Archivo muy grande (máx 10MB)'); return; }
+    
+    try {
+        var fileName = companyId + '/w9_' + Date.now() + '_' + file.name;
+        var uploadRes = await sbClient.storage.from('documents').upload(fileName, file);
+        
+        if (uploadRes.error) {
+            // Try creating bucket first
+            await sbClient.storage.createBucket('documents', { public: false });
+            uploadRes = await sbClient.storage.from('documents').upload(fileName, file);
+        }
+        
+        if (uploadRes.error) throw uploadRes.error;
+        
+        await sbClient.from('companies').update({ w9_uploaded: true, w9_file: fileName, w9_date: new Date().toISOString() }).eq('id', companyId);
+        
+        updateW9Status(true);
+        alert('✅ ¡W-9 subido exitosamente! Ya estás listo para recibir pagos.');
+    } catch(e) {
+        console.log('W9 upload error:', e);
+        // Save at least the record that they tried
+        await sbClient.from('companies').update({ w9_uploaded: true, w9_date: new Date().toISOString() }).eq('id', companyId);
+        updateW9Status(true);
+        alert('✅ W-9 registrado. Nuestro equipo lo procesará.');
+    }
+}
+
+function updateW9Status(uploaded) {
+    var icon = document.getElementById('w9Icon');
+    var title = document.getElementById('w9Title');
+    var desc = document.getElementById('w9Desc');
+    var status = document.getElementById('w9Status');
+    
+    if (uploaded) {
+        if (icon) icon.textContent = '✅';
+        if (title) title.textContent = 'W-9 Recibido';
+        if (desc) desc.textContent = '¡Tu W-9 está en archivo! Estás listo para recibir pagos de comisiones.';
+        if (status) status.innerHTML = '<div style="background:#dcfce7;color:#166534;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600">✅ Documento recibido — listo para pagos</div>';
+    }
+}
+
+// Share functions
+function copyRefLink() {
+    var link = document.getElementById('ambassadorLink').textContent;
+    navigator.clipboard.writeText(link).then(function() {
+        alert('✅ ¡Link copiado al portapapeles!');
+    }).catch(function() {
+        var ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        alert('✅ ¡Link copiado!');
+    });
+}
+
+function getShareMsg() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    return '🔥 ¡Prueba Trade Master CRM! El sistema #1 para negocios de HVAC. Maneja clientes, técnicos, facturas y más desde tu celular.\n\n💰 Usa mi código ' + code + ' y activa tu negocio.\n👉 ' + link + '\n\n¡No te quedes atrás! 🚀';
+}
+
+function shareRefWhatsApp() {
+    window.open('https://wa.me/?text=' + encodeURIComponent(getShareMsg()), '_blank');
+}
+
+function shareRefSMS() {
+    window.open('sms:?&body=' + encodeURIComponent(getShareMsg()), '_blank');
+}
+
+function shareRefEmail() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    var subject = '🔥 Te recomiendo Trade Master CRM — Código ' + code;
+    var body = '¡Hola!\n\nTe escribo porque encontré un sistema increíble para manejar negocios de HVAC.\n\n' +
+               'Se llama Trade Master CRM y te permite:\n' +
+               '✅ Manejar clientes y trabajos\n' +
+               '✅ Despachar técnicos en tiempo real\n' +
+               '✅ Crear facturas y cobrar al instante\n' +
+               '✅ Reportes financieros completos\n' +
+               '✅ App móvil para tu equipo\n\n' +
+               '💰 Usa mi código de referido: ' + code + '\n' +
+               '🔗 ' + link + '\n\n' +
+               '¡Te va a cambiar el juego! 🚀';
+    window.open('mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+}
+
+function shareRefFacebook() {
+    var link = document.getElementById('ambassadorLink').textContent;
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link) + '&quote=' + encodeURIComponent('🔥 El mejor CRM para negocios de HVAC. ¡Pruébalo!'), '_blank', 'width=600,height=400');
+}
+
+function shareRefInstagram() {
+    copyEpicMessage();
+    alert('📸 Mensaje copiado — pégalo en tu historia o post de Instagram');
+}
+
+function shareRefTwitter() {
+    var code = document.getElementById('ambassadorCode').textContent;
+    var link = document.getElementById('ambassadorLink').textContent;
+    var text = '🔥 Si tienes un negocio de HVAC, NECESITAS Trade Master CRM. Código: ' + code + ' 💰 ' + link;
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'width=600,height=400');
+}
+
 function renderAmbassadorReferrals(referrals) {
     var c = document.getElementById('ambassadorReferrals');
     if (!c) return;
     if (!referrals.length) {
-        c.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Aún no tienes referidos — ¡comparte tu código para empezar a ganar!</p>';
+        c.innerHTML = '<div style="text-align:center;padding:30px"><div style="font-size:48px;margin-bottom:12px">🚀</div><p style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">¡Empieza a ganar $50 por cada referido!</p><p style="font-size:12px;color:#9ca3af">Comparte tu código con dueños de negocios de HVAC</p></div>';
         return;
     }
-    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Negocio</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Plan</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Estado</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Comisión/Mes</th></tr></thead><tbody>' +
+    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:10px;text-align:left;border-bottom:2px solid #e5e7eb">Negocio</th><th style="padding:10px;text-align:center;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:10px;text-align:center;border-bottom:2px solid #e5e7eb">Status</th><th style="padding:10px;text-align:center;border-bottom:2px solid #e5e7eb">Tu Comisión</th></tr></thead><tbody>' +
     referrals.map(function(r) {
         var statusBadge = {
-            pending: '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px">⏳ Pendiente</span>',
-            registered: '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px">📝 Registrado</span>',
-            converted: '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">✅ Convertido</span>',
-            active: '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">🟢 Activo</span>',
-            cancelled: '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px">❌ Cancelado</span>'
+            pending: '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">⏳ Pendiente</span>',
+            registered: '<span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">📝 Registrado</span>',
+            converted: '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">✅ ¡Activado!</span>',
+            active: '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">🟢 Activo</span>',
+            cancelled: '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">❌ Cancelado</span>'
         }[r.status] || r.status;
-        var commission = (r.status === 'active' || r.status === 'converted') ? (r.plan === 'enterprise' ? '$50' : '$25') : '—';
-        var commColor = commission !== '—' ? 'color:#22c55e;font-weight:700' : 'color:#9ca3af';
-        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px"><strong>' + (r.referred_name || 'Pendiente') + '</strong><br><small style="color:#9ca3af">' + (r.referred_email || '') + '</small></td><td style="padding:8px;text-align:center">' + formatAmbDate(r.created_at) + '</td><td style="padding:8px;text-align:center">' + (r.plan || 'Trial') + '</td><td style="padding:8px;text-align:center">' + statusBadge + '</td><td style="padding:8px;text-align:center;' + commColor + '">' + commission + '</td></tr>';
+        var commission = (r.status === 'active' || r.status === 'converted') ? '<span style="font-weight:900;color:#22c55e;font-size:14px">$50 💰</span>' : '<span style="color:#9ca3af">—</span>';
+        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:10px"><strong>' + (r.referred_name || 'Pendiente') + '</strong><br><small style="color:#9ca3af">' + (r.referred_email || '') + '</small></td><td style="padding:10px;text-align:center">' + formatAmbDate(r.created_at) + '</td><td style="padding:10px;text-align:center">' + statusBadge + '</td><td style="padding:10px;text-align:center">' + commission + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
@@ -11885,60 +12081,18 @@ function renderAmbassadorPayouts(payouts) {
     var c = document.getElementById('ambassadorPayouts');
     if (!c) return;
     if (!payouts.length) {
-        c.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">Sin pagos aún — genera referidos para empezar a ganar</p>';
+        c.innerHTML = '<div style="text-align:center;padding:20px"><p style="font-size:12px;color:#9ca3af">💸 Tus pagos aparecerán aquí cuando generes referidos activos</p></div>';
         return;
     }
-    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Monto</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Método</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Estado</th><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Notas</th></tr></thead><tbody>' +
+    c.innerHTML = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb">Fecha</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Monto</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Método</th><th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb">Estado</th></tr></thead><tbody>' +
     payouts.map(function(p) {
-        var stBadge = p.status === 'paid' ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">✅ Pagado</span>' : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px">⏳ Pendiente</span>';
-        var method = { transfer:'🏦 Transferencia', zelle:'⚡ Zelle', venmo:'💜 Venmo', paypal:'💰 PayPal', check:'📋 Cheque', credit:'🎫 Crédito CRM' }[p.method] || p.method || '—';
-        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px">' + formatAmbDate(p.payout_date || p.created_at) + '</td><td style="padding:8px;text-align:center;font-weight:700;color:#22c55e">$' + (p.amount || 0).toFixed(2) + '</td><td style="padding:8px;text-align:center">' + method + '</td><td style="padding:8px;text-align:center">' + stBadge + '</td><td style="padding:8px;font-size:11px;color:#6b7280">' + (p.notes || '') + '</td></tr>';
+        var stBadge = p.status === 'paid' ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">✅ Pagado</span>' : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">⏳ Pendiente</span>';
+        var method = { transfer:'🏦 Transferencia', zelle:'⚡ Zelle', venmo:'💜 Venmo', paypal:'💰 PayPal', check:'📋 Cheque', credit:'🎫 Crédito', cash:'💵 Efectivo' }[p.method] || p.method || '—';
+        return '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px">' + formatAmbDate(p.payout_date || p.created_at) + '</td><td style="padding:8px;text-align:center;font-weight:900;color:#22c55e;font-size:14px">$' + (p.amount || 0).toFixed(2) + '</td><td style="padding:8px;text-align:center">' + method + '</td><td style="padding:8px;text-align:center">' + stBadge + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
 function formatAmbDate(d) {
     if (!d) return '—';
     try { return new Date(d).toLocaleDateString('es', { day:'numeric', month:'short', year:'numeric' }); } catch(e) { return d; }
-}
-
-// Share functions
-function copyRefLink() {
-    var link = document.getElementById('ambassadorLink').textContent;
-    navigator.clipboard.writeText(link).then(function() {
-        alert('✅ Link copiado al portapapeles');
-    }).catch(function() {
-        // Fallback
-        var ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        alert('✅ Link copiado');
-    });
-}
-
-function shareRefWhatsApp() {
-    var code = document.getElementById('ambassadorCode').textContent;
-    var link = document.getElementById('ambassadorLink').textContent;
-    var msg = '¡Hola! Te recomiendo Trade Master CRM para manejar tu negocio de HVAC. ' +
-              'Usa mi código ' + code + ' y obtén acceso al mejor CRM del mercado. ' +
-              '👉 ' + link;
-    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
-}
-
-function shareRefEmail() {
-    var code = document.getElementById('ambassadorCode').textContent;
-    var link = document.getElementById('ambassadorLink').textContent;
-    var subject = 'Te recomiendo Trade Master CRM - Código ' + code;
-    var body = 'Hola,\n\nTe escribo para recomendarte Trade Master CRM, el sistema que uso para manejar mi negocio.\n\n' +
-               'Con Trade Master puedes:\n' +
-               '- Manejar clientes, trabajos e invoices\n' +
-               '- Despachar técnicos en tiempo real\n' +
-               '- Cobrar por internet y llevar tu contabilidad\n' +
-               '- Y mucho más\n\n' +
-               'Usa mi código de referido: ' + code + '\n' +
-               'Link: ' + link + '\n\n' +
-               '¡Saludos!';
-    window.open('mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
-}
-
-function shareRefFacebook() {
-    var link = document.getElementById('ambassadorLink').textContent;
-    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link), '_blank', 'width=600,height=400');
 }
