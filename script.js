@@ -2273,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         var adminBar = document.createElement('div');
         adminBar.id = 'adminBar';
         adminBar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-family:Inter,sans-serif;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,0.2)';
-        adminBar.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">🔧</span> MODO ADMIN — Estás en el CRM de <strong style="margin:0 4px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:4px">' + adminData.company_name + '</strong> como ' + adminData.admin_name + '</div><button onclick="exitAdminMode()" style="background:#fff;color:#ea580c;border:none;padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">✕ Salir del CRM</button>';
+        adminBar.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">🔧</span> MODO ADMIN — Estás en el CRM de <strong style="margin:0 4px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:4px">' + adminData.company_name + '</strong> como ' + adminData.admin_name + '</div><div style="display:flex;gap:8px"><button onclick="launchDemoManual()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">🎬 Demo AI</button><button onclick="exitAdminMode()" style="background:#fff;color:#ea580c;border:none;padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">✕ Salir del CRM</button></div>';
         document.body.prepend(adminBar);
         // Push dashboard down
         var dashPage = document.getElementById('dashboardPage');
@@ -12106,53 +12106,39 @@ function formatAmbDate(d) {
 function checkOnboardingTour() {
     // Skip if already in demo mode
     if (new URLSearchParams(location.search).get('demo') === 'true') return;
-    // Skip if no company
     if (!companyId) return;
     
-    // Check localStorage first (fast)
-    var obKey = 'tm_onboarding_done_' + companyId;
+    // Check localStorage - only skip if user explicitly dismissed
+    var obKey = 'tm_onboarding_seen_' + companyId;
     if (localStorage.getItem(obKey) === 'true') return;
     
-    // Check Supabase
-    sbClient.from('companies').select('onboarding_completed').eq('id', companyId).single().then(function(res) {
-        if (res.data && res.data.onboarding_completed) {
-            localStorage.setItem(obKey, 'true');
-            return;
-        }
-        
-        // Also check if they have real data (skip if veteran user)
-        sbClient.from('clients').select('id').eq('company_id', companyId).limit(3).then(function(cRes) {
-            if (cRes.data && cRes.data.length >= 3) {
-                // Veteran user, mark complete
-                markOnboardingDone();
-                return;
-            }
-            // New user - show welcome
-            setTimeout(function() {
-                var ov = document.getElementById('onboardingWelcome');
-                if (ov) ov.style.display = 'flex';
-            }, 1500); // Small delay to let dashboard load
-        });
-    }).catch(function() {});
+    // Show welcome for everyone who hasn't seen it
+    setTimeout(function() {
+        var ov = document.getElementById('onboardingWelcome');
+        if (ov) ov.style.display = 'flex';
+    }, 2000);
 }
 
 function startOnboardingTour() {
-    // Hide welcome modal
     var ov = document.getElementById('onboardingWelcome');
     if (ov) ov.style.display = 'none';
-    // Redirect to demo mode
-    var url = location.pathname + '?demo=true';
-    location.href = url;
+    // Mark as seen
+    if (companyId) localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
+    location.href = location.pathname + '?demo=true';
+}
+
+function launchDemoManual() {
+    // Open demo in new tab so they don't lose their work
+    window.open(location.pathname + '?demo=true', '_blank');
 }
 
 function skipOnboarding() {
     var ov = document.getElementById('onboardingWelcome');
     if (ov) ov.style.display = 'none';
-    markOnboardingDone();
+    if (companyId) localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
 }
 
 function markOnboardingDone() {
     if (!companyId) return;
-    localStorage.setItem('tm_onboarding_done_' + companyId, 'true');
-    sbClient.from('companies').update({ onboarding_completed: true }).eq('id', companyId).then(function() {}).catch(function() {});
+    localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
 }
