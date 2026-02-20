@@ -301,6 +301,10 @@
             <div class="nav-item" onclick="showSec('revenue',this)">📈 Revenue</div>
             <div class="nav-item" onclick="showSec('pagos',this)">💰 Historial Pagos</div>
             
+            <div class="nav-group">Ventas & Marketing</div>
+            <div class="nav-item" onclick="showSec('vendedores',this)">🤝 Vendedores</div>
+            <div class="nav-item" onclick="showSec('marketing',this)">📣 Marketing & ROI</div>
+            
             <div class="nav-group">Sistema</div>
             <div class="nav-item" onclick="showSec('admins',this)" id="navAdmins">👤 Admins</div>
             <div class="nav-item" onclick="showSec('logs',this)">📋 Logs</div>
@@ -590,6 +594,112 @@
     </div>
 </div>
 
+<!-- ============ SECTION: VENDEDORES ============ -->
+<div class="section" id="secVendedores">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#dbeafe">🤝</div><div class="stat-info"><h3 id="svTotal">0</h3><p>Vendedores Activos</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#dcfce7">🏆</div><div class="stat-info"><h3 id="svDeals">0</h3><p>Ventas Cerradas</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f3e8ff">💰</div><div class="stat-info"><h3 id="svRevenue">$0</h3><p>Revenue por Ventas</p></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fef3c7">💸</div><div class="stat-info"><h3 id="svComm">$0</h3><p>Comisiones Pagadas</p></div></div>
+    </div>
+
+    <!-- Vendedores List -->
+    <div class="card">
+        <div class="card-head">
+            <h2>🤝 Equipo de Ventas</h2>
+            <button class="btn-sm btn-success" onclick="openAddSalesRep()">➕ Nuevo Vendedor</button>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Vendedor</th><th>Contacto</th><th>Tipo Comisión</th><th>Ventas</th><th>Revenue</th><th>Comisión Ganada</th><th>Status</th><th>Acciones</th>
+        </tr></thead><tbody id="salesRepsTable"></tbody></table></div>
+    </div>
+
+    <!-- Ventas Cerradas -->
+    <div class="card">
+        <div class="card-head">
+            <h2>🏆 Ventas Cerradas</h2>
+            <div style="display:flex;gap:0.5rem">
+                <select id="dealsFilterRep" onchange="filterDeals()" style="padding:0.4rem;border:1px solid #e5e7eb;border-radius:8px;font-size:0.8rem">
+                    <option value="all">Todos los vendedores</option>
+                </select>
+                <select id="dealsFilterChannel" onchange="filterDeals()" style="padding:0.4rem;border:1px solid #e5e7eb;border-radius:8px;font-size:0.8rem">
+                    <option value="all">Todos los canales</option>
+                    <option value="visita">🚶 Visita</option>
+                    <option value="llamada">📞 Llamada</option>
+                    <option value="facebook">📘 Facebook</option>
+                    <option value="instagram">📸 Instagram</option>
+                    <option value="google_ads">🔍 Google Ads</option>
+                    <option value="referido">🗣️ Referido</option>
+                    <option value="website">🌐 Website</option>
+                    <option value="otro">📋 Otro</option>
+                </select>
+                <button class="btn-sm btn-success" onclick="openAddDeal()">➕ Registrar Venta</button>
+            </div>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Fecha</th><th>Vendedor</th><th>Empresa</th><th>Canal</th><th>Plan</th><th>Monto</th><th>Comisión</th><th>Notas</th>
+        </tr></thead><tbody id="dealsTable"></tbody></table></div>
+    </div>
+
+    <!-- Channel Breakdown -->
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-head"><h2>📊 Ventas por Canal</h2></div>
+            <div class="chart-container"><canvas id="channelChart"></canvas></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h2>🏅 Top Vendedores</h2></div>
+            <div id="topSalesReps" style="padding:1rem"><p class="empty">Sin datos</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SECTION: MARKETING ============ -->
+<div class="section" id="secMarketing">
+    <div class="stats-grid">
+        <div class="stat-card" style="border-left:4px solid #3b82f6"><div class="stat-icon" style="background:#dbeafe">📣</div><div class="stat-info"><h3 id="mkTotal">0</h3><p>Campañas Activas</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #ef4444"><div class="stat-icon" style="background:#fee2e2">💸</div><div class="stat-info"><h3 id="mkSpent">$0</h3><p>Total Invertido</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #22c55e"><div class="stat-icon" style="background:#dcfce7">💰</div><div class="stat-info"><h3 id="mkRevenue">$0</h3><p>Revenue Generado</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #8b5cf6"><div class="stat-icon" style="background:#f3e8ff">📈</div><div class="stat-info"><h3 id="mkROI">0%</h3><p>ROI General</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #f97316"><div class="stat-icon" style="background:#ffedd5">👥</div><div class="stat-info"><h3 id="mkLeads">0</h3><p>Leads Generados</p></div></div>
+        <div class="stat-card" style="border-left:4px solid #ec4899"><div class="stat-icon" style="background:#fce7f3">🎯</div><div class="stat-info"><h3 id="mkConv">0%</h3><p>Tasa Conversión</p></div></div>
+    </div>
+
+    <!-- Campaigns -->
+    <div class="card">
+        <div class="card-head">
+            <h2>📣 Campañas de Marketing</h2>
+            <button class="btn-sm btn-success" onclick="openAddCampaign()">➕ Nueva Campaña</button>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Campaña</th><th>Plataforma</th><th>Invertido</th><th>Leads</th><th>Conversiones</th><th>Revenue</th><th>ROI</th><th>Status</th><th>Acciones</th>
+        </tr></thead><tbody id="campaignsTable"></tbody></table></div>
+    </div>
+
+    <!-- Marketing Expenses -->
+    <div class="card">
+        <div class="card-head">
+            <h2>💸 Gastos de Marketing</h2>
+            <button class="btn-sm btn-success" onclick="openAddMkExpense()">➕ Registrar Gasto</button>
+        </div>
+        <div class="wrap"><table class="tbl"><thead><tr>
+            <th>Fecha</th><th>Campaña</th><th>Concepto</th><th>Monto</th><th>Plataforma</th><th>Notas</th>
+        </tr></thead><tbody id="mkExpensesTable"></tbody></table></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-head"><h2>📊 ROI por Plataforma</h2></div>
+            <div class="chart-container"><canvas id="roiChart"></canvas></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h2>💰 Inversión vs Revenue</h2></div>
+            <div class="chart-container"><canvas id="mkRevenueChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
 <!-- ============ SECTION: ADMINS ============ -->
 <div class="section" id="secAdmins">
     <div class="card">
@@ -750,6 +860,137 @@
     </div>
 </div>
 
+<!-- Modal: Add Sales Rep -->
+<div class="modal-bg" id="modalSalesRep">
+    <div class="modal" style="max-width:550px">
+        <div class="modal-head"><h3 id="salesRepModalTitle">➕ Nuevo Vendedor</h3><button class="modal-close" onclick="closeModal('modalSalesRep')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Nombre Completo</label><input type="text" id="srName" placeholder="Juan Pérez"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Email</label><input type="email" id="srEmail" placeholder="juan@email.com"></div>
+                <div class="form-group"><label>Teléfono</label><input type="text" id="srPhone" placeholder="+1 555-1234"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Tipo de Comisión</label><select id="srCommType">
+                    <option value="percentage">📊 Porcentaje</option>
+                    <option value="fixed">💵 Monto Fijo</option>
+                </select></div>
+                <div class="form-group"><label>Valor Comisión</label><input type="number" id="srCommValue" step="0.01" placeholder="15 (% o $)"></div>
+            </div>
+            <div class="form-group"><label>Zona / Territorio</label><input type="text" id="srZone" placeholder="San Diego, CA"></div>
+            <div class="form-group"><label>Notas</label><textarea id="srNotes" rows="2" placeholder="Notas sobre el vendedor..."></textarea></div>
+        </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalSalesRep')">Cancelar</button><button class="btn-sm btn-success" id="btnSaveSalesRep" onclick="saveSalesRep()">💾 Guardar</button></div>
+    </div>
+</div>
+
+<!-- Modal: Register Deal -->
+<div class="modal-bg" id="modalDeal">
+    <div class="modal" style="max-width:600px">
+        <div class="modal-head"><h3>🏆 Registrar Venta Cerrada</h3><button class="modal-close" onclick="closeModal('modalDeal')">×</button></div>
+        <div class="modal-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Vendedor</label><select id="dealRep"></select></div>
+                <div class="form-group"><label>Empresa (Cliente)</label><select id="dealCompany"></select></div>
+            </div>
+            <div class="form-group"><label>📌 ¿Cómo cerró la venta?</label><select id="dealChannel">
+                <option value="visita">🚶 Visitó el negocio en persona</option>
+                <option value="llamada">📞 Llamada telefónica</option>
+                <option value="facebook">📘 Facebook / Messenger</option>
+                <option value="instagram">📸 Instagram / DM</option>
+                <option value="google_ads">🔍 Google Ads (lead)</option>
+                <option value="referido">🗣️ Referido / Boca a boca</option>
+                <option value="website">🌐 Website / Formulario</option>
+                <option value="email_mkt">📧 Email Marketing</option>
+                <option value="evento">🎪 Evento / Feria</option>
+                <option value="otro">📋 Otro</option>
+            </select></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Plan Vendido</label><select id="dealPlan" onchange="updateDealAmount()">
+                    <option value="profesional" data-amount="149.99">Profesional ($149.99/mo)</option>
+                    <option value="enterprise" data-amount="299">Enterprise ($299/mo)</option>
+                </select></div>
+                <div class="form-group"><label>Monto de Venta ($)</label><input type="number" id="dealAmount" step="0.01" value="149.99"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Comisión a Pagar ($)</label><input type="number" id="dealComm" step="0.01"></div>
+                <div class="form-group"><label>Fecha</label><input type="date" id="dealDate"></div>
+            </div>
+            <div class="form-group"><label>Campaña Marketing (si aplica)</label><select id="dealCampaign"><option value="">— Ninguna —</option></select></div>
+            <div class="form-group"><label>Notas</label><textarea id="dealNotes" rows="2" placeholder="Detalles de cómo se cerró la venta..."></textarea></div>
+        </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalDeal')">Cancelar</button><button class="btn-sm btn-success" onclick="saveDeal()">🏆 Registrar Venta</button></div>
+    </div>
+</div>
+
+<!-- Modal: Campaign -->
+<div class="modal-bg" id="modalCampaign">
+    <div class="modal" style="max-width:550px">
+        <div class="modal-head"><h3 id="campaignModalTitle">➕ Nueva Campaña</h3><button class="modal-close" onclick="closeModal('modalCampaign')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Nombre de Campaña</label><input type="text" id="campName" placeholder="Facebook Ads - Enero 2026"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Plataforma</label><select id="campPlatform">
+                    <option value="facebook">📘 Facebook Ads</option>
+                    <option value="instagram">📸 Instagram Ads</option>
+                    <option value="google_ads">🔍 Google Ads</option>
+                    <option value="tiktok">🎵 TikTok Ads</option>
+                    <option value="youtube">▶️ YouTube Ads</option>
+                    <option value="linkedin">💼 LinkedIn Ads</option>
+                    <option value="seo">🔎 SEO</option>
+                    <option value="email">📧 Email Marketing</option>
+                    <option value="flyers">📄 Flyers / Print</option>
+                    <option value="radio">📻 Radio</option>
+                    <option value="evento">🎪 Eventos</option>
+                    <option value="referidos">🗣️ Programa Referidos</option>
+                    <option value="otro">📋 Otro</option>
+                </select></div>
+                <div class="form-group"><label>Status</label><select id="campStatus">
+                    <option value="active">🟢 Activa</option>
+                    <option value="paused">🟡 Pausada</option>
+                    <option value="ended">⚫ Finalizada</option>
+                </select></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Presupuesto Total ($)</label><input type="number" id="campBudget" step="0.01" placeholder="500"></div>
+                <div class="form-group"><label>Gastado ($)</label><input type="number" id="campSpent" step="0.01" placeholder="0"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Fecha Inicio</label><input type="date" id="campStart"></div>
+                <div class="form-group"><label>Fecha Fin</label><input type="date" id="campEnd"></div>
+            </div>
+            <div class="form-group"><label>Notas / Objetivo</label><textarea id="campNotes" rows="2" placeholder="Objetivo de la campaña..."></textarea></div>
+        </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalCampaign')">Cancelar</button><button class="btn-sm btn-success" id="btnSaveCampaign" onclick="saveCampaign()">💾 Guardar</button></div>
+    </div>
+</div>
+
+<!-- Modal: Marketing Expense -->
+<div class="modal-bg" id="modalMkExpense">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-head"><h3>💸 Registrar Gasto Marketing</h3><button class="modal-close" onclick="closeModal('modalMkExpense')">×</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Campaña</label><select id="mkeCampaign"></select></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="form-group"><label>Monto ($)</label><input type="number" id="mkeAmount" step="0.01" placeholder="100"></div>
+                <div class="form-group"><label>Fecha</label><input type="date" id="mkeDate"></div>
+            </div>
+            <div class="form-group"><label>Concepto</label><input type="text" id="mkeConcept" placeholder="Ads, diseño, contenido..."></div>
+            <div class="form-group"><label>Plataforma de Pago</label><select id="mkePlatform">
+                <option value="facebook">📘 Facebook/Meta</option>
+                <option value="google">🔍 Google</option>
+                <option value="stripe">💳 Stripe</option>
+                <option value="paypal">💰 PayPal</option>
+                <option value="cash">💵 Efectivo</option>
+                <option value="transfer">🏦 Transferencia</option>
+                <option value="otro">📋 Otro</option>
+            </select></div>
+            <div class="form-group"><label>Notas</label><textarea id="mkeNotes" rows="2"></textarea></div>
+        </div>
+        <div class="modal-foot"><button class="btn-sm btn-ghost" onclick="closeModal('modalMkExpense')">Cancelar</button><button class="btn-sm btn-success" onclick="saveMkExpense()">💾 Guardar</button></div>
+    </div>
+</div>
+
 <!-- Modal: Delete -->
 <div class="modal-bg" id="modalDelete">
     <div class="modal" style="max-width:400px">
@@ -809,6 +1050,7 @@ async function refreshAll(){
     await Promise.all([loadCompanies(),loadTickets(),loadPayments(),loadAdmins(),loadLogs(),loadResetRequests(),loadNotifications()]);
     computeCSData();renderCS();
     try{await loadFollowUps();}catch(e){}
+    try{await Promise.all([loadSalesReps(),loadDeals(),loadCampaigns(),loadMkExpenses()]);}catch(e){}
     updateDashboard();
     if(STRIPE_KEY)loadStripeData();
 }
@@ -933,7 +1175,7 @@ function showSec(name,el){
     if(el)el.classList.add('active');
     var sec=$('sec'+name.charAt(0).toUpperCase()+name.slice(1));
     if(sec)sec.classList.add('active');
-    var titles={dashboard:'📊 Dashboard',empresas:'🏢 Empresas CRM',success:'🎯 Customer Success',stripe:'💳 Stripe Pagos',tickets:'🎫 Soporte',passwords:'🔑 Passwords',revenue:'📈 Revenue',pagos:'💰 Historial Pagos',admins:'👤 Admins',logs:'📋 Logs',settings:'⚙️ Configuración'};
+    var titles={dashboard:'📊 Dashboard',empresas:'🏢 Empresas CRM',success:'🎯 Customer Success',stripe:'💳 Stripe Pagos',tickets:'🎫 Soporte',passwords:'🔑 Passwords',revenue:'📈 Revenue',pagos:'💰 Historial Pagos',vendedores:'🤝 Vendedores',marketing:'📣 Marketing & ROI',admins:'👤 Admins',logs:'📋 Logs',settings:'⚙️ Configuración'};
     $('pageTitle').textContent=titles[name]||name;
     document.getElementById('sidebar').classList.remove('open');
     if(name==='stripe'&&STRIPE_KEY)loadStripeData();
@@ -1518,12 +1760,235 @@ function toggleNotifications(){$('notifDropdown').classList.toggle('show');}
 async function handleNotification(id,et,eid){await db.from('admin_notifications').update({is_read:true}).eq('id',id);loadNotifications();if(et==='ticket'){showSec('tickets');setTimeout(function(){viewTicket(eid)},100);}else if(et==='company')showSec('empresas');}
 async function markAllRead(){if(!currentAdmin)return;await db.from('admin_notifications').update({is_read:true}).eq('admin_user_id',currentAdmin.id);loadNotifications();}
 function openDelete(type,id,name){deleteTarget={type:type,id:id};$('deleteName').textContent=name;openModal('modalDelete');}
-async function confirmDelete(){if(!deleteTarget)return;if(deleteTarget.type==='company'){await db.from('companies').delete().eq('id',deleteTarget.id);await logActivity('delete','company',deleteTarget.id,$('deleteName').textContent);}closeModal('modalDelete');deleteTarget=null;refreshAll();}
+async function confirmDelete(){if(!deleteTarget)return;var t=deleteTarget.type;var id=deleteTarget.id;var name=$('deleteName').textContent;if(t==='company'){await db.from('companies').delete().eq('id',id);}else if(t==='sales_rep'){await db.from('sales_reps').delete().eq('id',id);}else if(t==='campaign'){await db.from('marketing_campaigns').delete().eq('id',id);}await logActivity('delete',t,id,name);closeModal('modalDelete');deleteTarget=null;refreshAll();}
 async function logActivity(action,et,eid,en,details){if(!currentAdmin)return;await db.from('admin_activity_logs').insert({admin_user_id:currentAdmin.id,admin_name:currentAdmin.name,action:action,entity_type:et,entity_id:eid,entity_name:en,details:details});}
 function filterLogs(){var f=$('logFilter').value;if(f==='all')renderLogs(logs);else renderLogs(logs.filter(function(l){return l.action===f}));}
 function doSearch(){var q=$('q').value.toLowerCase();renderCompanies(companies.filter(function(c){return(c.name||'').toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)}));}
 function filterCompanies(plan,el){if(el){document.querySelectorAll('.filter-bar .pill').forEach(function(p){p.classList.remove('active')});el.classList.add('active');}if(plan==='all')renderCompanies(companies);else if(plan==='active')renderCompanies(companies.filter(function(c){return c.subscription_status==='active'}));else if(plan==='canceled')renderCompanies(companies.filter(function(c){return c.subscription_status==='canceled'}));else if(plan==='trial')renderCompanies(companies.filter(function(c){return!c.plan||c.plan==='free'||c.subscription_status==='trialing'}));else renderCompanies(companies.filter(function(c){return(c.plan||'free')===plan}));}
 function exportCompaniesCSV(){var csv='Nombre,Email,Telefono,Plan,Status,Registro,Stripe ID\n';companies.forEach(function(c){csv+='"'+(c.name||'')+'",'+(c.email||'')+','+(c.phone||'')+','+(c.plan||'free')+','+(c.subscription_status||'-')+','+fmtDate(c.created_at)+','+(c.stripe_customer_id||'')+'\n';});var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='empresas_'+new Date().toISOString().slice(0,10)+'.csv';a.click();}
+
+// ==========================================
+// VENDEDORES (SALES REPS)
+// ==========================================
+var salesReps=[],deals=[],campaigns=[],mkExpenses=[];
+var editingSalesRepId=null,editingCampaignId=null;
+
+async function loadSalesReps(){try{var r=await db.from('sales_reps').select('*').order('created_at',{ascending:false});salesReps=r.data||[];}catch(e){salesReps=[];}renderSalesReps();}
+async function loadDeals(){try{var r=await db.from('sales_deals').select('*').order('deal_date',{ascending:false});deals=r.data||[];}catch(e){deals=[];}renderDeals();}
+async function loadCampaigns(){try{var r=await db.from('marketing_campaigns').select('*').order('created_at',{ascending:false});campaigns=r.data||[];}catch(e){campaigns=[];}renderCampaigns();}
+async function loadMkExpenses(){try{var r=await db.from('marketing_expenses').select('*').order('expense_date',{ascending:false});mkExpenses=r.data||[];}catch(e){mkExpenses=[];}renderMkExpenses();}
+
+function renderSalesReps(){
+    var tb=$('salesRepsTable');if(!salesReps.length){tb.innerHTML='<tr><td colspan="8" class="empty">No hay vendedores — agrega el primero</td></tr>';updateSalesKPIs();return;}
+    tb.innerHTML=salesReps.map(function(s){
+        var sDeals=deals.filter(function(d){return d.rep_id===s.id});
+        var totalRev=sDeals.reduce(function(sum,d){return sum+(d.amount||0)},0);
+        var totalComm=sDeals.reduce(function(sum,d){return sum+(d.commission||0)},0);
+        return'<tr>'+
+            '<td><div class="user-card"><div class="avatar" style="background:linear-gradient(135deg,#f97316,#ea580c)">'+initials(s.name)+'</div><div><h4>'+s.name+'</h4><small>'+(s.zone||'')+'</small></div></div></td>'+
+            '<td><div>'+s.email+'</div><small style="color:var(--gray)">'+(s.phone||'')+'</small></td>'+
+            '<td><span class="badge '+(s.commission_type==='percentage'?'b-purple':'b-blue')+'">'+(s.commission_type==='percentage'?s.commission_value+'%':'$'+s.commission_value)+'</span></td>'+
+            '<td style="font-weight:700">'+sDeals.length+'</td>'+
+            '<td style="font-weight:700;color:var(--success)">$'+totalRev.toFixed(2)+'</td>'+
+            '<td style="font-weight:700;color:#8b5cf6">$'+totalComm.toFixed(2)+'</td>'+
+            '<td><span class="badge '+(s.is_active?'b-green':'b-red')+'">'+(s.is_active!==false?'Activo':'Inactivo')+'</span></td>'+
+            '<td><div class="actions">'+
+                '<button class="act" onclick="editSalesRep(\''+s.id+'\')" title="Editar">✏️</button>'+
+                '<button class="act danger" onclick="openDelete(\'sales_rep\',\''+s.id+'\',\''+s.name+'\')" title="Eliminar">🗑️</button>'+
+            '</div></td></tr>';
+    }).join('');
+    updateSalesKPIs();renderTopSalesReps();
+}
+
+function renderDeals(){
+    var tb=$('dealsTable');
+    var list=getFilteredDeals();
+    if(!list.length){tb.innerHTML='<tr><td colspan="8" class="empty">No hay ventas cerradas</td></tr>';return;}
+    tb.innerHTML=list.map(function(d){
+        var chIcon={visita:'🚶',llamada:'📞',facebook:'📘',instagram:'📸',google_ads:'🔍',referido:'🗣️',website:'🌐',email_mkt:'📧',evento:'🎪',otro:'📋'}[d.channel]||'📋';
+        var chText={visita:'Visita',llamada:'Llamada',facebook:'Facebook',instagram:'Instagram',google_ads:'Google Ads',referido:'Referido',website:'Website',email_mkt:'Email',evento:'Evento',otro:'Otro'}[d.channel]||d.channel;
+        return'<tr>'+
+            '<td>'+fmtDate(d.deal_date||d.created_at)+'</td>'+
+            '<td><strong>'+(d.rep_name||'—')+'</strong></td>'+
+            '<td>'+(d.company_name||'—')+'</td>'+
+            '<td><span class="badge b-blue">'+chIcon+' '+chText+'</span></td>'+
+            '<td><span class="badge '+planClass(d.plan)+'">'+(d.plan||'-')+'</span></td>'+
+            '<td style="font-weight:700;color:var(--success)">$'+(d.amount||0).toFixed(2)+'</td>'+
+            '<td style="font-weight:700;color:#8b5cf6">$'+(d.commission||0).toFixed(2)+'</td>'+
+            '<td style="font-size:0.75rem;color:var(--gray)">'+(d.notes||'')+'</td></tr>';
+    }).join('');
+    // Update filter dropdown
+    var sel=$('dealsFilterRep');var current=sel.value;
+    sel.innerHTML='<option value="all">Todos los vendedores</option>'+salesReps.map(function(s){return'<option value="'+s.id+'">'+s.name+'</option>'}).join('');
+    sel.value=current;
+    renderChannelChart();
+}
+
+function getFilteredDeals(){
+    var rep=$('dealsFilterRep').value;var ch=$('dealsFilterChannel').value;
+    return deals.filter(function(d){return(rep==='all'||d.rep_id===rep)&&(ch==='all'||d.channel===ch)});
+}
+function filterDeals(){renderDeals();}
+
+function updateSalesKPIs(){
+    $('svTotal').textContent=salesReps.filter(function(s){return s.is_active!==false}).length;
+    $('svDeals').textContent=deals.length;
+    $('svRevenue').textContent='$'+deals.reduce(function(s,d){return s+(d.amount||0)},0).toFixed(2);
+    $('svComm').textContent='$'+deals.reduce(function(s,d){return s+(d.commission||0)},0).toFixed(2);
+}
+
+function renderTopSalesReps(){
+    var ranked=salesReps.map(function(s){
+        var sDeals=deals.filter(function(d){return d.rep_id===s.id});
+        return{name:s.name,deals:sDeals.length,revenue:sDeals.reduce(function(sum,d){return sum+(d.amount||0)},0)};
+    }).sort(function(a,b){return b.revenue-a.revenue}).slice(0,5);
+    $('topSalesReps').innerHTML=ranked.length?ranked.map(function(r,i){
+        var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+        return'<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid #f3f4f6"><span style="font-size:1.2rem;width:30px;text-align:center">'+(medal||(i+1)+'.')+'</span><div style="flex:1"><strong style="font-size:0.85rem">'+r.name+'</strong><p style="font-size:0.72rem;color:var(--gray)">'+r.deals+' ventas</p></div><span style="font-weight:800;color:var(--success)">$'+r.revenue.toFixed(0)+'</span></div>'
+    }).join(''):'<p class="empty">Sin datos</p>';
+}
+
+var channelChartInst=null;
+function renderChannelChart(){
+    var channels={};deals.forEach(function(d){var ch=d.channel||'otro';channels[ch]=(channels[ch]||0)+1;});
+    var labels=Object.keys(channels);var data=Object.values(channels);
+    var colors=['#3b82f6','#f97316','#22c55e','#8b5cf6','#ef4444','#eab308','#ec4899','#14b8a6','#64748b','#6366f1'];
+    if(channelChartInst)channelChartInst.destroy();
+    var ctx=$('channelChart');if(!ctx)return;
+    channelChartInst=new Chart(ctx,{type:'doughnut',data:{labels:labels.map(function(l){return{visita:'🚶 Visita',llamada:'📞 Llamada',facebook:'📘 Facebook',instagram:'📸 Instagram',google_ads:'🔍 Google',referido:'🗣️ Referido',website:'🌐 Website',email_mkt:'📧 Email',evento:'🎪 Evento'}[l]||l}),datasets:[{data:data,backgroundColor:colors.slice(0,data.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}});
+}
+
+// Sales Rep CRUD
+function openAddSalesRep(){editingSalesRepId=null;$('salesRepModalTitle').textContent='➕ Nuevo Vendedor';$('srName').value='';$('srEmail').value='';$('srPhone').value='';$('srCommType').value='percentage';$('srCommValue').value='15';$('srZone').value='';$('srNotes').value='';openModal('modalSalesRep');}
+function editSalesRep(id){var s=salesReps.find(function(x){return x.id===id});if(!s)return;editingSalesRepId=id;$('salesRepModalTitle').textContent='✏️ Editar Vendedor';$('srName').value=s.name;$('srEmail').value=s.email||'';$('srPhone').value=s.phone||'';$('srCommType').value=s.commission_type||'percentage';$('srCommValue').value=s.commission_value||15;$('srZone').value=s.zone||'';$('srNotes').value=s.notes||'';openModal('modalSalesRep');}
+
+async function saveSalesRep(){
+    var data={name:$('srName').value.trim(),email:$('srEmail').value.trim(),phone:$('srPhone').value.trim(),commission_type:$('srCommType').value,commission_value:parseFloat($('srCommValue').value)||0,zone:$('srZone').value.trim(),notes:$('srNotes').value,is_active:true};
+    if(!data.name){alert('Ingresa el nombre');return;}
+    if(editingSalesRepId){await db.from('sales_reps').update(data).eq('id',editingSalesRepId);await logActivity('update','sales_rep',editingSalesRepId,data.name);}
+    else{await db.from('sales_reps').insert(data);await logActivity('create','sales_rep',null,data.name);}
+    closeModal('modalSalesRep');editingSalesRepId=null;loadSalesReps();
+}
+
+// Deals
+function openAddDeal(){
+    $('dealRep').innerHTML=salesReps.map(function(s){return'<option value="'+s.id+'" data-name="'+s.name+'" data-commtype="'+s.commission_type+'" data-commval="'+s.commission_value+'">'+s.name+'</option>'}).join('');
+    $('dealCompany').innerHTML='<option value="">— Nuevo cliente —</option>'+companies.map(function(c){return'<option value="'+c.id+'" data-name="'+c.name+'">'+c.name+'</option>'}).join('');
+    $('dealCampaign').innerHTML='<option value="">— Ninguna —</option>'+campaigns.map(function(c){return'<option value="'+c.id+'" data-name="'+c.name+'">'+c.name+'</option>'}).join('');
+    $('dealDate').value=new Date().toISOString().slice(0,10);
+    $('dealChannel').value='visita';$('dealNotes').value='';
+    updateDealAmount();updateDealComm();
+    $('dealRep').onchange=updateDealComm;
+    openModal('modalDeal');
+}
+function updateDealAmount(){var sel=$('dealPlan');var opt=sel.selectedOptions[0];$('dealAmount').value=opt?opt.dataset.amount:'149.99';updateDealComm();}
+function updateDealComm(){var rep=$('dealRep').selectedOptions[0];if(!rep)return;var type=rep.dataset.commtype;var val=parseFloat(rep.dataset.commval)||0;var amount=parseFloat($('dealAmount').value)||0;$('dealComm').value=type==='percentage'?(amount*val/100).toFixed(2):val.toFixed(2);}
+
+async function saveDeal(){
+    var repId=$('dealRep').value;var repName=$('dealRep').selectedOptions[0]?.dataset.name||'';
+    var compId=$('dealCompany').value;var compName=$('dealCompany').selectedOptions[0]?.dataset.name||'';
+    var campId=$('dealCampaign').value;var campName=$('dealCampaign').selectedOptions[0]?.dataset.name||'';
+    var data={rep_id:repId,rep_name:repName,company_id:compId||null,company_name:compName,channel:$('dealChannel').value,plan:$('dealPlan').value,amount:parseFloat($('dealAmount').value)||0,commission:parseFloat($('dealComm').value)||0,deal_date:$('dealDate').value,campaign_id:campId||null,campaign_name:campName,notes:$('dealNotes').value};
+    if(!data.rep_id){alert('Selecciona vendedor');return;}
+    await db.from('sales_deals').insert(data);
+    await logActivity('create','deal',null,repName+' → '+(compName||'nuevo')+' $'+data.amount);
+    // Update campaign conversions if linked
+    if(campId){var camp=campaigns.find(function(c){return c.id===campId});if(camp){await db.from('marketing_campaigns').update({conversions:(camp.conversions||0)+1,revenue_generated:(camp.revenue_generated||0)+data.amount}).eq('id',campId);}}
+    closeModal('modalDeal');loadDeals();loadCampaigns();
+}
+
+// ==========================================
+// MARKETING & ROI
+// ==========================================
+function renderCampaigns(){
+    var tb=$('campaignsTable');if(!campaigns.length){tb.innerHTML='<tr><td colspan="9" class="empty">No hay campañas</td></tr>';updateMkKPIs();return;}
+    tb.innerHTML=campaigns.map(function(c){
+        var spent=c.amount_spent||0;var rev=c.revenue_generated||0;
+        var roi=spent>0?Math.round((rev-spent)/spent*100):0;
+        var roiColor=roi>100?'var(--success)':roi>0?'var(--warning)':'var(--danger)';
+        var platIcon={facebook:'📘',instagram:'📸',google_ads:'🔍',tiktok:'🎵',youtube:'▶️',linkedin:'💼',seo:'🔎',email:'📧',flyers:'📄',radio:'📻',evento:'🎪',referidos:'🗣️',otro:'📋'}[c.platform]||'📋';
+        var stBadge=c.status==='active'?'b-green':c.status==='paused'?'b-yellow':'b-gray';
+        return'<tr>'+
+            '<td><strong>'+c.name+'</strong><br><small style="color:var(--gray)">'+fmtDate(c.start_date)+' → '+(c.end_date?fmtDate(c.end_date):'—')+'</small></td>'+
+            '<td><span class="badge b-blue">'+platIcon+' '+(c.platform||'')+'</span></td>'+
+            '<td style="font-weight:700;color:var(--danger)">$'+spent.toFixed(2)+'</td>'+
+            '<td>'+(c.leads_generated||0)+'</td>'+
+            '<td>'+(c.conversions||0)+'</td>'+
+            '<td style="font-weight:700;color:var(--success)">$'+rev.toFixed(2)+'</td>'+
+            '<td style="font-weight:800;color:'+roiColor+'">'+roi+'%</td>'+
+            '<td><span class="badge '+stBadge+'">'+({active:'🟢 Activa',paused:'🟡 Pausada',ended:'⚫ Fin'}[c.status]||c.status)+'</span></td>'+
+            '<td><div class="actions">'+
+                '<button class="act" onclick="editCampaign(\''+c.id+'\')" title="Editar">✏️</button>'+
+                '<button class="act danger" onclick="openDelete(\'campaign\',\''+c.id+'\',\''+c.name+'\')" title="Eliminar">🗑️</button>'+
+            '</div></td></tr>';
+    }).join('');
+    updateMkKPIs();renderROIChart();renderMkRevenueChart();
+}
+
+function renderMkExpenses(){
+    var tb=$('mkExpensesTable');if(!mkExpenses.length){tb.innerHTML='<tr><td colspan="6" class="empty">No hay gastos</td></tr>';return;}
+    tb.innerHTML=mkExpenses.map(function(e){
+        return'<tr><td>'+fmtDate(e.expense_date||e.created_at)+'</td><td>'+(e.campaign_name||'—')+'</td><td>'+(e.concept||'—')+'</td><td style="font-weight:700;color:var(--danger)">$'+(e.amount||0).toFixed(2)+'</td><td>'+(e.platform||'')+'</td><td style="font-size:0.75rem;color:var(--gray)">'+(e.notes||'')+'</td></tr>';
+    }).join('');
+}
+
+function updateMkKPIs(){
+    var active=campaigns.filter(function(c){return c.status==='active'}).length;
+    var totalSpent=campaigns.reduce(function(s,c){return s+(c.amount_spent||0)},0)+mkExpenses.reduce(function(s,e){return s+(e.amount||0)},0);
+    var totalRev=campaigns.reduce(function(s,c){return s+(c.revenue_generated||0)},0);
+    var roi=totalSpent>0?Math.round((totalRev-totalSpent)/totalSpent*100):0;
+    var totalLeads=campaigns.reduce(function(s,c){return s+(c.leads_generated||0)},0);
+    var totalConv=campaigns.reduce(function(s,c){return s+(c.conversions||0)},0);
+    var convRate=totalLeads>0?Math.round(totalConv/totalLeads*100):0;
+    $('mkTotal').textContent=active;$('mkSpent').textContent='$'+totalSpent.toFixed(0);
+    $('mkRevenue').textContent='$'+totalRev.toFixed(0);$('mkROI').textContent=roi+'%';
+    $('mkLeads').textContent=totalLeads;$('mkConv').textContent=convRate+'%';
+}
+
+var roiChartInst=null,mkRevChartInst=null;
+function renderROIChart(){
+    var platforms={};campaigns.forEach(function(c){var p=c.platform||'otro';if(!platforms[p])platforms[p]={spent:0,rev:0};platforms[p].spent+=(c.amount_spent||0);platforms[p].rev+=(c.revenue_generated||0);});
+    var labels=Object.keys(platforms);var spentData=labels.map(function(l){return platforms[l].spent});var revData=labels.map(function(l){return platforms[l].rev});
+    if(roiChartInst)roiChartInst.destroy();
+    var ctx=$('roiChart');if(!ctx)return;
+    roiChartInst=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Invertido',data:spentData,backgroundColor:'#ef4444'},{label:'Revenue',data:revData,backgroundColor:'#22c55e'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return'$'+v}}}}}});
+}
+function renderMkRevenueChart(){
+    var months=[],spent=[],rev=[];
+    for(var i=5;i>=0;i--){var d=new Date();d.setMonth(d.getMonth()-i);var m=d.toLocaleString('es',{month:'short'});months.push(m);
+        var mSpent=mkExpenses.filter(function(e){var ed=new Date(e.expense_date||e.created_at);return ed.getMonth()===d.getMonth()&&ed.getFullYear()===d.getFullYear()}).reduce(function(s,e){return s+(e.amount||0)},0);
+        var mRev=deals.filter(function(dl){var dd=new Date(dl.deal_date||dl.created_at);return dd.getMonth()===d.getMonth()&&dd.getFullYear()===d.getFullYear()&&dl.campaign_id}).reduce(function(s,dl){return s+(dl.amount||0)},0);
+        spent.push(mSpent);rev.push(mRev);}
+    if(mkRevChartInst)mkRevChartInst.destroy();
+    var ctx=$('mkRevenueChart');if(!ctx)return;
+    mkRevChartInst=new Chart(ctx,{type:'line',data:{labels:months,datasets:[{label:'Invertido',data:spent,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true},{label:'Revenue Marketing',data:rev,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:true}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{callback:function(v){return'$'+v}}}}}});
+}
+
+// Campaign CRUD
+function openAddCampaign(){editingCampaignId=null;$('campaignModalTitle').textContent='➕ Nueva Campaña';$('campName').value='';$('campPlatform').value='facebook';$('campStatus').value='active';$('campBudget').value='';$('campSpent').value='0';$('campStart').value=new Date().toISOString().slice(0,10);$('campEnd').value='';$('campNotes').value='';openModal('modalCampaign');}
+function editCampaign(id){var c=campaigns.find(function(x){return x.id===id});if(!c)return;editingCampaignId=id;$('campaignModalTitle').textContent='✏️ Editar Campaña';$('campName').value=c.name;$('campPlatform').value=c.platform||'facebook';$('campStatus').value=c.status||'active';$('campBudget').value=c.budget||'';$('campSpent').value=c.amount_spent||0;$('campStart').value=c.start_date||'';$('campEnd').value=c.end_date||'';$('campNotes').value=c.notes||'';openModal('modalCampaign');}
+
+async function saveCampaign(){
+    var data={name:$('campName').value.trim(),platform:$('campPlatform').value,status:$('campStatus').value,budget:parseFloat($('campBudget').value)||0,amount_spent:parseFloat($('campSpent').value)||0,start_date:$('campStart').value||null,end_date:$('campEnd').value||null,notes:$('campNotes').value};
+    if(!data.name){alert('Nombre requerido');return;}
+    if(editingCampaignId){await db.from('marketing_campaigns').update(data).eq('id',editingCampaignId);await logActivity('update','campaign',editingCampaignId,data.name);}
+    else{data.leads_generated=0;data.conversions=0;data.revenue_generated=0;await db.from('marketing_campaigns').insert(data);await logActivity('create','campaign',null,data.name);}
+    closeModal('modalCampaign');editingCampaignId=null;loadCampaigns();
+}
+
+// Marketing Expenses
+function openAddMkExpense(){$('mkeCampaign').innerHTML=campaigns.map(function(c){return'<option value="'+c.id+'" data-name="'+c.name+'">'+c.name+'</option>'}).join('');$('mkeAmount').value='';$('mkeDate').value=new Date().toISOString().slice(0,10);$('mkeConcept').value='';$('mkeNotes').value='';openModal('modalMkExpense');}
+
+async function saveMkExpense(){
+    var campId=$('mkeCampaign').value;var campName=$('mkeCampaign').selectedOptions[0]?.dataset.name||'';
+    var data={campaign_id:campId,campaign_name:campName,amount:parseFloat($('mkeAmount').value)||0,expense_date:$('mkeDate').value,concept:$('mkeConcept').value,platform:$('mkePlatform').value,notes:$('mkeNotes').value};
+    if(!data.amount){alert('Monto requerido');return;}
+    await db.from('marketing_expenses').insert(data);
+    // Update campaign spent
+    if(campId){var camp=campaigns.find(function(c){return c.id===campId});if(camp){await db.from('marketing_campaigns').update({amount_spent:(camp.amount_spent||0)+data.amount}).eq('id',campId);}}
+    await logActivity('create','mk_expense',null,campName+' $'+data.amount);
+    closeModal('modalMkExpense');loadMkExpenses();loadCampaigns();
+}
 
 // ==========================================
 // UTILITIES
