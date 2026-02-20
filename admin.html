@@ -1092,14 +1092,31 @@ function enterCompanyCRM(){
     if(!selectedCompany){alert('No hay empresa seleccionada');return;}
     enterCompanyCRMById(selectedCompany.id);
 }
-function enterCompanyCRMById(companyId){
+async function enterCompanyCRMById(companyId){
     var c=companies.find(function(x){return x.id===companyId});if(!c){alert('Empresa no encontrada');return;}
-    // Open the CRM with admin impersonation params
-    var baseUrl=location.origin+location.pathname.replace('admin.html','');
-    var params='?admin_access=true&company_id='+c.id+'&admin_token='+encodeURIComponent(currentAdmin.id);
-    var url=baseUrl+params;
-    window.open(url,'_blank');
-    logActivity('view','crm_access',c.id,'Admin entered CRM: '+c.name);
+    
+    // Store admin impersonation session in localStorage
+    // The CRM will detect this and auto-login as this company
+    var adminSession={
+        company_id:c.id,
+        company_name:c.name,
+        company_email:c.email||'',
+        company_phone:c.phone||'',
+        company_address:c.address||'',
+        company_plan:c.plan||'free',
+        admin_id:currentAdmin.id,
+        admin_name:currentAdmin.name,
+        admin_role:currentAdmin.role,
+        timestamp:Date.now()
+    };
+    localStorage.setItem('tm_admin_access',JSON.stringify(adminSession));
+    
+    // Open the CRM
+    var baseUrl=location.origin+location.pathname.replace(/admin[^/]*\.html/,'index.html');
+    window.open(baseUrl,'_blank');
+    
+    await logActivity('view','crm_access',c.id,'Admin entered CRM: '+c.name);
+    alert('🚀 Abriendo CRM de "'+c.name+'" en nueva pestaña.\n\n⚠️ Estás en modo ADMIN — verás una barra naranja arriba.\nTodo lo que hagas queda registrado.');
 }
 
 async function sendLoginLink(companyId){
