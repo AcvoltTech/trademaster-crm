@@ -1123,7 +1123,61 @@ var T={
 'Partes usadas y nuevas, boards':'Used and new parts, boards',
 'Equipos y partes Trane/American Standard':'Trane/American Standard equipment and parts',
 'Equipos y partes Lennox':'Lennox equipment and parts',
-'Mini-splits, boilers, partes':'Mini-splits, boilers, parts'
+'Mini-splits, boilers, partes':'Mini-splits, boilers, parts',
+// === v6.1 REMAINING ===
+// Dispatch
+'Baja':'Low',
+'hace':'ago',
+'reparar su ac':'repair their ac',
+'revisar un furnace':'check a furnace',
+'garantia de un furnace que no esta funcinando':'warranty on a furnace that is not working',
+'Completado':'Completed',
+// Service Calls map legend
+'Nueva':'New',
+'Asignada':'Assigned',
+'Completada':'Completed',
+// Technicians
+'en estimados y facturas para cumplir con requisitos de empresas y clientes comerciales.':'in estimates and invoices to meet business and commercial client requirements.',
+'facturas para cumplir con requisitos de empresas y clientes comerciales.':'invoices to meet business and commercial client requirements.',
+// Home Advisors
+'Comisiones Pendings':'Pending Commissions',
+'Leads Activos':'Active Leads',
+'Receipts sin Conciliar':'Unreconciled Receipts',
+'Venta':'Sale',
+'Materiales':'Materials',
+// Price Book supplier descriptions
+'Piping, fittings, equipment':'Piping, fittings, equipment',
+'Equipos Carrier, Bryant, Payne':'Carrier, Bryant, Payne equipment',
+'Rheem, Ruud, equipos completos':'Rheem, Ruud, complete equipment',
+'Motores, controles, herramientas':'Motors, controls, tools',
+'Partes, herramientas, accesorios':'Parts, tools, accessories',
+'Equipos, filtros, ductos':'Equipment, filters, ducts',
+'Partes usadas y nuevas, boards':'Used and new parts, boards',
+'Equipos y partes Trane/American Standard':'Trane/American Standard equipment & parts',
+'Equipos y partes Lennox':'Lennox equipment & parts',
+'Mini-splits, boilers, partes':'Mini-splits, boilers, parts',
+'Buscar parte, servicio...':'Search part, service...',
+// Users & Team role descriptions  
+'Acceso total. My Money, cuenta bancaria, configuración, usuarios. Solo 1 por empresa.':'Full access. My Money, bank account, settings, users. Only 1 per company.',
+'Payroll, gastos, recibos, facturas, QuickBooks, reportes. No ve My Money ni cuenta bancaria.':'Payroll, expenses, receipts, invoices, QuickBooks, reports. Cannot see My Money or bank account.',
+'Despacho, trabajos, técnicos, clientes, correo, agenda. No ve finanzas ni nómina.':'Dispatch, jobs, technicians, clients, email, schedule. Cannot see finances or payroll.',
+'Solo sus trabajos asignados, reloj de entrada/salida. No ve otros datos.':'Only their assigned jobs, clock in/out. Cannot see other data.',
+'Administra quién puede acceder al CRM y qué secciones puede ver.':'Manage who can access the CRM and what sections they can see.',
+'Solo el':'Only the',
+'puede administrar usuarios.':'can manage users.',
+// Business Mail long text
+'facturas de proveedores, avisos del gobierno, correspondencia de seguros, etc.':'supplier invoices, government notices, insurance correspondence, etc.',
+'No hay documentos en esta vista.':'No documents in this view.',
+// Receipts  
+'No hay recibos registrados.':'No receipts recorded.',
+// Jobs
+'Garantía, condiciones, recomendaciones...':'Warranty, conditions, recommendations...',
+'DESCUENTO (%)':'DISCOUNT (%)',
+// Settings placeholders
+'Dirección de la empresa':'Company address',
+'Nombre completo del dueño':'Owner full name',
+'LOGO DE LA EMPRESA':'COMPANY LOGO',
+'Cambiar Logo':'Change Logo'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -1548,7 +1602,23 @@ var PATTERNS = [
   [/Equipos y partes Lennox/g, 'Lennox equipment and parts'],
   [/Mini-splits, boilers, partes/g, 'Mini-splits, boilers, parts'],
   [/Venta/g, 'Sale'],
-  [/Materiales/g, 'Materials']
+  [/Materiales/g, 'Materials'],
+  [/garantia de un furnace que no esta funcinando/g, 'warranty on a furnace that is not working'],
+  [/revisar un furnace/g, 'check a furnace'],
+  [/reparar su ac/g, 'repair their ac'],
+  [/Comisiones Pend\w*/g, 'Pending Commissions'],
+  [/Leads Activos/g, 'Active Leads'],
+  [/Receipts sin Conciliar/g, 'Unreconciled Receipts'],
+  [/Rheem, Ruud, equipos completos/g, 'Rheem, Ruud, complete equipment'],
+  [/Administra quién puede acceder/g, 'Manage who can access'],
+  [/puede administrar usuarios/g, 'can manage users'],
+  [/Dueño\/CEO/g, 'Owner/CEO'],
+  [/en estimados y facturas para cumplir/g, 'in estimates and invoices to meet'],
+  [/requisitos de empresas y clientes comerciales/g, 'business and commercial client requirements'],
+  [/facturas para cumplir con requisitos/g, 'invoices to meet requirements'],
+  [/Nombre completo del dueño/g, 'Owner full name'],
+  [/Dirección de la empresa/g, 'Company address'],
+  [/Baja/g, 'Low']
 ];
 
 function applyPatterns(){
@@ -1632,7 +1702,7 @@ function init(){
     });
   }
 
-  console.log('✅ i18n-patch.js v6 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
+  console.log('✅ i18n-patch.js v6.1 loaded — ' + Object.keys(T).length + ' translations + ' + PATTERNS.length + ' patterns ready');
 }
 
 if(document.readyState === 'loading'){
