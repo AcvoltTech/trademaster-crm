@@ -870,7 +870,54 @@ var T={
 'Ene':'Jan',
 'Abr':'Apr',
 'Ago':'Aug',
-'Dic':'Dec'
+'Dic':'Dec',
+
+// --- Collections ---
+'Total por Cobrar':'Total to Collect',
+'Referencia':'Reference',
+'REFERENCIA':'REFERENCE',
+'💳 Tarjeta':'💳 Card',
+'Todas con Balance':'All with Balance',
+'VENCIDAS':'OVERDUE',
+'0 VENCIDAS':'0 OVERDUE',
+'PAGOS RECIBIDOS':'PAYMENTS RECEIVED',
+'TOTAL POR COBRAR':'TOTAL TO COLLECT',
+'COLLECTED ESTE MES':'COLLECTED THIS MONTH',
+
+// --- Cash Flow ---
+'💰 Flujo de Efectivo':'💰 Cash Flow',
+'Flujo de Efectivo':'Cash Flow',
+'Efectivo':'Cash',
+
+// --- Expenses / Settings ---
+'Licencia de Contratista':'Contractor License',
+'Licencia de Negocio':'Business License',
+'📜 Licencia de Contratista (C-10, C-20, etc.)':'📜 Contractor License (C-10, C-20, etc.)',
+'🏛️ Licencia del Contratista / Contractor License Board':'🏛️ Contractor License Board',
+'Correo del Negocio':'Business Email',
+'Sin historial de sincronización':'No sync history',
+'Sin campañas':'No campaigns',
+'Sin artículos':'No items',
+
+// --- Dispatch table ---
+'Técnico':'Technician',
+'Trabajo':'Job',
+
+// --- Mailbox ---
+'📥 Correo Entrante':'📥 Incoming Mail',
+'📤 Correo Saliente':'📤 Outgoing Mail',
+'Correo del Negocio':'Business Email',
+
+// --- Licenses ---
+'Licencia de Manejar':'Driver License',
+
+// --- Remaining ---
+'— Factura manual —':'— Manual Invoice —',
+'Total por Cobrar':'Total to Collect',
+'TOTAL POR COBRAR':'TOTAL TO COLLECT',
+'Referencia':'Reference',
+'REFERENCIA':'REFERENCE',
+'Seleccionar...':'Select...'
 };
 
 // ===== 4. DOM SCANNING TRANSLATION ENGINE =====
@@ -1120,7 +1167,42 @@ var PATTERNS = [
   [/Todos los Proveedores/g, 'All Suppliers'],
   [/Todas las Categorías/g, 'All Categories'],
   [/Todas las categorías/g, 'All categories'],
-  [/Todo el Año/g, 'All Year']
+  [/Todo el Año/g, 'All Year'],
+  // Collections
+  [/Total por Cobrar/g, 'Total to Collect'],
+  [/Referencia/g, 'Reference'],
+  [/Tarjeta/g, 'Card'],
+  [/Todas con Balance/g, 'All with Balance'],
+  [/Vencidas/g, 'Overdue'],
+  [/Pagos Recibidos/g, 'Payments Received'],
+  // Cash flow / Dashboard
+  [/Flujo de Efectivo/g, 'Cash Flow'],
+  [/Efectivo/g, 'Cash'],
+  // Expenses / Settings
+  [/Licencia de Contratista/g, 'Contractor License'],
+  [/Licencia de Negocio/g, 'Business License'],
+  [/Licencia del Contratista/g, 'Contractor License'],
+  [/Exporta tus recibos y gastos como CSV y súbelos a QuickBooks para mantener tu contabilidad/g, 'Export your receipts and expenses as CSV and upload them to QuickBooks to keep your accounting'],
+  [/El cliente podrá ver\/descargar/g, 'The client can view/download'],
+  [/directamente desde/g, 'directly from'],
+  [/Correo del Negocio/g, 'Business Email'],
+  // Mailbox
+  [/El coordinador de despacho puede subir correo físico o digital importante del negocio/g, 'The dispatch coordinator can upload important physical or digital business mail'],
+  [/facturas de proveedores, avisos de gobierno, correspondencia legal/g, 'supplier invoices, government notices, legal correspondence'],
+  [/Correo Entrante/g, 'Incoming Mail'],
+  [/Correo Saliente/g, 'Outgoing Mail'],
+  // Settings licenses
+  [/Licencia de Manejar/g, 'Driver License'],
+  // Invoice
+  [/Factura manual/g, 'Manual Invoice'],
+  // Jobs
+  [/Prueba de Flujo/g, 'Airflow Test'],
+  // Dispatch table headers handled in T map,
+  // Remaining fix for partial translations  
+  [/CSV y upload/g, 'CSV and upload'],
+  [/CSV y súbelos/g, 'CSV and upload them'],
+  // Reports
+  [/\bReparación\b/g, 'Repair']
 ];
 
 function applyPatterns(){
