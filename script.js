@@ -12159,7 +12159,7 @@ function generateQR(link) {
     var qrDiv = document.getElementById('ambassadorQR');
     if (!qrDiv) return;
     // Use Google Charts QR API
-    var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(link) + '&choe=UTF-8&chld=H|2';
+    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(link) + '&format=png';
     qrDiv.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;border-radius:8px" id="ambassadorQRImg">';
 }
 
