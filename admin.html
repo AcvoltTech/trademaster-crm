@@ -2306,8 +2306,8 @@ async function saveMkExpense(){
 // DEMO & ONBOARDING TOOLS
 // ==========================================
 var DEMO_URL='https://acvolttech.github.io/trademaster-crm/?demo=true';
-var DEMO_QR_URL='https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl='+encodeURIComponent(DEMO_URL)+'&choe=UTF-8&chld=H|2';
-var DEMO_QR_HD='https://chart.googleapis.com/chart?chs=600x600&cht=qr&chl='+encodeURIComponent(DEMO_URL)+'&choe=UTF-8&chld=H|2';
+var DEMO_QR_URL='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(DEMO_URL)+'&format=png';
+var DEMO_QR_HD='https://api.qrserver.com/v1/create-qr-code/?size=600x600&data='+encodeURIComponent(DEMO_URL)+'&format=png';
 
 function initDemoTools(){
     var img=$('demoQRImg');if(img)img.src=DEMO_QR_URL;
@@ -2336,8 +2336,8 @@ function shareDemoEmail(){
     window.open('mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body));
 }
 
-function downloadDemoQR(){var a=document.createElement('a');a.href=DEMO_QR_URL;a.download='TradeMaster-Demo-QR.png';a.click();}
-function downloadDemoQRHD(){var a=document.createElement('a');a.href=DEMO_QR_HD;a.download='TradeMaster-Demo-QR-HD.png';a.click();}
+function downloadDemoQR(){fetch(DEMO_QR_URL).then(function(r){return r.blob();}).then(function(b){var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='TradeMaster-Demo-QR.png';a.click();URL.revokeObjectURL(u);}).catch(function(){window.open(DEMO_QR_URL,'_blank');});}
+function downloadDemoQRHD(){fetch(DEMO_QR_HD).then(function(r){return r.blob();}).then(function(b){var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='TradeMaster-Demo-QR-HD.png';a.click();URL.revokeObjectURL(u);}).catch(function(){window.open(DEMO_QR_HD,'_blank');});}
 
 function printBusinessCards(){
     var qr=DEMO_QR_URL;
