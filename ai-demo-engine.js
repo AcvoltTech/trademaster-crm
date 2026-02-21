@@ -191,10 +191,10 @@ function showSplash(){
     '<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1)">'+
     '<p style="color:#94a3b8;font-size:.75rem;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;font-weight:600">📤 Share this demo / Comparte el demo</p>'+
     '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
-    '<button onclick="window.open(\'https://wa.me/?text=\'+encodeURIComponent(\'Check out this CRM demo for HVAC contractors! AI-powered tour 🔥\\n\\n\'+location.href),\'_blank\')" style="padding:8px 16px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">💬 WhatsApp</button>'+
-    '<button onclick="window.open(\'https://mail.google.com/mail/?view=cm&su=\'+encodeURIComponent(\'🎬 Demo en Vivo — Trade Master CRM para tu negocio\')+\'&body=\'+encodeURIComponent(\'¡Hola!\\n\\nTe invito a ver una demostración en vivo de Trade Master CRM — el sistema #1 para contratistas HVAC.\\n\\nNuestra AI Brenda te muestra todo en 10 minutos:\\n\\n\'+location.href+\'\\n\\n¡Dale play y mira cómo funciona!\'),\'_blank\')" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📧 Email</button>'+
-    '<button onclick="window.open(\'sms:?body=\'+encodeURIComponent(\'Check out this CRM demo for HVAC! 🔥 \'+location.href))" style="padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📱 Texto</button>'+
-    '<button id="demoCopyLink" style="padding:8px 16px;background:#475569;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📋 Copiar Link</button>'+
+    '<button id="demoShareWA" style="padding:8px 16px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">💬 WhatsApp</button>'+
+    '<button id="demoShareEmail" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">📧 Email</button>'+
+    '<button id="demoShareSMS" style="padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">📱 Texto</button>'+
+    '<button id="demoCopyLink" style="padding:8px 16px;background:#475569;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">📋 Copiar Link</button>'+
     '</div></div>'+
     '</div>';
     document.body.appendChild(s);
@@ -210,6 +210,10 @@ function showSplash(){
     $('demoStartBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('manual');},800);};
     $('demoAutoBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('auto');},800);};
     $('demoCopyLink').onclick=function(){navigator.clipboard.writeText(location.href).then(function(){var b=$('demoCopyLink');b.textContent='✅ Copied!';setTimeout(function(){b.innerHTML='📋 Copiar Link';},2000);}).catch(function(){prompt('Copy this link:',location.href);});};
+    var demoUrl=location.href;
+    $('demoShareWA').onclick=function(){var a=document.createElement('a');a.href='https://wa.me/?text='+encodeURIComponent('Mira este demo del CRM para contratistas HVAC! AI tour 🔥\n\n'+demoUrl);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);};
+    $('demoShareEmail').onclick=function(){var a=document.createElement('a');a.href='https://mail.google.com/mail/?view=cm&su='+encodeURIComponent('🎬 Demo en Vivo — Trade Master CRM')+'&body='+encodeURIComponent('¡Hola!\n\nTe invito a ver el demo de Trade Master CRM:\n\n'+demoUrl+'\n\nNuestra AI te muestra todo en 10 min!');a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);};
+    $('demoShareSMS').onclick=function(){var a=document.createElement('a');a.href='sms:?body='+encodeURIComponent('Mira este demo del CRM para HVAC! 🔥 '+demoUrl);document.body.appendChild(a);a.click();document.body.removeChild(a);};
   });
 }
 
