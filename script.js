@@ -571,13 +571,14 @@ function showDashboard() {
     }
     showSection('dashboard');
     loadAllData();
-    // Plan & Billing UI
-    try { renderPlanBadge(); } catch(e) {}
-    try { updatePlanUI(); } catch(e) {}
+    // Load plan data then render UI
+    loadCompanyPlanData().then(function() {
+        try { renderPlanBadge(); } catch(e) {}
+        try { updatePlanUI(); } catch(e) {}
+        try { checkTrialStatus(); } catch(e) {}
+    });
     // Track login
     try { trackLogin(); } catch(e) {}
-    // Check trial status
-    try { checkTrialStatus(); } catch(e) {}
     // Check if new user needs onboarding tour
     checkOnboardingTour();
 }
@@ -10132,9 +10133,24 @@ var PLAN_CONFIG = {
     enterprise: { name: 'Enterprise', price: 299, clients: Infinity, techs: Infinity, reports: true, marketing: true, support: 'priority' }
 };
 
+// Cache for company plan data
+var _companyPlanData = null;
+
+async function loadCompanyPlanData() {
+    if (!companyId || !sbClient) return null;
+    try {
+        var res = await sbClient.from('companies').select('plan, subscription_status, trial_ends_at, stripe_customer_id').eq('id', companyId).single();
+        if (res.data) {
+            _companyPlanData = res.data;
+            return res.data;
+        }
+    } catch(e) {}
+    return null;
+}
+
 function getCurrentPlan() {
-    if (!currentCompany) return 'free';
-    return currentCompany.plan || 'free';
+    if (_companyPlanData) return _companyPlanData.plan || 'free';
+    return 'free';
 }
 
 function getPlanConfig(plan) {
@@ -10279,10 +10295,10 @@ async function trackLogin() {
 
 // Check trial status — show warnings/blocks when expired
 function checkTrialStatus() {
-    if (!currentCompany) return;
-    var plan = currentCompany.plan || 'free';
-    var status = currentCompany.subscription_status || 'trial';
-    var trialEnd = currentCompany.trial_ends_at;
+    if (!_companyPlanData) return;
+    var plan = _companyPlanData.plan || 'free';
+    var status = _companyPlanData.subscription_status || 'trial';
+    var trialEnd = _companyPlanData.trial_ends_at;
 
     // If they're on a paid plan, no trial to worry about
     if (plan !== 'free') return;
