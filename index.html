@@ -3295,6 +3295,89 @@
                 <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Crea técnicos, clientes, leads y citas de ejemplo para probar el sistema.</p>
                 <button class="btn-secondary btn-sm" onclick="seedDemoData()">🎲 Crear Datos Demo</button>
               </div>
+
+              <!-- ===== PLAN & BILLING ===== -->
+              <hr style="margin:24px 0;border-color:var(--border);">
+              <div id="planBillingSection">
+                <h4 style="color:var(--primary);margin-bottom:4px;">💳 Plan & Facturación</h4>
+                <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Tu plan actual y opciones de upgrade.</p>
+
+                <!-- Current Plan Card -->
+                <div id="currentPlanCard" style="background:linear-gradient(135deg,#f8fafc,#e2e8f0);border:2px solid #cbd5e1;border-radius:14px;padding:20px;margin-bottom:20px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div>
+                      <div style="font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:700;letter-spacing:1px;">Plan Actual</div>
+                      <div id="currentPlanName" style="font-size:24px;font-weight:900;color:#1e293b;margin:4px 0;">FREE</div>
+                      <div id="currentPlanPrice" style="font-size:14px;color:#6b7280;">$0/mes</div>
+                    </div>
+                    <div id="planUsageBox" style="text-align:right;">
+                      <div style="font-size:12px;color:#6b7280;">Clientes</div>
+                      <div id="planUsageCount" style="font-size:28px;font-weight:900;color:#1e3a5f;">0 / 10</div>
+                      <div id="planUsageBar" style="width:120px;height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:4px;">
+                        <div id="planUsageFill" style="height:100%;background:#22c55e;border-radius:99px;width:0%;transition:width .5s"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Plans Comparison -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px;">
+                  <!-- FREE -->
+                  <div id="planCardFree" class="plan-card-option" style="border:2px solid #e5e7eb;border-radius:14px;padding:20px;position:relative;background:#fff;">
+                    <div style="font-size:11px;color:#6b7280;text-transform:uppercase;font-weight:700;">Free</div>
+                    <div style="font-size:28px;font-weight:900;color:#1e293b;">$0<span style="font-size:14px;font-weight:500;color:#9ca3af;">/mes</span></div>
+                    <ul style="list-style:none;padding:0;margin:14px 0;font-size:12px;color:#4b5563;line-height:2;">
+                      <li>✅ 10 clientes</li>
+                      <li>✅ 2 técnicos</li>
+                      <li>✅ Facturas & estimados</li>
+                      <li>✅ GPS Dispatch básico</li>
+                      <li>❌ Reportes avanzados</li>
+                      <li>❌ Marketing tools</li>
+                      <li>❌ Soporte prioritario</li>
+                    </ul>
+                    <div id="planBtnFree" style="text-align:center;padding:10px;background:#f3f4f6;border-radius:8px;font-weight:700;color:#6b7280;font-size:13px;">Plan Actual</div>
+                  </div>
+
+                  <!-- PROFESIONAL -->
+                  <div id="planCardPro" class="plan-card-option" style="border:3px solid #f97316;border-radius:14px;padding:20px;position:relative;background:#fff;box-shadow:0 4px 20px rgba(249,115,22,.15);">
+                    <div style="position:absolute;top:-12px;right:16px;background:#f97316;color:#fff;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;">⭐ POPULAR</div>
+                    <div style="font-size:11px;color:#f97316;text-transform:uppercase;font-weight:700;">Profesional</div>
+                    <div style="font-size:28px;font-weight:900;color:#1e293b;">$149<span style="font-size:14px;font-weight:500;color:#9ca3af;">/mes</span></div>
+                    <ul style="list-style:none;padding:0;margin:14px 0;font-size:12px;color:#4b5563;line-height:2;">
+                      <li>✅ 50 clientes</li>
+                      <li>✅ 10 técnicos</li>
+                      <li>✅ Facturas & estimados</li>
+                      <li>✅ GPS Dispatch completo</li>
+                      <li>✅ Reportes avanzados</li>
+                      <li>✅ Marketing tools</li>
+                      <li>✅ Soporte email</li>
+                    </ul>
+                    <button id="planBtnPro" onclick="upgradePlan('crm-profesional')" style="width:100%;padding:12px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;">⬆️ Upgrade a Pro</button>
+                  </div>
+
+                  <!-- ENTERPRISE -->
+                  <div id="planCardEnt" class="plan-card-option" style="border:2px solid #1e3a5f;border-radius:14px;padding:20px;position:relative;background:#fff;">
+                    <div style="font-size:11px;color:#1e3a5f;text-transform:uppercase;font-weight:700;">Enterprise</div>
+                    <div style="font-size:28px;font-weight:900;color:#1e293b;">$299<span style="font-size:14px;font-weight:500;color:#9ca3af;">/mes</span></div>
+                    <ul style="list-style:none;padding:0;margin:14px 0;font-size:12px;color:#4b5563;line-height:2;">
+                      <li>✅ Clientes ilimitados</li>
+                      <li>✅ Técnicos ilimitados</li>
+                      <li>✅ Todo en Profesional</li>
+                      <li>✅ Multi-ubicación</li>
+                      <li>✅ API access</li>
+                      <li>✅ Soporte prioritario 24/7</li>
+                      <li>✅ Onboarding personalizado</li>
+                    </ul>
+                    <button id="planBtnEnt" onclick="upgradePlan('crm-enterprise')" style="width:100%;padding:12px;background:linear-gradient(135deg,#1e3a5f,#0f172a);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;">⬆️ Upgrade Enterprise</button>
+                  </div>
+                </div>
+
+                <!-- Billing Portal -->
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                  <button onclick="StripePayments.openBillingPortal()" style="padding:10px 20px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#475569;">📄 Portal de Facturación</button>
+                  <button onclick="showSection('settings')" style="padding:10px 20px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#475569;">📧 Contactar Soporte</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -4883,13 +4966,16 @@
 
       // Check if user can add more clients
       async function canAddClient() {
-        if (!currentCompany || !currentCompany.id) return true;
+        if (!companyId) return true;
         
-        var plan = currentCompany.plan || 'free';
+        var plan = 'free';
+        if (typeof _companyPlanData !== 'undefined' && _companyPlanData) {
+          plan = _companyPlanData.plan || 'free';
+        }
         var limit = PLAN_LIMITS[plan] || 10;
         
         // Count current clients
-        var res = await sbClient.from('customers').select('id', { count: 'exact' }).eq('company_id', currentCompany.id);
+        var res = await sbClient.from('clients').select('id', { count: 'exact' }).eq('company_id', companyId);
         var currentCount = res.count || 0;
         
         return {
@@ -4948,11 +5034,17 @@
 
       function redirectToUpgrade(planId) {
         closeUpgradeModal();
-        // Show settings section and subscription tab
-        if (typeof showSection === 'function') {
+        if (planId === 'profesional') {
+          upgradePlan('crm-profesional');
+        } else if (planId === 'enterprise') {
+          upgradePlan('crm-enterprise');
+        } else {
           showSection('settings');
+          setTimeout(function() {
+            var el = document.getElementById('planBillingSection');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 300);
         }
-        alert('📧 Para actualizar tu plan, contacta a soporte:\n\nsupport@acvolttech.com\n\nO llama a Technical Support.');
       }
 
       // Override client save function to check limits
@@ -4985,10 +5077,10 @@
       // Check if current company can add more clients
       async function checkClientLimit() {
         try {
-          var companyId = localStorage.getItem('companyId') || (typeof currentCompany !== 'undefined' ? currentCompany?.id : null);
-          if (!companyId) return { canAdd: true, currentCount: 0, limit: 10, plan: 'free' };
+          var cId = companyId || localStorage.getItem('companyId');
+          if (!cId) return { canAdd: true, currentCount: 0, limit: 10, plan: 'free' };
           
-          var companyRes = await sbClient.from('companies').select('plan').eq('id', companyId).single();
+          var companyRes = await sbClient.from('companies').select('plan').eq('id', cId).single();
           var plan = companyRes.data?.plan || 'free';
           var limit = CLIENT_LIMITS[plan] || 10;
           
