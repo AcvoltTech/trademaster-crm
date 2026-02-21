@@ -187,7 +187,16 @@ function showSplash(){
     '<button id="splEN" style="padding:10px 22px;border-radius:12px;border:2px solid '+(isEN?'#f97316':'rgba(255,255,255,.2)')+';background:'+(isEN?'rgba(249,115,22,.15)':'transparent')+';color:#fff;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s"><span style="font-size:1.4rem">\uD83D\uDC71\u200D\u2640\uFE0F</span><br>Danielle<br><span style="font-size:.7rem;color:#94a3b8">English</span></button>'+
     '<button id="splES" style="padding:10px 22px;border-radius:12px;border:2px solid '+(!isEN?'#f97316':'rgba(255,255,255,.2)')+';background:'+(!isEN?'rgba(249,115,22,.15)':'transparent')+';color:#fff;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s"><span style="font-size:1.4rem">\uD83D\uDC69\uD83C\uDFFC</span><br>Brenda<br><span style="font-size:.7rem;color:#94a3b8">Español</span></button>'+
     '</div>'+
-    '<button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Start Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Full Demo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 30-40 min</p></div>';
+    '<button id="demoStartBtn" class="ds-btn">\u25B6\uFE0F Start Demo</button><br><button id="demoAutoBtn" style="margin-top:12px;padding:12px 36px;background:transparent;color:#f97316;border:2px solid #f97316;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer">\uD83D\uDD04 Auto Play Full Demo</button><p style="font-size:.75rem;color:#64748b;margin-top:12px">\u23F1 30-40 min</p>'+
+    '<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1)">'+
+    '<p style="color:#94a3b8;font-size:.75rem;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;font-weight:600">📤 Share this demo / Comparte el demo</p>'+
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+    '<button onclick="window.open(\'https://wa.me/?text=\'+encodeURIComponent(\'Check out this CRM demo for HVAC contractors! AI-powered tour 🔥\\n\\n\'+location.href),\'_blank\')" style="padding:8px 16px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">💬 WhatsApp</button>'+
+    '<button onclick="window.open(\'mailto:?subject=\'+encodeURIComponent(\'Trade Master CRM - AI Demo\')+\'&body=\'+encodeURIComponent(\'Check out this CRM for HVAC contractors! AI demo tour:\\n\\n\'+location.href),\'_blank\')" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📧 Email</button>'+
+    '<button onclick="window.open(\'sms:?body=\'+encodeURIComponent(\'Check out this CRM demo for HVAC! 🔥 \'+location.href))" style="padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📱 Texto</button>'+
+    '<button id="demoCopyLink" style="padding:8px 16px;background:#475569;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">📋 Copiar Link</button>'+
+    '</div></div>'+
+    '</div>';
     document.body.appendChild(s);
     function selLang(lang){
       window.currentLang=lang;var en=lang==='en';
@@ -200,6 +209,7 @@ function showSplash(){
     $('splES').onclick=function(){selLang('es');};
     $('demoStartBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('manual');},800);};
     $('demoAutoBtn').onclick=function(){s.classList.add('ds-exit');setTimeout(function(){s.remove();res('auto');},800);};
+    $('demoCopyLink').onclick=function(){navigator.clipboard.writeText(location.href).then(function(){var b=$('demoCopyLink');b.textContent='✅ Copied!';setTimeout(function(){b.innerHTML='📋 Copiar Link';},2000);}).catch(function(){prompt('Copy this link:',location.href);});};
   });
 }
 
