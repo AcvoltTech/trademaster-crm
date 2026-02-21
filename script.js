@@ -12389,11 +12389,29 @@ function checkOnboardingTour() {
     if (new URLSearchParams(location.search).get('demo') === 'true') return;
     if (!companyId) return;
     
-    // Check localStorage - only skip if user explicitly dismissed
-    var obKey = 'tm_onboarding_seen_' + companyId;
-    if (localStorage.getItem(obKey) === 'true') return;
+    // Auto-start demo if ?demo=auto in URL
+    if (new URLSearchParams(location.search).get('demo') === 'auto') {
+        setTimeout(function() { startOnboardingTour(); }, 1500);
+        return;
+    }
     
-    // Show welcome for everyone who hasn't seen it
+    // Check if user has completed the tour (Supabase-based, not just localStorage)
+    var plan = 'free';
+    if (typeof _companyPlanData !== 'undefined' && _companyPlanData) {
+        plan = _companyPlanData.plan || 'free';
+    }
+    
+    // If user already upgraded, don't show popup
+    if (plan !== 'free') return;
+    
+    // For free/trial users: show popup every time until they've seen it 3+ times
+    // This ensures trial users always get reminded about the demo
+    var obKey = 'tm_onboarding_seen_' + companyId;
+    var seenCount = parseInt(localStorage.getItem(obKey) || '0');
+    
+    // After dismissing 5 times, stop showing (they clearly don't want it)
+    if (seenCount >= 5) return;
+    
     setTimeout(function() {
         var ov = document.getElementById('onboardingWelcome');
         if (ov) ov.style.display = 'flex';
@@ -12403,8 +12421,8 @@ function checkOnboardingTour() {
 function startOnboardingTour() {
     var ov = document.getElementById('onboardingWelcome');
     if (ov) ov.style.display = 'none';
-    // Mark as seen
-    if (companyId) localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
+    // Mark tour as completed (won't show popup again)
+    if (companyId) localStorage.setItem('tm_onboarding_seen_' + companyId, '10');
     location.href = location.pathname + '?demo=true';
 }
 
@@ -12416,10 +12434,14 @@ function launchDemoManual() {
 function skipOnboarding() {
     var ov = document.getElementById('onboardingWelcome');
     if (ov) ov.style.display = 'none';
-    if (companyId) localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
+    if (companyId) {
+        var obKey = 'tm_onboarding_seen_' + companyId;
+        var seenCount = parseInt(localStorage.getItem(obKey) || '0');
+        localStorage.setItem(obKey, String(seenCount + 1));
+    }
 }
 
 function markOnboardingDone() {
     if (!companyId) return;
-    localStorage.setItem('tm_onboarding_seen_' + companyId, 'true');
+    localStorage.setItem('tm_onboarding_seen_' + companyId, '10');
 }
