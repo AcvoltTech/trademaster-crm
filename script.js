@@ -571,6 +571,13 @@ function showDashboard() {
     }
     showSection('dashboard');
     loadAllData();
+    // Plan & Billing UI
+    try { renderPlanBadge(); } catch(e) {}
+    try { updatePlanUI(); } catch(e) {}
+    // Track login
+    try { trackLogin(); } catch(e) {}
+    // Check trial status
+    try { checkTrialStatus(); } catch(e) {}
     // Check if new user needs onboarding tour
     checkOnboardingTour();
 }
@@ -1691,6 +1698,17 @@ function previewTechPhoto(input) {
 
 async function handleTechCreate(event) {
     event.preventDefault();
+    // Check tech limit
+    var techCheck = canAddTechnician();
+    if (!techCheck.canAdd) {
+        var lim = techCheck.limit === Infinity ? '∞' : techCheck.limit;
+        if (typeof showFeatureGate === 'function') {
+            showFeatureGate('Más de ' + lim + ' técnicos');
+        } else {
+            alert('Tu plan permite máximo ' + lim + ' técnicos. Haz upgrade para agregar más.');
+        }
+        return;
+    }
     var data = {
         company_id: companyId,
         name: document.getElementById('techName').value,
@@ -4960,6 +4978,11 @@ function hideClientForm() { document.getElementById('clientFormContainer').style
 
 async function handleClientCreate(event) {
     event.preventDefault();
+    // Check client limit before saving
+    if (!editingClientId && typeof checkClientLimitBeforeSave === 'function') {
+        var canSave = await checkClientLimitBeforeSave();
+        if (!canSave) return;
+    }
     var tagsSelect = document.getElementById('clientTags');
     var tags = [];
     if (tagsSelect) { for (var i = 0; i < tagsSelect.selectedOptions.length; i++) tags.push(tagsSelect.selectedOptions[i].value); }
@@ -10101,6 +10124,242 @@ var StripePayments = {
         container.innerHTML = html;
     }
 };
+
+// ========== PLAN & BILLING MANAGEMENT ==========
+var PLAN_CONFIG = {
+    free: { name: 'Free', price: 0, clients: 10, techs: 2, reports: false, marketing: false, support: 'community' },
+    profesional: { name: 'Profesional', price: 149, clients: 50, techs: 10, reports: true, marketing: true, support: 'email' },
+    enterprise: { name: 'Enterprise', price: 299, clients: Infinity, techs: Infinity, reports: true, marketing: true, support: 'priority' }
+};
+
+function getCurrentPlan() {
+    if (!currentCompany) return 'free';
+    return currentCompany.plan || 'free';
+}
+
+function getPlanConfig(plan) {
+    return PLAN_CONFIG[plan] || PLAN_CONFIG.free;
+}
+
+async function upgradePlan(productSlug) {
+    if (typeof StripePayments !== 'undefined' && StripePayments.checkout) {
+        await StripePayments.checkout(productSlug);
+    } else {
+        // Fallback — open billing.html
+        window.open('billing.html', '_blank');
+    }
+}
+
+async function updatePlanUI() {
+    var plan = getCurrentPlan();
+    var config = getPlanConfig(plan);
+
+    // Update current plan card
+    var nameEl = document.getElementById('currentPlanName');
+    var priceEl = document.getElementById('currentPlanPrice');
+    if (nameEl) nameEl.textContent = config.name.toUpperCase();
+    if (priceEl) priceEl.textContent = config.price === 0 ? '$0/mes — Gratis' : '$' + config.price + '/mes';
+
+    // Style current plan card
+    var cardEl = document.getElementById('currentPlanCard');
+    if (cardEl) {
+        if (plan === 'profesional') cardEl.style.background = 'linear-gradient(135deg,#fff7ed,#ffedd5)';
+        else if (plan === 'enterprise') cardEl.style.background = 'linear-gradient(135deg,#eff6ff,#dbeafe)';
+        else cardEl.style.background = 'linear-gradient(135deg,#f8fafc,#e2e8f0)';
+    }
+
+    // Update plan buttons
+    var plans = ['Free', 'Pro', 'Ent'];
+    var planKeys = ['free', 'profesional', 'enterprise'];
+    planKeys.forEach(function(k, i) {
+        var btn = document.getElementById('planBtn' + plans[i]);
+        var card = document.getElementById('planCard' + plans[i]);
+        if (!btn) return;
+        if (k === plan) {
+            btn.outerHTML = '<div id="planBtn' + plans[i] + '" style="text-align:center;padding:10px;background:#22c55e;border-radius:8px;font-weight:700;color:#fff;font-size:13px;">✅ Plan Actual</div>';
+            if (card) card.style.borderColor = '#22c55e';
+        }
+    });
+
+    // Update usage
+    try {
+        var res = await sbClient.from('clients').select('id', { count: 'exact' }).eq('company_id', companyId);
+        var count = res.count || 0;
+        var limit = config.clients === Infinity ? '∞' : config.clients;
+        var usageEl = document.getElementById('planUsageCount');
+        if (usageEl) usageEl.textContent = count + ' / ' + limit;
+        var fillEl = document.getElementById('planUsageFill');
+        if (fillEl) {
+            var pct = config.clients === Infinity ? 10 : Math.min((count / config.clients) * 100, 100);
+            fillEl.style.width = pct + '%';
+            fillEl.style.background = pct > 80 ? '#ef4444' : pct > 60 ? '#f97316' : '#22c55e';
+        }
+    } catch(e) {}
+}
+
+// Plan badge in dashboard
+function renderPlanBadge() {
+    var plan = getCurrentPlan();
+    var config = getPlanConfig(plan);
+    var badge = document.getElementById('dashPlanBadge');
+    if (!badge) {
+        // Create badge in welcome banner area
+        var welcome = document.querySelector('.hcp-welcome-banner');
+        if (!welcome) return;
+        badge = document.createElement('div');
+        badge.id = 'dashPlanBadge';
+        badge.style.cssText = 'margin-top:8px;';
+        welcome.appendChild(badge);
+    }
+    var colors = { free: '#6b7280', profesional: '#f97316', enterprise: '#1e3a5f' };
+    var bgColors = { free: '#f3f4f6', profesional: '#fff7ed', enterprise: '#eff6ff' };
+    badge.innerHTML = '<div style="display:inline-flex;align-items:center;gap:8px;background:' + (bgColors[plan] || bgColors.free) + ';padding:6px 14px;border-radius:20px;border:1px solid ' + (colors[plan] || colors.free) + '33;">' +
+        '<span style="font-size:11px;font-weight:700;color:' + (colors[plan] || colors.free) + ';text-transform:uppercase;">Plan ' + config.name + '</span>' +
+        (plan === 'free' ? '<button onclick="showSection(\'settings\');setTimeout(function(){var e=document.getElementById(\'planBillingSection\');if(e)e.scrollIntoView({behavior:\'smooth\'});},300);" style="background:' + '#f97316' + ';color:#fff;border:none;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;">⬆️ Upgrade</button>' : '') +
+        '</div>';
+}
+
+// Check technician limits
+function canAddTechnician() {
+    var plan = getCurrentPlan();
+    var config = getPlanConfig(plan);
+    var techCount = (typeof employeesData !== 'undefined' ? employeesData : []).length;
+    return { canAdd: techCount < config.techs, current: techCount, limit: config.techs };
+}
+
+// Feature gate check
+function hasFeature(feature) {
+    var plan = getCurrentPlan();
+    var config = getPlanConfig(plan);
+    return !!config[feature];
+}
+
+// Show upgrade prompt for locked features
+function showFeatureGate(featureName) {
+    var plan = getCurrentPlan();
+    if (plan !== 'free') return false; // Has access
+
+    var modal = document.createElement('div');
+    modal.id = 'featureGateModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    modal.innerHTML = '<div style="background:white;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.3);">' +
+        '<div style="background:linear-gradient(135deg,#f97316,#ea580c);padding:24px;text-align:center;color:white;">' +
+        '<div style="font-size:48px;margin-bottom:8px;">🔒</div>' +
+        '<h2 style="margin:0;font-size:1.3rem;">Feature Premium</h2></div>' +
+        '<div style="padding:24px;text-align:center;">' +
+        '<p style="color:#4b5563;margin-bottom:20px;"><strong>' + featureName + '</strong> está disponible en el plan <strong>Profesional</strong> ($149/mes).</p>' +
+        '<div style="display:flex;gap:12px;">' +
+        '<button onclick="document.getElementById(\'featureGateModal\').remove()" style="flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancelar</button>' +
+        '<button onclick="document.getElementById(\'featureGateModal\').remove();upgradePlan(\'crm-profesional\')" style="flex:1;padding:12px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">⬆️ Upgrade</button>' +
+        '</div></div></div>';
+    document.body.appendChild(modal);
+    return true; // Blocked
+}
+
+// ========== PLAN & BILLING MANAGEMENT END ==========
+
+// ========== LOGIN TRACKING & TRIAL ENFORCEMENT ==========
+
+// Track login — increment login_count, update last_login
+async function trackLogin() {
+    if (!companyId || !sbClient) return;
+    try {
+        // Get current count
+        var res = await sbClient.from('companies').select('login_count').eq('id', companyId).single();
+        var currentCount = (res.data && res.data.login_count) || 0;
+        await sbClient.from('companies').update({
+            login_count: currentCount + 1,
+            last_login: new Date().toISOString()
+        }).eq('id', companyId);
+        console.log('Login tracked: #' + (currentCount + 1));
+    } catch(e) {
+        console.log('Login tracking error:', e);
+    }
+}
+
+// Check trial status — show warnings/blocks when expired
+function checkTrialStatus() {
+    if (!currentCompany) return;
+    var plan = currentCompany.plan || 'free';
+    var status = currentCompany.subscription_status || 'trial';
+    var trialEnd = currentCompany.trial_ends_at;
+
+    // If they're on a paid plan, no trial to worry about
+    if (plan !== 'free') return;
+    // If no trial_ends_at, skip
+    if (!trialEnd) return;
+
+    var now = new Date();
+    var endDate = new Date(trialEnd);
+    var daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft <= 0) {
+        // TRIAL EXPIRED
+        showTrialExpiredBanner();
+    } else if (daysLeft <= 3) {
+        // TRIAL EXPIRING SOON
+        showTrialWarningBanner(daysLeft);
+    } else if (daysLeft <= 7) {
+        // SOFT WARNING
+        showTrialInfoBanner(daysLeft);
+    }
+}
+
+function showTrialExpiredBanner() {
+    var existing = document.getElementById('trialBanner');
+    if (existing) existing.remove();
+
+    var banner = document.createElement('div');
+    banner.id = 'trialBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);';
+    banner.innerHTML = '<span>⚠️ Tu período de prueba ha expirado.</span>' +
+        '<span style="opacity:.8;">Actualiza para seguir usando el CRM.</span>' +
+        '<button onclick="showSection(\'settings\');setTimeout(function(){var e=document.getElementById(\'planBillingSection\');if(e)e.scrollIntoView({behavior:\'smooth\'});},300);document.getElementById(\'trialBanner\').remove();" style="background:#fff;color:#dc2626;border:none;padding:8px 20px;border-radius:6px;font-weight:800;font-size:13px;cursor:pointer;">⬆️ Upgrade Ahora</button>' +
+        '<button onclick="document.getElementById(\'trialBanner\').remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;opacity:.7;padding:0 4px;">✕</button>';
+    document.body.appendChild(banner);
+
+    // Push content down
+    var dash = document.getElementById('dashboardPage');
+    if (dash) dash.style.paddingTop = '52px';
+}
+
+function showTrialWarningBanner(daysLeft) {
+    var existing = document.getElementById('trialBanner');
+    if (existing) existing.remove();
+
+    var banner = document.createElement('div');
+    banner.id = 'trialBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.2);';
+    banner.innerHTML = '<span>⏰ Tu prueba gratis termina en <strong>' + daysLeft + ' día' + (daysLeft > 1 ? 's' : '') + '</strong>.</span>' +
+        '<button onclick="showSection(\'settings\');setTimeout(function(){var e=document.getElementById(\'planBillingSection\');if(e)e.scrollIntoView({behavior:\'smooth\'});},300);document.getElementById(\'trialBanner\').remove();" style="background:#fff;color:#ea580c;border:none;padding:6px 16px;border-radius:6px;font-weight:800;font-size:12px;cursor:pointer;">⬆️ Upgrade</button>' +
+        '<button onclick="document.getElementById(\'trialBanner\').remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;opacity:.7;">✕</button>';
+    document.body.appendChild(banner);
+
+    var dash = document.getElementById('dashboardPage');
+    if (dash) dash.style.paddingTop = '46px';
+}
+
+function showTrialInfoBanner(daysLeft) {
+    var existing = document.getElementById('trialBanner');
+    if (existing) existing.remove();
+
+    // Dismissible soft banner — only show once per session
+    if (sessionStorage.getItem('tm_trial_info_dismissed')) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'trialBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#1e3a5f,#1e40af);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+    banner.innerHTML = '<span>📋 Período de prueba: <strong>' + daysLeft + ' días restantes</strong>. Explora todas las funciones.</span>' +
+        '<button onclick="showSection(\'settings\');setTimeout(function(){var e=document.getElementById(\'planBillingSection\');if(e)e.scrollIntoView({behavior:\'smooth\'});},300);document.getElementById(\'trialBanner\').remove();" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">Ver Planes</button>' +
+        '<button onclick="sessionStorage.setItem(\'tm_trial_info_dismissed\',\'1\');document.getElementById(\'trialBanner\').remove();var d=document.getElementById(\'dashboardPage\');if(d)d.style.paddingTop=\'0\';" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;opacity:.7;">✕</button>';
+    document.body.appendChild(banner);
+
+    var dash = document.getElementById('dashboardPage');
+    if (dash) dash.style.paddingTop = '46px';
+}
+
+// ========== LOGIN TRACKING & TRIAL ENFORCEMENT END ==========
+
 // =====================================================
 // TRADE MASTER CRM - MÓDULO DE RECURSOS HUMANOS 🛡️
 // Versión 1.0 - Febrero 2026
