@@ -2333,7 +2333,7 @@ function shareDemoSMS(){
 function shareDemoEmail(){
     var subj='🎬 Demo en Vivo — Trade Master CRM para tu negocio';
     var body='¡Hola!\n\nTe invito a ver una demostración en vivo de Trade Master CRM, el sistema #1 para negocios de HVAC y contratistas.\n\nNuestra asistente AI Brenda te guiará por cada función con narración de voz:\n\n✅ Manejo de clientes y trabajos\n✅ Despacho GPS de técnicos en tiempo real\n✅ Facturación y cobros instantáneos\n✅ Nómina y reportes financieros\n✅ Marketing y más\n\n👉 Ver Demo: '+DEMO_URL+'\n\n¡Es GRATIS para empezar con hasta 10 clientes!\n\nSaludos,\nTrade Master CRM Team';
-    window.open('mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body));
+    window.open('https://mail.google.com/mail/?view=cm&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank');
 }
 
 function downloadDemoQR(){fetch(DEMO_QR_URL).then(function(r){return r.blob();}).then(function(b){var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='TradeMaster-Demo-QR.png';a.click();URL.revokeObjectURL(u);}).catch(function(){window.open(DEMO_QR_URL,'_blank');});}
@@ -2426,7 +2426,7 @@ function openEmailTemplate(){
     if(!currentEmailTemplate){alert('Selecciona un template primero');return;}
     var tmpl=emailTemplates[currentEmailTemplate];
     var body=tmpl.body.replace(/DEMO_URL/g,DEMO_URL);
-    window.open('mailto:?subject='+encodeURIComponent(tmpl.subject)+'&body='+encodeURIComponent(body));
+    window.open('https://mail.google.com/mail/?view=cm&su='+encodeURIComponent(tmpl.subject)+'&body='+encodeURIComponent(body),'_blank');
 }
 
 function copySalesScript(){
