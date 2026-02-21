@@ -12319,7 +12319,7 @@ function shareRefEmail() {
                '💰 Usa mi código de referido: ' + code + '\n' +
                '🔗 ' + link + '\n\n' +
                '¡Te va a cambiar el juego! 🚀';
-    window.open('mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+    window.open('https://mail.google.com/mail/?view=cm&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
 }
 
 function shareRefFacebook() {
